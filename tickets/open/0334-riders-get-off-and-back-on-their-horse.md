@@ -5,9 +5,9 @@ type: feature
 milestone: M2 Core rules
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
-blocked_by: ["0083"]
-nick_input: answer-first
+status: todo
+blocked_by: ["0083", "0335"]
+nick_input: none
 completed:
 ---
 
@@ -43,18 +43,41 @@ Act 1's mounted units: Tamsin (`sergeant`, Rider) on the player's side;
 `hound_rider`s among the enemies (Chapters 2 to 4, and Chapter 4's
 turn-7 riders).
 
-**0083** asks Nick how getting off and on works. His rule above is
-fixed: it is a **free action** (it doesn't end the unit's action, like
-`Command::Equip`, `crates/core/src/battle.rs` ~:325, ~:859), and only
-**before the unit acts**. 0083 settles the rest (whether "acts" includes
-moving; what changes on foot: movement type, Mov, the Mounted tag, stats,
-weapons, Lance Rush and Charge; whether enemies do it; whether it lasts
-past the battle; how a rider on foot looks).
+**0083 decided it (2026-11-17)**; the rules are in `terrain.md`,
+*Getting off and back on a horse*. In short:
+
+- **Who:** every class with movement type `mounted` (Rider, Lancer,
+  Outrider, Iron Rider, High Lancer, Juggernaut, Windrunner); never
+  fliers.
+- **On foot:** movement type `foot` (Iron Rider and Juggernaut:
+  `armored`, keeping `Armored`); **Mov −2** (Tamsin 7 → 5); **Spd +2**
+  (Tamsin 5 → 7); **no `Mounted` tag**; weapons, other stats and skills
+  (Lance Rush, Charge 1) unchanged.
+- **When:** a **free action** (it doesn't use the unit's action, like
+  `Command::Equip`, `crates/core/src/battle.rs` ~:325, ~:859), **before
+  moving** (then the move uses the new Mov and costs) **or after moving**
+  (no more moving, but it can still act), **not both** in one turn, and
+  **never after the unit has acted**. Mounting follows the same rules;
+  no mounting on a tile a horse can't enter, such as a river (*the
+  agent's starting rule*).
+- **Where:** indoors changes nothing. **Enemies never do it.** **Every
+  battle starts mounted.**
+- **Control:** an action-menu line, **Dismount** / **Mount**, plus an
+  **optional rebindable action with no default key** (Nick).
+- **Look:** deferred (Nick: "dont need to block mechanic on it"): the
+  glyph mark and the combat picture on foot are 0089's; MattWalkden's
+  mounted map sprites are 0499's. This ticket puts the state in the map
+  scene and paints nothing new.
+
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+*A new unit action fans out*): 0335 comes first. It makes
+`BattleState::actions_at(unit, dest)` the one list the action menu, the
+bots' candidates (`legal.rs`) and the AI read, so Dismount / Mount is a
+row there (an `ActionKind`), not a new rule in `menu_entries`.
 
 ## Nick input
 
-**Answer first:** ticket 0083 (with its mockups of a rider on foot in
-both looks). Nothing else is asked here. Verified by tests, `cargo shuyi
+None (0083 answered it). Nothing is asked here. Verified by tests, `cargo shuyi
 frame-png` pictures in the PR and the bots; what is left to judge by
 playing goes on the Act 1 playtest's checklist (1064).
 
@@ -64,124 +87,151 @@ playing goes on the Act 1 playtest's checklist (1064).
 
 - **Core (ADR-0004: state changes only through a `Command` and its
   `Event`s).** A unit's mount state in the battle (e.g. `Unit.on_foot:
-  bool`, serialised with the battle so a suspend and a rewind keep it).
-  The likely shapes, by 0083's answer on *when*:
-  - **Before moving only:** a new free command, e.g. `Command::Dismount
-    { unit }` / `Command::Mount { unit }` (or one `SetMount { unit,
-    on_foot }`), accepted for a ready unit of the current phase that
-    hasn't moved or acted, refused otherwise with a `CommandError`;
-    its event, e.g. `Event::Dismounted { unit }` / `Event::Mounted
-    { unit }`. Movement then uses the new state.
+  bool`), and whether it changed this turn (once a turn), both serialised
+  with the battle so a suspend and a rewind keep them. Both of 0083's
+  moments are needed:
+  - **Before moving:** a new free command, e.g. `Command::SetMount
+    { unit, on_foot }`, accepted for a ready unit of the current phase
+    whose class is mounted and that hasn't moved, acted or already
+    changed this turn; refused otherwise with a `CommandError`. Its
+    event, e.g. `Event::MountChanged { unit, on_foot }`. The move that
+    follows uses the new state.
   - **After moving, before the action** (the action menu's moment): the
     move and the action are one `Command::Act { unit, dest, action }`, so
-    a dismount there has to ride on it (a field such as `mount:
-    Option<MountChange>` applied after the move and before the action),
-    and the move is still checked with the state the unit started in.
-  - What the state changes is one place that the rest asks, e.g. a
-    `Unit::movement_type(&ClassTable)` and `Unit::tags(&ClassTable)` that
-    swap in `foot` and drop `Mounted` when on foot (plus Mov, stats or
-    weapons if 0083 says so). `mover_info`, `combat_input`'s tags, the
+    the change rides on it (a field such as `mount: Option<bool>`,
+    applied after the move and before the action), and the move is
+    checked with the state the unit started in. Refused if it already
+    changed this turn. "Mount" is also refused on a tile a mounted unit
+    can't enter (a river; *the agent's starting rule*, 0083).
+  - What the state changes is one place that the rest asks, e.g.
+    `Unit::movement_type(&ClassTable)`, `Unit::tags(&ClassTable)`,
+    `Unit::mov(..)` and the Spd the stats read: on foot, movement type
+    `foot` (`armored` for a class tagged `Armored`), no `Mounted` tag,
+    **Mov −2** and **Spd +2** (*tunable*: two named constants, with
+    `terrain.md`'s numbers in their doc). Weapons, skills and the other
+    stats don't change. `mover_info`, `combat_input`'s tags and Spd, the
     AI's flow field (keyed by movement type), the danger zone and threat
     arrows, and the bots' threats all go through it, never the class
     directly.
-  - Whether it lasts: reset to mounted at battle start (on the unit the
-    campaign builds) unless 0083 says it carries over.
-- **The enemy side:** as 0083 says. If enemies never do it, nothing
-  changes in `ai.rs` but reading the mount state through the one place
-  above. If they do, the AI's rule for when (*the agent's starting rule*,
-  written in `ai.rs`'s module doc with an example) and its tests.
-- **The persona bots:** they may ignore it in this ticket (they play as
-  before; say so in `docs/playtesting.md`). If the bands move because the
-  enemy does it, the bots' threat model reads the mount state.
+  - It doesn't last: every battle starts mounted (the units the campaign
+    builds have `on_foot: false`).
+- **The enemy side:** enemies never do it. `ai.rs` only reads the mount
+  state through the one place above (a player rider on foot is a foot
+  unit to its flow field and its targeting).
+- **The persona bots:** they don't dismount in this ticket (they play as
+  before; say so in `docs/playtesting.md`). Their threat model reads the
+  mount state through the one place.
 - **UI (`crates/ui`):**
-  - The action menu entry: a `MenuEntry` (e.g. `Dismount` / `Mount`, one
-    entry whose text follows the state) in
-    `crates/ui/src/screens/battle/mode.rs` ~:156–210, shown only for a
-    unit whose class is mounted and only at the moment 0083 allows,
-    with its help line (`battle.help.*`, `crates/ui/src/screens/battle/mod.rs`
-    ~:2089) and its text in `assets/lang/en/ui.ron`. If the answer is
-    "before moving", the entry must be reachable before a destination is
-    picked (for instance when the unit is chosen as its own destination,
-    if that opens the menu: check how `mode.rs` handles it), and the move
-    range redraws after it. Input is actions only (the `keyboard-input` skill): no new
-    action unless 0083's answer needs one; then it gets a default key on
-    every layout, a pad button and a Playdate button or chord.
+  - The action menu entry: `Dismount`, or `Mount` when on foot, decided
+    in core by 0335's `actions_at` (a new `ActionKind`, mounted class,
+    not changed this turn, not after acting; "Mount" not on a tile a
+    horse can't enter) and shown by `menu_entries`
+    (`crates/ui/src/screens/battle/mode.rs`) through 0335's kind-to-text
+    table, never a check of its own in the UI, with its help line
+    (`battle.help.*`, `crates/ui/src/screens/battle/mod.rs` ~:2089) and
+    its text in `assets/lang/en/ui.ron`. **Before moving:** choosing it
+    with the unit's own tile as the destination sends `SetMount` and goes
+    back to choosing a destination, with the move range redrawn for the
+    new state (check how `mode.rs` opens the menu on the unit's own
+    tile). **After moving:** it rides on the `Act` and the menu stays
+    open (the unit can still attack, use an item or wait).
+  - **A new input action** (e.g. `Action::ToggleMount`) with **no default
+    key** on any layout, pad or Playdate (Nick: "optional, not bound by
+    default key"), listed on the key-binding screen so a player can bind
+    it; it does what the menu line does for the selected unit. Follow the
+    `keyboard-input` skill (an unbound action must pass `check-keys`; if
+    the keymap can't express "no default", make the smallest engine-side
+    or game-side change, per `engine-change`).
   - **The map (ADR-0038):** the map scene's `UnitView`
-    (`crates/ui/src/map_view/scene.rs` ~:86) gets the mount state (e.g.
-    `on_foot: bool`); every map skin paints it as 0083 picked: the glyph
-    skin (`map_view/glyph`), the sprite skin (`map_view/sprite/units.rs`,
-    `Tileset::unit_picture`, `crates/content/src/tileset.rs` ~:99, which
-    may need an on-foot picture per character or class in the tileset
-    file) and the Playdate skin (`map_view/playdate`). If the on-foot
-    picture comes from the bought art, the private repository gets it
-    and `assets-private.rev` moves in this PR (`cargo shuyi
-    private-assets --pin`; AGENTS.md, *Bought art*).
-  - The unit info screen shows the unit's Mov and movement as on foot
-    (it reads the unit, so this is a test that it does).
+    (`crates/ui/src/map_view/scene.rs` ~:86) gets `on_foot: bool`. The
+    skins paint **nothing new** (0089 decides the glyph mark and the
+    combat picture), but for one thing 0499 left to this ticket: **the
+    sprite skin must pick the picture on foot**. 0499 made the mounted
+    classes' map sprites MattWalkden's riders and named the Tiny Tales
+    knight on foot for each of them in the tileset's `units.on_foot`
+    (`Tileset::on_foot_picture(&ClassId)`,
+    `crates/content/src/tileset.rs`); `paint_pictures`
+    (`crates/ui/src/map_view/sprite/units.rs`) uses it in place of
+    `unit_picture` for a unit whose `on_foot` is true (a named
+    character's own picture first, as `unit_picture` does), with a
+    test that reads the scene and the tileset.
+  - The side panel shows the unit's Mov and Spd on foot (it reads the
+    unit, so this is a test that it does).
   - The forecast's `!` (effective) goes away by itself for a rider on
     foot; a test says so.
-- `docs/design/terrain.md` (*Mounted*) and the battle rules doc
-  (`turn-structure.md` or wherever 0083 recorded it) say the rule; the
-  rules' doc in `battle.rs` lists the new command.
+- The rules' doc in `battle.rs` lists the new command and the `Act`
+  field; `terrain.md` already says the rule (0083).
 
-**Expected size** (ADR-0101): about 1,600–2,000 changed lines: core
-command, state and the one place that answers movement type and tags
-(~250 production, ~400 tests), the menu entry and help (~120 production,
-~250 tests), the scene field and three skins (~150 production, snapshot
-tests), docs (~100). If 0083's answer adds on-foot stats or weapons, or
-enemies that dismount, it won't fit: **split before coding**
-(`write-ticket`): this ticket keeps the core and the AI, and a Battle UI
-ticket (04xx, `blocked_by` this one) takes the menu entry, the scene and
-the skins. 1064's `blocked_by` then names both.
+**Expected size** (ADR-0101): about 1,700–2,000 changed lines: core
+command, state and the one place that answers movement type, tags, Mov
+and Spd (~300 production, ~450 tests), the menu entry, help and the
+unbound action (~150 production, ~300 tests), the scene field (~20),
+docs (~100), this file (~300). The skins paint nothing new, which makes
+room for the on-foot stats. If the estimate passes 2,000, **split
+before coding** (`write-ticket`): this ticket keeps the core, and a
+Battle UI ticket (04xx, `blocked_by` this one) takes the menu entry, the
+action and the scene field. 1064's `blocked_by` then names both.
 
 **Out (do not do):**
-- Dismounting forced by terrain (indoors) unless 0083 asks for it.
+- Dismounting forced by terrain (indoors): 0083 said no.
+- Enemies dismounting: 0083 said no.
 - Flying units (none in Act 1; `progression.md` ~:766, fliers are late).
 - New mounted classes or changes to Rider's numbers.
+- How a rider on foot looks (0089) and MattWalkden's riders (0499).
 
 ## Implementation steps
 
-1. Read 0083's answer, `movement.rs` (`mover_info`, `reachable`,
-   `threats_at`), `combat.rs` (`side`'s tags), `ai.rs` (`decide`,
-   `flow`), `battle.rs` (`Command`, `Event`, how `Equip` is accepted and
-   applied, the save format and rewind), and the action menu
-   (`mode.rs`, `mod.rs`).
-2. Core: the state, the command(s) and event(s), the one place for
-   movement type and tags; route every reader through it (`grep -rn
-   "movement_type\|\.tags" crates/core crates/bots`).
-3. Core tests (below); then the AI per 0083.
-4. UI: the menu entry and help, the scene field, each skin; snapshots and
-   `frame-png` pictures.
+1. Read `terrain.md` (*Getting off and back on a horse*), `movement.rs`
+   (`mover_info`, `reachable`, `threats_at`), `combat.rs` (`side`'s
+   tags), `ai.rs` (`decide`, `flow`), `battle.rs` (`Command`, `Event`,
+   how `Equip` is accepted and applied, the save format and rewind), and
+   the action menu (`mode.rs`, `mod.rs`).
+2. Core: the state, the command, the `Act` field and the event, the one
+   place for movement type, tags, Mov and Spd; route every reader
+   through it (`grep -rn "movement_type\|\.tags\|\.mov\b" crates/core
+   crates/bots`).
+3. Core tests (below).
+4. UI: the menu entry and help, the unbound action, the scene field;
+   snapshots and `frame-png` pictures of the menu.
 5. Docs.
 6. Run the winnable tests of Chapters 1 to 4 (they shouldn't move: the
-   recorded playthroughs never dismount) and the bots on Chapters 2 to 4
-   if the enemy side changed.
+   recorded playthroughs never dismount).
 
 ## Acceptance criteria
 
-- [ ] A ready Tamsin who hasn't acted can get off (the command is
-      accepted, its event is emitted), and then a Hound's spear forecast
-      against her has no ×2 (`effective` false) and her move range is a
-      foot unit's (tests).
-- [ ] She can get back on under the same rule, and neither is accepted
-      after she has acted (tests: a `CommandError` on each).
-- [ ] At the moment 0083 allows, the action menu shows the entry for a
-      mounted unit only (tests through the battle screen).
-- [ ] The map scene's unit says it is on foot and each skin paints it as
-      0083 picked (`frame-png` pictures of glyph, sprite and Playdate in
-      the PR).
-- [ ] A suspend and resume, and a rewind past the command, keep the right
+- [ ] A ready Tamsin who hasn't moved can get off (`SetMount` accepted,
+      its event emitted); then a Hound's spear forecast against her has
+      no ×2 (`effective` false), her move range is a foot unit's with
+      Mov 5, and her Spd is 7 (tests).
+- [ ] She can instead ride, then get off as part of `Act` and still
+      attack in the same command (test), but not both before and after
+      moving in one turn (a `CommandError`).
+- [ ] Getting back on follows the same rules; neither is accepted after
+      she has acted, nor "Mount" in a river (tests: a `CommandError` on
+      each).
+- [ ] An Iron Rider on foot moves as `armored`, Mov 4, keeping `Armored`
+      (test).
+- [ ] Enemy riders never change; a new battle starts every rider mounted
+      (tests).
+- [ ] The action menu shows Dismount / Mount for a mounted class only,
+      before and after moving, and not once it has changed this turn
+      (tests through the battle screen); the new action has no default
+      key and `check-keys` passes.
+- [ ] The map scene's unit says it is on foot (test).
+- [ ] A suspend and resume, and a rewind past the change, keep the right
       state (tests).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: the command's acceptance and refusals, movement and tags on
-  foot, combat effectiveness, the AI reading the state (`crates/core`).
-- Property: getting off then on (when both are allowed) leaves the unit
+- Unit: the command's and the `Act` field's acceptance and refusals,
+  movement, tags, Mov and Spd on foot, combat effectiveness, the AI
+  reading the state, and `actions_at` offering Dismount / Mount exactly
+  when the change is accepted (`crates/core`).
+- Property: getting off on one turn and back on the next leaves the unit
   as it was; a refused command changes nothing.
-- Snapshot / integration: the action menu with the entry; the map in each
-  skin with a rider on foot; save and rewind round trips.
+- Snapshot / integration: the action menu with the entry; the scene with
+  a rider on foot; save and rewind round trips.
 
 ## Completion notes
 

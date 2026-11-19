@@ -21,8 +21,12 @@ use core::fmt;
 
 use shuyi_ui::GameData;
 use shuyi_ui::frame::color::Palette;
+use shuyi_ui::frame::glyph_buffer::PxRect;
+use shuyi_ui::frame::key_cap::KeyCapStyle;
 use shuyi_ui::input::help_keys::HelpKeys;
+use shuyi_ui::text::StyledText;
 use trpg_content::dialogue;
+use trpg_content::image::KEY_ARROWS_PATH;
 use trpg_content::lang::TEST;
 use trpg_content::voice::{self, SOURCE_LANG};
 use trpg_content::{
@@ -41,6 +45,16 @@ use crate::words::{Language, Words};
 
 pub use shuyi_ui::ctx::{DEFAULT_MUSIC_SEED, IdleMotion, KEYBINDINGS_KEY, KeyPrompt, Keyboard};
 pub use shuyi_ui::screen::{Screen, ScreenResult};
+
+/// The clock a looping motion (a pulse, a blink, units stepping in place)
+/// reads: `ctx`'s, or 0 when [`Ctx::idle_motion`](shuyi_ui::Ctx::idle_motion)
+/// is off, so a test's frame shows every loop at its start (1290).
+pub fn loop_clock_s(ctx: &Ctx) -> f64 {
+    match ctx.idle_motion {
+        IdleMotion::On => ctx.clock_s,
+        IdleMotion::Off => 0.0,
+    }
+}
 
 /// What every screen shares: Shuyi Engine's services and this game's part,
 /// [`Ctx::game`](shuyi_ui::Ctx::game) ([`Shuyi`]).
@@ -159,6 +173,12 @@ pub struct Shuyi {
     /// "Thanks for playing" and "Export save?", and the title has no Load
     /// Game.
     pub demo: bool,
+    /// Whether a key's name in a hint is drawn as a key cap (ticket 0254,
+    /// [`key_caps`](GameData::key_caps)): on in the game. The test
+    /// harness turns them off, so a test of what a hint says reads its
+    /// words; a test of the look turns them on
+    /// ([`Harness::with_key_caps`](crate::harness::Harness::with_key_caps)).
+    pub key_caps: bool,
 }
 
 impl Shuyi {
@@ -180,6 +200,7 @@ impl Shuyi {
             lessons: Lessons::Off,
             lead: LeadProfile::new(DEFAULT_NAME, LeadGender::Male),
             demo: trpg_content::bundle::is_demo(),
+            key_caps: true,
         }
     }
 
@@ -245,6 +266,49 @@ impl GameData for Shuyi {
         crate::tips::key_text(name, keys)
     }
 
+    /// [`key_text`](GameData::key_text) in spans as the engine gives them
+    /// (the arrow keys one span, drawn as their picture), but plain on a
+    /// controller and for a key not mapped
+    /// ([`for_player`](crate::widgets::help::for_player)).
+    fn key_text_styled(&self, name: &str, keys: HelpKeys<'_, Action>) -> Option<StyledText> {
+        let text = self.key_text(name, keys)?;
+        let mut styled = shuyi_ui::input::help_keys::cursor_keys_styled(keys);
+        if styled.plain() != text {
+            styled = StyledText::new();
+            styled.push_key(&text);
+        }
+        Some(crate::widgets::help::for_player(keys, &styled))
+    }
+
+    /// Key caps as Nick decided them in 0250 (`docs/design/look-and-feel.md`,
+    /// *Key names in hints*): bold, a single letter in capitals, 2 px round
+    /// the letters, in the theme's `key`, `key_bg` and `key_edge`; the
+    /// arrow keys as the picture of the arrow cluster
+    /// ([`KEY_ARROWS_PATH`]). None on the Playdate's one-bit screen (0256).
+    fn key_caps(&self) -> Option<KeyCapStyle> {
+        if !self.key_caps {
+            return None;
+        }
+        let caps = KeyCapStyle::new()
+            .with_bold(true)
+            .with_capitals(true)
+            .with_margin_px(2)
+            .with_one_bit(false);
+        let images = &self.content.images;
+        let arrows = images.id(KEY_ARROWS_PATH).and_then(|id| {
+            let info = images.info(id)?;
+            let (w, h) = (
+                i32::try_from(info.width).ok()?,
+                i32::try_from(info.height).ok()?,
+            );
+            Some((id, PxRect::new(0, 0, w, h)))
+        });
+        Some(match arrows {
+            Some((id, src)) => caps.with_arrows(id, src),
+            None => caps,
+        })
+    }
+
     /// The clip for the lead's gender, where the words differ.
     fn voice_variant(&self) -> Variant {
         Variant::of(self.lead.gender)
@@ -276,19 +340,31 @@ impl GameData for Shuyi {
     }
 
     /// Paints the battle map with the skin of the map look in the settings
-    /// (ticket 0824), in the [`skin_set`](Self::skin_set), at their zoom
-    /// (ticket 0439): a new skin when the look changed (or the settings were
-    /// just loaded), the same skin at the new zoom when only the zoom did.
+    /// (ticket 0824), in the [`skin_set`](Self::skin_set), with their
+    /// threat arrows (ticket 0908) and range look (ticket 0923), at their
+    /// zoom (ticket 0439): a new skin when the look, the arrows or the
+    /// ranges changed (or the settings were just loaded), the same skin at
+    /// the new zoom when only the zoom did.
     fn apply_settings(&mut self, now: &Settings, before: Option<&Settings>) {
         let zoom = now.game.map_zoom;
+        let (look, arrows, ranges) = (
+            now.game.map_look,
+            now.game.threat_arrows,
+            now.game.range_style,
+        );
         let skin = match before {
-            Some(b) if b.game.map_look == now.game.map_look => {
+            Some(b)
+                if b.game.map_look == look
+                    && b.game.threat_arrows == arrows
+                    && b.game.range_style == ranges =>
+            {
                 if b.game.map_zoom == zoom {
                     return;
                 }
                 self.map_skin.clone()
             }
-            _ => crate::map_view::skin_for(self.skin_set, now.game.map_look, &self.content),
+            _ => crate::map_view::skin_for(self.skin_set, look, &self.content)
+                .with_marks(arrows, ranges),
         };
         self.map_skin = skin.at_zoom(zoom).unwrap_or(skin);
     }
@@ -443,10 +519,7 @@ pub(crate) mod tests {
     }
 
     fn play(line: &LineId, variant: Variant) -> AudioRequest {
-        AudioRequest::PlayVoice {
-            line: line.clone(),
-            variant,
-        }
+        AudioRequest::play_voice(line.clone(), variant)
     }
 
     /// Acceptance (0238): a line with a clip is asked for; one without,
@@ -625,14 +698,7 @@ pub(crate) mod tests {
             audio.sounds.insert(cue.to_owned(), sound);
         }
         for &cue in music {
-            let track = MusicCue {
-                file: format!("{cue}.ogg"),
-                volume: 100,
-                looped: true,
-                length_ms: 10_000,
-                credit: CreditRef::Own,
-                group: None,
-            };
+            let track = MusicCue::new(format!("{cue}.ogg"), 100, 10_000, CreditRef::Own);
             audio.music.insert(cue.to_owned(), track);
         }
         ctx

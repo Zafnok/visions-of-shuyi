@@ -33,7 +33,7 @@ pub fn paint(ctx: &Ctx, view: &ModeSelectView, buf: &mut GlyphBuffer) {
             centred(ctx, buf, y, &text);
         }
     }
-    centred(ctx, buf, bottom, &view.help);
+    centred(ctx, buf, bottom, &view.help.plain());
 }
 
 #[cfg(test)]
@@ -57,11 +57,7 @@ mod tests {
         };
         ModeSelectView {
             heading: "Choose a game mode".to_owned(),
-            menu: MenuView {
-                items: vec![item("Classic", 0), item("Casual", 1)],
-                first_shown: 0,
-                shown: 2,
-            },
+            menu: MenuView::new(vec![item("Classic", 0), item("Casual", 1)]),
             lines: vec![
                 line(
                     "Classic: a unit that falls in battle dies and is gone for good.",
@@ -69,7 +65,7 @@ mod tests {
                 ),
                 line("Casual: a unit that falls retreats.", 1),
             ],
-            help: "↑↓ choose · A select · B back".to_owned(),
+            help: "↑↓ choose · A select · B back".into(),
         }
     }
 
@@ -115,6 +111,6 @@ mod tests {
             "{shown:#?}"
         );
         assert_eq!(shown[13], "");
-        assert_eq!(shown[14], v.help);
+        assert_eq!(shown[14], v.help.plain());
     }
 }

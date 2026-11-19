@@ -109,6 +109,76 @@ rest are FE GBA values Nick accepted ("rest of numbers seem ok"). All
   for now. Walls, doors and thickets still block them (*Claude's starting
   rule*, unchanged by Nick's answers).
 
+### Getting off and back on a horse
+
+Decided: 2026-11-17
+Source: ticket 0083 (from Nick's Act 1 playtest, 2026-11-08); built by
+0334; its look by 0089 and 0499
+
+**Nick's words:**
+
+> "We should allow manual dismount and remount for mounted class to avoid
+> effectiveness (strategy) -- however, treat like fire emblem does, after
+> you make an action you can't take a free action of dismounting or
+> remounting."
+
+Asked with Tamsin's numbers (Rider, Mov 7, sword and spear; a Chapter 2
+Hound guard's Iron Spear does 15 a hit to her on horseback, 8 on foot).
+Of three options for what a rider on foot is, Nick picked **"Three
+Houses trade"** (a foot soldier, plus Spd +2 on foot). For when:
+**"Before or after moving"**, the Three Houses rule. For who and where:
+**"Simplest set"**. The control: **"menu line, with optional, not bound
+by default key"**. The look: **"defer glyphs. dont need to block
+mechanic on it."**, and yes to MattWalkden's riders on the map.
+
+**The rules:**
+
+- **Who.** Every class whose movement type is `mounted`: Rider, Lancer,
+  Outrider, Iron Rider, High Lancer, Juggernaut, Windrunner. Fliers never
+  land (they are not `Mounted`, and none is in Act 1).
+- **What changes on foot.**
+  - **Movement:** the `foot` costs in the table above (forest 2,
+    mountains 3, rivers can be waded at 5). Iron Rider and Juggernaut
+    keep their `Armored` tag on foot and move as `armored` (no mountains,
+    no water).
+  - **Mov −2**: Tamsin 7 → 5, a foot soldier's (*tunable*; the −2 for
+    the other classes is *the agent's starting value*, from Tamsin's
+    7 → 5: Lancer 8 → 6, Iron Rider 6 → 4).
+  - **Spd +2** on foot, like Three Houses' cavalry (Tamsin 5 → 7;
+    *tunable*).
+  - **No `Mounted` tag**, so spears and Unhorse lose their effectiveness
+    against her (Nick's point: "to avoid effectiveness").
+  - **Unchanged:** her other stats, her weapons (sword and spear), her
+    skills (Lance Rush, Charge 1).
+- **When.** It's free (it doesn't use up the unit's action), and:
+  - **before moving:** she gets off (or on), then moves with the new Mov
+    and costs; or
+  - **after moving:** she rides (or walks) to a tile, then gets off (or
+    on) there; she moves no further but can still attack, use an item or
+    wait;
+  - **once a turn:** a unit can't change both before and after moving;
+  - **never after the unit has acted** (Nick).
+  - Getting back on uses the same rules. She can't get on while
+    standing where a horse can't go (in a river) (*the agent's starting
+    rule*).
+- **Where.** Riders still ride indoors (floors cost 1, as today); no tile
+  forces anyone off.
+- **Enemies** never get off: enemy riders stay mounted, and spears keep
+  working on them.
+- **Each battle starts mounted**; being on foot doesn't carry over.
+- **The control.** One line in the unit's action menu: **Dismount**, or
+  **Mount** when on foot, shown only for a mounted class and only when
+  it's allowed. It needs no key and works on the Playdate. Also, an
+  **optional rebindable action with no default key** (Nick), for
+  players who want a shortcut.
+- **The look** (`look-and-feel.md`, *Who uses what*). In the picture
+  look, a mounted unit's map sprite is MattWalkden's riders (ticket
+  0499) and a rider on foot shows today's knight on foot. The glyph
+  look's mark and the combat picture on foot are deferred to ticket
+  0089 and don't block the mechanic (Nick). Until they're done, a rider
+  on foot looks the same as one on a horse in the glyph look and in
+  combat.
+
 ### Terrain combat bonuses
 
 Fire Emblem GBA style (Nick, Q4): good terrain makes a unit harder to hit

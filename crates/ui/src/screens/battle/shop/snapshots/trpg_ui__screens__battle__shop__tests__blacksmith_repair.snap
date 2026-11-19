@@ -1,6 +1,6 @@
 ---
 source: crates/ui/src/screens/battle/shop/tests.rs
-expression: "render(&s, &c).to_snapshot(&c.palette)"
+expression: "snap(&render(&s, &c), &c, ABOVE_HELP_ROW)"
 ---
 ╔══ Blacksmith ══════════════════════════════════════════════════════════════════════ Gold 1 250 ══╗
 ║                                                                                                  ║
@@ -33,7 +33,6 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║                                                                                                  ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
                                                                                                     
- Up Down choose · f confirm · d leave                                                      F2 debug 
 --- colours ---
 aaabbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbaaa
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
@@ -66,11 +65,9 @@ accccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-effffffffffffffffffffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeffffffffe
 --- legend ---
 a = fg:panel_border bg:panel_bg
 b = fg:text_highlight bg:panel_bg
 c = fg:text bg:panel_bg
 d = fg:panel_bg bg:panel_border_focus
 e = fg:text bg:black
-f = fg:text_dim bg:black

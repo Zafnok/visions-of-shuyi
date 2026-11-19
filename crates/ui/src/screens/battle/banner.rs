@@ -1,7 +1,9 @@
 //! Phase and outcome banners (ticket 0405, `docs/design/turn-structure.md`):
 //! `PLAYER PHASE` / `ENEMY PHASE` / `OTHER PHASE` with the turn beneath when
-//! a phase starts, `VICTORY` / `DEFEAT` when the battle ends. The battle
-//! screen's skin paints them.
+//! a phase starts, `VICTORY` / `DEFEAT` when the battle ends; and the
+//! `OBJECTIVE` banner when it starts (0481), its lines from
+//! [`objective::lines`](super::objective::lines). The battle screen's skin
+//! paints them.
 
 use crate::prelude::*;
 use trpg_core::{Event, Outcome, Phase, Turn};
@@ -25,6 +27,9 @@ pub enum BannerKind {
     },
     /// The battle ended; stays until confirmed.
     Outcome(Outcome),
+    /// The battle started: what wins it and what loses it (0481); stays
+    /// until confirmed.
+    Objective,
 }
 
 /// A banner on screen, and how long it has been up.
@@ -47,10 +52,19 @@ impl Banner {
         Some(Self { kind, t: 0.0 })
     }
 
-    /// Whether it has been up long enough to close by itself (outcome
-    /// banners never do).
+    /// The objective's banner, shown once when a battle starts.
+    pub const OBJECTIVE: Self = Self {
+        kind: BannerKind::Objective,
+        t: 0.0,
+    };
+
+    /// Whether it has been up long enough to close by itself (outcome and
+    /// objective banners never do: they wait for Confirm).
     pub fn expired(&self) -> bool {
-        matches!(self.kind, BannerKind::Phase { .. }) && self.t >= PHASE_BANNER_S
+        match self.kind {
+            BannerKind::Phase { .. } => self.t >= PHASE_BANNER_S,
+            BannerKind::Objective | BannerKind::Outcome(_) => false,
+        }
     }
 
     /// The big line.
@@ -63,6 +77,7 @@ impl Banner {
             },
             BannerKind::Outcome(Outcome::Victory) => "battle.banner.victory",
             BannerKind::Outcome(Outcome::Defeat) => "battle.banner.defeat",
+            BannerKind::Objective => "battle.banner.objective",
         };
         words.text(key)
     }
@@ -77,7 +92,7 @@ impl Banner {
                 }
                 None => words.text_with("battle.turn", &[("turn", &turn)]),
             },
-            BannerKind::Outcome(_) => String::new(),
+            BannerKind::Outcome(_) | BannerKind::Objective => String::new(),
         }
     }
 
@@ -87,6 +102,7 @@ impl Banner {
             kind: self.kind,
             title: self.title(words).to_owned(),
             subtitle: self.subtitle(words, limit),
+            lines: Vec::new(),
         }
     }
 }
@@ -154,6 +170,7 @@ mod tests {
                 },
                 title: "ENEMY PHASE".to_owned(),
                 subtitle: "Turn 2/8".to_owned(),
+                lines: Vec::new(),
             }
         );
     }

@@ -5,8 +5,9 @@
 //! the campaign's tutorial level changes there and in a battle (0838).
 //!
 //! Rows, top to bottom: Text speed, Animation speed, Combat animations,
-//! Enemy phase speed, Auto-end turn, Fullscreen, Cursor, (Map look, with the
-//! bought pictures), Colors, Music volume,
+//! Enemy phase speed, Auto-end turn, Fullscreen, Cursor, (Map look and Map
+//! zoom, with the bought pictures), Threat arrows, Range look, Intro, Open towns on
+//! arrival, Colors, Music volume,
 //! Sound volume, Voices, Voice volume, Voice on hover in the log, Layout, Key bindings, (Game mode and Tutorial, with a
 //! campaign), Reset tips, Restore defaults. `key_bindings_screen.rs` opens the Key bindings
 //! row.
@@ -37,10 +38,10 @@ use trpg_ui::tips::TIPS_SEEN_KEY;
 const TO_AUTO_END: &str = "Down Down Down Down";
 const TO_FULLSCREEN: &str = "Down Down Down Down Down";
 const TO_CURSOR: &str = "Down Down Down Down Down Down";
-const TO_THEME: &str = "Down Down Down Down Down Down Down Down Down";
-const TO_MUSIC: &str = "Down Down Down Down Down Down Down Down Down Down";
+const TO_THEME: &str = "Down Down Down Down Down Down Down Down Down Down Down";
+const TO_MUSIC: &str = "Down Down Down Down Down Down Down Down Down Down Down Down";
 const TO_LAYOUT: &str =
-    "Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down";
+    "Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down";
 
 /// Leaves Options with its changes kept: Cancel asks, the cursor starts on
 /// Back, two left is Keep (ticket 0839).
@@ -61,10 +62,10 @@ fn options() -> Harness {
 
 /// From Options with changes, kept, back at the title (still on its
 /// Options item), the Quick
-/// Battle (its Preparations: Left wraps to `Fight!`) with its `PLAYER
-/// PHASE` banner closed.
+/// Battle (its Preparations: Left wraps to `Fight!`) with its objective's
+/// and `PLAYER PHASE` banners closed.
 fn into_quick_battle(h: &mut Harness) {
-    h.keys(KEEP).keys("Up f Left f f");
+    h.keys(KEEP).keys("Up f Left f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }
 
@@ -72,7 +73,7 @@ fn into_quick_battle(h: &mut Harness) {
 /// Guides, Options).
 fn options_in_battle() -> Harness {
     let mut h = title();
-    h.keys("Down f Left f f d Down Down Down f");
+    h.keys("Down f Left f f f d Down Down Down f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
     h
 }
@@ -156,6 +157,8 @@ fn the_title_opens_options_and_cancel_closes_it() {
     assert_eq!(settings(&h), Settings::default().with_layout(RIGHT_HANDED));
     // No campaign: no Game mode row.
     assert!(!shows(&h, "Game mode"));
+    // The options list's one look snapshot (1290): every other test here
+    // reads the view, or crops to what it changed.
     assert_snapshot!(h.snapshot());
     h.keys("d");
     assert_eq!(h.screens(), ["title"]);
@@ -173,7 +176,6 @@ fn the_map_menu_opens_options_over_the_battle() {
     // The Quick Battle is a Classic campaign: its mode shows.
     assert!(shows(&h, "Game mode"));
     assert!(shows(&h, "Classic"));
-    assert_snapshot!(h.snapshot());
     h.keys("d");
     // Back in the map menu, still on Options.
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -289,7 +291,7 @@ fn the_cursor_row_changes_the_battle_cursor() {
     h.keys(KEEP).keys("d");
     assert_eq!(style(&h), Some(CursorStyle::TileGlow));
     let mut h = relaunch(h);
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     assert_eq!(style(&h), Some(CursorStyle::TileGlow));
 }
 
@@ -329,7 +331,6 @@ fn volumes_reach_the_mixer_and_persist() {
         typing: true,
     };
     assert_eq!(value(&h, Row::MusicVolume), typed);
-    assert_snapshot!(h.snapshot());
     // The game's keys do nothing while it is open; nothing changes yet.
     h.keys("Down d");
     assert_eq!(h.screens(), ["title", "options"]);
@@ -372,7 +373,6 @@ fn the_layout_switches_from_options_both_ways_and_persists() {
     // The layout in use is focused, and Cancel backs out unchanged.
     assert!(shows(&h, "► Right-handed"));
     assert!(shows(&h, "d back"));
-    assert_snapshot!(h.snapshot());
     h.keys("d");
     assert_eq!(h.screens(), ["title", "options"]);
     assert_eq!(layout(&h), Some(RIGHT_HANDED));
@@ -381,7 +381,7 @@ fn the_layout_switches_from_options_both_ways_and_persists() {
     assert_eq!(h.screens(), ["title", "options"]);
     assert_eq!(layout(&h), Some(LEFT_HANDED));
     assert!(shows(&h, "Left-handed"));
-    assert!(shows(&h, "wasd move · j open · k back"));
+    assert!(shows(&h, "w a s d move · j open · k back"));
     h.keys("f Up d");
     assert_eq!(h.screens(), ["title", "options"]);
     // And back, with the left-handed keys: the picker opens on
@@ -466,7 +466,6 @@ fn classic_switches_to_casual_at_preparations_and_never_back() {
     h.keys("f");
     assert!(shows(&h, "Switch to Casual? This can't be undone."));
     assert!(shows(&h, "f yes / d no"));
-    assert_snapshot!(h.snapshot());
     // No: still Classic, still in Options.
     h.keys("d");
     assert_eq!(
@@ -491,7 +490,7 @@ fn classic_switches_to_casual_at_preparations_and_never_back() {
     let battle = h.battle().map(|b| b.state().mode());
     assert_eq!(battle, Some(GameMode::Casual));
     // Options in the battle: Casual, and no message about Preparations.
-    h.keys("f d Down Down Down f Up Up Up Up f");
+    h.keys("f f d Down Down Down f Up Up Up Up f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
     assert!(shows(&h, "Casual") && !shows(&h, "Preparations"));
     assert_eq!(mode(&h), Some(GameMode::Casual));
@@ -515,10 +514,12 @@ fn a_switch_at_the_first_preparations_starts_the_battle_in_casual() {
 fn a_casual_campaign_shows_its_mode_and_the_title_shows_none() {
     let mut h = title();
     // New Game, Casual, Not familiar, the default lead; skip the intro scene; close the
-    // battle notes and the banner.
+    // battle notes and the banners.
     h.keys("f Down f f Up f");
+    // The chapter's title card (0812).
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue");
-    h.keys("d f f f");
+    h.keys("d f f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(mode(&h), Some(GameMode::Casual));
     h.keys("d Down Down Down f Up Up Up Up");
@@ -549,7 +550,6 @@ fn the_tutorial_set_to_none_at_preparations_stops_the_tips() {
     assert_eq!(value(&h, Row::Tutorial), setting("Full"));
     h.keys("Right Right");
     assert_eq!(value(&h, Row::Tutorial), setting("None"));
-    assert_snapshot!(h.snapshot());
     h.keys(KEEP);
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     assert_eq!(tutorial(&h), Some(TutorialLevel::None));
@@ -654,7 +654,6 @@ fn restore_defaults_asks_first_and_keeps_the_layout_and_the_keys() {
         "{}",
         h.snapshot()
     );
-    assert_snapshot!(h.snapshot());
     h.keys("d");
     assert_eq!(settings(&h), changed);
     h.keys("f f");
@@ -714,7 +713,13 @@ fn the_help_line_fits_on_every_pad() {
         h.use_pad(kind);
         // Onto Game mode, whose hint is the longest.
         h.pad("DpadUp DpadUp DpadUp DpadUp");
-        let help = h.snapshot().lines().nth(31).unwrap_or("").trim().to_owned();
+        let help = h
+            .snapshot_whole()
+            .lines()
+            .nth(31)
+            .unwrap_or("")
+            .trim()
+            .to_owned();
         assert!(help.contains("switch to Casual"), "{kind:?}: {help}");
         assert!(help.contains("back"), "{kind:?}: {help}");
         assert!(help.chars().count() <= 100, "{kind:?}: {help}");
@@ -754,7 +759,6 @@ fn map_look_swaps_the_skin_at_once_and_is_remembered() {
     h.keys(TO_CURSOR);
     h.keys("Down");
     assert_eq!(value(&h, Row::MapLook), setting("Pictures"));
-    assert_snapshot!(h.snapshot());
     h.keys("Right");
     assert_eq!(value(&h, Row::MapLook), setting("Glyphs"));
     assert_eq!(settings(&h).game.map_look, MapLook::Glyphs);
@@ -813,7 +817,6 @@ fn colors_swap_the_palette_at_once_and_are_remembered() {
     h.keys("Down Down f");
     h.keys(TO_THEME);
     assert_eq!(value(&h, Row::Theme), setting("Earthy painterly"));
-    assert_snapshot!(h.snapshot());
 
     let mut seen = vec![earthy.clone()];
     for (key, theme, name) in [
@@ -885,7 +888,7 @@ fn leaving_asks_and_each_answer_does_its_part(open: fn() -> Harness, under: &[&s
     let (before, saved_before) = (settings(&h), stored(&h));
     // Text speed, fullscreen and the music volume.
     h.keys("Right").keys("Down Down Down Down Down Right");
-    h.keys("Down Down Down Down Down Left");
+    h.keys("Down Down Down Down Down Down Down Left");
     assert!(h.fullscreen());
     assert_eq!(h.gain(MUSIC), loudness(92));
     assert_eq!(stored(&h), saved_before, "nothing saved yet");
@@ -946,7 +949,9 @@ fn leaving_options_at_preparations_asks_whether_to_keep_the_changes() {
 fn the_question_on_leaving_with_changes() {
     let mut h = options();
     h.keys("Right d");
-    assert_snapshot!(h.snapshot());
+    // The question's box alone, centred over the list (1290).
+    let question = trpg_ui::glyph_buffer::Rect::new(34, 13, 31, 6);
+    assert_snapshot!(h.snapshot_of(question));
 }
 
 /// A kept change is there after a restart; a discarded one isn't.
@@ -959,4 +964,87 @@ fn only_kept_changes_are_there_after_a_restart() {
     h.keys("Down Down f Right").keys(KEEP);
     let h = relaunch(h);
     assert_eq!(settings(&h).text_speed, TextSpeed::Fast);
+}
+
+/// Options from the Quick Battle's map menu in a build with the
+/// pictures: every row the PC shows (Map look and Map zoom, Game mode and
+/// Tutorial).
+fn options_in_battle_with_pictures() -> Harness {
+    let mut h = launch_with_pictures(None);
+    h.keys("Down f Left f f f d Down Down Down f");
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
+    h
+}
+
+/// The screen's text rows above the help line (row 31), and the help line.
+fn screen_lines(h: &Harness) -> (Vec<String>, String) {
+    let mut lines: Vec<String> = h.snapshot_whole().lines().map(str::to_owned).collect();
+    let help = lines.get(31).cloned().unwrap_or_default();
+    lines.truncate(31);
+    (lines, help)
+}
+
+/// Ticket 1301: with the pictures' rows the list outgrows the screen; it
+/// scrolls, and the focused row is always on it, all the way down and
+/// round again.
+#[test]
+fn with_pictures_the_focused_row_is_always_on_screen() {
+    let mut h = options_in_battle_with_pictures();
+    let view = h
+        .game()
+        .screen::<OptionsScreen>()
+        .unwrap()
+        .view(h.game().ctx());
+    assert!(view.row(Row::MapLook).is_some() && view.row(Row::MapZoom).is_some());
+    assert!(view.row(Row::GameMode).is_some() && view.row(Row::Tutorial).is_some());
+    let count = view.rows.len();
+    let mut scrolled = false;
+    for _ in 0..=count {
+        let view = h
+            .game()
+            .screen::<OptionsScreen>()
+            .unwrap()
+            .view(h.game().ctx());
+        // Its whole label: a focused value's arrow never covers the end
+        // of a long one (ticket 1302).
+        let label = view.focused().map_or_default(|r| r.label.clone());
+        let (lines, help) = screen_lines(&h);
+        assert!(
+            lines.iter().any(|l| l.contains(&label)),
+            "{label} not shown:
+{}",
+            lines.join(
+                "
+"
+            )
+        );
+        assert!(help.contains("back"), "{help}");
+        scrolled |= lines.iter().any(|l| l.contains('▲'));
+        h.keys("Down");
+    }
+    assert!(scrolled, "the list never scrolled");
+}
+
+/// Ticket 1301: with the pictures' rows, a message still shows under the
+/// panel, and the help line is clear: the game mode's in a battle, and
+/// Reset tips'.
+#[test]
+fn with_pictures_the_messages_show_above_the_help_line() {
+    let mut h = options_in_battle_with_pictures();
+    // Game mode is four rows up from the first.
+    h.keys("Up Up Up Up f");
+    let (lines, help) = screen_lines(&h);
+    let message = "The game mode can be changed at Preparations, before a battle";
+    assert!(lines.iter().any(|l| l.contains(message)), "{lines:#?}");
+    assert!(help.contains("back"), "{help}");
+    assert!(lines.iter().any(|l| l.contains("Game mode")));
+
+    // Reset tips is two rows up from the first.
+    h.keys("Down Down f f");
+    let (lines, help) = screen_lines(&h);
+    assert!(
+        lines.iter().any(|l| l.contains("Tips will show again")),
+        "{lines:#?}"
+    );
+    assert!(help.contains("back"), "{help}");
 }

@@ -125,7 +125,8 @@ the sergeant's combat picture · **0449** arrows where the map goes past the vie
 **0467** tips lost before they show · **0841** Tutorial None stops what's
 queued · **0463** the forecast's weapon swap easy to find · **0468** Vix's
 ears · **0842** Vix's profile nudge on the title · **0250** key names that
-stand out · **0847** a better dialogue log key · **0461** the road up to a
+stand out (decided: key caps; built by **0254** after engine#2347 and
+engine#3215) · **0847** a better dialogue log key · **0461** the road up to a
 bridge · **0462** aiming starts on an enemy · **0318** Cinder Oath can't
 counter · **0845** the objective becomes defeating Chapter 1's boss → **0846** the lead
 a little stronger. Parked, not before round 4: **0063** rework the intro's
@@ -402,7 +403,7 @@ recruit joins outside battle.
 - **G. Chapter 1's round 4 fixes:** **0736** first, because its craft
   research governs every Act 1 script → **0737** the Chapter 1 script
   → **0742** · **1177** the engine pin (moved by 0740) · **0449** (done) · **0845** →
-  **0846** · the rest of round 3's tickets: **0250**, **0318**,
+  **0846** · the rest of round 3's tickets: **0254** (0250 decided), **0318**,
   **0446**, **0461**, **0462**, **0463**, **0465**, **0466**, **0468**,
   **0738**, **0739**, **0741**, **0842**, **0843**, **0844**, **0847**.
   Cheap Chapter 1 gaps, any time: **0450**, **0453**, **0454**,
@@ -417,7 +418,7 @@ recruit joins outside battle.
   explains wading · **0078** → **0484** stats easy to see in battle ·
   **0609** a spell learned in battle comes with its uses · **0762**
   voiced lines without long pauses (→ **0757**) · **0763** the dialogue
-  box at the bottom · **0864** the sergeant a little stronger (asks Nick) ·
+  box at the bottom · ~~**0864** the sergeant a little stronger~~ done → **0531** the bots' armies don't hang on one recorded win → **0876** Chapters 3–5 back in their bands (also after 0527 and 0528, Lane I) ·
   **0865** the music dips under a voiced line (after engine#2511 →
   engine#2342 → engine#2343).
 - **I. Nick's playtest of the Act 1 build** (2026-11-08). Decisions
@@ -425,7 +426,8 @@ recruit joins outside battle.
   Houndmaster's Axe → **0332** · **0080** how the army gets through
   armour → **0333** · **0081** a bigger EXP cut for a level gap →
   **0610** · **0082** Chapter 2's houses within reach → **0867** ·
-  **0083** getting off and back on a horse → **0334** · **0084**
+  ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 →
+  **0335** one list of what a unit can do → **0334** (its look, not blocking: **0089**, ~~**0499**~~ done) · **0084**
   Chapter 3's throne and its guards → **0868**. Without a decision:
   **0527** the bots report units that can't hurt the enemy or fall
   behind (first, so the balance tickets show per-unit numbers before
@@ -439,9 +441,12 @@ recruit joins outside battle.
   chapter's win (→ **1065**) · **1088** the world map's cursor follows
   the roads · **1089** a town's world-map picture cut right ·
   **0453** (Lane G) gives Cinder Oath its "no counter" note. The
-  balance tickets (0332, 0333, 0610, 0870, 0528, 0867, 0868) each
-  re-record the bots' winning playthroughs, so they run one at a time:
-  0333 → 0610 → 0870 → 0528 → 0867 → 0868, 0332 after 0079.
+  balance tickets (0332, 0333, 0610, 0870, 0528, 0867, 0868) and 0876
+  each re-record the bots' winning playthroughs, so they run one at a
+  time, after **0527** and **0531**: **0528** first (it waits on no
+  decision), then **0876**, then 0333 → 0610 → 0870 → 0867 → 0868 as
+  Nick's decisions arrive, 0332 after 0079. **0532** (band reports show
+  a 95% interval) may go any time.
 - **J. A human writer** (Nick, 2026-11-08: the dialogue reads robotic
   after three or four rewrites; AI writing of dialogue is paused until
   a writer is hired). ~~**0153** research: keep the story private~~
@@ -459,15 +464,23 @@ recruit joins outside battle.
   an outside writer · engine#3082 demo editions and **0872** save
   export (the demo ends on "Export save?") → **0914** the Chapter
   1 web demo → **0915** the demo on a password-protected page → **0766**
-  find a writer (the ad, the trial scene, the pick). While 0766 is open no dialogue is written by an agent:
+  find a writer (the ad, the trial scene, the pick), after **0773**
+  (writer tools wait for the pick; the story import runs once end to
+  end before the writer joins the mirror). While 0766 is open no dialogue is written by an agent:
   **1073**, **1083** and **1084** wait for it. Short instructional tips
   (0483, 0489, 0490, 1081) go ahead in plain words; the writer may
   redo Vix's wording later.
 - **K. The Chapter 1 demo, before it goes to the writers** (Nick,
   2026-11-12, after 0915): **0494** Vix speaks every tip and lesson (three
   tips have no clip; her lines aren't preloaded on the web) · **0495** her
-  boxes don't take the keys meant for other screens (asks Nick). Both
-  before **0766** sends the demo out.
+  boxes don't take the keys meant for other screens (asks Nick) ·
+  from Nick's itch.io play (2026-11-17): **1295** the unit info screen
+  shows the unit's portrait · **1292** a tip that misses its moment waits
+  for the next one, not for a key press · **1293** a scene's first voice
+  lines are loaded before it starts · **1296** so are those of the scenes
+  the battle plays and a world-map battle's intro (from 1293). All before
+  **0766** sends the demo
+  out.
 
 **Phase 3: content.** **0743** the new cast's character sheets (after
 0736) → the scripts, one chapter at a time because the ledger makes
@@ -499,7 +512,8 @@ supports and camp events (after 1003, 0743, 0750).
 **Phase 4: proof.** **0512** the bots play all of Act 1 (softlocks,
 balance bands, save and load at every node, a Playdate memory and
 timing run; after Phases 2 and 3) → **1064** Nick plays Act 1 on the
-web and on his Playdate.
+web and on his Playdate. Its checklist's starting rules come from
+**1256** → **0183** (sorted by area and by whether play shows them).
 
 **Off the path** (nothing in Act 1 waits for them): engine 3010, 3028,
 3029, 3090, 2388, 3096 and game **1170** (the Playdate front end on the engine's
@@ -517,7 +531,10 @@ languages and voices (0042, 0043, 0045, 0236, 0237, 0239,
 0718–0726, 0825, 0826, 0907, 1048, 1049); mods (0054, 1011–1024);
 replayability decisions **0046**–**0052** and **0060** (after 1064) and
 **0053**; release work (0901, 0903, 0906, 0908, 1052–1054); **0857**
-(the battle's mode and its own data set in one place); and the rest of
+(the battle's mode and its own data set in one place); from the
+2026-11-17 retro, **0532** band intervals and **1287**–**1291** (engine
+adoptions, the content build's list parser, test drivers, snapshots,
+the guide); and the rest of
 the `01xx` and `11xx` tooling tickets (among them **0131**, ticket
 numbers checked against open PRs, and 1183–1187).
 
@@ -534,11 +551,12 @@ Design answers unblock most of the rules work. Suggested order:
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** the shieldbearer's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
-   · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · **0083** getting off and back on a horse · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870**. Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick
+   · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 (how a rider on foot looks: **0089**) · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870** (**0184** puts these first, in the order the balance tickets need them). Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)
 9. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
+10. After the writer audition (0766), the storefront hook (Nick, 2026-11-16: legendary beasts hidden at the bottom of dungeon delves, fought as a raid, with timed parries and a stolen turn): **0085** element states on tiles · **0086** timed presses and Steal the Turn · **0087** legendary beasts, their hunts, their parts and forging (the story answer goes private) · **0088** dungeon delves; then **0772** the beasts in the story documents (after 0087, with the writer)
 
 No sign-offs after merge any more (Nick, 2026-10-21): he checks design
 (the `00xx` tickets and questions asked before building) and plays the
@@ -604,6 +622,26 @@ early so every later PR is checked by them.
   chapters): 1007 nodes/travel/towns/save/camp, 1008 fixed and random skirmishes.
 - Supports (FE GBA-style, earned in battle) and camp events: 1002, 1003.
   Parked far-future ideas: hub activities (1004), pair abilities (1005).
+- **The storefront hook** (Nick, 2026-11-16, after five rounds of hook
+  research): legendary beasts hidden at the bottom of dungeon delves,
+  hunted against a rival column and fought as a raid. It stands on three
+  battle systems that make the enemy's turn the exciting part. Design
+  first (Nick's queue, row 10: 0085–0088, then 0772 with the writer).
+  Building starts after the Act 1 playtest (1064), with tickets on one
+  row able to run side by side:
+  1. **1091** element states on tiles · **1092** timed presses in the
+     rules · **1095** the beast army and its Beast Phase · **1099**
+     materials and forging gated by chapter · **1277** dungeon delves
+  2. **1093** the timing ring and bar in the combat frame (also after
+     1078, the Playdate's fight at 30 frames a second) · **1096**
+     beasts on several tiles with parts · **1275** the forge at the
+     blacksmith · **1278** dark floors and light · **1281** delves on
+     screen (the world-map mark, the party picker, the floors' flow)
+  3. **1094** Steal the Turn · **1097** aiming at a part · **1279** beast
+     hunts on the world map
+  4. **1098** a broken part as terrain or material → **1276** the grinder
+     bot and the shop-only balance check
+  5. **1280** the first legendary beast, the frost wyrm's lair
 - **Playdate port of Chapter 1** (Nick, 2026-10-15: "rush" it; unparked
   ahead of the engine carve. Since 2026-10-16 the carve comes first and the
   port second: the note at the top): 1026 technical test (do the rules build for

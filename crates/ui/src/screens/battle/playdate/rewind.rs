@@ -36,7 +36,7 @@ pub fn paint(ctx: &Ctx, view: &RewindScreenView, buf: &mut GlyphBuffer) {
         paint_lesson(ctx, &view.scene, lesson, buf);
     }
     if let Some(question) = &view.list.prompt {
-        pd::ask(ctx, buf, question, Answers::Hint(&view.help));
+        pd::ask(ctx, buf, question, Answers::Hint(&view.help.plain()));
     }
 }
 

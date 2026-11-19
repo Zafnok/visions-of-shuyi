@@ -1,6 +1,6 @@
 ---
 source: crates/ui/src/screens/battle/guides/tests.rs
-expression: "render(&s, &c).to_snapshot(&c.palette)"
+expression: "snap(&render(&s, &c), &c, ABOVE_HELP_ROW)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
@@ -29,11 +29,10 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Terrain                         │                                                                ║
 ║ Wading                          │                                                                ║
 ║ Weapon kinds                    │                                                                ║
-║ Exporting a save                │                                                                ║
+║ Swapping weapons                │                                                                ║
 ║                                 │                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
                                                                                                     
- arrows choose · d close                                                                   F2 debug 
 --- colours ---
 aabbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
@@ -66,11 +65,9 @@ acccccccccccccccccccccccccccccccccaccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-efffffffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeffffffffe
 --- legend ---
 a = fg:panel_border bg:panel_bg
 b = fg:text_highlight bg:panel_bg
 c = fg:text bg:panel_bg
 d = fg:panel_bg bg:panel_border_focus
 e = fg:text bg:black
-f = fg:text_dim bg:black

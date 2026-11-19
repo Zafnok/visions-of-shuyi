@@ -23,7 +23,7 @@ only to report a PR **in the gap** that completes a marker's ticket
 looks at the marker again.
 
 The game/engine boundary audit of 2026-11-03 (finding records#4) found
-both of today's markers stale: `crates/xtask/src/game_tools.rs` (lines
+both of today's markers stale: `crates/tools/src/game_tools.rs` (lines
 77, 126, 280) cites engine#2540 and `crates/ui/src/screens/camp/music.rs:97`
 cites engine#2341, and both engine tickets are in the engine's
 `tickets/done/` at the pin. Here both happen to have a game ticket (1182
@@ -36,6 +36,14 @@ engine ticket is done at the pin fails the check unless an open game
 ticket names `engine#NNNN`. It trips only in the PR that moves the pin
 past the ticket, or that adds such a marker: the PR that should deal
 with it.
+
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md), *Processes that slow us
+down*): this ticket folds into 0181's one PR-checks CI job, which runs
+`engine-pin --check` (not `--offline`) beside `cargo xtask check-pr`, the
+checks of 0151, 1174 and 1257. What stays here is the check itself:
+`stale_markers` in `crates/engine-watch/src/lib.rs` and its line in
+`engine-pin --check`, the issue checklist and the skill. Either order with
+0181: the job picks the check up wherever `engine-pin --check` runs.
 
 ## Nick input
 

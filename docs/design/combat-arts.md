@@ -760,7 +760,9 @@ list beside the forecast (ticket 0414).
 Example: the lord stands beside a brigand. Its action menu reads `Attack`,
 `Arts`, `Skill`, `Item`, `Equip`, `Wait`. `Arts` lists Flowing Cut and Guard
 Break. The player picks Guard Break, then the brigand, sees the forecast
-with `Guard Break (20 → 16)` and `no counter`, and confirms.
+with `Guard Break` at the top, `20 → 16` under the Iron Sword and `no
+counter`, and confirms (the uses moved under the weapon in 0480,
+`look-and-feel.md`).
 
 - **`Arts` is an entry of the action menu, under `Attack`** (Nick: "Action
   menu only", like Fire Emblem: Three Houses). It is the only way to an art:
@@ -779,10 +781,11 @@ with `Guard Break (20 → 16)` and `no counter`, and confirms.
   `broken` (the weapon), `1 uses left` (a spell active that needs two),
   `out of range` (nobody it reaches from that tile). A dimmed line can't be
   chosen. An art that costs more durability than is left stays usable; the
-  forecast shows it breaking the weapon (`Guard Break (3 → 0)`).
+  forecast shows it breaking the weapon (`3 → 0` under it).
 - **Then the target**, with the forecast: the numbers **with** the art
-  applied, plus a line with the art's name and the durability change, e.g.
-  `Guard Break (20 → 16)`. Effects that aren't numbers are spelled out:
+  applied, plus a line with the art's name (`Guard Break`) and, under
+  the weapon, the durability change (`20 → 16`; ticket 0480 moved it there
+  from the art's line). Effects that aren't numbers are spelled out:
   `no counter`, `pierces`, `pins: Mov −3`, `slows: Spd −3`,
   `stance: avoid +20`.
 - **The forecast's keys are the same in every weapon forecast** (Nick: "Same
@@ -815,6 +818,11 @@ with `Guard Break (20 → 16)` and `no counter`, and confirms.
     it doesn't swap.
   - A line with a spell active shows only `Fire + Overcast` and its cost;
     the spell's uses and numbers are on the spell's own line, above it.
+  - The focused line's effect under the menu says it is an attack:
+    `Attack: crit +20`, `Attack: +10 hit; no counter` (ticket 0490, after
+    Nick's playtest: a player took arts for buffs that end the turn). An
+    art used as an action of its own (Overwatch) keeps its effect alone;
+    its line reads `ends action`.
 - The arts menu (Quick Battle's lord):
 
   ```
@@ -828,9 +836,10 @@ with `Guard Break (20 → 16)` and `no counter`, and confirms.
 
   ```
    ╔════════ Forecast ══════════╗
-   ║ Guard Break (20 → 16)      ║
+   ║ Guard Break                ║
    ║ Test Lord     Brigand      ║
-   ║ Iron Sword    Iron Axe     ║
+   ║ Iron Sword    Iron Axe 20  ║
+   ║ 20 → 16                    ║
    ║ Hit   100     Hit   --     ║
    ║  8 dmg  →  1   no counter  ║
    ║  9 dmg  →  2               ║
@@ -848,6 +857,57 @@ with `Guard Break (20 → 16)` and `no counter`, and confirms.
    │ Heal    8/8   HP+10 Rng1        │
    └─────────────────────────────────┘
   ```
+
+### Showing that left / right swap the weapon (0463)
+
+Decided 2026-11-17, ticket 0463. Nick, Chapter 1 playtest round 3 (0804),
+on the Arts menu:
+
+> "so swapping weapons on forecast menu feels quite hidden as a feature it
+> should be more obvious idk how also the guide should probably mention
+> it"
+
+Shown the real forecast in both looks with ◄ ► arrows on the weapon (A),
+`Left/Right weapon` in the bottom border (B) and both, he picked "A + B
+but figure out a way to make it fit better within the column". Of the
+two fits then shown (smaller arrows either side, or a pair before the
+name), he picked **the pair before the name**. For the guide he picked
+**a tip** (D) over a line in the Attacking lesson (C).
+
+- **When left / right swap the weapon** (the unit has more than one
+  weapon, or weapon and spell, it can use there; see the keys above),
+  the forecast shows:
+  - a small `◂▸` mark in the empty cell just before the attacker's
+    weapon, in the highlight colour; the weapon's name keeps its width;
+  - `Left/Right weapon` in the bottom of the forecast's frame, with the
+    player's own keys, in the highlight colour.
+- **With one weapon to attack with**, neither shows (left / right then
+  change the target). The help line under the map says the same as
+  before (`Left/Right swap`).
+- The **Playdate** shows the same mark before the weapon and the same
+  hint in the bottom of its window, with its own buttons' names.
+- **The tip** (*Swapping weapons*, at the Full tutorial level, once per
+  profile): the first time a forecast opens where left / right swap the
+  weapon. See `tutorial.md`, *Tips*.
+
+```
+ ╔════════ Forecast ══════════╗
+ ║                            ║
+ ║ Test Lord     Brigand      ║
+ ║◂▸Iron Sword 20 Iron Axe 20 ║   (◂▸ is drawn inside the cell before
+ ║ HP 19 → 11    HP 20 → 3    ║    the name, not as two letters)
+ ║ ...                        ║
+ ╚════ Left/Right weapon ═════╝
+```
+
+*Claude's starting rules (Nick can veto; for the Act 1 playtest, 1064):*
+
+- The hint shows the same words (`weapon`) when left / right swap between
+  a weapon and a spell (after pointing at an enemy).
+- The whole hint is in the highlight colour; key caps (0254) will style
+  its key names like every other hint's.
+- An art's forecast shows the mark and hint too, when the art can be used
+  with more than one weapon.
 
 ## Worked example (for 0312's tests)
 

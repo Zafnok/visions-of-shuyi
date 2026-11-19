@@ -106,7 +106,12 @@ pub fn paint(ctx: &Ctx, view: &WorldMapView, picture: &str, buf: &mut GlyphBuffe
         menu_glyph::paint(ctx, &list.menu, buf, LIST.0, LIST.1 + 1);
     }
     let bottom = i32::from(buf.height()) - 1;
-    buf.print(1, bottom, &view.help, c(UiColor::Text), black);
+    buf.print_styled(
+        1,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(c(UiColor::Text), black),
+    );
 }
 
 /// A dot every [`DOT_STEP`] pixels along each of `roads`, from turn to

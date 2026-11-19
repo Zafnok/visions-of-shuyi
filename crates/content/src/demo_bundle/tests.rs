@@ -227,9 +227,9 @@ fn the_demos_list_keeps_chapter_1_and_cuts_the_shared_files() {
     }
     let read = |path: &str| {
         let text = crate::bundle::story_only(|| crate::bundle::file(path)).unwrap_or_default();
-        plan.rewrite(path, text)
+        plan.rewrite(path, &text)
             .unwrap_or_else(|e| panic!("{e}"))
-            .unwrap_or_else(|| text.to_owned())
+            .unwrap_or_else(|| text.into_owned())
     };
     let characters = read("data/characters.ron");
     assert!(characters.contains("id: \"rival\""), "ch01_tbc's rival");

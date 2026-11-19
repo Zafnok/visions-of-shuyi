@@ -1,82 +1,74 @@
 ---
 source: crates/ui/tests/it/map_zoom.rs
-expression: h.snapshot()
+expression: h.snapshot_of(MAP_VIEW)
 ---
-                                                                      ╔════════════════════════════╗
-                                                                      ║ Plain                      ║
-                                                                      ║ DEF +0  AVO +0             ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║ Test Lord                  ║
-                                                                      ║ Exile  Lv 1                ║
-                                                                      ║ HP 19/19   ██████████      ║
-                                                                      ║ Player                     ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                           ┌────────┐                                 ║                            ║
-                           │ Attack │                                 ║                            ║
-                           │ Arts   │                                 ║                            ║
-                           │ Skill  │                                 ║                            ║
-                           │ Item   │                                 ║                            ║
-                           │ Equip  │                                 ║                            ║
-                           │ Wait   │                                 ║                            ║
-                           └────────┘                                 ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║ Gold 3 000                 ║
-                                                                      ╚════════════════════════════╝
-                                        q zoom: 2× · w danger zone: OFF · Shift+Space auto-end: OFF 
- arrows choose · f confirm · d back                                                        F2 debug 
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                           ┌────────┐                                 
+                           │ Attack │                                 
+                           │ Arts   │                                 
+                           │ Skill  │                                 
+                           │ Item   │                                 
+                           │ Equip  │                                 
+                           │ Wait   │                                 
+                           └────────┘                                 
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabceeeeeeeeeccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaabggggggggbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaabggggggggbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaabggggggggbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaabhhhhhhhhbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiia
-aiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiia
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaabeeeeeeeebaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
-c = fg:text bg:panel_bg
-d = fg:text_highlight bg:panel_bg
-e = fg:player bg:panel_bg
-f = fg:hp_high bg:panel_bg
-g = fg:text_dim bg:panel_bg
-h = fg:panel_bg bg:panel_border_focus
-i = fg:text_dim bg:black
+c = fg:text_dim bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:panel_bg bg:panel_border_focus
 --- overlays ---
 under sprite 16,48 48x48  tilesets/test.png 24,24 24x24
 under sprite 64,48 48x48  tilesets/test.png 24,24 24x24
@@ -221,50 +213,175 @@ over  354,284 44x4  hp_high
 over  354,140 44x4  hp_high
 over  402,428 44x4  hp_high
 over  162,380 44x4  hp_high
-over  370,262 10x6  black
-over  362,264 12x6  black
-over  354,266 12x6  black
-over  346,268 12x6  black
-over  338,270 12x6  black
-over  330,272 12x6  black
-over  322,274 12x6  black
-over  314,276 12x6  black
-over  306,278 12x6  black
-over  298,280 12x6  black
-over  296,282 6x6  black
-over  210,302 6x6  black
-over  202,304 12x6  black
-over  194,306 12x6  black
-over  188,308 10x6  black
-over  188,308 8x6  black
-over  192,310 8x6  black
-over  196,312 6x6  black
-over  188,308 6x6  black
-over  190,306 6x6  black
-over  192,304 6x6  black
-over  194,302 6x6  black
-over  372,264 6x2  enemy
-over  364,266 8x2  enemy
-over  356,268 8x2  enemy
-over  348,270 8x2  enemy
-over  340,272 8x2  enemy
-over  332,274 8x2  enemy
-over  324,276 8x2  enemy
-over  316,278 8x2  enemy
-over  308,280 8x2  enemy
-over  300,282 8x2  enemy
-over  296,284 4x2  enemy
-over  212,304 4x2  enemy
-over  204,306 8x2  enemy
-over  196,308 8x2  enemy
-over  190,310 6x2  enemy
-over  190,310 4x2  enemy
-over  194,312 4x2  enemy
-over  198,314 2x2  enemy
-over  190,310 2x2  enemy
-over  192,308 2x2  enemy
-over  194,306 2x2  enemy
-over  196,304 2x2  enemy
+over  372,262 8x8  black
+over  370,260 6x8  black
+over  368,260 8x8  black
+over  366,258 6x8  black
+over  364,258 8x8  black
+over  362,256 6x8  black
+over  360,256 8x8  black
+over  358,254 6x8  black
+over  356,254 8x8  black
+over  354,252 6x8  black
+over  350,252 10x8  black
+over  350,252 6x8  black
+over  348,250 6x8  black
+over  346,250 8x8  black
+over  344,248 6x8  black
+over  340,248 10x8  black
+over  338,248 8x8  black
+over  336,246 6x8  black
+over  332,246 10x8  black
+over  330,246 8x8  black
+over  328,244 6x8  black
+over  324,244 10x8  black
+over  320,244 10x8  black
+over  316,244 10x8  black
+over  314,244 8x8  black
+over  312,242 6x8  black
+over  308,242 10x8  black
+over  304,242 10x8  black
+over  302,242 8x8  black
+over  300,242 8x8  black
+over  298,244 6x8  black
+over  294,244 10x8  black
+over  290,244 10x8  black
+over  286,244 10x8  black
+over  284,244 8x8  black
+over  282,246 6x8  black
+over  278,246 10x8  black
+over  276,246 8x8  black
+over  274,248 6x8  black
+over  270,248 10x8  black
+over  268,248 8x8  black
+over  266,250 6x8  black
+over  264,250 8x8  black
+over  262,252 6x8  black
+over  258,252 10x8  black
+over  256,252 8x8  black
+over  254,254 6x8  black
+over  254,254 6x8  black
+over  252,256 6x8  black
+over  250,256 8x8  black
+over  248,258 6x8  black
+over  246,258 8x8  black
+over  244,260 6x8  black
+over  242,260 8x8  black
+over  240,262 6x8  black
+over  238,262 8x8  black
+over  236,264 6x8  black
+over  236,264 6x8  black
+over  234,266 6x6  black
+over  232,268 6x4  black
+over  230,268 8x4  black
+over  228,270 6x2  black
+over  226,270 8x2  black
+over  214,280 2x8  black
+over  212,282 4x8  black
+over  210,282 6x8  black
+over  208,284 6x8  black
+over  208,284 8x8  black
+over  206,288 6x8  black
+over  204,288 8x8  black
+over  202,290 6x8  black
+over  202,290 6x8  black
+over  200,292 6x8  black
+over  198,294 6x8  black
+over  198,294 6x8  black
+over  196,296 6x8  black
+over  194,298 6x8  black
+over  194,298 6x8  black
+over  192,300 6x8  black
+over  190,302 6x8  black
+over  190,294 6x6  black
+over  190,296 8x6  black
+over  190,298 10x6  black
+over  188,300 14x6  black
+over  188,302 16x6  black
+over  186,304 6x6  black
+over  374,264 4x4  enemy
+over  372,262 2x4  enemy
+over  370,262 4x4  enemy
+over  368,260 2x4  enemy
+over  366,260 4x4  enemy
+over  364,258 2x4  enemy
+over  362,258 4x4  enemy
+over  360,256 2x4  enemy
+over  358,256 4x4  enemy
+over  356,254 2x4  enemy
+over  352,254 6x4  enemy
+over  352,254 2x4  enemy
+over  350,252 2x4  enemy
+over  348,252 4x4  enemy
+over  346,250 2x4  enemy
+over  342,250 6x4  enemy
+over  340,250 4x4  enemy
+over  338,248 2x4  enemy
+over  334,248 6x4  enemy
+over  332,248 4x4  enemy
+over  330,246 2x4  enemy
+over  326,246 6x4  enemy
+over  322,246 6x4  enemy
+over  318,246 6x4  enemy
+over  316,246 4x4  enemy
+over  314,244 2x4  enemy
+over  310,244 6x4  enemy
+over  306,244 6x4  enemy
+over  304,244 4x4  enemy
+over  302,244 4x4  enemy
+over  300,246 2x4  enemy
+over  296,246 6x4  enemy
+over  292,246 6x4  enemy
+over  288,246 6x4  enemy
+over  286,246 4x4  enemy
+over  284,248 2x4  enemy
+over  280,248 6x4  enemy
+over  278,248 4x4  enemy
+over  276,250 2x4  enemy
+over  272,250 6x4  enemy
+over  270,250 4x4  enemy
+over  268,252 2x4  enemy
+over  266,252 4x4  enemy
+over  264,254 2x4  enemy
+over  260,254 6x4  enemy
+over  258,254 4x4  enemy
+over  256,256 2x4  enemy
+over  256,256 2x4  enemy
+over  254,258 2x4  enemy
+over  252,258 4x4  enemy
+over  250,260 2x4  enemy
+over  248,260 4x4  enemy
+over  246,262 2x4  enemy
+over  244,262 4x4  enemy
+over  242,264 2x4  enemy
+over  240,264 4x4  enemy
+over  238,266 2x4  enemy
+over  238,266 2x4  enemy
+over  236,268 2x4  enemy
+over  234,270 2x2  enemy
+over  232,270 4x2  enemy
+over  214,284 2x4  enemy
+over  212,284 4x4  enemy
+over  210,286 2x4  enemy
+over  210,286 4x4  enemy
+over  208,290 2x4  enemy
+over  206,290 4x4  enemy
+over  204,292 2x4  enemy
+over  204,292 2x4  enemy
+over  202,294 2x4  enemy
+over  200,296 2x4  enemy
+over  200,296 2x4  enemy
+over  198,298 2x4  enemy
+over  196,300 2x4  enemy
+over  196,300 2x4  enemy
+over  194,302 2x4  enemy
+over  192,304 2x4  enemy
+over  192,296 2x2  enemy
+over  192,298 4x2  enemy
+over  192,300 6x2  enemy
+over  190,302 10x2  enemy
+over  190,304 12x2  enemy
+over  188,306 2x2  enemy
 over  370,214 10x22  black
 over  372,216 6x12  text_highlight
 over  372,230 6x4  text_highlight

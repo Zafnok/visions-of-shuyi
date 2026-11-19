@@ -27,7 +27,7 @@ const FIRST: &str = "The rain had not stopped for three days.";
 fn file(path: &str) -> String {
     bundle::file(path)
         .unwrap_or_else(|| panic!("no {path}"))
-        .to_owned()
+        .into_owned()
 }
 
 /// A folder read from disk, shown as `name`, holding the game's file at

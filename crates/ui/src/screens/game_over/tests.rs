@@ -287,3 +287,18 @@ fn the_demos_end_card_declares_its_actions() {
     let screen = DemoEndScreen::new(&ctx(), "Ellery");
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::TO_BE_CONTINUED);
 }
+
+/// Ticket 0257: game over, "To be continued" and the demo's end name their keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_lines_hold_their_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let c = crate::screen::tests::ctx();
+    let km = c.help_keys();
+    let over = GameOverScreen::help(&c);
+    assert_eq!(key_spans(&over), spans_of(km, &["Cursor", "Confirm"]));
+    let next = ToBeContinuedScreen.view(&c).help;
+    assert_eq!(key_spans(&next), spans_of(km, &["Confirm"]));
+    let demo = DemoEndScreen::new(&c, "Mara").view(&c).help;
+    assert_eq!(key_spans(&demo), spans_of(km, &["Confirm"]));
+}

@@ -57,7 +57,7 @@ pub fn paint(ctx: &Ctx, view: &LeadSelectView, buf: &mut GlyphBuffer) {
         let rect = Rect::new(BOX_X.0, TYPE_BOX.0, BOX_X.1, TYPE_BOX.1);
         paint_typing(ctx, buf, rect, typing);
     }
-    centred(ctx, buf, height - 1, &view.help);
+    centred(ctx, buf, height - 1, &view.help.plain());
 }
 
 /// One gender's frame, portrait and name at column `x`: the chosen one in

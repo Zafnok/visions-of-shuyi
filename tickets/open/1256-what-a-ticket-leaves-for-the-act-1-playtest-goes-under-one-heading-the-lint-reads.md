@@ -46,6 +46,8 @@ None.
 
 **Out (do not do):**
 - The playtest itself (1064).
+- Sorting the notes by area and by whether play shows them, and
+  `playtest-notes --by-area` (0183, blocked by this ticket).
 
 ## Implementation steps
 

@@ -168,9 +168,9 @@ pub enum Frame {
     },
     /// The logo over the title's backdrop.
     Logo {
-        /// The sparks, as milliseconds since the cinematic's start; `None`
+        /// The embers, as milliseconds since the cinematic's start; `None`
         /// when screens show no idle motion.
-        sparks: Option<u32>,
+        embers: Option<u32>,
     },
     /// A text box of a scene in the dialogue screen's look.
     Talk {
@@ -249,7 +249,7 @@ impl ShotPainter for Built {
                 Frame::MapPan { origin_px, zoom }
             }
             Built::Logo => Frame::Logo {
-                sparks: (ctx.idle_motion == IdleMotion::On).then_some(moment.t_ms),
+                embers: (ctx.idle_motion == IdleMotion::On).then_some(moment.t_ms),
             },
             Built::Talk { boxes } => {
                 #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
@@ -297,7 +297,7 @@ impl ShotPainter for Built {
                 let picture = now.map_or_else(|| Rc::clone(&stage.picture.scene), |p| p.0.scene);
                 paint_pan(&ctx.palette, picture, PanFrame { origin_px, zoom }, buf);
             }
-            (Frame::Logo { sparks }, _) => paint_logo(ctx, cast.backdrop, sparks, buf),
+            (Frame::Logo { embers }, _) => paint_logo(ctx, cast.backdrop, embers, buf),
             (Frame::Talk { index, shown }, Built::Talk { boxes }) => {
                 if let Some(talk) = boxes.get(index) {
                     talk.draw(ctx, &cast.lead, shown, buf);

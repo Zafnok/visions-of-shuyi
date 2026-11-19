@@ -1,0 +1,33 @@
+---
+source: crates/ui/tests/it/ch01_lessons.rs
+expression: lesson_box(&h)
+---
+╔═ Vix ═══════════════════════════════════════╗
+║                                             ║
+║ Combat Arts                                 ║
+║ An art is an attack, not a buff: one fight, ║
+║ every strike boosted. It costs weapon wear. ║
+║                                             ║
+║ [x] Open Arts in the unit's menu            ║
+║ [ ] Attack with an art                      ║
+║                                             ║
+║ 1 of 2 done                                 ║
+╚═════════════════════════════════════════════╝
+--- colours ---
+aabbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+accccccccccccccccccccccccccccccccccccccccccccca
+acbbbbbbbbbbbccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccca
+acdddceeeeeeeeeeeeeeeeeeeeeeeeeeeecccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccca
+aceeeeeeeeeeeccccccccccccccccccccccccccccccccca
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:panel_border bg:panel_bg
+b = fg:text_highlight bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:hp_high bg:panel_bg
+e = fg:text_dim bg:panel_bg

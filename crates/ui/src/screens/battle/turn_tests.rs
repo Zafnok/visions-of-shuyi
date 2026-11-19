@@ -6,6 +6,7 @@ use insta::assert_snapshot;
 use trpg_core::{ItemId, Objective, Outcome, UnitAction};
 
 use super::banner::{BannerKind, PHASE_BANNER_S};
+use super::layout::{ABOVE_HELP_BAR, MAP_VIEW, snap};
 use super::testing::{Stacked, battle_with, skirmish, through_ai_phases, wait};
 use super::*;
 use crate::color::Rgb;
@@ -84,7 +85,7 @@ fn wait_unit(s: &mut BattleScreen, index: usize) {
 fn phase_banner(s: &BattleScreen) -> Option<(Phase, u32)> {
     match s.banner()?.kind {
         BannerKind::Phase { phase, turn } => Some((phase, turn)),
-        BannerKind::Outcome(_) => None,
+        BannerKind::Outcome(_) | BannerKind::Objective => None,
     }
 }
 
@@ -126,9 +127,9 @@ fn the_danger_zone_is_the_cores_danger_zone_tinted_under_the_ranges() {
         }
     }
     assert!(
-        s.status(&c).starts_with("w danger zone: ON"),
+        s.status(&c).plain().starts_with("w danger zone: ON"),
         "{}",
-        s.status(&c)
+        s.status(&c).plain()
     );
     // A selected unit's ranges go over it.
     press(&mut s, &mut c, &[Action::Confirm]);
@@ -145,7 +146,7 @@ fn the_danger_zone_is_the_cores_danger_zone_tinted_under_the_ranges() {
     // The toggle works while a unit is selected, too.
     press(&mut s, &mut c, &[Action::DangerZone]);
     assert_eq!(s.danger(), None);
-    assert!(s.status(&c).starts_with("w danger zone: OFF"));
+    assert!(s.status(&c).plain().starts_with("w danger zone: OFF"));
 }
 
 #[test]
@@ -210,7 +211,7 @@ fn danger_zone_snapshot() {
     let mut s = quick();
     press(&mut s, &mut c, &[Action::DangerZone]);
     let buf = render(&s, &c);
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    assert_snapshot!(snap(&buf, &c, MAP_VIEW));
 }
 
 // Info screen.
@@ -314,7 +315,8 @@ fn info_screen_full_loadout_snapshot() {
     assert_eq!(info.accessory.item, Some(ring));
     assert!(info.spells.iter().any(|s| s.name == "Fire"));
     assert!(info.weapons[0].as_ref().is_some_and(|w| w.broken.is_some()));
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    // The info screen covers the screen: all of it but the help bar (1290).
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_BAR));
 }
 
 /// The lord's info screen.
@@ -323,7 +325,8 @@ fn info_screen_snapshot() {
     let mut c = ctx();
     let mut s = quick();
     press(&mut s, &mut c, &[Action::Info]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    // The info screen covers the screen: all of it but the help bar (1290).
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_BAR));
 }
 
 // Map menu.
@@ -366,7 +369,10 @@ fn the_battle_is_drawn_in_the_players_language() {
     assert!(shows(&shouted, "RESTART BATTLE"));
     assert_eq!(s.help(&c), "ARROWS CHOOSE · f CONFIRM · d BACK");
     assert!(shows(&shouted, "ARROWS CHOOSE"));
-    assert!(shows(&shouted, "DANGER ZONE: OFF"));
+    // The toggles are hidden while a menu is open (0445); their words
+    // come from the pack too.
+    assert!(!shows(&shouted, "DANGER ZONE"));
+    assert!(s.status(&c).plain().contains("DANGER ZONE: OFF"));
     // Drawing changes nothing that is played.
     assert_eq!(s.mode(), &before);
 }
@@ -517,7 +523,7 @@ fn map_menu_snapshot() {
     press(&mut s, &mut c, &[Action::Cancel]);
     let buf = render(&s, &c);
     assert_in_font(&buf);
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    assert_snapshot!(snap(&buf, &c, MAP_VIEW));
 }
 
 /// The unit list, the objective and the end-turn question, centred on
@@ -527,19 +533,19 @@ fn map_menu_boxes_snapshot() {
     let mut c = ctx();
     let mut s = quick();
     press(&mut s, &mut c, &[Action::Cancel, Action::Confirm]);
-    assert_snapshot!("unit_list", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("unit_list", snap(&render(&s, &c), &c, MAP_VIEW));
     press(
         &mut s,
         &mut c,
         &[Action::Cancel, Action::CursorDown, Action::Confirm],
     );
-    assert_snapshot!("objective", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("objective", snap(&render(&s, &c), &c, MAP_VIEW));
     press(
         &mut s,
         &mut c,
         &[Action::Cancel, Action::Cancel, Action::EndTurn],
     );
-    assert_snapshot!("end_turn_prompt", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("end_turn_prompt", snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 // Ending the turn.
@@ -599,7 +605,7 @@ fn auto_end_is_off_by_default_and_toggles_on() {
     // phase.
     let mut s = quick();
     assert!(!s.auto_end());
-    assert!(s.status(&c).ends_with("Shift+Space auto-end: OFF"));
+    assert!(s.status(&c).plain().ends_with("Shift+Space auto-end: OFF"));
     for i in PLAYERS {
         wait_unit(&mut s, i);
     }
@@ -628,7 +634,7 @@ fn auto_end_is_off_by_default_and_toggles_on() {
     assert_eq!(s.toast(), Some("Auto-end: ON"));
     let message = s.view(&c).message.map(|m| m.text);
     assert_eq!(message.as_deref(), Some("Auto-end: ON"));
-    assert!(s.status(&c).ends_with("auto-end: ON"));
+    assert!(s.status(&c).plain().ends_with("auto-end: ON"));
     frame(&mut s, &mut c, &[], TOAST_S / 2.0);
     assert!(s.toast().is_some());
     frame(&mut s, &mut c, &[], TOAST_S / 2.0);
@@ -687,13 +693,56 @@ fn quick_start(c: &Ctx) -> (BattleState, Vec<Event>) {
     BattleState::new(campaign.battle_setup(def, &c.game.content.tables()))
 }
 
+/// Acceptance (0481): a battle just started shows its objective's banner
+/// once, before turn 1's `PLAYER PHASE`; it waits for Confirm, which does
+/// nothing else.
+#[test]
+fn a_battle_just_started_opens_on_its_objective_until_confirmed() {
+    let mut c = ctx();
+    let (state, events) = quick_start(&c);
+    let mut s = BattleScreen::start(state, &events);
+    let objective =
+        |s: &BattleScreen, c: &Ctx| s.view(c).banner.filter(|b| b.kind == BannerKind::Objective);
+    let shown = objective(&s, &c).expect("the objective banner");
+    assert_eq!(shown.title, "OBJECTIVE");
+    assert_eq!(shown.lines[0].text, "Rout the enemy");
+    assert_eq!(s.help(&c), "f continue");
+    // Keys other than Confirm are ignored, and it never closes by itself.
+    let before = s.cursor().pos;
+    press(&mut s, &mut c, &[Action::CursorRight, Action::Cancel]);
+    frame(&mut s, &mut c, &[], 60.0);
+    assert!(objective(&s, &c).is_some());
+    assert_eq!(s.cursor().pos, before);
+    assert_eq!(s.mode(), &Mode::default());
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(objective(&s, &c), None);
+    assert_eq!(phase_banner(&s), Some((Phase::Player, 1)));
+    assert_eq!(s.mode(), &Mode::default());
+    // Once: not again after the phase banner, nor on the next turn.
+    frame(&mut s, &mut c, &[], PHASE_BANNER_S * 1.1);
+    assert_eq!(s.banner(), None);
+    press(&mut s, &mut c, &[Action::EndTurn, Action::EndTurn]);
+    for _ in 0..200 {
+        assert_eq!(objective(&s, &c), None);
+        frame(&mut s, &mut c, &[], 0.5);
+    }
+}
+
+/// `start` with `events`, past the objective's banner.
+fn started(c: &mut Ctx, state: BattleState, events: &[Event]) -> BattleScreen {
+    let mut s = BattleScreen::start(state, events);
+    assert_eq!(s.banner().map(|b| b.kind), Some(BannerKind::Objective));
+    press(&mut s, c, &[Action::Confirm]);
+    s
+}
+
 #[test]
 fn a_battle_just_started_opens_on_turn_ones_player_phase_banner() {
     let mut c = ctx();
     let (state, events) = quick_start(&c);
     // A screen on a given state (a unit test, a debug tool) has none.
     assert_eq!(BattleScreen::new(state.clone()).banner(), None);
-    let mut s = BattleScreen::start(state.clone(), &events);
+    let mut s = started(&mut c, state.clone(), &events);
     assert_eq!(phase_banner(&s), Some((Phase::Player, 1)));
     assert!(s.view(&c).shows("PLAYER PHASE"));
     assert!(s.view(&c).shows("Turn 1"));
@@ -713,7 +762,7 @@ fn a_battle_just_started_opens_on_turn_ones_player_phase_banner() {
     assert_ne!(s.cursor().pos, before);
     // Or on Confirm, which does nothing else (the cursor is on the lord:
     // a second Confirm selects it).
-    let mut s = BattleScreen::start(state, &events);
+    let mut s = started(&mut c, state, &events);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.banner(), None);
     assert_eq!(s.mode(), &Mode::default());
@@ -770,7 +819,7 @@ fn phase_banner_snapshot() {
     );
     through_ai_phases(&mut s, &mut c, 30.0);
     assert_eq!(phase_banner(&s), Some((Phase::Player, 2)));
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 #[test]

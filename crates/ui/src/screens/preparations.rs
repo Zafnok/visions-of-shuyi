@@ -37,12 +37,14 @@ pub mod shop;
 pub mod view;
 
 use crate::prelude::*;
+use crate::widgets::help::HelpBar;
+use shuyi_ui::text::StyledText;
 pub use view::{
-    ConsumableRowView, GearView, ItemRowView, ListState, ListView, LoadoutsView, PackView,
-    PrepBody, PreparationsView, SlotRowView, TabView, UnitRowView,
+    ConsumableRowView, GearView, HolderView, ItemRowView, ListState, ListView, LoadoutsView,
+    PackView, PrepBody, PreparationsView, SlotRowView, TabView, UnitRowView,
 };
 
-use core::fmt::Display;
+use shuyi_ui::text::ToArg;
 
 use trpg_core::{
     ArmourWeight, BattleSetup, Equipped, GearSlot, ItemDef, ItemId, PrepError, PrepUnit,
@@ -148,6 +150,26 @@ pub struct StockRow {
     pub detail: String,
     /// Why the unit can't use it, if it can't.
     pub unusable: Option<Unusable>,
+    /// Who holds it, on a row of another unit's item.
+    pub holder: Option<HolderView>,
+}
+
+/// Who `unit` is on a swap row: its character, its portrait (the lead's
+/// by the gender picked) if the game has one, and its map letters.
+fn holder_view(ctx: &Ctx, unit: &Unit) -> HolderView {
+    let portrait = unit.character.as_ref().and_then(|id| {
+        let id = ctx.game.lead.portrait_for(&id.0);
+        ctx.game
+            .content
+            .portraits
+            .contains_key(id)
+            .then(|| id.to_owned())
+    });
+    HolderView {
+        character: unit.character.clone(),
+        portrait,
+        label: unit.map_label.clone(),
+    }
 }
 
 /// Why a unit can't use an item, as the player reads it: `needs rank D`.
@@ -353,6 +375,7 @@ impl PreparationsScreen {
                 name: ctx.text(PUT_BACK).to_owned(),
                 detail: String::new(),
                 unusable: None,
+                holder: None,
             });
         }
         let row = |item: StockItem, id: &ItemId, name: String, detail: String| {
@@ -363,6 +386,7 @@ impl PreparationsScreen {
                 name,
                 detail,
                 unusable,
+                holder: None,
             }
         };
         match slot {
@@ -405,7 +429,7 @@ impl PreparationsScreen {
                     let detail = match (slot, items.get(id)) {
                         (GearSlot::Armour, Some(ItemDef::Armour(a))) => {
                             let bonus = bonus_text(ctx.words(), &a.bonus);
-                            let detail = [("bonus", &bonus as &dyn Display), ("weight", &a.weight)];
+                            let detail = [("bonus", &bonus as &dyn ToArg), ("weight", &a.weight)];
                             ctx.text_with("prep.armour_detail", &detail)
                         }
                         (GearSlot::Accessory, Some(ItemDef::Accessory(a))) => {
@@ -474,6 +498,7 @@ impl PreparationsScreen {
                     name,
                     detail,
                     unusable: None,
+                    holder: Some(holder_view(ctx, unit)),
                 });
             }
         }
@@ -506,7 +531,7 @@ impl PreparationsScreen {
     /// `Pack 3/6`.
     pub fn pack_header(&self, ctx: &Ctx) -> String {
         let pack = &self.prep.setup.pack;
-        let args: [(&str, &dyn Display); 2] = [("packed", &pack.items.len()), ("cap", &pack.cap)];
+        let args: [(&str, &dyn ToArg); 2] = [("packed", &pack.items.len()), ("cap", &pack.cap)];
         ctx.text_with("prep.pack_header", &args)
     }
 
@@ -587,16 +612,16 @@ impl PreparationsScreen {
             );
         let line = match (before, gear) {
             (Some(now), false) => {
-                let args: [(&str, &dyn Display); 3] =
+                let args: [(&str, &dyn ToArg); 3] =
                     [("now", &now), ("then", &then), ("weapon", &weapon)];
                 ctx.text_with("prep.speed_change", &args)
             }
             (Some(now), true) => {
-                let args: [(&str, &dyn Display); 2] = [("now", &now), ("then", &then)];
+                let args: [(&str, &dyn ToArg); 2] = [("now", &now), ("then", &then)];
                 ctx.text_with("prep.speed_change_gear", &args)
             }
             (None, false) => {
-                let args: [(&str, &dyn Display); 2] = [("now", &then), ("weapon", &weapon)];
+                let args: [(&str, &dyn ToArg); 2] = [("now", &then), ("weapon", &weapon)];
                 ctx.text_with("prep.speed", &args)
             }
             (None, true) => ctx.text_with("prep.speed_gear", &[("now", &then)]),
@@ -637,13 +662,17 @@ impl PreparationsScreen {
     }
 
     /// The bottom help line.
-    pub fn help(&self, ctx: &Ctx) -> String {
-        let key = match (self.is_asking_leave(), self.focus, self.tab, self.can_leave) {
-            (true, ..) => "prep.help.leaving",
-            (_, Focus::Tabs, Tab::Fight, true) => "prep.help.fight_leave",
-            (_, Focus::Tabs, Tab::Fight, false) => "prep.help.fight",
-            (_, Focus::Tabs, _, true) => "prep.help.tabs_leave",
-            (_, Focus::Tabs, _, false) => "prep.help.tabs",
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
+        let key = match (self.is_asking_leave(), self.focus) {
+            (true, _) => "prep.help.leaving",
+            (_, Focus::Tabs) => {
+                let open = match self.tab {
+                    Tab::Fight => "hint.start_battle",
+                    _ => "hint.open",
+                };
+                let bar = HelpBar::new().hint("hint.choose").hint(open);
+                return bar.hint_if("hint.leave", self.can_leave).line(ctx);
+            }
             (_, Focus::Units, ..) => "prep.help.units",
             (_, Focus::Slots, ..) => "prep.help.slots",
             (_, Focus::Stock, ..) => "prep.help.stock",
@@ -655,7 +684,7 @@ impl PreparationsScreen {
             }
             (_, Focus::Shop, ..) => shop::HELP,
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// Opens the shown tab (Confirm or Down on the tabs). Returns whether
@@ -738,7 +767,7 @@ impl PreparationsScreen {
         if let (Some(why), Some(unit)) = (row.unusable, self.unit()) {
             let reason = reason_text(ctx, why);
             let name = ctx.words().unit(unit);
-            let args: [(&str, &dyn Display); 2] = [("unit", &name), ("reason", &reason)];
+            let args: [(&str, &dyn ToArg); 2] = [("unit", &name), ("reason", &reason)];
             self.message = Some(ctx.text_with("prep.cant", &args));
         }
     }
@@ -754,7 +783,7 @@ impl PreparationsScreen {
                 ctx.audio.menu(MenuSound::Denied);
                 if e == PrepError::PackFull {
                     let pack = &self.prep.setup.pack;
-                    let args: [(&str, &dyn Display); 2] =
+                    let args: [(&str, &dyn ToArg); 2] =
                         [("packed", &pack.items.len()), ("cap", &pack.cap)];
                     self.message = Some(ctx.text_with("prep.pack_full", &args));
                 }
@@ -907,7 +936,7 @@ impl PreparationsScreen {
             Tab::Fight => {
                 let units = self.prep.setup.player_units().count();
                 let pack = self.pack_header(ctx);
-                let args: [(&str, &dyn Display); 2] = [("units", &units), ("pack", &pack)];
+                let args: [(&str, &dyn ToArg); 2] = [("units", &units), ("pack", &pack)];
                 PrepBody::Fight(ctx.text_with("prep.ready", &args))
             }
         };
@@ -990,6 +1019,7 @@ impl PreparationsScreen {
             name: r.name,
             detail: r.detail,
             usable: r.unusable.is_none(),
+            holder: r.holder,
         });
         let stock = ListView {
             title: title.to_owned(),
@@ -1012,7 +1042,7 @@ impl PreparationsScreen {
         ConsumableRowView {
             name: self.item_name(words, id),
             count,
-            effect: effect.map(|e| effect_text(words, e)).unwrap_or_default(),
+            effect: effect.map_or_default(|e| effect_text(words, e)),
         }
     }
 

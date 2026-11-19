@@ -17,7 +17,8 @@ use crate::prelude::*;
 pub use screen::TipScreen;
 pub use view::{FaceView, LessonItemView, LessonView, LessonsEndView, TipView};
 
-use core::fmt::Display;
+use crate::words::SOURCE_LANG;
+use shuyi_ui::text::Args;
 
 use trpg_content::tip::CURSOR_PLACEHOLDER;
 
@@ -38,14 +39,26 @@ pub use shuyi_ui::tips::{TIPS_SEEN_KEY, TipsSeen, reset_tips};
 ///
 /// [`select_action`]: crate::screens::battle::split_keys::select_action
 pub fn fill_placeholders(text: &str, keys: HelpKeys<'_>) -> String {
-    fill_text(text, keys, &[])
+    // No values, so no plural to choose by a language's rules.
+    fill_text(text, SOURCE_LANG, keys, &[])
 }
 
 /// [`fill_placeholders`], with each `{name}` that `args` names replaced by
 /// its value first (`("count", &3)` fills `{count}`). What is filled in is
-/// not looked at again, so a value may hold braces.
-pub fn fill_text(text: &str, keys: HelpKeys<'_>, args: &[(&str, &dyn Display)]) -> String {
-    shuyi_ui::text::fill(text, args, |name| key_text(name, keys))
+/// not looked at again, so a value may hold braces. `lang` is the language
+/// `text` is in, whose plural rules a message of it follows.
+pub fn fill_text(text: &str, lang: &str, keys: HelpKeys<'_>, args: &Args<'_>) -> String {
+    shuyi_ui::text::fill(text, lang, args, |name| key_text(name, keys))
+}
+
+/// [`fill_placeholders`] in spans, as the player of `ctx` sees them: each
+/// key's name in a key span, drawn as a key cap (ticket 0254), the arrow
+/// keys one span ([`Shuyi`](crate::screen::Shuyi)'s `key_text_styled`).
+pub fn fill_styled(ctx: &crate::screen::Ctx, text: &str) -> shuyi_ui::text::StyledText {
+    use shuyi_ui::GameData;
+    let keys = ctx.help_keys();
+    let lookup = |name: &str| ctx.game.key_text_styled(name, keys);
+    shuyi_ui::text::fill_styled_with(text, SOURCE_LANG, &[], &[], lookup)
 }
 
 /// What a `{name}` placeholder that names a key says ([`fill_text`]):
@@ -66,9 +79,10 @@ pub fn key_text(name: &str, keys: HelpKeys<'_>) -> Option<String> {
 
 /// `text` with each `{name}` that `args` names replaced by its value, and
 /// no key named: for text built where there are no keys to name (a line
-/// of a list, a label). Anything else in braces is left alone.
-pub fn fill_values(text: &str, args: &[(&str, &dyn Display)]) -> String {
-    shuyi_ui::text::fill_values(text, args)
+/// of a list, a label). Anything else in braces is left alone. `lang` is
+/// the language `text` is in, whose plural rules a message of it follows.
+pub fn fill_values(text: &str, lang: &str, args: &Args<'_>) -> String {
+    shuyi_ui::text::fill_values(text, lang, args)
 }
 
 #[cfg(test)]
@@ -78,10 +92,11 @@ mod tests {
     fn values_are_filled_and_keys_left_as_written() {
         let filled = fill_values(
             "{Confirm} {n} of {max} {nope} {",
+            SOURCE_LANG,
             &[("n", &3), ("max", &"{n}")],
         );
         assert_eq!(filled, "{Confirm} 3 of {n} {nope} {");
-        assert_eq!(fill_values("plain", &[]), "plain");
+        assert_eq!(fill_values("plain", SOURCE_LANG, &[]), "plain");
     }
 
     use trpg_content::{Chord, RepeatDef};
@@ -135,6 +150,7 @@ mod tests {
         assert_eq!(
             fill_text(
                 "{count} of {total}: {Confirm} {count} {nope}",
+                SOURCE_LANG,
                 keys,
                 &[("count", &3), ("total", &"ten")]
             ),
@@ -145,14 +161,15 @@ mod tests {
         assert_eq!(
             fill_text(
                 "{Confirm} {a}{b} {",
+                SOURCE_LANG,
                 keys,
                 &[("Confirm", &"{a}"), ("a", &"{Confirm}"), ("b", &"}")]
             ),
             "{a} {Confirm}} {"
         );
         // Text after an unclosed brace is kept as it is.
-        assert_eq!(fill_text("a { b", keys, &[("b", &1)]), "a { b");
-        assert_eq!(fill_text("", keys, &[]), "");
+        assert_eq!(fill_text("a { b", SOURCE_LANG, keys, &[("b", &1)]), "a { b");
+        assert_eq!(fill_text("", SOURCE_LANG, keys, &[]), "");
     }
 
     /// Ticket 0220: on a controller a tip names the pad's buttons.
@@ -213,7 +230,7 @@ mod tests {
         let tip = |id: &str| {
             let tip = content.tips.tips.iter().find(|t| t.id == id);
             let how = tip.and_then(|t| t.how.as_deref());
-            how.map(|h| h.replace('\n', " ")).unwrap_or_default()
+            how.map_or_default(|h| h.replace('\n', " "))
         };
         let default = Keymap::for_layout(&content.keymap, RIGHT_HANDED);
         let mut split = content
@@ -259,7 +276,7 @@ mod tests {
         );
         assert_eq!(
             fill_placeholders(text, HelpKeys::keyboard(&left)),
-            "j wasd u"
+            "j w\u{a0}a\u{a0}s\u{a0}d u"
         );
     }
 }

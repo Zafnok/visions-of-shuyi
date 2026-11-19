@@ -1,8 +1,9 @@
 //! The title screen's art (`assets/title/`, ticket 0811, ADR-0059): the
 //! logo, a picture of the game's name, and the backdrops one of which is
 //! behind it each launch, and the words `GAME OVER` as a picture for the
-//! Game Over screen (ticket 0830). `content` reads only each image's
-//! size; the screens draw them as sprites (ADR-0038). Format:
+//! Game Over screen (ticket 0830), and the chapter title card's lettering
+//! (ticket 0812, [`lettering`]). `content` reads only
+//! each image's size; the screens draw them as sprites (ADR-0038). Format:
 //! `assets/title/README.md`.
 use crate::prelude::*;
 
@@ -12,6 +13,7 @@ use crate::battler::BACKDROP_PX;
 use crate::bundle;
 use crate::error::ContentError;
 use crate::image::{ImageId, ImageTable};
+use crate::lettering::{self, Lettering};
 use crate::ron_loader::parse_ron;
 
 /// Directory of the title art inside the asset bundle.
@@ -36,6 +38,42 @@ pub struct TitleArt {
     /// its size in its own pixels; `None` if the file names none (the
     /// Game Over screen then shows the words as text).
     pub game_over: Option<(ImageId, (u32, u32))>,
+    /// The chapter title card's lettering (0812); `None` if the file
+    /// names none (the card then shows its lines in the cell font).
+    pub lettering: Option<Lettering>,
+    /// The campfire in the title's corner (ticket 0922); `None` if the
+    /// file names none or the build leaves it out (the Playdate's): the
+    /// title then has no fire and no crackle.
+    pub campfire: Option<Campfire>,
+}
+
+/// A picture that moves by itself: its frames side by side in one image,
+/// left to right, each as wide as the image over their count.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Campfire {
+    /// The image of the frames.
+    pub image: ImageId,
+    /// One frame's size in its own pixels, width × height.
+    pub frame: (u32, u32),
+    /// How many frames, at least 1.
+    pub frames: u32,
+}
+
+/// A strip of frames by file name in the title directory.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StripFile {
+    file: String,
+    frames: u32,
+}
+
+/// The chapter card's two glyph sheets, by file stem in the title
+/// directory.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LetteringFile {
+    heading: String,
+    line: String,
 }
 
 #[derive(Deserialize)]
@@ -46,6 +84,10 @@ struct TitleFile {
     backdrops: Vec<String>,
     #[serde(default)]
     game_over: Option<String>,
+    #[serde(default)]
+    lettering: Option<LetteringFile>,
+    #[serde(default)]
+    campfire: Option<StripFile>,
 }
 
 /// Loads the embedded title art file, checking each image against
@@ -54,7 +96,7 @@ pub fn load(images: &ImageTable) -> Result<TitleArt, Vec<ContentError>> {
     let file = bundle::display_path(TITLE_PATH);
     let source = bundle::file(TITLE_PATH)
         .ok_or_else(|| vec![ContentError::new(&file, "file not found in asset bundle")])?;
-    from_source(&file, source, images)
+    from_source(&file, &source, images)
 }
 
 /// Parses title art `source` (errors attributed to `file`), checking each
@@ -91,11 +133,41 @@ pub fn from_source(
         .game_over
         .as_deref()
         .and_then(|relative| check("game_over".to_owned(), check_logo(relative, images)));
+    // A bundle that leaves the sheets out on purpose (the Playdate's,
+    // `playdate-bundle.txt`, which lists both) has no lettering.
+    let wanted = raw.lettering.as_ref().filter(|s| {
+        let heading = format!("{TITLE_DIR}/{}.ron", s.heading);
+        !bundle::left_out(&heading)
+    });
+    let lettering = wanted.and_then(|stems| {
+        let mut sheet = |stem: &str| {
+            lettering::sheet(TITLE_DIR, stem, images)
+                .map_err(|e| errors.extend(e))
+                .ok()
+        };
+        let (heading, line) = (sheet(&stems.heading), sheet(&stems.line));
+        Some(Lettering {
+            heading: heading?,
+            line: line?,
+        })
+    });
+    // The Playdate's bundle leaves the fire out (ticket 0922).
+    let wanted = raw
+        .campfire
+        .as_ref()
+        .filter(|strip| !bundle::left_out(&format!("{TITLE_DIR}/{}", strip.file)));
+    let campfire = wanted.and_then(|strip| {
+        check_strip(strip, images)
+            .map_err(|problem| errors.push(ContentError::new(file, format!("campfire: {problem}"))))
+            .ok()
+    });
     if errors.is_empty() {
         Ok(TitleArt {
             logo,
             backdrops,
             game_over,
+            lettering,
+            campfire,
         })
     } else {
         Err(errors)
@@ -127,6 +199,25 @@ fn check_logo(relative: &str, images: &ImageTable) -> Result<(ImageId, (u32, u32
         ));
     }
     Ok((id, (w, h)))
+}
+
+/// The strip of frames `strip` names, or what is wrong with it: its image
+/// must be in `images`, and as wide as a whole number of its frames, one
+/// or more.
+fn check_strip(strip: &StripFile, images: &ImageTable) -> Result<Campfire, String> {
+    let (image, (w, h)) = find(&strip.file, images)?;
+    let frames = strip.frames;
+    if frames == 0 || w % frames != 0 {
+        return Err(format!(
+            "{} is {w} px wide, not {frames} frames of a whole width",
+            strip.file
+        ));
+    }
+    Ok(Campfire {
+        image,
+        frame: (w / frames, h),
+        frames,
+    })
 }
 
 /// The backdrop at `relative`, or what is wrong with it: it must be in
@@ -192,6 +283,58 @@ mod tests {
         assert_eq!(Some(size), images.info(words).map(|i| (i.width, i.height)));
         // As wide as the logo: the two line up on the Game Over screen.
         assert_eq!(size.0, art.logo.unwrap().1.0);
+        let lettering = art.lettering.unwrap();
+        assert_eq!(lettering.heading.image.path(), "title/chapter_name.png");
+        assert_eq!(lettering.line.image.path(), "title/chapter_line.png");
+        // The name is the bigger of the two.
+        assert!(lettering.heading.atlas.cell_h > lettering.line.atlas.cell_h);
+        // The campfire: four frames of 26×52 (ticket 0922).
+        let fire = art.campfire.unwrap();
+        assert_eq!(fire.image.path(), "title/campfire.png");
+        assert_eq!((fire.frame, fire.frames), ((26, 52), 4));
+    }
+
+    #[test]
+    fn a_campfire_is_a_strip_of_whole_frames() {
+        let images = images();
+        let art = from_source(
+            FILE,
+            r#"(logo: "logo.png", campfire: Some((file: "logo.png", frames: 4)))"#,
+            &images,
+        )
+        .unwrap();
+        let fire = Campfire {
+            image: images.id("title/logo.png").unwrap(),
+            frame: (25, 34),
+            frames: 4,
+        };
+        assert_eq!(art.campfire, Some(fire));
+        // One frame is the whole picture; none named, no fire.
+        let one = r#"(logo: "logo.png", campfire: Some((file: "a.png", frames: 1)))"#;
+        let art = from_source(FILE, one, &images).unwrap();
+        assert_eq!(
+            art.campfire.map(|c| (c.frame, c.frames)),
+            Some(((336, 248), 1))
+        );
+        let art = from_source(FILE, r#"(logo: "logo.png")"#, &images).unwrap();
+        assert_eq!(art.campfire, None);
+        for (frames, wide) in [(3, 100), (0, 100)] {
+            let source = format!(
+                r#"(logo: "logo.png", campfire: Some((file: "logo.png", frames: {frames})))"#
+            );
+            assert_eq!(
+                messages(&source),
+                [format!(
+                    "{FILE}: campfire: logo.png is {wide} px wide, not {frames} frames of a whole width"
+                )]
+            );
+        }
+        assert_eq!(
+            messages(r#"(logo: "logo.png", campfire: Some((file: "none.png", frames: 2)))"#),
+            [format!(
+                "{FILE}: campfire: assets/title/none.png is not a PNG image in the assets"
+            )]
+        );
     }
 
     #[test]
@@ -212,8 +355,9 @@ mod tests {
         // Backdrops are optional.
         let art = from_source(FILE, r#"(logo: "logo.png")"#, &images).unwrap();
         assert_eq!(art.backdrops, []);
-        // So are the Game Over words.
+        // So are the Game Over words and the chapter card's lettering.
         assert_eq!(art.game_over, None);
+        assert_eq!(art.lettering, None);
         let art = from_source(
             FILE,
             r#"(logo: "logo.png", game_over: Some("logo.png"))"#,
@@ -261,6 +405,17 @@ mod tests {
             [format!(
                 "{FILE}: logo: assets/title/none.png is not a PNG image in the assets"
             )]
+        );
+    }
+
+    #[test]
+    fn missing_lettering_sheets_are_reported() {
+        assert_eq!(
+            messages(r#"(logo: "logo.png", lettering: Some((heading: "n", line: "l")))"#),
+            [
+                "assets/title/n.ron: file not found in asset bundle",
+                "assets/title/l.ron: file not found in asset bundle",
+            ]
         );
     }
 

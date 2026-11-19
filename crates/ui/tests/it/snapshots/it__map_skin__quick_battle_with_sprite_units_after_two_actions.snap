@@ -1,91 +1,83 @@
 ---
 source: crates/ui/tests/it/map_skin.rs
-expression: h.snapshot()
+expression: h.snapshot_of(MAP_VIEW)
 ---
-                                                                      ┌────────────────────────────┐
-                                                                      │ Plain                      │
-                                                                      │ DEF +0  AVO +0             │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │                            │
-                    ≈≈≈≈≈≈≈≈....··  ··♣♣♣♣^^^^^^                      │                            │
-                    ≈≈≈≈≈≈====······  ..♣♣♣♣....                      │                            │
-                    ..≈≈≈≈..··..............╦╦..                      │                            │
-                    ....······  ..  ..▓▓▓▓▓▓▓▓..                      │                            │
-                    ..♣♣··  ..╦╦......▓▓░░╦╦▓▓..                      │                            │
-                    ♣♣♣♣··    ........▓▓░░░░▓▓..                      │                            │
-                    ♣♣♠♠··..........  ▓▓▓▓▐▌▓▓..                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │ Gold 3 000                 │
-                                                                      └────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
- arrows move · f menu · s next unit · r rewind · d menu · Space end turn                   F2 debug 
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      
+                    ≈≈≈≈≈≈≈≈....··  ··♣♣♣♣^^^^^^                      
+                    ≈≈≈≈≈≈====······  ..♣♣♣♣....                      
+                    ..≈≈≈≈..··..............╦╦..                      
+                    ....······  ..  ..▓▓▓▓▓▓▓▓..                      
+                    ..♣♣··  ..╦╦......▓▓░░╦╦▓▓..                      
+                    ♣♣♣♣··    ........▓▓░░░░▓▓..                      
+                    ♣♣♠♠··..........  ▓▓▓▓▐▌▓▓..                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaeeeeeeffffgggghhhhiiiijjjjkkaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaeeeeffffggggllllllhhhhjjjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaeeffffmmmmllllllgggghhhhggggaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaggffffggllggggggggggggggnnggaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaggggllllllggggggggooooooooggaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaagghhllggggnnggggggooppnnooggaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhllggggggggggggooppppooggaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiillggggggggggggooooqqooggaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrra
-arrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrraaaaaaaaaaaaaaaaaaarrrrrrrra
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbbbbbccccddddeeeeffffgggghhaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbbbccccddddiiiiiieeeeggggggaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbccccjjjjiiiiiiddddeeeeddddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaddccccddiiddddddddddddddkkddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaddddiiiiiiddddddddllllllllddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaddeeiiddddkkddddddllmmkkllddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaeeeeiiddddddddddddllmmmmllddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaeeffiiddddddddddddllllnnllddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
-b = fg:panel_border bg:panel_bg
-c = fg:text bg:panel_bg
-d = fg:text_highlight bg:panel_bg
-e = fg:water bg:sea
-f = fg:water bg:water_bg
-g = fg:grass bg:grass_bg
-h = fg:forest bg:forest_bg
-i = fg:thicket bg:thicket_bg
-j = fg:mountain bg:mountain_bg
-k = fg:peak bg:peak_bg
-l = fg:road bg:road_bg
-m = fg:wood bg:water_bg
-n = fg:fort bg:fort_bg
-o = fg:stone bg:stone_bg
-p = fg:floor bg:floor_bg
-q = fg:wood bg:stone_bg
-r = fg:text_dim bg:black
+b = fg:water bg:sea
+c = fg:water bg:water_bg
+d = fg:grass bg:grass_bg
+e = fg:forest bg:forest_bg
+f = fg:thicket bg:thicket_bg
+g = fg:mountain bg:mountain_bg
+h = fg:peak bg:peak_bg
+i = fg:road bg:road_bg
+j = fg:wood bg:water_bg
+k = fg:fort bg:fort_bg
+l = fg:stone bg:stone_bg
+m = fg:floor bg:floor_bg
+n = fg:wood bg:stone_bg
 --- overlays ---
 over  sprite 272,185 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
 over  sprite 272,187 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy

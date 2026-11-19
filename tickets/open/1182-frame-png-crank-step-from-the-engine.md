@@ -15,10 +15,13 @@ completed:
 
 ## Context
 
+2026-11-17 friction sweep: folded into 1170 (its engine blocker,
+engine#2540, is pinned); 1170 moves this ticket to `done/`.
+
 Ticket 1039 needed a picture of the Playdate's rewind screen, which only
 the crank opens. The engine's `frame-png` script (`shuyi_cli::frame_png`)
 had `--keys`, `--pad` and `--wait` but no crank step, so the game added two
-options of its own to its `GameTools` in `crates/xtask/src/game_tools.rs`:
+options of its own to its `GameTools` in `crates/tools/src/game_tools.rs`:
 `--crank DEGREES` and `--then-pad BUTTONS`, played after the script's steps
 (the `After` steps of `Start`), marked `// engine-friction: engine#2540`.
 Engine ticket 2540 adds `--crank` as a script step, in order with the
@@ -41,7 +44,7 @@ None. Tooling only; nothing the player sees changes.
   which also deleted the game's `--crank`: the engine's parser takes the
   flag first, so the game's could no longer be reached)
 - Delete the game's `--then-pad` option, `After`, and their handling in
-  `crates/xtask/src/game_tools.rs`; the `frame-png` test that used it
+  `crates/tools/src/game_tools.rs`; the `frame-png` test that used it
   uses the engine's steps (`--crank -30 --pad East`).
 - Update the commands for 1039's pictures if any doc names
   `--then-pad`.
@@ -62,7 +65,7 @@ and its help names agree.
 2. Remove `OPTIONS`' `--then-pad` entry (the array back to 6),
    `Start::after`, `enum After` and the loop after `script.play`.
 3. Rewrite `the_crank_and_buttons_after_the_steps_open_the_rewind_screen`
-   in `crates/xtask/src/game_tools/tests.rs` on the engine's step (a
+   in `crates/tools/src/game_tools/tests.rs` on the engine's step (a
    script with `--crank -30` shows `rewind`).
 
 ## Acceptance criteria

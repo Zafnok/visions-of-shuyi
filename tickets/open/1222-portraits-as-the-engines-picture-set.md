@@ -50,7 +50,7 @@ None. Nothing a player sees changes.
 - The sidecars' fields renamed to the engine's (`character` → `id`,
   `expressions` → `pictures`): `assets-test/portraits/*.ron`,
   `assets/portraits/*.ron` and its `README.md`, xtask's `sidecar_stub`
-  (`crates/xtask/src/portrait_import.rs`) and its tests, and the private
+  (`crates/tools/src/portrait_import.rs`) and its tests, and the private
   repository's `game/portraits/*.ron` (11 files) with
   `cargo shuyi private-assets --pin` in this PR (`AGENTS.md`, *Bought
   art*).

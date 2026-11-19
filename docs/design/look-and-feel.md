@@ -224,6 +224,13 @@ D the side panel):
   the unit's path end (not its own tile) take the **heal** tint; moving the
   focus off it clears them (*the agent's starting rule*: a friend's
   playtest asked for a range indicator; Act 1 playtest, 1064).
+  **The Skill list goes beside the reach, not over it** (decided
+  2026-11-17, ticket 0492: Nick was shown the list beside the unit, beside
+  the reach, kept in place with the map slid, and in a fixed corner, in
+  both looks, and picked "A: beside the reach"): while an area line is
+  focused, the list goes one cell past the reach's edge, right of it or
+  left where it would leave the map view, by the same rule as every menu
+  beside its unit (0454); on the PC and the Playdate.
 - **Colour themes** (ticket 0806): Options has a **Colors** row with four
   palettes, **C Rich & painterly, D Earthy painterly (default), E War-table
   parchment (light), G Moonlit**. D is `assets/data/palette.ron`, the others
@@ -524,8 +531,9 @@ so they aren't in this repository (ADR-0032).
   background and back once a second; the terrain glyph or unit letter in
   that cell gives way to it. Only while browsing. The glyph look's view is
   35 × 30 tiles, so no map the game has today shows them.
-- The **side panel shows the unit under the cursor** (name, class, level, HP,
-  stats, weapon, terrain). That's where class and full numbers are read.
+- The **side panel shows the unit under the cursor**: name, class, level,
+  HP, stats, weapon and combat numbers, under the terrain. That's where
+  class and full numbers are read (*Side panel* below, ticket 0078).
 - Class symbols (`†`, `»`, `}`, …) were tried and rejected: the font's symbols
   are too small and generic. Custom-drawn class icons may be explored later
   (ticket 1006); until then, initials are the rule.
@@ -618,6 +626,75 @@ over each enemy, a red frame around each enemy, lines and marks). The rule
     on the map view's top row it is moved down to stay inside the view.
   - Neither moves or blinks.
 
+**Changed 2026-11-17 (ticket 0908, before the Steam release):** three
+rounds of renders over the Chapter 1 map, both looks. Round 1, four
+tunings of today's arrow (thicker, a bigger head, brighter or deeper red,
+starting at the tile's edge): "ur thinking too much in the box, several
+games use a more 3D opacity effect with blinking and such for the attack
+range tiles and for threats". Round 2, moving and see-through (breathing,
+pulses flowing to the tile, a glowing core, the tile blinking): "these
+are more creative but start to sacrifice readability … how do modern
+SRPGs handle it?". Round 3, from how other tactics games do it (arcs like
+Fire Emblem: Three Houses and Triangle Strategy, dotted arcs like
+Wildermyth, arcs and a framed tile like XCOM 2's flank shield), still and
+solid: "lets do I as default, K as option, and A as an option too".
+
+- **Arcs by default:** each arrow is an **arc bowing up the screen** over
+  what lies between, from the enemy (its tile's middle in the picture
+  look, its tile's edge in the glyph look, as before) to just short of
+  the tile's middle: a 2-pixel line with a 1-pixel dark edge, bowed by
+  0.4 of the distance between the two, ending 4 pixels short in a filled
+  head 6 pixels long (*tunable*: the engine's `grid::threat`, ticket
+  3223).
+- **An option, Arcs + tile:** the same arcs, and a 1-pixel frame in the
+  arrow's colour inside the threatened tile, edged dark.
+- **An option, Straight:** the straight arrows above, unchanged.
+- The `!` marks are unchanged in all three. The Playdate draws the same
+  shapes in black edged in white.
+- The player picks in Options (`options.md`, *Threat arrows*).
+
+### Range tiles
+
+Decided 2026-11-18, ticket 0923, over three rounds of moving renders of
+the Chapter 1 battle (a selected unit's ranges), both looks. Round 1,
+from other tactics games: today's still tints, see-through panels (Fire
+Emblem: Three Houses), edges only (XCOM 2), and the range spreading out
+from the unit then shimmering (Advance Wars): "spread and shimmer looks
+best but not in the first iteration so play around more with this as the
+base". Round 2, four takes on it (a stronger shimmer, a bright ring
+riding the spread, a glint band, the shimmer on the outline only): "D1
+and D3 look best but I don't like how theres 2 outlines one for blue one
+for red it looks amateur. I also saw some 3D like effects on another game
+that I wonder if we can use". Round 3, one outline around the whole
+range, with the stronger shimmer, the glint, each tile raised, or the
+whole range a raised slab: "can have each of these as options I think,
+and maybe H as the default". Asked whether players also get today's
+still tints: "Yes, add Still".
+
+- **When a unit is selected, its ranges spread out from it**, ring by
+  ring, about 45 ms a tile and fading in over 90 ms, so the whole range
+  is there in about a third of a second (*tunable*).
+- **One outline around the whole range**, the move and attack tiles
+  together: none where blue meets red. Each stretch is its tile's range
+  colour, lightened.
+- **The tint is lighter than before** (about 55–60% instead of 75%,
+  *tunable*), and moves in one of these looks, picked in Options
+  (`options.md`, *Range look*):
+  - **Slab (the default):** a glint band sweeps across the range about
+    every 2.4 s, and the whole range is a raised slab casting a dark
+    shadow below and to the right.
+  - **Shimmer:** a slow wave of brightness runs across the tiles.
+  - **Glint:** the glint band alone.
+  - **Raised tiles:** the glint, and each tile a raised panel, its top
+    and left edges lit and its bottom and right edges shaded.
+  - **Still:** today's 75% tints, nothing spreads or moves (above,
+    *Colour*).
+- *Claude's starting rules:* ranges that show without a unit being
+  selected (the danger zone, an area skill's reach) show at once, in
+  the same look, without the spread. On the Playdate's one-bit screen
+  the ranges spread out as above and are otherwise unchanged (it has no
+  see-through tints to shimmer or shade).
+
 ### Attack forecast
 
 Decided 2026-09-27, ticket 0404, over three rounds of renders (the ticket's
@@ -637,10 +714,14 @@ then three strike-list layouts). Screenshot: `0404-forecast.png`.
 - While a target is chosen, the forecast **replaces the side panel** (double
   border, title `Forecast`): the attacker in the left column, the target in
   the right, names in faction colour, weapon names dimmed under them.
+  *Added by 0463: when left / right swap the weapon, a `◂▸` mark before
+  the attacker's weapon and `Left/Right weapon` in the bottom border
+  (`combat-arts.md`, *Showing that left / right swap the weapon*).*
 - **Mixed-case labels:** `HP`, `Hit`, `Crit`. A side that can't counter shows
   `--` for Hit and Crit.
 - **HP bars:** `HP 19` and a short bar. The part of the bar the unit would
-  lose **if every strike hit** (no crits) is shaded in `hp_low`.
+  lose **if every strike hit** (no crits) is shaded in `hp_low`. *Changed
+  by 0480 (below): `HP 19 → 6` and a 12-cell bar on its own row.*
 - **Strikes in the order they happen**, one per row, numbered down the
   middle: the attacker's on the left (`8 dmg →`), the target's counters on
   the right (`← 9 dmg`). `no counter` in the right column when it can't.
@@ -654,6 +735,247 @@ then three strike-list layouts). Screenshot: `0404-forecast.png`.
   rule, not rendered for Nick)*.
 - The Combat Arts list and art line (0414) go above this forecast; that
   ticket works out the combined box.
+
+#### HP after the fight, and the weapon's uses (0480)
+
+Decided 2026-11-16, ticket 0480, over two rounds of `frame-png` renders of
+three fights (a plain exchange, a double with a counter, a kill) in both
+looks. A friend's playtest of the Act 1 build had found the forecast "hard
+to parse visually … i.e. for seeing how much expected HP enemy will have at
+the end". Options shown: A, the HP now and after as numbers (Fire Emblem:
+Three Houses' forecast gives each unit's remaining HP); B, a longer bar
+whose lost part blinks (Into the Breach's health pips flash the damage to
+come); C, the strikes folded into one damage line per side; D, labelled
+columns down the middle (Fire Emblem's GBA forecast).
+
+> [HP after the fight:] "A + B" … [the strike list:] "Keep strike list" …
+> [the weapon's durability:] "beside the weapon, or under when a art is
+> used which drains dura, and then shows uses depleting like hp" …
+> [round 2, an art's cost:] "E. Numbers only" … [the rest of round 2:]
+> "just make sure unless the HP is expected 0 it doesn't show 0 cells lit
+> up. its confusing if you're expected to live with 2 hp left and it
+> floors to 0 cells"
+
+Example: Ellery (19 HP) attacks a Raider (28 HP) with an Iron Sword that
+has 20 uses left. Each column reads, top to bottom:
+
+```
+Ellery          Raider
+Iron Sword 20   Iron Axe 20
+HP 19 → 6       HP 28 → 21
+████▒▒▒▒▒▒▒▒    █████████▒▒▒
+Hit  92         Hit  71
+Crit 2          Crit 1
+```
+
+- **HP now → after, as numbers:** `HP 19 → 6`, the HP if every strike
+  hits (no crits). The after number is in its HP colour (`hp_high`,
+  `hp_mid`, `hp_low`, as the bar), and a unit that falls shows a `0` in
+  `hp_low`.
+- **The bar has its own row under it, 12 cells** (it was 5 beside the HP).
+  The HP that would be lost **blinks**: shaded in `hp_low`, then full in
+  the HP colour of now, and so on.
+- **A unit that lives keeps at least one cell lit** (Nick, round 2): with
+  2 HP left of 28 the bar shows one cell, never none. Only an after of 0
+  shows no kept cell. The same holds for the HP it has now.
+- **The strike list stays** as 0404 decided: numbered, in the order they
+  happen, the skull on the kill, the totals.
+- **The weapon's uses go after its name:** `Iron Sword 20` (the uses left,
+  no `/20`; a spell's uses the same way: `Fire 10`). There is no row of
+  its own any more, so nothing above the HP reads like HP.
+- **An art that spends durability** shows the uses going down **on a row
+  under the weapon**, like the HP: `Iron Sword`, then `20 → 16`, the after
+  number in the highlight colour (round 2's E; F, with a second blinking
+  bar, was not picked). The art's line at the top shows only its name,
+  `Guard Break` (it read `Guard Break (20 → 16)`). An art that breaks the
+  weapon shows `3 → 0`. Both columns move down a row, so the two sides
+  stay level.
+- *Claude's starting rules (Nick can veto):*
+  - The blink is half a second shaded, half a second full, from the
+    shaded half (*tunable*).
+  - A broken weapon shows `(broken)` in `hp_low` on the row under it, as
+    the art's cost does (0404's starting rule, moved).
+  - The row under Crit stays for the affinity (`(resist)`, `heals 9`) and
+    is blank without one; 0333's armour mark, if it adds one, goes there.
+  - The Playdate's window gets the same lines in its 10-cell columns, the
+    weapon's name fitted to its uses as below (`Iron S… 20`) and a
+    10-cell bar on its own row; the lost part blinks between the checker
+    and black.
+
+#### Short weapon names (0498)
+
+Decided 2026-11-17, ticket 0498, over `frame-png` renders of three
+forecasts (Steel Sword against Fordwarden's Spear, Steel Gauntlets and
+Houndmaster's Axe) on the PC and the Playdate. 0480 cut a name too long
+for its uses with `…`; Nick, asked then: "use shortened names rather than
+truncated i.e. Stl Swo / probably need some mapping from long to short
+name". Options shown: A, vowels dropped (`Stl Swd`, `Hndmst Axe`); B, the
+first word shortened and the kind kept (`Stl Sword`, `Hound Axe`); C,
+seven letters for every weapon so the Playdate never cuts (`Stl Swd`,
+`Hnd Axe`, `Irn Swd`).
+
+> [style:] "B. First word shortened" … [a weapon whose name fits:] "Keep
+> the full name"
+
+- **A weapon too long for its line has a short name, written by hand**
+  (`short_name` in the items file, translated like its name):
+
+  | Weapon | Short name |
+  | ------ | ---------- |
+  | Steel Sword | Stl Sword |
+  | Steel Spear | Stl Spear |
+  | Iron Gauntlets | Iron Gntlt |
+  | Steel Gauntlets | Stl Gntlt |
+  | Houndmaster's Axe | Hound Axe |
+  | Fordwarden's Spear | Ford Spear |
+
+- **The forecast shows the full name when it fits** with the uses after
+  it (`Iron Sword 20`, `Moonblade 30`), else the short name (`Stl Sword
+  25`). The PC's 13-cell column fits every weapon one way or the other.
+- *Claude's starting rules (Nick can veto):*
+  - A new weapon whose name doesn't fit gets a short name in the same
+    style; the content check refuses one wider than the line less its
+    uses.
+  - Where even the short name doesn't fit (the Playdate's 10 cells), the
+    short name is cut with `…` (`Stl Sw… 25`); a weapon without one is
+    cut by its full name (`Iron S… 20`).
+
+### Side panel
+
+Decided 2026-11-16, ticket 0078 (built by 0484). A friend's playtest of
+the Act 1 build, passed on by Nick (2026-11-07): "Make stats easier to
+see, rather than needing to go to unit info or leveling up (we can
+workshop ideas)". Until then the panel showed the terrain, then the
+unit's name, class and level, HP and faction, and the gold: no stats and
+no weapon, though this page said it showed both. Nobody had decided to
+leave them out.
+
+Nick saw Chapter 1's map at its start, hovering Ellery and a Brigand, in
+both looks, with: A. stats and weapon on the panel; B. combat numbers on
+it instead; E. both together; D. a window over the map beside the unit;
+and the Playdate's corner window with stats, and with stats and combat
+numbers. (A key that flips the panel was offered for the Playdate; the
+PC's panel has room for everything.)
+
+> [which:] "E: A + B on panel" … [the same for enemies?] "if the
+> standard for Fire Emblem is that you can open a stat panel on enemy and
+> all info is not hidden then we can keep it the same" [it is: the GBA
+> games open an enemy's stat pages, items included] … [the Playdate:]
+> "probably stay as name + HP, but what button do you propose to switch
+> to full window given we don't have many buttons avail on Playdate? I
+> think it might be worth exploring but only if there's a good option
+> available." [shown hold B + Up, no button, crank forward:] "No flip
+> button" … [unit info shows Ellery's Def 4 without her Leather Vest's
+> +2; fights use 6:] "can u switch armor during a battle? I don't think so
+> right, so prob with gear" [right: armor and accessories change only at
+> Preparations]
+
+**On the PC, both looks** (the panel is the same in both), from the top:
+
+```
+Road
+DEF +0  AVO +0
+
+Ellery
+Exile  Lv 1
+HP 19/19   ##########
+Player
+
+Str   8     Mag   1
+Dex   7     Spd   7
+Def   6     Res   5
+Mov   5
+
+Iron Sword        20/20
+Atk  13     Hit 104
+Crit  3     Avo  14
+AS    5
+
+Gold 0
+```
+
+- **The terrain and the unit block stay as they were**: terrain name and
+  bonuses; name in faction colour, class and level, HP with its bar,
+  faction.
+- **Then the stats**, two to a row: Str, Mag, Dex, Spd, Def, Res, then
+  Mov. They are **the numbers a fight uses**: with the equipped armor and
+  accessory (Nick: "prob with gear") and the timed effects, so Ellery's
+  Def reads 6 with her Leather Vest, not 4. Unit info shows the same
+  numbers (built by 0484 too).
+- **Then the equipped weapon** (or attack spell) and its uses, as the
+  menus' top border names it (`Iron Sword 20/20`).
+- **Then the combat numbers**, two to a row: Atk, Hit, Crit, Avo, AS.
+  They are the unit's side of any fight, before the target counts:
+  - `Atk` = Str (Mag for a magic weapon or spell) + the weapon's might;
+  - `Hit` = the weapon's hit + Dex × 2;
+  - `Crit` = the weapon's crit + Dex / 2;
+  - `Avo` = Spd × 2 + the avoid of the terrain the unit stands on (+15
+    with a gauntlet);
+  - `AS` = attack speed;
+  
+  by the formulas in `stats-and-combat.md` and `weapons-and-items.md`,
+  with a broken weapon's penalties. The forecast still gives the
+  numbers of one fight against one target.
+- **The same for every unit**, enemies included (Fire Emblem shows an
+  enemy's full stats too).
+- *The agent's starting rules (Nick can veto; on the Act 1 playtest's
+  checklist, 1064):*
+  - Labels are dim, values bright; labels in mixed case as in the
+    forecast. A blank row between the unit block, the stats and the
+    weapon.
+  - `Hit` shows above 100 when it is (Ellery: 104), and `AS` below 0
+    (the Brigand's Iron Axe is heavy for him: `AS -1`), as the formulas
+    give them; neither is cut.
+  - A unit with no weapon or attack spell in hand shows `--` for the
+    weapon, `Atk`, `Hit` and `Crit`; `Avo` and `AS` still show.
+  - Stats raised or lowered by a timed effect are marked as on unit info;
+    gear doesn't mark them.
+  - Skill bonuses count when they hold in any fight: timed effects, the
+    equipped weapon's passive, an ally's aura reaching the unit where it
+    stands. One that holds only in some fights (when attacking, against a
+    kind of unit) isn't counted, as the Preparations' speed line leaves
+    out bonuses that only apply in a fight.
+- **The Playdate doesn't change** (Nick: "No flip button"): the corner
+  window stays name and HP, and the full numbers are on Unit info,
+  from the map menu.
+- **Not chosen:** combat numbers alone (B), a window over the map (D:
+  it covers the units around the one under the cursor), a key that flips
+  the panel.
+
+**While a spell, item or skill is aimed** (decided 2026-11-17, ticket
+1286). Nick saw Fire aimed at a forest and a Potion aimed at a hurt
+archer with: (a) a block at the top of the panel (the name, the preview
+line, a rule) over the tile and unit; (b) the same above `Gold`; (c) for
+a heal on a unit, its HP line showing the change with the preview line
+under it, and (a) elsewhere.
+
+> [asked how (a) and (c) differ, then:] "I like C but I don't like the
+> redundancy of showing HP 6 -> 17/17 as well as the line under it saying
+> potion on test archer... I think just the top line is better for a
+> potion use case. Otherwise, like A has it for inanimate objs like a
+> forest is good."
+
+```
+Fire                              Road
+Forest → Burning (1 round)        DEF +0  AVO +0
+──────────────────────────
+Forest                            Test Archer
+DEF +1  AVO +20                   Archer  Lv 1
+                                  HP 6 → 17/17 ##########
+                                  Player
+```
+
+- **A heal or potion aimed at a unit** (the Heal spell, a Potion, an
+  Elixir): the unit's HP line says it, `HP 6 → 17/17` in the highlight
+  colour, its bar showing the HP the heal leaves, after the line. No
+  block and no preview line in the panel.
+- **Anything else aimed** (a spell at a tile, a skill at a unit): a block
+  at the top of the panel, the name in the highlight colour, the preview
+  line under it wrapped to the panel (never cut), then a rule; the tile
+  and unit follow as when browsing.
+- The line over the help bar stays as it is in both cases (*Screen
+  layout*). Attacks and attack spells at an enemy keep their forecast,
+  which replaces the panel.
 
 ### Portraits and battle art (bought)
 
@@ -785,8 +1107,11 @@ sprites.
     Narration (no face, no name) sits in the same box from the same
     column as speech, on the first text row, in the dim narration colour
     (ticket 0740; it was centred before).
-  - **Not** in the battle side panel or hover. That panel shows stats only
-    (Nick dropped the mini portrait).
+  - **Not** in the battle side panel or hover (Nick dropped the mini
+    portrait). What the panel shows is in *Side panel*.
+  - **Preparations, Loadouts:** a three-quarter face (48×48) at the
+    start of each row that names another unit's item (Nick, ticket 0479;
+    `weapons-and-items.md`, *Loadout (per unit)*).
 
 #### Combat screen
 
@@ -889,6 +1214,13 @@ sprites.
     Company's archers** are the same picture with dark hair and red in
     their clothes, so they aren't her twins.
   - **The female lead's** top is blue, as in her portrait (0706).
+  - **The Rider** (decided 2026-11-16, ticket 0446, on renders of the
+    intro's fight shot): the **Red Company's riders** are the Paladin
+    with its gold trim, lance and cloth in red, like their guard; **Tamsin**
+    keeps the gold trim and lance, and her tabard and saddle cloth are a
+    clear red, her own colour (she wore the Red Company's red). Nick, on
+    three options (as bought, Veyne blue, faded brick red): "prob a bit
+    more red than A or C", then the reddest of three.
   - A **class's picture is what the enemy's soldiers of that class look
     like**; a named character of the player's who shares it gets their own
     recolour *(Claude's rule for how the files are set up; in Chapter 1
@@ -937,7 +1269,8 @@ like shit". What the search was held to after that:
 
 | Fighter | Combat picture | Size | Map sprite | Source |
 | ------- | -------------- | ---- | ---------- | ------ |
-| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders | Pixel Flag; MattWalkden |
+| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders, red (ticket 0499): the **lance rider** for the Rider, Lancer, High Lancer, Iron Rider and Juggernaut, the **bow rider** for the Outrider and Windrunner; 24×24 frames, a little bigger than a Tiny Tales sprite | Pixel Flag; MattWalkden |
+| A rider who got off the horse (0083) | Not decided yet (ticket 0089); the Paladin until then | 1.5× | The Tiny Tales knight on foot (Knight M1), named for every mounted class in the tileset's `on_foot` (0499); drawn once 0334 puts the rider's state in the map scene | Pixel Flag; Tiny Tales |
 | Harl | The **bearded axe bandit** (`bandanna05`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Brigand | The **bearded axe bandit in its second colours** (`bandanna05_b`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
 | Raider | The **armoured axe fighter**, red (`fighter04_a`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
@@ -995,14 +1328,30 @@ like shit". What the search was held to after that:
   - **Pixel Flag (ぴくせるふらっぐ商店)**, *ドット絵TRPGのコマ「クラスと
     モブ」全64種*, <https://booth.pm/ja/items/7851483>, ¥500. Commercial
     use and edits allowed, no resale or redistribution, no credit needed,
-    "AI生成不使用の手打ちドット100％". Nick likes only its Paladin. **Not
-    bought yet.**
+    "AI生成不使用の手打ちドット100％". Nick likes only its Paladin.
+    **Bought 2026-11-16** (ticket 0446). The whole pack is ours, so check
+    it before buying another picture: 64 chibi pieces about 40 px tall,
+    most facing the viewer, which the side-on rule above rules out
+    without Nick's OK. Turned to one side are a gunner and two archers
+    on foot, and three riders: a mounted archer, a cavalryman with a
+    sword, and the Paladin. The rest are knights and fighters
+    (templar, dragoon, valkyrie, samurai, viking, pirate and others),
+    mages and clerics, and townsfolk (king, queen, maid, villagers, a
+    dog and a cat). The private library's `pixel-flag/INDEX.md` lists
+    each one with its size.
   - **MattWalkden**, *Fantasy Battle Pack*,
     <https://mattwalkden.itch.io/fantasy-battle-pack>, pay what you want.
     "Royalty free commercial and personal license"; "No generative AI was
     used". Idle, move, attack and death in 4 directions ("as long as they
-    are animated same as rest of our units MattWalkden looks good"). Read
-    the licence file in the download for edits before the first use.
+    are animated same as rest of our units MattWalkden looks good").
+    Downloaded 2026-11-17 (ticket 0499); its licence file allows use in
+    a commercial game and edits, never handing the files out on their
+    own. The private library's `mattwalkden/INDEX.md` lists the whole
+    pack: lance, sword and bow riders, armoured lance and axe knights on
+    foot, spear, sword and axe fighters, an archer, a thief and a wizard
+    (each in blue, green and red, most in three skin tones), plus a
+    tileset and battle UI pieces. Check it before buying another map
+    sprite.
 - **Not usable, so nobody rechecks:** SRPG Studio's bundled art and every
   edit of it (its terms allow it only in games made with SRPG Studio);
   RPG Maker stock-character lookalikes; Fire Emblem fan sprites (reworks
@@ -1204,12 +1553,9 @@ Shown `of` pale with the bars gold, and with the bars pale too:
   - It stays for the whole launch: back from a battle or Game Over, the
     title shows the same picture.
   - The lettering is the same on every backdrop.
-- **Sparks drift up the screen** (Nick: "it looks more dynamic than a
-  static background this way"; "we might tune it a bit later"): 46 small
-  dots and stars in warm colours, each rising 9 or 18 rows a second and
-  swaying a cell or two (*all tunable*, `title/glyph.rs`). They pass
-  behind the logo and the menu, and show from the first frame, before the
-  first press too *(Claude's starting rule)*.
+- **A campfire burns in the bottom-left corner, and embers rise from it**
+  (ticket 0922, below). The 0811 sparks (46 dots drifting up the whole
+  screen) are gone: the embers took their place.
 - **The title music starts at once** on the first press, as before (Nick:
   "A"): the song's own opening is quiet and rising.
 - **Layout:** the logo at the top; under it the menu, or `Press any key or
@@ -1223,6 +1569,66 @@ Shown `of` pale with the bars gold, and with the bars pale too:
   placeholder: the bought pictures aren't in it (ADR-0040).
 - The intro cinematic's last shot (`title-screen.md`, *Intro cinematic*)
   and the Game Over animation (ticket 0830) use this logo.
+
+#### The campfire, its embers and its crackle
+
+Decided 2026-11-18, ticket 0922, over two rounds of moving renders of the
+real title with the bought backdrops, and 30-second recordings to listen
+to. Screenshot of the built screen:
+[`0922-title.png`](../screenshots/0922-title.png). Nick, on the 0908 sparks: "we can probably enhance the title screen
+some more in general, with additional sfx (fire burn) ambience and a
+sprite of a campfire or smth which fades out when the cinematic plays
+too".
+
+Round 1 (the fire: 1 Idylwild's stone ring, 2 the same with smoke, 3
+ArlanTR's bright outlined flames, 4 crad's crossed logs, 5 the bought
+brazier; where: left of the menu at 3×, under the menu at 2×, the corner
+at 4×, beside the logo at 2×, two either side of the menu; the embers:
+today's sparks, rise, few, tall, mix; the crackle: his own two Freesound
+picks, raw and at three compressor strengths, after "I want less popping
+and a higher volume base sound I think he said to use a compressor for
+that"):
+
+> 2 Idylwild + smoke; Corner, 4×; [the embers:] render each with my prev
+> selections
+
+Round 2 (the five embers again with that fire and place; the loudness
+under the song: 6, 12 or 18 dB under; the fade: with the picture, the
+sound lingering, a slower fade, the crackle staying):
+
+> [Embers:] Rise. [Crackle:] 2 light, and make sure it's volume controlled
+> so it mixes well with the title music and doesn't overtake it.
+> [Loudness:] prob in between -12 and -18 somewhere around there.
+> [Fade:] With the picture.
+
+- **The fire** is Idylwild's *Chromatic Campfires* (CC0), the orange fire
+  in its ring of stones with a column of smoke over it, four frames
+  (`assets/title/campfire.png`). It stands in the **bottom-left corner**,
+  4× (104×208 screen pixels), on the row over the help line. A frame
+  every 140 ms, and it flickers a little darker now and then *(both
+  tunable)*. With idle motion off (Options) it stands still on its first
+  frame and no embers rise *(Claude's starting rule)*.
+- **The embers rise from the fire** ("Rise"): 26 dots and stars in warm
+  colours, each from near the middle of the flames, 6 to 11 rows a
+  second, drifting a few cells to one side and swaying; bright for the
+  first half of their rise, then fading out 8 to 15 rows up *(all
+  tunable, `title/glyph.rs`)*. They show from the first frame, before the
+  first press too, as the sparks did.
+- **The crackle** is HECKFRICKER's *Campfire 02* (Freesound, CC0), 40
+  seconds of it looped, under the light compressor Nick picked (4:1) so
+  the bed is louder and the pops quieter. It plays about **15 dB under the
+  title song** ("in between -12 and -18"; the cue's volume in
+  `audio.ron`, *tunable*). It starts with the song, on the first press.
+- **They go with the picture** ("With the picture"): when the title goes
+  idle, the fire and the embers go to black with the logo and the
+  backdrop in 0.2 seconds, and the crackle fades out over the same 0.2
+  seconds; the cinematic then comes in as before. On the cinematic's last
+  shot, the logo, the fire is back, and so is the crackle (in the
+  silence after a skip too) *(Claude's starting rule: the logo shot is
+  the title's picture)*. Starting a game fades the crackle out the same
+  way.
+- **The Playdate's title** stays as it is for now (Nick: "decide later,
+  followup ticket"): ticket 0924.
 
 ### Game Over screen
 
@@ -1413,6 +1819,35 @@ battle as they were.
   (`ch01.md`, *After the fight*). The battle map already had the noon
   light; it read as early morning because it was darkened at once.
 
+**The faces over a darkened place** (decided 2026-11-18, ticket 0739).
+Round 3 asked why the faces were darkened with the place. Nick was shown
+real frames of the yard and the study with the bought portraits: the
+listener not dimmed, dimmed to 80% or as today (55%); faces at full
+brightness, hidden or dimmed during narration; and the place at 40%, 50%
+and 60%. His answers:
+
+> [the listener:] "I have no problem with the listener face as it is
+> today. the concern is that the ambient lighting bleeds into the dialogue
+> boxes. like in the study"
+>
+> [narration:] "again no concern here"
+>
+> [the place:] "this is not the problem. the problem is the study has its
+> dialogue boxes being a ridiculously low brightness." (seen in the web
+> build)
+
+- **The listener stays dimmed as today** (about 55% of full colour), and
+  so do both faces while a narration box is up.
+- **The place stays at 40%** (the study at 60%, above).
+- **The place's light never reaches the faces, the name plates or the text
+  box.** The study's night light shades the floor and walls only. Nick
+  saw them dark in the study in the October playtest's web build; today's
+  web build and desktop window draw them as bright as over the yard
+  (checked 2026-11-18, and Nick confirmed it was the old build).
+- The title cinematic's talk shots are drawn by the same skin, so they
+  follow these rules. They are never faded as a whole: the cinematic
+  fades in from black only at its start, over a map shot.
+
 *Claude's starting rules (Nick can veto):*
 
 - The place behind the talk is at **about 40% of its brightness**, a
@@ -1578,12 +2013,216 @@ player's map look is pictures:
 - **The cursor** is the battle map's picture cursor: thick marks with a
   dark edge round the plate.
 
+### Key names in hints
+
+Decided 2026-11-16, ticket 0250, over five rounds of mockups (real
+Chapter 1 frames in both looks, with only the key names repainted in the
+real font and palette). Nick, playing Chapter 1 (0804), on the text box's
+`b log` hint:
+
+> "generally looks fine, but I think all hotkeys need to be more easily
+> discernable right now they blend in "b log" looks like some word... if
+> it were "<B> log" or "[B] log" or bolded B log or something with a
+> different color for the keybind it would be better"
+
+Shown brackets, angle brackets, a key colour, a key-cap box, bold and a
+mix of brackets and colour, in lowercase and capitals:
+
+> "can I see bold + keycap? also, this probably will need to be changed on
+> console / playdate (console using i.e. colored buttons or official
+> icons, and playdate consideration for 1-bit screen) -- these can be
+> followup tickets. Let me see bold + keycap before deciding, in both
+> lower and uppercase."
+>
+> "bold + capitals + keycaps looks good. But I think the centering can use
+> some work. somehow keep the border/margin on keycaps more consistent.
+> The top/bottom margin should be same. And left/right the same.
+> Shouldn't have some keys like W and D and F going to top of the box."
+>
+> (Even margins, with longer names as written or in capitals:) "G3 when
+> looking at Shift and Space. But for Arrows I think we can represent it
+> with a combination keycap in the triangle-like shape it usually comes on
+> the keyboard. That's how most games show it."
+>
+> (The arrows at 8 and 10 px a key; a cursor on other keys as a small
+> lettered T, four caps or one wide cap:) "1: 8 px keys"; "four caps but
+> seems the commas and period are currently behind the caps so fix that"
+
+This is the keyboard's look. **A controller's buttons and the Playdate**
+are open (*Open sub-questions*).
+
+- **Every key name is a key cap**: wherever text names one of the
+  player's keys (help bars, the text box's corner, tips and lessons,
+  Options, Key bindings), the name sits in a small rounded box like a
+  keyboard key, in the same place in the line. The words around it are
+  unchanged. Example: the battle's help bar reads `F select · E info ·
+  S next unit · Space end turn`, with `F`, `E`, `S` and `Space` each in a
+  cap (no brackets).
+- **The cap:** a box a shade lighter than the panel, with a 1 px edge
+  lighter again (the mockup's `#4a402e` and `#807052`, *tunable*), its
+  corners rounded. The name is in **bold**, in the `text` colour, brighter
+  than the help line's `text_dim` words.
+- **Even margins:** 2 px between the letters and the box's edge, the same
+  above as below and the same left as right, for every capital letter
+  (W, D and F sit as low as E). The cap is one text line tall. A
+  lowercase letter that hangs below the line (the `p` of `Space`) may
+  reach the bottom edge: Nick picked this seeing it.
+- **Single letters are capitals** (`F`, not `f`). Longer names are
+  written as the keymap writes them: `Space`, `Shift+Space`, `F2`,
+  `Enter`. A chord is one cap holding the whole name.
+- **The arrow keys** (the cursor on ↑ ← ↓ →): one picture of four small
+  caps in an upside-down T, as on a keyboard, each 8 × 8 px with an
+  arrow, one text line tall and three cells wide, in place of the word
+  `arrows`.
+- **The cursor on other keys:** four caps in up, left, down, right order,
+  one space between them (`W A S D` as four caps).
+- **Nothing hides behind a cap:** a comma, full stop or colon right after
+  it is drawn whole, beside the cap's edge, not under it.
+- **Both looks** (glyphs and pictures): the same caps.
+
+*Claude's starting rules (Nick can veto):*
+
+- An action with no key still reads `! not mapped`, in plain text, no cap.
+- On the Key bindings screen the caps are the key names in the slot
+  columns; a slot being captured keeps its prompt in plain text.
+
+### The objective at a battle's start
+
+Decided 2026-11-17, ticket 0481, on mockups of Chapter 1's and Chapter 2's
+start in both looks. A playtester (passed on by Nick, 2026-11-07):
+
+> "The battles should explain the objective without needing to go to the
+> objective in the options menu (i.e. a brief popup banner at the start
+> of battle so ch2 isn't a surprise)"
+
+Shown: A, the phase banner's look with the parts joined by a gold `AND`;
+B, labelled `Win:` / `Lose:` lines, as Fire Emblem: Three Houses lists a
+battle's victory and defeat conditions, up for a few seconds; C, B's panel
+waiting for Confirm. Nick picked **C**, with the Objective page using the
+same wording (yes), then a `Bonus:` line for the village's rewards
+(recommended option, picked).
+
+- When a battle starts (after the pre-battle talk and the battle notes,
+  before turn 1's `PLAYER PHASE`), an `OBJECTIVE` panel in the middle of
+  the map: a double frame in the player's colour, the title, then one line
+  per part, its label in a column in the highlight colour (gold in the
+  default theme), the text after it in the text colour:
+
+  ```
+  ╔═════════════════════════════════════════╗
+  ║                OBJECTIVE                ║
+  ║  Win:   Defeat Silas Hendry             ║
+  ║  Lose:  3 of 5 houses burn              ║
+  ║  or     Ellery falls                    ║
+  ║  Bonus: Save 4 or 5 houses for rewards  ║
+  ╚═════════════════════════════════════════╝
+  ```
+
+- It stays until Confirm (help `continue`); no other key does anything
+  under it. It is not timed.
+- The lines (`turn-structure.md`, *The objective at a battle's start*):
+  `Win:` and the objective; `Lose:` and the first thing that loses it,
+  then `or` and each other one; `Bonus:` in a battle with a village whose
+  houses past the minimum give rewards.
+- The map menu's Objective page shows the same lines (the labels in a
+  column, in the page's text colour), then the village's count
+  (`Houses: 1 saved, 0 lost`) and the turn.
+- The same in the picture look (the panel is drawn over the bought map as
+  the phase banner is) and on the Playdate (a window in its inks, the
+  labels in a column; a line too wide for the screen is cut).
+- It shows on a fresh start and on Retry or Restart; not after a rewind,
+  nor on a suspended battle carried on (*the agent's starting rule*, 0481).
+
+### The chapter title card
+
+Decided 2026-11-17, ticket 0812, on mockups at the game's size in palette
+D. Shown: A, no card (the chapter opens on its first scene); B, the
+chapter's number and name centred on black; C, B with a frame like the
+phase banner's or with rules. Nick: *"let me see the 2 C variants with
+perhaps different font choices to better accentuate a title card"*; then,
+of the framed card and the card with rules each in three letterings
+(spaced capitals, a big numeral, big block letters): *"I like C1
+framed/lettering and C3 big block name the best but I wonder if we could
+explore other fonts I think a titlecard is fine to break from our
+established one font for everything"*. Of six open-licensed fonts (two
+pixel blackletters, a pixel sans, Cinzel, IM Fell English SC, Grenze
+Gotisch) he liked Jacquard 24, Cinzel and IM Fell English best, picked
+**the rules** over the frame, then **Cinzel**, and Cinzel for the
+`Chapter 1` line too (over IM Fell English).
+
+- When a chapter starts (New Game, the next chapter, a loaded chapter
+  save), before its first scene, the screen is black with two rules
+  across its middle, each a double line broken by a small diamond in the
+  dim border colour (`══════ ◆ ══════`); between them `Chapter 1` in
+  Cinzel Medium in the text colour, and under it the chapter's name in
+  Cinzel Bold, larger, in the highlight colour (gold in the default
+  theme). Both come from the chapter file's `title` (`Chapter 1: The
+  Letter`), split at its first `: `.
+- The name is in Cinzel, the only text in the game that isn't the cell
+  font (Nick: a title card may break from one font for everything). The
+  longest Act 1 name (`The Hound's Country`) fits on one line.
+- It closes by itself after a few seconds, or on Confirm or Cancel (the
+  ticket's rule).
+- The same in the picture look (the card covers the screen; there is no
+  map behind it).
+
+*The agent's starting rules (Nick can veto):*
+
+- The card stays up **3 seconds** (*tunable*, `chapter_card.rs`).
+- A world-map chapter shows it before its opening scenes; arriving at a
+  battle on the world map doesn't show it again. Restarting or retrying
+  a battle doesn't either.
+- A title without `: ` shows whole as the name, with no line above.
+- A language whose title has a character Cinzel lacks shows both lines in
+  the cell font, in the same places.
+- On the Playdate the card is the same in its inks, in the cell font (its
+  screen is too small for Cinzel's name at this size).
+- The debug Quick Battle shows no card (it goes straight to its battle).
+
+As built: [`0812-chapter-card.png`](../screenshots/0812-chapter-card.png)
+and, on the Playdate,
+[`0812-chapter-card-playdate.png`](../screenshots/0812-chapter-card-playdate.png).
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side
 panel on the right (single-line; **double-line** when a unit is selected), a
 status line on top (chapter, objective, phase and turn, rewinds), and a 2-row
 message and key-help bar at the bottom.
+
+**The bottom bar** (ticket 0445; Nick, 2026-10-04 and 2026-11-17, from
+rendered frames of the Quick Battle):
+
+```
+ w danger zone: OFF                                      Shift+Space auto-end: OFF
+ f select · e info · s next unit · r rewind · d menu     Space end turn    F2 debug
+```
+
+- The toggles' row: the danger-zone hint from the left edge, where the key
+  help starts ("left align the w danger zone hint"); in the picture look
+  the zoom hint goes first, before it (`q zoom: 2× · w danger zone: OFF`).
+- While browsing, `end turn` is always in one column, padded out to the
+  longest of the browsing help lines, and the auto-end hint sits right
+  above it ("align shift+space auto-end to a column with space end
+  turn"). When the key help has no `end turn` (a unit selected, a menu,
+  a prompt, aiming, a fight, the enemy phase) both toggle hints are
+  hidden. Nick picked this over auto-end following `end turn` wherever it
+  lands.
+- Messages (Nick: "toast in a different part like a new row under or on
+  top of the banner which appears briefly"; then "for INFO level like
+  Auto-End ON it can be 1, for WARN/ERR level messages probably 4 but
+  left aligned"):
+  - a brief note (`Auto-end: ON`, what a unit picked up) shows on a
+    shaded strip over the map's bottom row, just above the bar;
+  - a warning or an error (the save failing) shows in a small box at the
+    bottom left of the map, just above the bar; a long one wraps inside
+    the map's width ("Wrap inside the map");
+  - what a spell, item or skill will do while you aim it, and a fight's
+    lines, stay where they were, at the left of the toggles' row ("as it
+    is today but make it not conflict with any new additions"); the toggle
+    hints are hidden then, so nothing meets. Nick also wants the preview
+    in the side panel "somehow": ticket 1286, *Side panel* (*While a
+    spell, item or skill is aimed*).
 
 ## Theme palettes for ticket 0806 (*mockup values, tunable*)
 
@@ -1618,21 +2257,18 @@ black.
 
 ## Open sub-questions
 
-- Title screen: the sparks may be tuned after Nick has seen them in the
-  game (ticket 0811).
+- The Playdate's title: whether it gets the campfire, its crackle or
+  neither (ticket 0924).
 - Selection arrows `►Al◄` next to another unit: whole-glyph arrows would hide
   one of its letters (the 0416 bracket problem). Ask Nick before 0403 draws them.
 - Combat screen (ticket 0413 decided where it is shown, the backdrop, the
   motions, the sizes and the Chapter 1 recolours): which backdrop each
-  terrain gets (today mountains or fields, Claude's starting rule); the
-  riders, who show a plain figure until Pixel Flag's Paladin is bought
-  (ticket 0446).
+  terrain gets (today mountains or fields, Claude's starting rule).
 - Sprite units on the map: the outline alone or with a corner mark
   (0436).
 - On the bought tiles (seen in ticket 0437, not decided): the picks in
   the terrain table above, the burning stand-in first.
-- The battle screen's bottom two rows: the danger-zone hint on the left
-  and the auto-end hint in a column with `end turn` (Nick, 2026-10-04);
-  where a message goes, and what auto-end lines up with when the key help
-  has no `end turn`, are for him to pick from rendered options (ticket
-  0445).
+- Key names in hints with a controller (coloured buttons or the
+  platform's icons, ticket 0255) and on the Playdate's one-bit screen
+  (ticket 0256): the keyboard's key caps are decided (*Key names in
+  hints*); these two are asked when their tickets are picked up.

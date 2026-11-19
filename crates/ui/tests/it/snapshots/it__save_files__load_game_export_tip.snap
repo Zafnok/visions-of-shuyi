@@ -33,7 +33,6 @@ expression: h.snapshot()
                                                                                                     
                    Saves are kept in C:\Users\Player\AppData\Roaming\tactical-rpg                   
                                                                                                     
-             arrows choose · f load · e export · Space import · x open folder · d back              
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aabbccbbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
@@ -42,9 +41,9 @@ aabddebdccccccccccccccccdddddddddddddddddddddddddddddddddddddddbeddddddeeeeddddd
 aabdddbddddddddddddddddddddddddddddddddddddddddddddddddddddddddbdddddddddddddddddddddddddddddddddbaa
 aabfffbddddddddddddddddddddddddddddddddddddddddddddddddddddddddbfffffffffffffffffffffffffffffffffbaa
 aabdddbddddddddddddddddddddddddddddddddddddddddddddddddddddddddbdddddddddddddddddddddddddddddddddbaa
+aabdddbdddddddddddddddddddddddddddddddddddgddddddddddddddddddddbdddddddddddddddddddddddddddddddddbaa
 aabdddbddddddddddddddddddddddddddddddddddddddddddddddddddddddddbdddddddddddddddddddddddddddddddddbaa
-aabdddbddddddddddddddddddddddddddddddddddddddddddddddddddddddddbdddddddddddddddddddddddddddddddddbaa
-aabdddbdeeeeeeeddddddddddddddddddddddddddddddddddddddddddddddddbdddddddddddddddddddddddddddddddddbaa
+aabdddbdgeeeeeeddddddddddddddddddddddddddddddddddddddddddddddddbdddddddddddddddddddddddddddddddddbaa
 aabdddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddbaa
 aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddeeeeedddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
@@ -64,9 +63,8 @@ aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 aabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeeeeeeeeebbaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaagggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -74,4 +72,5 @@ c = fg:text_highlight bg:panel_bg
 d = fg:text bg:panel_bg
 e = fg:text_dim bg:panel_bg
 f = fg:panel_bg bg:panel_border_focus
-g = fg:text_dim bg:black
+g = fg:text bg:key_bg
+h = fg:text_dim bg:black

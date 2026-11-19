@@ -138,7 +138,14 @@ fn the_restore_question_opens_in_a_window() {
     let shown = rows(&buf);
     let at = shown
         .iter()
-        .position(|r| r.contains(question.keys.as_deref().unwrap_or_default()))
+        .position(|r| {
+            r.contains(
+                &question
+                    .keys
+                    .as_ref()
+                    .map_or_default(shuyi_ui::text::StyledText::plain),
+            )
+        })
         .unwrap();
     assert!(shown[at - 2].contains(&question.text), "{shown:#?}");
 }

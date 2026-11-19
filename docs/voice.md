@@ -310,6 +310,44 @@ reaction. The dialogue log's cursor says the line it moves onto unless
 *Voice on hover in the log* is off. The debug menu's **Voice test** says
 the test scene's voiced lines, one per press, without the screen.
 
+That preload comes as the scene starts, and the first line is said on
+the same frame: on the web, where a clip is fetched, it would miss the
+0.3 s. So a scene's first 3 lines (`DialogueScreen::first_lines`) are
+kept loaded (`ctx.keep_voices`) a screen before it starts, by whoever
+knows it comes next (ticket 1293, `crates/ui/src/flow/first_lines.rs`):
+
+- The title keeps New Game's opening scene's while it is on top.
+- The Load Game list keeps those and the first scene of each save it
+  lists (a chapter save's next chapter's; a world-map save plays none).
+- The game flow, each time it shows a screen, keeps the first lines of
+  the scene it shows, if it is one, and of the scene it knows comes
+  after it: the next scene waiting (a chapter's first while its title
+  card shows, ticket 0812; the next intro scene; the victory scenes
+  while the results show), New Game's opening during the
+  questions and the lead screen, the next chapter's at the save prompt
+  and in camp. So picking New Game or a save narrows the set to that
+  path's lines, and a scene's lines stay kept until its own screen has
+  asked for them. Before a battle it keeps nothing; the battle keeps
+  its own set.
+- The battle keeps, beside the guide's lines, the first lines of every
+  scene it may still play over itself (ticket 1296,
+  `screens/battle/scene_voices.rs`): those its triggers fired that wait
+  their turn, and those its triggers may yet fire. A `once` trigger
+  that fired, a turn's that has passed, one for the other mode (a
+  Classic death quote in Casual) and one about a character neither on
+  the map nor among the reinforcements to come drop out the next time
+  the set changes. A scene the battle pushes keeps its lines in the set
+  until it is on screen.
+- The world map keeps the first lines of the intro scene of every
+  battle the army's next move may start (`world_battle_lines`): at its
+  own place, or where one Travel would end as the rules route it. It
+  sends the set on its first frame on top and again once the army moves.
+
+Not covered: a victory scene when a battle has no results to show (no
+screen before it). A line whose
+words change with the lead's gender is kept in the clip of the lead
+the title knows (the last one played) until the lead is picked.
+
 The battle screen (ticket 0476) says the guide's line as a lesson's or a
 tip's box comes on screen; the box going, or another taking its place,
 stops it. A box back on screen after a pause (a combat playing over an

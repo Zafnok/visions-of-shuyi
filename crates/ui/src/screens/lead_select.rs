@@ -19,6 +19,7 @@ pub mod view;
 
 use crate::prelude::*;
 pub use crate::widgets::name_entry::{GridCell, NameBox, NameEntry, grid};
+use shuyi_ui::text::StyledText;
 pub use view::{GenderView, GridView, LeadSelectView, NameRowView, TypingView};
 
 use trpg_core::lead::{DEFAULT_NAME, FAMILY_NAME, MAX_NAME_LEN};
@@ -26,11 +27,12 @@ use trpg_core::{LeadGender, LeadProfile};
 
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
-use crate::input::{Action, text_keys_help};
+use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::Skins;
 use crate::widgets::name_entry::{NameEvent, NameRules};
 use crate::widgets::wrap_step;
+use shuyi_ui::screens::text_keys_help;
 
 /// The screen's skins: the PC's and the Playdate's.
 pub const SKINS: Skins<LeadSelectView> = Skins {
@@ -128,7 +130,7 @@ impl LeadSelectScreen {
     }
 
     /// The bottom help line.
-    pub fn help(&self, ctx: &Ctx) -> String {
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
         if self.typing.is_some() {
             return text_keys_help(ctx);
         }
@@ -138,7 +140,7 @@ impl LeadSelectScreen {
             (None, Row::Name) => "lead_select.help.name",
             (None, Row::Start) => "lead_select.help.start",
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// Moves the focus one row down (`down`) or up, wrapping.

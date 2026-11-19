@@ -16,7 +16,7 @@
 # do `gain_problems` and `check_with_gains` in `crates/xtask/src/engine.rs`
 # (ticket 1197).
 #
-# `story_import::gh` (`crates/xtask/src/story_import.rs`) and
+# `story_import::gh` (`crates/tools/src/story_import.rs`) and
 # `story-check`'s `main` (`crates/writer/src/main.rs`) only run `gh` or
 # print what the tested `trpg_writer::story_check` returns (ticket 0152).
 #

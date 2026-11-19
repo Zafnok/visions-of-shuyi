@@ -32,8 +32,6 @@ expression: h.snapshot()
 │                                                ││                                                │
 │ 8 dmg  Hit 96  Crit 3                          ││ 8 dmg  Hit 65  Crit 0                          │
 └────────────────────────────────────────────────┘└────────────────────────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
- d skip · hold f fast                                                                      F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -65,8 +63,6 @@ caaaaaaaeeeeeeeeeeeeeeeeeeeeafffaaaaaaaaaaaaaaaaacdaaaaaaaeeeeeeeeeeeeeeeeefffaf
 caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaad
 cafffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaacdafffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaad
 ccccccccccccccccccccccccccccccccccccccccccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddd
-ggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ghhhhhhhhhhhhhhhhhhhhgggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhg
 --- legend ---
 a = fg:text bg:panel_bg
 b = fg:text_highlight bg:panel_bg
@@ -74,8 +70,6 @@ c = fg:player bg:panel_bg
 d = fg:enemy bg:panel_bg
 e = fg:hp_high bg:panel_bg
 f = fg:text_dim bg:panel_bg
-g = fg:text bg:black
-h = fg:text_dim bg:black
 --- overlays ---
 under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192 clip=64,0 672x112
 under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192 clip=64,128 672x256

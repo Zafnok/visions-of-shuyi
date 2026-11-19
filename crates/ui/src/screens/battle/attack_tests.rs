@@ -11,6 +11,7 @@ use super::BattleScreen;
 use super::playback::{Beat, Playback, TIMINGS};
 use super::progress::PROGRESS_TIMINGS;
 use super::testing::skirmish;
+use super::tests::unpadded;
 use super::view::{BattleView, ForecastView, ProgressView};
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
@@ -51,18 +52,18 @@ fn view(h: &Harness) -> BattleView {
 
 /// The help line.
 fn help(h: &Harness) -> String {
-    view(h).help
+    view(h).help.plain()
 }
 
 /// The message line; empty with none.
 fn message(h: &Harness) -> String {
-    view(h).message.map(|m| m.text).unwrap_or_default()
+    view(h).message.map_or_default(|m| m.text)
 }
 
 /// The name of the unit the side panel shows; empty with none.
 fn hovered(h: &Harness) -> String {
     let unit = view(h).panel.and_then(|p| p.unit);
-    unit.map(|u| u.name).unwrap_or_default()
+    unit.map_or_default(|u| u.name)
 }
 
 /// The HP the side panel shows of its unit (`HP 9/20`).
@@ -143,6 +144,12 @@ fn attack_opens_the_forecast_swaps_the_weapons_and_cycles_targets_in_order() {
     );
     assert_eq!(names(&h), "Test Lord | Raider");
     assert_eq!(weapons(&h), "Iron Sword | Steel Axe");
+    // The forecast says so too, in the player's keys (0463).
+    let swap = shown_forecast(&h).swap.expect("the swap hint");
+    assert_eq!(swap.plain(), "Left/Right weapon");
+    // Ticket 0257: the two keys, each in a key span.
+    let keys = crate::widgets::help::spans_of(h.ctx().help_keys(), &["CursorLeft", "CursorRight"]);
+    assert_eq!(crate::widgets::help::key_spans(&swap), keys);
     h.keys("Right");
     assert_eq!(weapons(&h), "Steel Sword | Steel Axe");
     assert_eq!(names(&h), "Test Lord | Raider");
@@ -235,6 +242,13 @@ fn forecast_with_a_double_and_a_counter_snapshot() {
     assert_snapshot!(lord_on_brigand(20).snapshot());
 }
 
+/// Ticket 0480: the brigand at 12 HP falls to the lord's second strike,
+/// after its counter: `HP 12 → 0`, the skull on strike 3.
+#[test]
+fn forecast_of_a_kill_after_a_counter_snapshot() {
+    assert_snapshot!(lord_on_brigand(12).snapshot());
+}
+
 /// The archer, two tiles below the brigand: it hits twice and the brigand
 /// can't counter. The brigand at 12 HP falls to the second arrow: a skull.
 #[test]
@@ -244,8 +258,10 @@ fn forecast_with_no_counter_and_a_kill_snapshot() {
     h.keys("Right Right Down Down f f f");
     assert_eq!(names(&h), "Test Archer | Brigand");
     assert_eq!(shown_forecast(&h).no_counter.as_deref(), Some("no counter"));
-    // One bow: nothing to swap, every cursor key picks the target.
+    // One bow: nothing to swap, every cursor key picks the target, and
+    // the forecast has no swap mark or hint (0463).
     assert_eq!(help(&h), "arrows next target · f attack · d back");
+    assert_eq!(shown_forecast(&h).swap, None);
     assert_snapshot!(h.snapshot());
 }
 
@@ -326,7 +342,7 @@ fn a_kill_fades_the_unit_out_with_a_message_and_removes_it() {
     assert_eq!(hovered(&h), "");
     assert_eq!(message(&h), "");
     assert_eq!(
-        help(&h),
+        unpadded(&help(&h)),
         "arrows move · f menu · s next unit · r rewind · d menu · Space end turn"
     );
 }

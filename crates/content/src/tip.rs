@@ -93,6 +93,10 @@ pub enum TipTrigger {
     /// its weapon kind's trait (a spear on a mounted unit, a bow on a
     /// flying one), not by a spell's element (ticket 0489).
     FirstEffective,
+    /// The forecast is open and left and right swap the weapon: its unit
+    /// has more than one weapon (or spell) to attack with there (ticket
+    /// 0463).
+    FirstWeaponSwap,
     /// The Load Game list opens with a save in it, where saves can be
     /// exported (ticket 0874).
     FirstLoadGame,
@@ -136,7 +140,7 @@ pub fn load(faces: Option<&BTreeMap<String, Portrait>>) -> Result<TipTable, Vec<
             "file not found in asset bundle",
         )]
     })?;
-    from_source(&display, source, faces)
+    from_source(&display, &source, faces)
 }
 
 /// Parses and validates tips `source`, attributing errors to `file`, each
@@ -222,6 +226,7 @@ mod tests {
             TipTrigger::ZoomAvailable,
             TipTrigger::FirstWadeInReach,
             TipTrigger::FirstEffective,
+            TipTrigger::FirstWeaponSwap,
             TipTrigger::FirstLoadGame,
             TipTrigger::FirstProfileScreen,
         ] {
@@ -267,7 +272,7 @@ mod tests {
         assert!(has("the title must be"), "{all:?}");
         assert!(has("unknown placeholder {Nope}"), "{all:?}");
         assert!(has("1 to 3 lines"), "{all:?}");
-        assert!(has("over 60 characters"), "{all:?}");
+        assert!(has("over 60 cells"), "{all:?}");
     }
 
     #[test]
@@ -283,8 +288,12 @@ mod tests {
         assert_eq!(errors(&source), Vec::<String>::new());
         let source = source.replace(&title, &format!("{title}t"));
         assert_eq!(errors(&source).len(), 1, "{source}");
+        // Three lines over: the engine reports the problem once (engine
+        // 2261), beside the title's.
         let source = source.replace(&line, &format!("{line}x"));
-        assert_eq!(errors(&source).len(), 4);
+        let all = errors(&source);
+        assert_eq!(all.len(), 2, "{all:?}");
+        assert!(all.iter().any(|m| m.contains("over 60 cells")), "{all:?}");
     }
 
     /// Ticket 0455: a tip's face is the guide's expression, `smile` by

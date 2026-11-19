@@ -37,7 +37,7 @@ Bots:
 
 ### The army
 
-The army a bot fields (`crates/xtask/src/playtest.rs`, `stage`: the
+The army a bot fields (`crates/tools/src/playtest.rs`, `stage`: the
 playtest and the autobalance build it the same way) is, for a battle:
 
 - **with a `bots_army`** (a generated skirmish, a side quest, an optional
@@ -186,12 +186,25 @@ only reported. CI plays every battle in `assets/battles` with `--bot all`
 terrain, supports, the new game), the rules (`crates/core`), how content
 becomes a battle (`crates/content`), the bots, the engine pin, or the
 playtest itself. The list is `.github/playtest-levers.sh` (ticket 0514);
-"Run workflow" on the Actions page always plays. It fails only on a
-blocked battle, or one not played; the tables are in the summary of the
-`playtest` job. Each battle plays in a job of its own (`play (ch03)`),
+the content modules no battle reads (credits, tips, languages, audio,
+voice, fonts, pictures, palettes, portraits, cinematics, the keymap) are
+not levers, and an edit to a lever's comments or in-file tests doesn't
+play (ticket 0173). "Run workflow" on the Actions page always plays. It
+fails only on a blocked battle, or one not played; the tables are in the
+summary of the `playtest` job. Playtest is advisory: no ruleset requires
+it (ADR-0014). Each battle plays in a job of its own (`play (ch03)`),
 all three personas in one run, and `playtest` gathers their reports
 (ticket 0530: one job playing every battle in turn ran past its 150
-minutes once Act 1 had 14 battles). A push to `main`
+minutes once Act 1 had 14 battles). The slowest battles (`SPLIT_BATTLES`
+in the workflow: ch03 and side_company_ledger) play in two jobs of 50
+tries, `play (ch03 1/2)` and `play (ch03 2/2)`, and `merge (ch03)` joins
+them with `cargo xtask playtest --merge a.json b.json` into the report
+one run of 100 gives. Each set of inputs is played once (ticket 0173):
+the seeds are fixed, so `detect` hashes the inputs
+(`.github/playtest-inputs.sh`) and reuses the reports of a run with the
+same hash, from the cache or, on the push to `main` that merges a pull
+request, from that pull request's last run; the summary's first line
+says which. A push to `main`
 is never cancelled by the next one, so every push's own changes are
 judged (ticket 0515); a pull request's newer commit cancels its older run.
 
@@ -491,6 +504,44 @@ length of the hold and with little else. Tried and not kept: roofs lv 11
 with Survive 9 (67, 67; Normal 27, 46); the officer lv 12 (71, 74, no
 change).
 
+After 0864 (2026-11-17). Tamsin Spd 6 and Def 6 (Nick's pick) broke
+Chapter 1's recording, and the new one (won on turn 10, nobody lost)
+leaves Chapter 2 the Lead lv 5, retainer lv 4, sergeant lv 6, poacher lv 3,
+keeper lv 2, heretic lv 3, where the old one left the sergeant lv 8 and
+the Lead lv 1. Chapter 1 played the same:
+
+```
+ch01         seeds 1–100
+casual       53/100  band 30–55% ✓
+normal       51/100  band 50–75% ✓
+hardcore     69/100  band 50–75% ✓
+hardcore turns median 6 (normal 9) lower ✓
+```
+
+Chapter 2 fell to 15 / 15 / 12 (blocked), and a Chapter 1 recording made
+with no change to Tamsin gave 14 / 37 / 46: its bands had leaned on the
+old recording's level-8 sergeant, the one unit that reached the west house
+on the Hounds' first turn (ticket 0531). Enemy levels didn't bring it back
+(the autobalance's best after 2.5 hours, every Hound 4 levels down: 34 /
+45 / 76); "save 2 of 5" did (37 / 60 / 70), but Nick kept 3 of 5 and asked
+that no house burn on the first turn. So the west house's raider starts
+at 1,15, two turns away, and 0524's second raider beside it and the ford's
+at 7,9 are gone (each reached a house on the first turn; wherever the
+ford's stood, it burned one or opened the ford to Hendry):
+
+```
+ch02         seeds 1–100            seeds 101–200
+casual       48/100  band 30–55% ✓  36/100 ✓
+normal       50/100  band 50–75% ✓  58/100 ✓
+hardcore     65/100  band 50–75% ✓  63/100 ✓
+hardcore turns median 5 (normal 4) lower ✗    5 (normal 4) lower ✗
+```
+
+Chapters 2 to 5 were recorded again after it, and the later armies moved:
+ch03 68 ⚠ / 70 / 42 ✗, aldwater 100 / 50 ✗ / 80, ch04 50 / 32 ✗ / 31 ✗,
+salt_road 100 / 94 / 96 ⚠, ch05 51 / 15 ✗ / 11 ✗ (seeds 1–100). Ticket
+0876 brings them back.
+
 ## History
 
 Every run is added to a file in the history folder, one file per battle and
@@ -514,7 +565,7 @@ until every band is met or its budget runs out. Only the battle changes,
 never the bots (`docs/design/playtest-bots.md`, *Autobalancing*). The
 search and the command are Shuyi Engine's (`autobalance`, `Knob`,
 engine#2127; `shuyi autobalance`, engine#2541); the game gives the plan
-(`crates/xtask/src/game_tools/balance.rs`) and the knobs
+(`crates/tools/src/game_tools/balance.rs`) and the knobs
 (`crates/bots/src/balance.rs`).
 
 **What it may change** depends on the battle file's `kind`
@@ -682,7 +733,7 @@ weapons. Layouts and the position, reinforcement and terrain knobs are ticket
     `trpg-app` never depend on it, and it never depends on them (a test in
     `xtask` checks the manifests). `personas.ron` and `targets.ron` are
     beside it, dev tooling too, not game content.
-  - `crates/xtask/src/playtest.rs`: the command. It loads the battle and
+  - `crates/tools/src/playtest.rs`: the command. It loads the battle and
     the two files, plays the tries on threads with the engine's
     `play_tries`, judges them once with `judge`, and writes the report,
     the JSON and the history.

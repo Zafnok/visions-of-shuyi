@@ -73,15 +73,22 @@ fn close_notes(h: &mut Harness) {
     assert!(!notes_open(h));
 }
 
-/// Closes the `PLAYER PHASE` banner that follows the notes.
+/// Closes the objective's banner (0481) and the `PLAYER PHASE` banner
+/// that follow the notes.
 fn close_banner(h: &mut Harness) {
+    assert!(shows(h, "OBJECTIVE"));
+    h.keys("f");
     assert!(shows(h, "PLAYER PHASE"));
     h.keys("f");
     assert!(!shows(h, "PLAYER PHASE"));
 }
 
-/// Skips the scene on screen: Cancel, then Confirm on "Skip scene?".
+/// Skips the scene on screen, after the chapter's title card (0812):
+/// Cancel, then Confirm on "Skip scene?".
 fn skip_scene(h: &mut Harness) {
+    if h.top_screen() == "chapter_card" {
+        h.keys("f");
+    }
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
 }
@@ -411,7 +418,8 @@ fn saving_again_opens_on_an_empty_slot_and_asks_before_overwriting() {
     let mut h = relaunch(h, true);
     h.keys("Down f");
     assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
-    assert!(shows(&h, "arrows choose · f load · d back"));
+    // Key caps: the real game draws F and D as caps, the arrows as a picture.
+    assert!(shows(&h, "choose · F  load · D  back"));
     h.keys("d");
     assert_eq!(h.screens(), ["title"]);
     // Another game won: the slots open on slot 2, the first empty one.
@@ -420,10 +428,10 @@ fn saving_again_opens_on_an_empty_slot_and_asks_before_overwriting() {
     win(&mut h);
     let first = stored(&h, &slot_key(1));
     h.keys("f");
-    assert!(shows(&h, "f save here"), "{}", h.snapshot());
+    assert!(shows(&h, "F  save here"), "{}", h.snapshot());
     // Up to the full slot: it says so, and asks.
     h.keys("Up");
-    assert!(shows(&h, "f overwrite"), "{}", h.snapshot());
+    assert!(shows(&h, "F  overwrite"), "{}", h.snapshot());
     h.keys("f");
     assert!(shows(&h, "Overwrite slot 01?"), "{}", h.snapshot());
     assert_eq!(stored(&h, &slot_key(1)), first);
@@ -665,11 +673,10 @@ fn a_storage_that_refuses_everything_still_plays_and_says_why_it_cant_save() {
     let before = battle_text(&h);
     suspend(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert!(
-        shows(&h, &format!("Save storage error: {REFUSED}")),
-        "{}",
-        h.snapshot()
-    );
+    // A warning, in a box wrapped inside the map (0445).
+    let last = REFUSED.rsplit(' ').next().unwrap_or_default();
+    assert!(shows(&h, "Save storage error:"), "{}", h.snapshot());
+    assert!(shows(&h, &format!("│ {last}")), "{}", h.snapshot());
     assert_eq!(battle_text(&h), before);
     h.wait(2.0);
     // A save in a slot after the victory says why too, and the slots stay.
@@ -717,7 +724,7 @@ fn the_music_follows_suspend_and_continue() {
     let music = |h: &Harness| -> Vec<String> {
         h.audio_requests()
             .iter()
-            .filter(|r| !matches!(r, trpg_ui::AudioRequest::PlaySound { .. }))
+            .filter(|r| crate::is_music(r))
             .map(|r| r.cue().unwrap_or("-").to_owned())
             .collect()
     };

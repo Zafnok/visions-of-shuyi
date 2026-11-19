@@ -27,16 +27,26 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
         .unwrap_or_else(|e| panic!("{e}"))
         .with_storage(storage);
     ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
+    // The help's keys as their words (ticket 0254).
+    ctx.game.key_caps = false;
     let mut h = Harness::from_game(trpg_ui::game::start(ctx));
     h.with_lessons();
     // New Game in Classic, the familiarity answer two rows below "Not
     // familiar" (None), the default lead, the intro scene skipped, the
     // battle notes and turn 1's banner closed.
     h.keys("f f Down Down f Up f");
+    // The chapter's title card (0812).
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    h.keys("f").wait(0.1).keys("f").wait(0.1);
+    // The notes, the objective's banner, turn 1's banner.
+    h.keys("f")
+        .wait(0.1)
+        .keys("f")
+        .wait(0.1)
+        .keys("f")
+        .wait(0.1);
     let level = h
         .flow()
         .and_then(|f| f.campaign_now(h.game().ctx()))
@@ -47,7 +57,7 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     h.keys("d Down Down f");
     assert!(h.screen::<GuidesScreen>().is_some());
     assert_eq!(h.screens(), ["title", "game_flow", "battle", "guides"]);
-    let screen = h.snapshot();
+    let screen = h.snapshot_whole();
     for text in [
         "Guides",
         "Moving the cursor",
@@ -61,28 +71,34 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     }
     h.keys("Down");
     assert!(
-        h.snapshot()
+        h.snapshot_whole()
             .contains("No mouse here; it's all keys. And every key")
     );
     h.keys("Up Up");
-    let screen = h.snapshot();
+    let screen = h.snapshot_whole();
     assert!(
         screen.contains("A profile can go out to a file"),
         "{screen}"
     );
     h.keys("Up Up");
-    let screen = h.snapshot();
+    let screen = h.snapshot_whole();
+    assert!(
+        screen.contains("This unit carries more than one weapon"),
+        "{screen}"
+    );
+    h.keys("Up");
+    let screen = h.snapshot_whole();
     assert!(screen.contains("A spear's might counts double"), "{screen}");
     h.keys("Up");
-    let screen = h.snapshot();
+    let screen = h.snapshot_whole();
     assert!(screen.contains("Foot units can wade a river"), "{screen}");
     h.keys("Up");
-    let screen = h.snapshot();
+    let screen = h.snapshot_whole();
     assert!(screen.contains("Mind the ground."), "{screen}");
     // Back to the map menu, then to the map.
     h.keys("d");
     assert!(h.screen::<GuidesScreen>().is_none());
-    assert!(h.snapshot().contains("Restart Battle"));
+    assert!(h.snapshot_whole().contains("Restart Battle"));
     h.keys("d");
-    assert!(!h.snapshot().contains("Restart Battle"));
+    assert!(!h.snapshot_whole().contains("Restart Battle"));
 }

@@ -146,7 +146,7 @@ mod tests {
         assert!(matches!(shown(&ctx, &screen), Frame::Characters { .. }));
         screen.update(&mut ctx, &frame(&[], 5.0));
         assert!((screen.time() - 16.5).abs() < 1e-4);
-        assert_eq!(shown(&ctx, &screen), Frame::Logo { sparks: None });
+        assert_eq!(shown(&ctx, &screen), Frame::Logo { embers: None });
         // Twenty seconds long: 16.5 + 4 is half a second into the next
         // round.
         screen.update(&mut ctx, &frame(&[], 4.0));

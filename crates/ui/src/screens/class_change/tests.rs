@@ -3,6 +3,7 @@
 //! one of every seal. They read the view and the state; where the skin
 //! puts things is tested in `glyph::tests`.
 
+use crate::screens::battle::layout::{ABOVE_HELP_ROW, snap};
 use insta::assert_snapshot;
 use trpg_core::{ItemId, WeaponKind, WeaponRank};
 
@@ -170,8 +171,12 @@ fn the_columns_say_each_stat_before_and_after_and_mark_a_maxed_one() {
         ]
     );
     let v = s.view(&c);
-    assert_eq!(v.help, "Left/Right class · f choose · d back");
+    assert_eq!(v.help.plain(), "Left/Right class · f choose · d back");
     assert_eq!(v.help, s.help(&c));
+    // Ticket 0257: each key in a key span, in order.
+    let keys = ["CursorLeft", "CursorRight", "Confirm", "Cancel"];
+    let want = crate::widgets::help::spans_of(c.help_keys(), &keys);
+    assert_eq!(crate::widgets::help::key_spans(&v.help), want);
 }
 
 #[test]
@@ -231,22 +236,20 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     // Confirm asks; Cancel backs out, the cursor where it was.
     step(&mut s, &mut c, &[Confirm]);
     assert!(s.is_confirming());
-    assert_eq!(s.help(&c), "f yes · d no");
+    assert_eq!(s.help(&c).plain(), "f yes · d no");
     let view = columns(&s, &c);
+    let mut ask = AskView::new("Promote Test Knight to Iron Rider?", Vec::new());
+    ask.keys = Some(yes_no());
     assert_eq!(
         view.question,
         Some(QuestionView {
-            ask: AskView {
-                text: "Promote Test Knight to Iron Rider?".into(),
-                answers: Vec::new(),
-                keys: Some("f yes / d no".into()),
-            },
+            ask,
             cost: "Uses 1 Tier 2 Seal (1 in stock).".into(),
         })
     );
     // The columns stay under it.
     assert_eq!(names(&view), ["Bulwark", "Iron Rider"]);
-    assert_eq!(s.view(&c).help, "f yes · d no");
+    assert_eq!(s.view(&c).help.plain(), "f yes · d no");
     // The cursor keys do nothing while it asks.
     step(&mut s, &mut c, &[CursorLeft]);
     assert_eq!((s.focus(), s.is_confirming()), (1, true));
@@ -276,7 +279,7 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     assert_eq!(page.before, [28, 11, 0, 7, 5, 99, 0]);
     assert_eq!(page.gains.0, [7, 3, 0, 2, 4, 1, 2]);
     assert_eq!(page.character.as_deref(), Some("test_knight"));
-    assert_eq!(s.help(&c), "f skip · hold f fast");
+    assert_eq!(s.help(&c).plain(), "f skip · hold f fast");
     // The view holds the page on screen, and nothing else.
     let view = s.view(&c);
     let faces = (&c.game.content.portraits, &c.game.lead);
@@ -296,11 +299,11 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
         g.stats,
         [] as [crate::screens::battle::view::StatGainView; 0]
     );
-    assert_eq!(view.help, "f skip · hold f fast");
+    assert_eq!(view.help.plain(), "f skip · hold f fast");
     // A press reveals every stat, the next closes the page and the screen.
     let t = step(&mut s, &mut c, &[Confirm]);
     assert!(matches!(t, Transition::None));
-    assert_eq!(s.help(&c), "f continue");
+    assert_eq!(s.help(&c).plain(), "f continue");
     assert!(s.progress().is_some_and(Progress::page_played));
     let t = step(&mut s, &mut c, &[Cancel]);
     assert!(matches!(t, Transition::Pop), "{t:?}");
@@ -313,7 +316,7 @@ fn once_the_pages_are_done_the_view_is_empty() {
     s.stage = Stage::Done;
     let view = s.view(&c);
     assert_eq!(view.body, ClassChangeBody::Done);
-    assert_eq!(view.help, "");
+    assert_eq!(view.help.plain(), "");
 }
 
 #[test]
@@ -323,10 +326,10 @@ fn the_pages_play_by_themselves_and_holding_confirm_speeds_them_up() {
     step(&mut s, &mut c, &[Confirm, Confirm]);
     let frame = |dt, held: &[Action]| FrameInput::new(vec![], dt, held.to_vec());
     s.update(&mut c, &frame(0.1, &[]));
-    let t = s.progress().map(Progress::time).unwrap_or_default();
+    let t = s.progress().map_or_default(Progress::time);
     assert!((t - 0.1).abs() < 1e-5, "{t}");
     s.update(&mut c, &frame(0.1, &[Confirm]));
-    let t = s.progress().map(Progress::time).unwrap_or_default();
+    let t = s.progress().map_or_default(Progress::time);
     assert!((t - 0.5).abs() < 1e-5, "{t}");
     // Played to its end, the page still waits for a key.
     let t = s.update(&mut c, &frame(60.0, &[]));
@@ -368,7 +371,7 @@ fn a_refused_class_says_why_and_cannot_be_chosen() {
             held: 0
         })
     );
-    assert_eq!(s.help(&c), "Left/Right class · d back");
+    assert_eq!(s.help(&c).plain(), "Left/Right class · d back");
     step(&mut s, &mut c, &[Confirm]);
     assert!(!s.is_confirming());
     assert_eq!(columns(&s, &c).question, None);
@@ -405,7 +408,7 @@ fn a_unit_with_nowhere_to_go_sees_an_empty_screen() {
         (view.seal, view.more_left, view.more_right),
         (None, None, None)
     );
-    assert_eq!(s.help(&c), "d back");
+    assert_eq!(s.help(&c).plain(), "d back");
     let t = step(&mut s, &mut c, &[CursorRight, Confirm]);
     assert!(matches!(t, Transition::None));
     assert!(!s.is_confirming());
@@ -575,7 +578,7 @@ fn sounds() {
     let mut one = ClassChangeScreen::new(&c, ChangeKind::Promote, lancer, Stock::default());
     assert_eq!(one.options().len(), 1);
     // Nothing to pick between, and nothing to choose (no seal).
-    assert_eq!(one.help(&c), "d back");
+    assert_eq!(one.help(&c).plain(), "d back");
     assert_eq!(heard(&mut one, &mut c, CursorRight), "");
     assert_eq!(one.focus(), 0);
     let closed = heard(&mut one, &mut c, Cancel);
@@ -603,7 +606,7 @@ fn the_demo_needs_its_test_character() {
 fn promotion_choice_snapshot() {
     let c = ctx();
     let s = demo(&c, ChangeKind::Promote);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -611,7 +614,7 @@ fn promotion_question_snapshot() {
     let mut c = ctx();
     let mut s = demo(&c, ChangeKind::Promote);
     step(&mut s, &mut c, &[CursorRight, Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -619,7 +622,7 @@ fn promotion_result_snapshot() {
     let mut c = ctx();
     let mut s = demo(&c, ChangeKind::Promote);
     step(&mut s, &mut c, &[Confirm, Confirm, Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -629,7 +632,7 @@ fn reclass_choice_snapshot() {
     for _ in 0..5 {
         step(&mut s, &mut c, &[CursorRight]);
     }
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
@@ -638,11 +641,22 @@ fn reclass_result_snapshot() {
     let mut s = demo(&c, ChangeKind::Reclass);
     step(&mut s, &mut c, &[CursorRight, CursorRight, CursorRight]);
     step(&mut s, &mut c, &[Confirm, Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]
 fn class_change_declares_its_actions() {
     let screen = demo(&crate::screen::tests::ctx(), ChangeKind::Promote);
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::CLASS_CHANGE);
+}
+
+/// The engine's yes-or-no keys line (engine#2347): each key's name in a
+/// key span.
+fn yes_no() -> shuyi_ui::text::StyledText {
+    let mut keys = shuyi_ui::text::StyledText::new();
+    keys.push_key("f")
+        .push_plain(" yes / ")
+        .push_key("d")
+        .push_plain(" no");
+    keys
 }

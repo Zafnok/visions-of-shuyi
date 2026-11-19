@@ -1,0 +1,34 @@
+---
+source: crates/ui/tests/it/ch01_lessons.rs
+expression: lesson_box(&h)
+---
+╔═ Vix ═════════════════════════════════════════╗
+║                                               ║
+║ That's the lessons                            ║
+║ That's all I've got. You're on your own now.  ║
+║ Need a reminder? Guides, in the map menu (d). ║
+║ A fresh start costs nothing, if you want one. ║
+║                                               ║
+║ >   Keep going                                ║
+║     Restart the battle                        ║
+║     Restart with the lessons                  ║
+║                                               ║
+╚═══════════════════════════════════════════════╝
+--- colours ---
+aabbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+accccccccccccccccccccccccccccccccccccccccccccccca
+acbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccdccca
+accccccccccccccccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccccca
+acbcccbbbbbbbbbbcccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccccca
+accccccccccccccccccccccccccccccccccccccccccccccca
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:panel_border bg:panel_bg
+b = fg:text_highlight bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:text bg:key_bg

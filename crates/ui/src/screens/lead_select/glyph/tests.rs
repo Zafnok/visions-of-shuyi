@@ -204,7 +204,7 @@ fn a_view_made_by_hand() {
         start: "Go".to_owned(),
         typing: None,
         grid: None,
-        help: "keys".to_owned(),
+        help: "keys".into(),
     };
     let buf = painted(&c, &view);
     assert_eq!(row(&buf, HEADING_ROW).trim(), "Who?");

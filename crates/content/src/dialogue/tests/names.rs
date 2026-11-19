@@ -224,7 +224,7 @@ fn name_tokens_count_as_the_longest_name() {
     assert_eq!(
         errors(&scene(&format!("> {base}{{n:king}}\n> {base}a{{n:king}}"))),
         [format!(
-            "t.dlg:5: text is {} characters; the limit is {MAX_TEXT_LEN}",
+            "t.dlg:5: text is {} cells; the limit is {MAX_TEXT_LEN}",
             MAX_TEXT_LEN + 1
         )]
     );
@@ -268,7 +268,7 @@ fn readme_names_example_is_valid() {
     let table = from_sources(&[("README.md", example)], None, None, Some(&names()), None);
     assert!(table.is_ok(), "{table:?}");
     let scene = table.unwrap_or_default().scenes.remove("ch01_road");
-    let steps = scene.map(|s| s.steps).unwrap_or_default();
+    let steps = scene.map_or_default(|s| s.steps);
     let shown: Vec<String> = steps
         .iter()
         .filter_map(|s| match s {
@@ -296,7 +296,7 @@ fn unknown_tokens_count_as_written() {
     assert_eq!(
         errs[1],
         format!(
-            "t.dlg:4: text is {} characters; the limit is {MAX_TEXT_LEN}",
+            "t.dlg:4: text is {} cells; the limit is {MAX_TEXT_LEN}",
             MAX_TEXT_LEN + 1
         )
     );

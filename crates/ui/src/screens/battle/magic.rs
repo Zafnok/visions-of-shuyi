@@ -12,7 +12,7 @@
 use crate::prelude::*;
 use trpg_core::{
     BattleState, CastTarget, Command, CostError, EffectDuration, Element, Equipped, Pos, SkillId,
-    SpellDef, SpellId, SpellKind, StatKind, TerrainId, TerrainTable, UnitAction, UnitId,
+    SpellDef, SpellId, SpellKind, StatKind, StatValue, TerrainId, TerrainTable, UnitAction, UnitId,
 };
 
 use super::art_list::{Fit, Technique, cost_label, effective_text, fit, reason_text};
@@ -24,7 +24,7 @@ use super::skills::skill_name;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::widgets::wrap_step;
 use crate::words::Words;
-use core::fmt::Display;
+use shuyi_ui::text::ToArg;
 
 /// One line of the spell list.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -299,7 +299,7 @@ pub fn spell_effect_text(words: Words<'_>, terrain: &TerrainTable, def: &SpellDe
         let name = |id| terrain.get(id).map_or("", |t| words.terrain(t));
         let from: Vec<&str> = effect.from.iter().map(|&id| name(id)).collect();
         let keys = [
-            ("from", &from.join("/") as &dyn Display),
+            ("from", &from.join("/") as &dyn ToArg),
             ("to", &name(effect.to)),
         ];
         parts.push(words.text_with("battle.spell.desc.terrain", &keys));
@@ -338,7 +338,7 @@ pub fn spell_menu(
                 Some(active) => {
                     let active = skill_name(state, words, active);
                     let keys = [
-                        ("spell", &words.spell(def) as &dyn Display),
+                        ("spell", &words.spell(def) as &dyn ToArg),
                         ("active", &active),
                     ];
                     words.text_with("battle.spell.with_active", &keys)
@@ -512,6 +512,17 @@ impl CastTargeting {
             .collect()
     }
 
+    /// The unit a healing spell is aimed at and the HP it would gain;
+    /// `None` aimed at a tile or with a spell that doesn't heal.
+    pub fn heal(&self, state: &BattleState) -> Option<(UnitId, StatValue)> {
+        let CastTarget::Unit(id) = self.target() else {
+            return None;
+        };
+        let action = cast(self.spell(), self.target());
+        let gain = state.preview_heal(self.sel.unit, self.sel.dest(), &action)?;
+        Some((id, gain))
+    }
+
     /// The preview line of a heal (`Heal on Rex: HP 10 → 25`) or a tile
     /// cast (`Forest → Burning (1 round)`, `Sea → Ice`); none on an enemy,
     /// which has the forecast.
@@ -520,8 +531,7 @@ impl CastTargeting {
         match self.target() {
             CastTarget::Unit(id) => {
                 let target = state.unit(id)?;
-                let action = cast(self.spell(), self.target());
-                let gain = state.preview_heal(self.sel.unit, self.sel.dest(), &action)?;
+                let (_, gain) = self.heal(state)?;
                 Some(heal_preview(words, words.spell(def), target, gain))
             }
             CastTarget::Tile(pos) => {

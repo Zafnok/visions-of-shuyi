@@ -62,44 +62,66 @@ frame and the target.
 
 ## The numbers
 
-Measured 2026-11-11 by the `bench` job of PR #624 (the engine pin move
-that brought ticket 1261's fix;
+Measured 2026-11-18 by the `bench` job of PR #761 (the engine pin move
+that brought engine ticket 3219's plain text fills, ticket 1285;
 Callgrind on Linux, the heap from the tool program's counter, the web
 package without the bought art). The Playdate's package isn't measured:
 CI has no Playdate SDK to build it.
 
 | Scenario | On | Frames | Instructions: most (frame) | p99 | Mean | Peak heap |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| battle-idle | desktop, web | 60 | 1,055,913 (34) | 1,055,913 | 1,050,422 | 4.8 MB |
-| battle-idle | playdate | 60 | 1,872,097 (6) | 1,872,097 | 1,869,943 | 5.6 MB |
-| battle-cursor-sweep | desktop, web | 106 | 1,095,036 (92) | 1,063,167 | 1,018,441 | 4.8 MB |
-| battle-cursor-sweep | playdate | 106 | 1,958,173 (92) | 1,944,953 | 1,871,779 | 5.6 MB |
-| battle-enemy-turn | desktop, web | 598 | 3,598,048 (63) | 3,020,731 | 1,221,469 | 4.8 MB |
-| battle-enemy-turn | playdate | 598 | **4,477,234** (63) | 3,864,653 | 1,960,896 | 5.6 MB |
-| battle-attack | desktop, web | 384 | 1,561,368 (83) | 1,367,121 | 1,204,249 | 4.8 MB |
-| battle-attack | playdate | 384 | **2,678,597** (15) | 2,521,734 | 1,941,084 | 5.6 MB |
-| options-menu | desktop, web | 110 | 482,871 (57) | 481,798 | 455,636 | 4.6 MB |
-| options-menu | playdate | 110 | 1,886,127 (3) | 1,881,493 | 867,153 | 5.3 MB |
-| dialogue-portrait | desktop, web | 304 | 2,089,109 (157) | 1,982,354 | 1,152,168 | 4.6 MB |
-| dialogue-portrait | playdate | 304 | **2,581,737** (157) | 2,561,958 | 1,560,167 | 5.3 MB |
+| battle-idle | desktop, web | 60 | 1,451,217 (6) | 1,451,217 | 1,442,384 | 5.0 MB |
+| battle-idle | playdate | 60 | 1,806,693 (34) | 1,806,693 | 1,804,914 | 9.3 MB |
+| battle-cursor-sweep | desktop, web | 106 | 1,478,510 (92) | 1,458,806 | 1,313,097 | 5.0 MB |
+| battle-cursor-sweep | playdate | 106 | 1,918,808 (92) | 1,904,904 | 1,811,345 | 9.3 MB |
+| battle-enemy-turn | desktop, web | 598 | 3,686,421 (63) | 3,112,977 | 1,285,564 | 5.0 MB |
+| battle-enemy-turn | playdate | 598 | **4,466,386** (63) | 3,849,307 | 1,946,711 | 9.3 MB |
+| battle-attack | desktop, web | 384 | 1,681,760 (83) | 1,482,045 | 1,318,427 | 5.0 MB |
+| battle-attack | playdate | 384 | **2,665,720** (15) | 2,525,381 | 1,916,713 | 9.3 MB |
+| options-menu | desktop, web | 110 | 531,901 (57) | 531,297 | 505,980 | 4.7 MB |
+| options-menu | playdate | 110 | 1,907,849 (3) | 1,903,387 | 886,846 | 9.1 MB |
+| dialogue-portrait | desktop, web | 304 | 2,174,466 (157) | 2,089,944 | 1,219,364 | 4.7 MB |
+| dialogue-portrait | playdate | 304 | **2,626,898** (157) | 2,609,668 | 1,584,213 | 9.0 MB |
 
 | Package | Size (gated) | Whole package |
 | --- | ---: | ---: |
-| `visions-of-shuyi-0.3.0-web.zip` | 8.7 MB | 81.8 MB |
+| `visions-of-shuyi-0.3.0-web.zip` | 9.2 MB | 82.0 MB |
 
 The web's package budget counts what a player waits for before the game
 starts, not the whole upload (engine ticket 3313, its
 `docs/targets/web.md`). The gated size leaves out the folders `shuyi.ron`'s
 `web.music` and `web.voice` ship beside the build: the game fetches each
-track or clip in the background when it first plays it, and itch.io and
-GitHub Pages serve an uploaded HTML5 zip as separate files, so those are
+track or clip in the background when it first plays it, and itch.io serves an uploaded HTML5 zip as separate files, so those are
 never waited for (ticket 1249 checked it in a browser: the page loads the
 scripts and the `.wasm`, the title song is fetched when it starts
 and the opening scene's track when New Game reaches it). The whole zip,
 with the 75 MB `music/` folder, is the upload's size; the "Whole package"
-column keeps it in sight. Measured 2026-11-13 by the `bench` job of PR
-#681 (ticket 0916: the first package `wasm-opt -Oz` shrank, its `.wasm`
-8.2 MB from 10.5).
+column keeps it in sight. Measured 2026-11-18 by PR #761's `bench` job,
+with the table above (PR #681, ticket 0916, the first package `wasm-opt
+-Oz` shrank, had its `.wasm` at 8.2 MB from 10.5 and the package at
+8.7 MB).
+
+### The web's start
+
+Ticket 1298 timed CI's release web package at the engine pin of
+2026-11-19 (d10d1950), served on one shared 25 Mbit/s link, in the
+built-in browser, two runs:
+
+| Moment | Time |
+| --- | ---: |
+| The pack (1.19 MB) all in | 0.83–0.87 s |
+| The `.wasm` (8.65 MB) all in, the game's first step | 3.35–3.37 s |
+| The loading card | 3.45 s |
+| The title (after the 130 ms load) | 3.63 s |
+
+The page fetches the pack and the `.wasm` together, and the game can't
+step until its `.wasm` is in, so the pack has arrived about 2.5 s
+before the first step: streaming it, or laying the title's folders
+first (`Bake::first`), saves nothing. The load before the title reads
+96% of the pack's bytes too (1,353,099 of 1,409,838 with the game's
+content). The start waits for the whole pack (`trpg_ui::start`) and the
+bake lays no folder first. CI's package has no game content (ADR-0117),
+so its load stops at a content error at the moment the title would show.
 
 ## Over budget
 
@@ -126,7 +148,25 @@ unit no longer searches every enemy's moves: the cursor sweep's costliest
 frame went from 2.28 to 1.37 million on the colour targets and from 3.05
 to 2.26 million on the Playdate.
 
-Until it lands, CI's `bench` job reports these three as warnings
+Ticket 1285 brought it under again. The engine pin move of 2026-11-17
+(PR #732) made every text fill parse a message (engine #476): about 80k
+instructions more per Playdate frame, and the sweep went from 1,980,877
+to 2,048,560, over. Engine ticket 3219 fills plain text without the
+parse; past it (PR #761) the sweep is at 1,918,808, the idle battle on
+the Playdate at 1,806,693 (1,882,067 before #732).
+
+What is still dearer than before #732 isn't the plain text fill. On
+the Playdate, the options menu (1,891,040 before #732, 1,907,849 now)
+and the dialogue line (2,579,587, now 2,626,898) still pay #732's
+message fills with values; ticket 1299 fills them from the forms. On the
+colour targets, the key caps in every hint (#737, ticket 0254) and the
+battle's new help bar (#742, ticket 0445) put about 0.3 million on the
+idle battle and the cursor sweep, far inside their budget. The
+Playdate's peak heap went from 5.7 to 9.3 MB with the chapter title
+card's lettering (#746, ticket 0812), under its 10 MB budget; ticket
+1300 finds what holds it.
+
+Until they land, CI's `bench` job reports these three as warnings
 (`KNOWN_OVER` in `.github/workflows/ci.yml`, read by
 `scripts/bench-known-over.sh`). Any other number over its budget, or a
 scenario that doesn't play, still fails the job. The job isn't part of

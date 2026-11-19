@@ -334,10 +334,7 @@ fn cancel_asks_before_skipping() {
     let mut s = full(&two_speakers("First."));
     press(&mut s, &mut c, Action::Cancel);
     assert!(s.is_asking_skip());
-    let skip = SkipView {
-        question: "Skip scene?".to_owned(),
-        answers: "f yes / d no".to_owned(),
-    };
+    let skip = SkipView::new("Skip scene?".to_owned(), yes_no());
     assert_eq!(s.view(&c).text.skip, Some(skip));
     // Time stands still while asking.
     s.update(&mut c, &frame(&[], 1.0, false));
@@ -431,11 +428,15 @@ fn the_page_waits_once_revealed() {
     assert!(s.view(&c).text.waiting.is_none());
     press(&mut s, &mut c, Action::Confirm);
     let waiting = s.view(&c).text.waiting;
-    let log_hint = c.text_with("dialogue.log_hint", &[]);
+    // The keys in key spans, drawn as key caps (ticket 0254).
+    let mut key = shuyi_ui::text::StyledText::new();
+    key.push_key("f");
+    let mut log_hint = shuyi_ui::text::StyledText::new();
+    log_hint.push_key("b").push_plain(" log");
     assert_eq!(
         waiting,
         Some({
-            let mut wait = WaitView::new("f", true);
+            let mut wait = WaitView::new(key, true);
             wait.log_hint = Some(log_hint);
             wait
         })
@@ -1141,4 +1142,15 @@ fn a_clip_ends_when_it_stops_sounding_after_it_was_heard() {
     assert_eq!(clip.ended_s(false, 0.125), Some(0.125), "ended");
     let mut never = Clip::default();
     assert_eq!(never.ended_s(false, 0.5), Some(0.0), "given up at 0.5 s");
+}
+
+/// The engine's yes-or-no keys line (engine#2347): each key's name in a
+/// key span.
+fn yes_no() -> shuyi_ui::text::StyledText {
+    let mut keys = shuyi_ui::text::StyledText::new();
+    keys.push_key("f")
+        .push_plain(" yes / ")
+        .push_key("d")
+        .push_plain(" no");
+    keys
 }

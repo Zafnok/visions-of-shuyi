@@ -14,6 +14,7 @@ use trpg_core::{
 use super::BattleScreen;
 use super::art_list::{Technique, art_lines, arts_menu, playback_banner};
 use super::attack::reach;
+use super::layout::{MAP_VIEW, SIDE_PANEL, snap};
 use super::mode::{Line, MenuEntry, Mode};
 use super::playback::{Playback, TIMINGS, box_view};
 use super::testing::{battle_with, quick_units};
@@ -535,7 +536,7 @@ fn arts_menu_snapshot() {
     let mut s = lord_menu(&mut c, state);
     choose_entry(&mut s, &mut c, MenuEntry::Arts);
     step(&mut s, &mut c, &[Action::CursorDown]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 /// The lord's arts menu in the left-handed layout (0208).
@@ -547,7 +548,7 @@ fn arts_menu_left_handed_snapshot() {
     let mut s = lord_menu(&mut c, state);
     choose_entry(&mut s, &mut c, MenuEntry::Arts);
     step(&mut s, &mut c, &[Action::CursorDown]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 /// The archer's arts menu, on Close Shot, its other lines dimmed.
@@ -557,7 +558,7 @@ fn archer_arts_menu_snapshot() {
     let state = battle(&c, |units| units[3].pos = p(12, 0));
     let mut s = archer_menu(&mut c, state);
     choose_entry(&mut s, &mut c, MenuEntry::Arts);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 /// What the focused line of the arts menu says it does (ticket 0429).
@@ -573,7 +574,7 @@ fn focused_note(s: &BattleScreen) -> Option<String> {
 }
 
 /// Moving down the arts menu changes the effect under it to the next
-/// line's.
+/// line's, each said to be an attack (ticket 0490).
 #[test]
 fn the_arts_menu_describes_the_focused_line() {
     let mut c = ctx();
@@ -591,9 +592,9 @@ fn the_arts_menu_describes_the_focused_line() {
     assert_eq!(
         seen,
         [
-            "follow-up ×3/2",
-            "+10 hit; no counter",
-            "Sword: +30 hit +10 crit"
+            "Attack: follow-up ×3/2",
+            "Attack: +10 hit; no counter",
+            "Attack: Sword: +30 hit +10 crit"
         ]
     );
 }
@@ -605,7 +606,7 @@ fn forecast_with_an_art_snapshot() {
     let mut c = ctx();
     let state = swordsman(&c, 20);
     let s = lord_on_brigand(&mut c, state, "Guard Break");
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, SIDE_PANEL));
 }
 
 /// The archer with Pinning Shot: a note-only art.
@@ -617,7 +618,7 @@ fn forecast_with_pinning_shot_snapshot() {
     let shown = forecast_of(&s, &c);
     assert_eq!(shown.skill, Some(skill_line("Pinning Shot", 20, 17)));
     assert_eq!(shown.notes, ["pins: Mov −3"]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, SIDE_PANEL));
 }
 
 /// The archer at bow rank S with Arrow Rain on the brigand, the raider
@@ -648,7 +649,7 @@ fn forecast_of_arrow_rain_snapshot() {
     let shown = forecast_of(&s, &c);
     let rows: Vec<_> = shown.struck.iter().map(|r| r.name.as_str()).collect();
     assert_eq!(rows, ["Brigand", "Raider", "Brigand"]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, SIDE_PANEL));
 }
 
 /// The lord's only sword broken: every line of the arts menu dimmed with
@@ -667,11 +668,11 @@ fn broken_weapon_lines_snapshot() {
     let (text, color) = menu.items()[0].suffix.clone().unwrap();
     assert_eq!((text.trim(), color), ("broken", SuffixKind::Warning));
     let action_menu = std::mem::replace(&mut s.mode, Mode::List { sel, menu });
-    let list = render(&s, &c).to_snapshot(&c.palette);
+    let list = snap(&render(&s, &c), &c, MAP_VIEW);
     s.mode = action_menu;
     choose_entry(&mut s, &mut c, MenuEntry::Attack);
     aim(&mut s, &mut c, UnitId(4));
-    let forecast = render(&s, &c).to_snapshot(&c.palette);
+    let forecast = snap(&render(&s, &c), &c, SIDE_PANEL);
     assert_snapshot!(format!("{list}\n=== forecast ===\n{forecast}"));
 }
 
@@ -991,7 +992,7 @@ fn arts_menu_with_overwatch_snapshot() {
     let mut c = ctx();
     let state = ranger(&c, 20);
     let s = on_overwatch(&mut c, state);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 /// The lord (Swordsman, Sword C) with Riposte chosen: a normal combat and
@@ -1008,7 +1009,7 @@ fn forecast_with_riposte_snapshot() {
     let s = lord_on_brigand(&mut c, state, "Riposte");
     let shown = forecast_of(&s, &c);
     assert_eq!(shown.notes, ["stance: strikes first"]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, SIDE_PANEL));
 }
 
 #[test]
@@ -1106,4 +1107,25 @@ fn opening_the_unit_menu_searches_the_move_once() {
     assert!(menu.values().contains(&MenuEntry::Arts));
     assert!(!menu.values().contains(&MenuEntry::Skill));
     assert_eq!(searches() - before, 1);
+}
+
+/// Ticket 0490: only a line that attacks and can be chosen is an art to
+/// attack with. Overwatch alone, usable, isn't; an attacking line that is
+/// dimmed isn't.
+#[test]
+fn an_art_to_attack_with_is_a_usable_line_that_attacks() {
+    use super::art_list::can_attack_with_art;
+    let c = ctx();
+    let state = ranger(&c, 20);
+    let archer = state.unit(UnitId(3)).unwrap().pos;
+    let all = art_lines(&state, UnitId(3), archer);
+    let is_action = |l: &&super::art_list::ArtLine| l.technique.is_action(&state);
+    let mut overwatch = all.iter().find(is_action).unwrap().clone();
+    overwatch.slots = vec![0];
+    let mut attack = all.iter().find(|l| !is_action(l)).unwrap().clone();
+    attack.slots = vec![];
+    assert!(!can_attack_with_art(&state, &[overwatch.clone()]));
+    assert!(!can_attack_with_art(&state, &[attack.clone()]));
+    attack.slots = vec![0];
+    assert!(can_attack_with_art(&state, &[overwatch, attack]));
 }

@@ -74,11 +74,7 @@ fn replies(labels: &[&str], focus: usize) -> MenuView {
         enabled: true,
         focused: i == focus,
     };
-    MenuView {
-        items: labels.iter().enumerate().map(item).collect(),
-        first_shown: 0,
-        shown: labels.len(),
-    }
+    MenuView::new(labels.iter().enumerate().map(item).collect())
 }
 
 /// `view` painted over a 100×32 screen of `x`s.
@@ -410,7 +406,7 @@ fn a_waiting_page_shows_its_key_and_the_blinking_arrow() {
     assert!(row(&painted(&view), arrow_row).ends_with(" f    │"));
     // The log's hint, three cells before the key.
     if let Some(waiting) = &mut view.text.waiting {
-        waiting.log_hint = Some("b log".to_owned());
+        waiting.log_hint = Some("b log".into());
     }
     assert!(row(&painted(&view), arrow_row).ends_with(" b log   f    │"));
 }
@@ -445,10 +441,10 @@ fn a_character_without_a_portrait_gets_an_empty_frame() {
 fn the_skip_question_replaces_the_text() {
     let c = ctx();
     let mut view = two_speakers();
-    view.text.skip = Some(SkipView {
-        question: "Skip scene?".to_owned(),
-        answers: "f yes / d no".to_owned(),
-    });
+    view.text.skip = Some(SkipView::new(
+        "Skip scene?".to_owned(),
+        "f yes / d no".to_owned(),
+    ));
     let buf = painted(&view);
     assert!(row(&buf, TEXT_Y).starts_with("│   Skip scene?  "));
     assert!(row(&buf, TEXT_Y + 1).starts_with("│   f yes / d no  "));
@@ -538,7 +534,7 @@ fn the_open_log_covers_the_scene() {
         title: "Log".to_owned(),
         rows: vec![],
         back_to_latest: None,
-        help: "help keys".to_owned(),
+        help: "help keys".into(),
     };
     let view = DialogueView {
         log: Some(log.clone()),

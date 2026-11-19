@@ -179,7 +179,13 @@ fn paint_text_box(ctx: &Ctx, buf: &mut GlyphBuffer, text: &TextView) {
     window(ctx, buf, frame, "");
     if let Some(skip) = &text.skip {
         buf.print(TEXT_X, text_y, &skip.question, ink.text, ink.inside);
-        buf.print(TEXT_X, text_y + 1, &skip.answers, ink.text, ink.inside);
+        buf.print(
+            TEXT_X,
+            text_y + 1,
+            &skip.answers.plain(),
+            ink.text,
+            ink.inside,
+        );
         return;
     }
     let lines = (text_y..).zip(text.revealed());

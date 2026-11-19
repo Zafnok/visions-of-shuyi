@@ -9,6 +9,7 @@ use trpg_core::Pos;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord, PadKind};
 use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
+use trpg_ui::screens::battle::layout::MAP_VIEW;
 use trpg_ui::settings::MapZoom;
 
 /// The tiles the test tileset shows at 1× and at 2×.
@@ -27,7 +28,7 @@ fn battle_with(mut h: Harness, skin: &str, keys: &str) -> Harness {
 
 /// [`battle_with`] the right-handed layout's keys.
 fn battle_in(h: Harness, skin: &str) -> Harness {
-    battle_with(h, skin, "Down f Left f f")
+    battle_with(h, skin, "Down f Left f f f")
 }
 
 /// A new game's Quick Battle under the skin `skin`.
@@ -240,6 +241,8 @@ fn the_left_handed_key_and_the_right_trigger_zoom_too() {
     let mut h = battle_with(left, "sprite", "s j a j j");
     h.keys("p");
     assert_eq!(skin_zoom(&h), Some(MapZoom::X1));
+    // The toggles show once the phase banner has gone (0445).
+    h.wait(3.0);
     assert!(status(&h).starts_with("p zoom: 1× · "), "{}", status(&h));
     for (kind, name) in [
         (PadKind::Xbox, "RT"),
@@ -249,6 +252,7 @@ fn the_left_handed_key_and_the_right_trigger_zoom_too() {
         let mut h = quick_battle("sprite");
         h.use_pad(kind).pad("RightTrigger");
         assert_eq!(skin_zoom(&h), Some(MapZoom::X1), "{kind:?}");
+        h.wait(3.0);
         let status = status(&h);
         assert!(
             status.starts_with(&format!("{name} zoom: 1× · ")),
@@ -265,7 +269,7 @@ fn quick_battle_at_twice_the_size() {
     let mut h = quick_battle("sprite");
     h.keys("f");
     assert_eq!(view(&h), VIEW_X2);
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// The same at 2× with the lord's action menu open: beside its tile.
@@ -273,12 +277,12 @@ fn quick_battle_at_twice_the_size() {
 fn a_menu_opens_beside_its_unit_at_twice_the_size() {
     let mut h = quick_battle("sprite");
     h.keys("f f");
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// The sides the map goes on past in the map scene: left, right, up, down.
 fn more(h: &Harness) -> [bool; 4] {
-    let m = h.map_scene().map(|s| s.more).unwrap_or_default();
+    let m = h.map_scene().map_or_default(|s| s.more);
     [m.left(), m.right(), m.up(), m.down()]
 }
 

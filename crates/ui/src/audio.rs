@@ -22,7 +22,7 @@
 use trpg_content::Variant;
 
 pub use shuyi_ui::audio::{
-    MusicClock, MusicCommand, MusicState, MusicSwitch, pick_from_pool, splitmix64,
+    MusicClock, MusicCommand, MusicState, MusicSwitch, SoundId, pick_from_pool, splitmix64,
 };
 
 /// Something a screen wants heard ([`shuyi_ui::audio::AudioRequest`]).
@@ -95,14 +95,7 @@ mod tests {
         let mut m = trpg_content::AudioManifest::default();
         let cues = ["one", "two", "three"];
         for cue in cues {
-            let track = MusicCue {
-                file: format!("{cue}.ogg"),
-                volume: 100,
-                looped: true,
-                length_ms: 10_000,
-                credit: CreditRef::Own,
-                group: None,
-            };
+            let track = MusicCue::new(format!("{cue}.ogg"), 100, 10_000, CreditRef::Own);
             m.music.insert(cue.to_owned(), track);
         }
         m.pools

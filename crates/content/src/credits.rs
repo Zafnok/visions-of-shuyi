@@ -128,7 +128,7 @@ mod tests {
             .in_group(CreditGroup::Fonts)
             .map(|e| e.title.as_str())
             .collect();
-        assert_eq!(fonts, ["Terminus Font"]);
+        assert_eq!(fonts, ["Terminus Font", "Cinzel"]);
         // The bought art is credited in the file, and shown only in a build
         // that has it: never in a gate (ADR-0040).
         let file = file.unwrap_or_default();
@@ -138,7 +138,10 @@ mod tests {
             .filter(|c| !c.private.is_empty())
             .collect();
         let ids: Vec<&str> = bought.iter().map(|c| c.id.as_str()).collect();
-        assert_eq!(ids, ["tiny_tales", "shironejiya"]);
+        assert_eq!(
+            ids,
+            ["tiny_tales", "shironejiya", "pixel_flag", "mattwalkden"]
+        );
         assert!(bought.iter().all(|c| c.group == CreditGroup::Art));
         assert!(bought[0].covers("units/witch.png"));
         // Each combat picture is its own artist's (0413).
@@ -147,8 +150,33 @@ mod tests {
         assert!(!bought[0].covers("battlers/brigand.png"));
         assert!(bought[1].covers("battlers/brigand.png"));
         assert!(!bought[1].covers("battlers/guard.png"));
+        // The riders are Pixel Flag's (0446).
+        assert!(
+            bought[2].covers("battlers/rider.png") && bought[2].covers("battlers/sergeant.ron")
+        );
+        assert!(
+            !bought[0].covers("battlers/rider.png") && !bought[2].covers("battlers/brigand.png")
+        );
+        // The mounted map sprites are MattWalkden's (0499), the knight on
+        // foot Tiny Tales'.
+        for rider in ["units/lance_cavalier.png", "units/mounted_archer.png"] {
+            assert!(
+                bought[3].covers(rider) && !bought[0].covers(rider),
+                "{rider}"
+            );
+        }
+        assert!(
+            bought[0].covers("units/knight_m1.png") && !bought[3].covers("units/knight_m1.png")
+        );
+        // Without the bought art, the free campfire alone (0922).
         #[cfg(not(feature = "private-assets"))]
-        assert_eq!(credits.in_group(CreditGroup::Art).count(), 0);
+        assert_eq!(
+            credits
+                .in_group(CreditGroup::Art)
+                .map(|c| c.title.as_str())
+                .collect::<Vec<_>>(),
+            ["Idylwild's Chromatic Campfires"]
+        );
         // Without the manifest: the file's entries alone.
         let alone = load(None).unwrap_or_default();
         assert_ne!(alone.entries, [] as [shuyi_assets::credits::CreditEntry; 0]);

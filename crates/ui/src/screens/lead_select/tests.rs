@@ -214,7 +214,10 @@ fn escape_closes_the_box_and_keeps_the_old_name() {
 fn typing_help_names_the_text_keys() {
     let mut c = ctx();
     let s = typing(&mut c);
-    assert_eq!(s.help(&c), "Enter done · Backspace delete · Escape cancel");
+    assert_eq!(
+        s.help(&c).plain(),
+        "Enter done · Backspace delete · Escape cancel"
+    );
 }
 
 /// The typing box open over the screen with "Mara" typed.
@@ -367,16 +370,19 @@ fn menu_sounds() {
 fn help_names_the_keys() {
     let mut c = ctx();
     let mut s = LeadSelectScreen::new();
-    assert_eq!(s.help(&c), "arrows choose · f next · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f next · d back");
     update(&mut s, &mut c, &[CursorDown]);
-    assert_eq!(s.help(&c), "arrows choose · f change name · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f change name · d back");
     update(&mut s, &mut c, &[CursorDown]);
-    assert_eq!(s.help(&c), "arrows choose · f start · d back");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f start · d back");
     let s = spelling(&mut c);
     assert!(s.typing().is_none());
-    assert_eq!(s.help(&c), "arrows choose · f type · d delete");
+    assert_eq!(s.help(&c).plain(), "arrows choose · f type · d delete");
     c.use_layout(crate::input::LEFT_HANDED);
-    assert_eq!(s.help(&c), "wasd choose · j type · k delete");
+    assert_eq!(
+        s.help(&c).plain(),
+        "w\u{a0}a\u{a0}s\u{a0}d choose · j type · k delete"
+    );
 }
 
 #[test]
@@ -450,9 +456,10 @@ fn the_view_on_the_first_frame() {
             start: "Start".to_owned(),
             typing: None,
             grid: None,
-            help: "arrows choose · f next · d back".to_owned(),
+            help: LeadSelectScreen::new().help(&c),
         }
     );
+    assert_eq!(view.help.plain(), "arrows choose · f next · d back");
 }
 
 #[test]
@@ -475,11 +482,11 @@ fn the_view_puts_the_cursor_on_each_row() {
     update(&mut s, &mut c, &[CursorDown]);
     let view = s.view(&c);
     assert_eq!(view.cursor, Some(Row::Name));
-    assert_eq!(view.help, "arrows choose · f change name · d back");
+    assert_eq!(view.help.plain(), "arrows choose · f change name · d back");
     update(&mut s, &mut c, &[CursorDown]);
     let view = s.view(&c);
     assert_eq!(view.cursor, Some(Row::Start));
-    assert_eq!(view.help, "arrows choose · f start · d back");
+    assert_eq!(view.help.plain(), "arrows choose · f start · d back");
     // Moving the cursor off the portraits keeps the gender chosen.
     assert_eq!(chosen(&view), [LeadGender::Male]);
 }
@@ -503,7 +510,10 @@ fn the_view_with_the_typing_box_open() {
         })
     );
     assert_eq!(view.grid, None);
-    assert_eq!(view.help, "Enter done · Backspace delete · Escape cancel");
+    assert_eq!(
+        view.help.plain(),
+        "Enter done · Backspace delete · Escape cancel"
+    );
 }
 
 #[test]
@@ -527,7 +537,7 @@ fn the_view_with_the_letter_grid_open_on_a_cell() {
     assert_eq!(grid.rows[0].concat(), "ABCDEFGHIJKLM");
     assert_eq!(grid.rows[3].concat(), "nopqrstuvwxyz");
     assert_eq!(grid.rows[4], ["-", "'", "Blank", "Delete", "Done"]);
-    assert_eq!(view.help, "arrows choose · f type · d delete");
+    assert_eq!(view.help.plain(), "arrows choose · f type · d delete");
 }
 
 /// The tests (and the game flow) reach the screen through `as_any`.
@@ -542,4 +552,16 @@ fn opts_into_as_any() {
 fn lead_select_declares_its_actions() {
     let screen = LeadSelectScreen::new();
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::LEAD_SELECT);
+}
+
+/// Ticket 0257: the help line names its keys (and the text box its fixed keys), each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_line_holds_its_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let mut c = ctx();
+    let want = spans_of(c.help_keys(), &["Cursor", "Confirm", "Cancel"]);
+    assert_eq!(key_spans(&LeadSelectScreen::new().help(&c)), want);
+    let s = typing(&mut c);
+    assert_eq!(key_spans(&s.help(&c)), ["Enter", "Backspace", "Escape"]);
 }

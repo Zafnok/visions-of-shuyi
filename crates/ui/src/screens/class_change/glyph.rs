@@ -99,7 +99,12 @@ pub fn paint(ctx: &Ctx, view: &ClassChangeView, buf: &mut GlyphBuffer) {
         ClassChangeBody::Result(None) | ClassChangeBody::Done => {}
     }
     let bottom = i32::from(buf.height()) - 1;
-    buf.print(1, bottom, &view.help, c(UiColor::TextDim), black);
+    buf.print_styled(
+        1,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(c(UiColor::TextDim), black),
+    );
 }
 
 /// The title, the unit's line and the seals in stock for the focused
@@ -227,11 +232,15 @@ fn paint_column(ctx: &Ctx, view: &ColumnsView, column: &ColumnView, buf: &mut Gl
 fn paint_question(ctx: &Ctx, question: &QuestionView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    let keys = question.ask.keys.as_deref().unwrap_or_default();
+    let keys = question
+        .ask
+        .keys
+        .as_ref()
+        .map_or_default(shuyi_ui::text::StyledText::plain);
     let lines = [
         (question.ask.text.as_str(), UiColor::Text),
         (question.cost.as_str(), UiColor::Text),
-        (keys, UiColor::TextDim),
+        (keys.as_str(), UiColor::TextDim),
     ];
     let widest = lines.iter().map(|(l, _)| l.chars().count()).max();
     let w = i32::try_from(widest.unwrap_or(0)).unwrap_or(0) + 4;

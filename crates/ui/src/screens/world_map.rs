@@ -46,6 +46,7 @@ pub mod view;
 
 use crate::prelude::*;
 use core::any::Any;
+use shuyi_ui::text::StyledText;
 
 use trpg_content::WorldMapDef;
 use trpg_core::{Campaign, LEAD_ID, NodeKind, Pos, WorldCommand, WorldEvent, WorldMap};
@@ -53,9 +54,12 @@ pub use view::{ListView, PanelView, PlaceMark, PlaceView, WorldMapView};
 
 use super::camp::music::{CampMusic, FADE_OUT_MS, ask};
 use crate::audio::MenuSound;
+use crate::flow::{self, KeptVoices};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, SkinSet, Transition};
+use crate::screen::{
+    Ctx, FrameInput, IdleMotion, Screen, ScreenResult, Shuyi, SkinSet, Transition,
+};
 use crate::screens::town::TownScreen;
 use crate::screens::{CampScreen, SlotPickerScreen};
 use crate::settings::{MapLook, TownsOpen};
@@ -231,6 +235,10 @@ pub struct WorldMapScreen {
     place_cue: Option<String>,
     /// [`Ctx::clock_s`] when the campaign began, for a save's playtime.
     started_at: f64,
+    /// The first lines of the intro scenes of the battles the army's next
+    /// move may start (1296), and the place it stood when they were found.
+    voices: KeptVoices,
+    voices_at: Option<String>,
 }
 
 impl WorldMapScreen {
@@ -240,11 +248,7 @@ impl WorldMapScreen {
     /// The world map of `campaign` (on it, [`Campaign::world`]), the cursor
     /// on the army; the campaign began at clock time `started_at`.
     pub fn new(campaign: Campaign, started_at: f64) -> Self {
-        let cursor = campaign
-            .world
-            .as_ref()
-            .map(|w| w.at.clone())
-            .unwrap_or_default();
+        let cursor = campaign.world.as_ref().map_or_default(|w| w.at.clone());
         Self {
             campaign,
             cursor,
@@ -255,6 +259,8 @@ impl WorldMapScreen {
             music: None,
             place_cue: None,
             started_at,
+            voices: KeptVoices::default(),
+            voices_at: None,
         }
     }
 
@@ -277,6 +283,18 @@ impl WorldMapScreen {
     fn def<'a>(&self, ctx: &'a Ctx) -> Option<&'a WorldMapDef> {
         let id = &self.campaign.world.as_ref()?.map;
         ctx.game.content.worldmaps.get(id)
+    }
+
+    /// Keeps the intro lines of the battles the army's next move may start
+    /// loaded (1296): on the first frame on top, and once it has moved
+    /// (the rules move it as it sets off).
+    fn keep_voices(&mut self, ctx: &mut Ctx) {
+        let at = self.campaign.world.as_ref().map(|w| &w.at);
+        if self.voices.due(ctx) || (KeptVoices::wanted(ctx) && self.voices_at.as_ref() != at) {
+            self.voices_at = at.cloned();
+            let lines = flow::world_battle_lines(ctx, &self.campaign);
+            self.voices.keep(lines, ctx);
+        }
     }
 
     /// The place the army is at (or passing, on its way).
@@ -716,7 +734,7 @@ impl WorldMapScreen {
                 .get(&map_cue)
                 .map(|t| f64::from(t.length_ms) / 1000.0);
             let fade_s = f64::from(FADE_OUT_MS) / 1000.0;
-            let tracks = length.map(|l| vec![(map_cue, l)]).unwrap_or_default();
+            let tracks = length.map_or_default(|l| vec![(map_cue, l)]);
             if let Some((music, cue)) = CampMusic::start(tracks, 0, fade_s, ctx.clock_s) {
                 self.music = Some(music.with_quiet(QUIET_S));
                 ask(ctx, &cue);
@@ -785,14 +803,14 @@ impl WorldMapScreen {
     }
 
     /// The help line for what is open.
-    fn help(&self, ctx: &Ctx) -> String {
+    fn help(&self, ctx: &Ctx) -> StyledText {
         let key = match &self.open {
             Open::Nothing if self.cursor == self.army_at() => "world_map.help.here",
             Open::Nothing => "world_map.help.map",
             Open::Menu(_) | Open::Town(..) => "world_map.help.menu",
             Open::Find(_) => "world_map.help.find",
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// The shown places but the army's, as the view has them.
@@ -875,7 +893,7 @@ impl WorldMapScreen {
                     lines: Vec::new(),
                 },
                 list: None,
-                help: String::new(),
+                help: StyledText::new(),
             };
         };
         let map = &def.map;
@@ -903,7 +921,11 @@ impl WorldMapScreen {
             }),
         };
         #[expect(clippy::cast_possible_truncation, reason = "a fraction of a second")]
-        let since = (ctx.clock_s - self.moved_at).max(0.0) as f32;
+        let since = match ctx.idle_motion {
+            IdleMotion::On => (ctx.clock_s - self.moved_at).max(0.0) as f32,
+            // Held at its start for a test's frame (1290).
+            IdleMotion::Off => 0.0,
+        };
         WorldMapView {
             map: map.id.clone(),
             places,
@@ -973,6 +995,7 @@ impl Screen<Shuyi> for WorldMapScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         self.tick_music(ctx);
+        self.keep_voices(ctx);
         if let Some(t) = self.walk_on(ctx, input) {
             return t;
         }
@@ -1004,6 +1027,7 @@ impl Screen<Shuyi> for WorldMapScreen {
         if let Some(campaign) = result.and_then(ScreenResult::take::<Campaign>) {
             self.campaign = campaign;
         }
+        self.voices.covered();
         self.open = Open::Nothing;
         self.last_step = None;
         self.music = None;

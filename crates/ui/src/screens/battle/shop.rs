@@ -29,6 +29,7 @@
 //! (ADR-0054).
 
 use crate::prelude::*;
+use shuyi_ui::text::ToArg;
 
 use trpg_core::{
     ArmourWeight, BattleState, Command, Gold, ItemDef, ItemId, Pos, SellFrom, Shop, ShopKind,
@@ -507,7 +508,7 @@ impl ShopScreen {
         let offer = offers.get(*line)?;
         let item = ctx.words().item(&offer.item, self.preview.items());
         let gold = gold_text(offer.gold);
-        let args: [(&str, &dyn core::fmt::Display); 2] = [("item", &item), ("gold", &gold)];
+        let args: [(&str, &dyn ToArg); 2] = [("item", &item), ("gold", &gold)];
         Some(ask.view_with_keys(ctx, ctx.help_keys(), &args))
     }
 
@@ -601,7 +602,7 @@ impl ShopScreen {
                 enabled: false,
             };
         }
-        let stats = def.map(|def| stat_line(words, def)).unwrap_or_default();
+        let stats = def.map_or_default(|def| stat_line(words, def));
         let detail = match (&offer.txn, offer.durability) {
             (ShopTxn::Repair { .. }, Some((left, max))) => format!("{left}/{max} → {max}/{max}"),
             (_, Some((left, max))) => format!("{left}/{max}  {stats}"),
@@ -628,7 +629,7 @@ impl ShopScreen {
                 "battle.shop.gold",
                 &[("gold", &gold_text(self.preview.gold()))],
             ),
-            unit: unit.map(|u| words.unit(u).to_owned()).unwrap_or_default(),
+            unit: unit.map_or_default(|u| words.unit(u).to_owned()),
             tabs: tabs.iter().map(|t| ctx.text(t.key()).to_owned()).collect(),
             tab: self.tab,
             lines: offers.iter().map(|o| self.line(words, o)).collect(),
@@ -636,7 +637,7 @@ impl ShopScreen {
             empty: ctx.text("battle.shop.empty").to_owned(),
             selling: self.sell_view(ctx, &offers),
             special: self.special_view(ctx, &offers),
-            help: ctx.text_with(
+            help: ctx.text_styled(
                 match (self.selling, &self.special, tabs.len()) {
                     (Some(_), ..) => HELP_SELL,
                     (None, Some(_), _) => HELP_SPECIAL,

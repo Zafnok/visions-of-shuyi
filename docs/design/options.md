@@ -64,13 +64,35 @@ Nick's.
   to zoom (*Claude's starting rule*). `Restore defaults` puts it back to
   2×.
 
+### Threat arrows
+
+- **Threat arrows: Arcs / Arcs + tile / Straight** (ticket 0908;
+  `look-and-feel.md`, *Threat arrows*): how the arrows from the enemies
+  that could attack a tile are drawn. It starts at **Arcs** (Nick,
+  2026-11-17: "lets do I as default, K as option, and A as an option
+  too").
+- The row is under `Map zoom` on the PC and on the Playdate, and a save
+  from before it loads as Arcs *(Claude's starting rules)*. `Restore
+  defaults` puts it back to Arcs.
+
+### Range look
+
+- **Range look: Slab / Shimmer / Glint / Raised tiles / Still** (ticket
+  0923; `look-and-feel.md`, *Range tiles*): how a selected unit's move
+  and attack ranges show. It starts at **Slab** (Nick, 2026-11-18: "can
+  have each of these as options I think, and maybe H as the default";
+  "Yes, add Still").
+- The row is under `Threat arrows` on the PC and on the Playdate, and a
+  save from before it loads as Slab *(Claude's starting rules)*.
+  `Restore defaults` puts it back to Slab.
+
 ### Intro
 
 - **Intro: On / Off** (ticket 0844; `title-screen.md`, *Intro cinematic*):
   whether the title plays its cinematic when left alone. It starts **On**
   (Nick, 2026-10-16: "Yes, an on/off setting"; not "only the first time").
-  Off, the title stays on the logo, backdrop, sparks and menu, and the
-  song keeps looping.
+  Off, the title stays on the logo, backdrop, campfire, embers and menu,
+  and the song and the crackle keep looping.
 - The row is under `Map zoom` (above `Colors`), on the title's Options
   and in battle alike (it does nothing in battle) (*Claude's starting
   rule*). The Playdate leaves it out until it has the cinematic (1044).

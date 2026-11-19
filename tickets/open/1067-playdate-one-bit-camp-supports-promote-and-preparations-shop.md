@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: sonnet-5 / gpt-6.1-terra
 effort: high
 status: todo
-blocked_by: ["1003", "0606", "0443", "1046"]
+blocked_by: ["1003", "0606", "0443", "1046", "1073"]
 nick_input: none
 completed:
 ---
@@ -29,6 +29,21 @@ Nick plays Act 1 on his Playdate in 1064, so each needs a one-bit paint
 1046 did for Preparations, results, saves and the ending screens. The
 support and camp conversations themselves play on the dialogue screen
 (1043).
+
+2026-11-17 friction sweep
+([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
+bucket B1): three of the four screens have no content yet, so their
+one-bit paints are parked until it exists. `supports.ron` has
+`pairs: []` and `camp.ron` `events: []` (the game skips camp when it
+has nothing, `flow.rs`), and their content is 1073, which waits on the
+writer (0766): 1073 is now in `blocked_by`. No seal is given anywhere in
+Act 1, so the promote screen can't be reached; whether Act 1 promotes is
+asked in 0184 (see 0606). If Nick answers that it doesn't, drop the
+promote and reclass paint from the Scope and 0606 from `blocked_by`.
+The Preparations shop tab has its content today: if 1064 needs it on
+the Playdate before 1073 is done (for example if 0184's answer takes
+1073 off 1064), split the shop paint into its own ticket with
+`write-ticket` and leave this one parked.
 
 ## Nick input
 

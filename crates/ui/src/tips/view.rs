@@ -10,9 +10,12 @@ use trpg_content::tip::{self, GUIDE_PORTRAIT};
 use trpg_content::{Lesson, Tip};
 use trpg_core::Pos;
 
-use super::fill_placeholders;
+use shuyi_ui::text::StyledText;
+
+use super::{fill_placeholders, fill_styled};
 use crate::screen::Ctx;
 use crate::screens::battle::lessons::EndAnswer;
+use crate::widgets::help::styled_lines;
 
 /// Names-table id of the guide's name, the box's title (0731).
 pub const GUIDE_NAME: &str = "guide";
@@ -39,11 +42,12 @@ pub struct TipView {
     pub heading: String,
     /// What the guide says, one entry per line. It names no key.
     pub lines: Vec<String>,
-    /// The tip's instructions apart from her lines, its keys named, one
-    /// entry per line; empty if it has none.
-    pub how: Vec<String>,
-    /// The close hint, e.g. `f close`.
-    pub close: String,
+    /// The tip's instructions apart from her lines, its keys named (each
+    /// in a key span, ticket 0254), one entry per line; empty if it has
+    /// none.
+    pub how: Vec<StyledText>,
+    /// The close hint, e.g. `f close`, its key in a key span.
+    pub close: StyledText,
 }
 
 /// A face beside the text: an expression of a portrait.
@@ -69,14 +73,18 @@ impl TipView {
                 expression: tip::face(tip).to_owned(),
             });
         let text = fill_placeholders(words.tip_text(tip), ctx.help_keys());
-        let how = fill_placeholders(words.tip_how(tip), ctx.help_keys());
+        let how = fill_styled(ctx, words.tip_how(tip));
         Self {
             title: words.name(&ctx.game.content.names, GUIDE_NAME).to_owned(),
             face,
             heading: words.tip_title(tip).to_owned(),
             lines: text.lines().map(str::to_owned).collect(),
-            how: how.lines().map(str::to_owned).collect(),
-            close: ctx.text_with(CLOSE_HINT, &[]),
+            how: if how.is_empty() {
+                Vec::new()
+            } else {
+                styled_lines(&how)
+            },
+            close: ctx.text_styled(CLOSE_HINT, &[]),
         }
     }
 }
@@ -107,8 +115,8 @@ pub struct LessonView {
 /// One item of a lesson's checklist.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LessonItemView {
-    /// What to do, its keys named.
-    pub label: String,
+    /// What to do, its keys named (each in a key span).
+    pub label: StyledText,
     /// Whether it is done (ticked).
     pub done: bool,
 }
@@ -123,8 +131,8 @@ pub struct LessonsEndView {
     pub face: Option<FaceView>,
     /// The first line.
     pub heading: String,
-    /// The text, its keys named, one entry per line.
-    pub lines: Vec<String>,
+    /// The text, its keys named (each in a key span), one entry per line.
+    pub lines: Vec<StyledText>,
     /// The answers, in order.
     pub answers: Vec<String>,
     /// The answer the cursor is on.
@@ -145,12 +153,12 @@ impl LessonsEndView {
                 portrait: GUIDE_PORTRAIT.to_owned(),
                 expression: LESSONS_END_FACE.to_owned(),
             });
-        let text = ctx.text_with(LESSONS_END_TEXT, &[]);
+        let text = ctx.text_styled(LESSONS_END_TEXT, &[]);
         Self {
             title: words.name(&ctx.game.content.names, GUIDE_NAME).to_owned(),
             face,
             heading: ctx.text(LESSONS_END_HEADING).to_owned(),
-            lines: text.lines().map(str::to_owned).collect(),
+            lines: styled_lines(&text),
             answers: EndAnswer::ALL
                 .iter()
                 .map(|a| ctx.text(a.text_key()).to_owned())
@@ -178,7 +186,7 @@ impl LessonView {
         let text = fill_placeholders(words.lesson_text(lesson), keys);
         let items: Vec<LessonItemView> = (0..lesson.items.len())
             .map(|i| LessonItemView {
-                label: fill_placeholders(words.lesson_item(lesson, i), keys),
+                label: fill_styled(ctx, words.lesson_item(lesson, i)),
                 done: ticked.get(i).copied().unwrap_or(false),
             })
             .collect();

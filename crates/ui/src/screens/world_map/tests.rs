@@ -421,13 +421,13 @@ fn the_help_says_enter_on_the_army_and_travel_elsewhere() {
     let mut ctx = ctx();
     let mut s = screen(&ctx);
     assert!(
-        s.view(&ctx).help.contains("f enter"),
+        s.view(&ctx).help.plain().contains("f enter"),
         "{}",
         s.view(&ctx).help
     );
     press(&mut s, &mut ctx, &[Action::CursorRight]);
     assert!(
-        s.view(&ctx).help.contains("f travel"),
+        s.view(&ctx).help.plain().contains("f travel"),
         "{}",
         s.view(&ctx).help
     );
@@ -684,7 +684,7 @@ fn the_picture_look_centres_a_short_level_and_ends_with_the_help() {
     let help: String = (1..40)
         .filter_map(|x| buf.get(x, bottom).map(|c| c.glyph))
         .collect();
-    let want = s.view(&ctx).help;
+    let want = s.view(&ctx).help.plain();
     assert!(
         want.starts_with(help.trim_end()) && !help.trim().is_empty(),
         "{help:?}"
@@ -1324,4 +1324,73 @@ fn winning_a_fixed_skirmish_shows_a_cleared_mark_without_a_level_or_blocked_path
 fn world_map_declares_its_actions() {
     let screen = screen(&crate::screen::tests::ctx());
     crate::screens::actions::assert_declares(&screen, crate::screens::actions::WORLD_MAP);
+}
+
+/// The cursor pulses from when it last moved while idle motion is on, and
+/// holds at full brightness while it is off, as in a test's frame (1290).
+#[test]
+fn the_cursor_pulses_from_its_last_move_only_with_idle_motion() {
+    use crate::screen::IdleMotion;
+    let mut ctx = ctx();
+    let mut s = screen(&ctx);
+    ctx.clock_s = 2.25;
+    s.point(&mut ctx, "bridge");
+    // Half a second after the move: the pulse at its faintest (a whole
+    // second, or one and a fifth, would be bright).
+    ctx.clock_s = 2.75;
+    let faintest = pulse(0.5);
+    assert!(faintest < 0.9, "{faintest}");
+    ctx.idle_motion = IdleMotion::On;
+    assert!((s.view(&ctx).cursor_brightness - faintest).abs() < 1e-4);
+    ctx.idle_motion = IdleMotion::Off;
+    assert!((s.view(&ctx).cursor_brightness - 1.0).abs() < 1e-4);
+}
+
+/// Ticket 0257: the help line names its keys, each key in a key span, in the order
+/// `key_name` names them.
+#[test]
+fn the_help_line_holds_its_keys_in_order() {
+    use crate::widgets::help::{key_spans, spans_of};
+    let ctx = ctx();
+    let s = screen(&ctx);
+    let names = [
+        "Cursor",
+        "Confirm",
+        "PrevUnit",
+        "NextUnit",
+        "WorldArmy",
+        "WorldFind",
+        "Cancel",
+    ];
+    let want = spans_of(ctx.help_keys(), &names);
+    assert_eq!(key_spans(&s.view(&ctx).help), want);
+}
+
+/// Ticket 1296: without voice clips (the Playdate) the map looks for no
+/// battle's lines.
+#[test]
+fn without_clips_the_map_looks_for_no_lines() {
+    let mut ctx = ctx();
+    assert!(!ctx.has_voices());
+    let mut s = screen(&ctx);
+    press(&mut s, &mut ctx, &[]);
+    assert_eq!(s.voices_at, None);
+}
+
+/// Ticket 1296: with clips, the map looks for the battles' lines from
+/// where the army stands, and again once it has moved.
+#[test]
+fn the_map_looks_again_once_the_army_moves() {
+    let (mut ctx, _) = crate::screens::battle::guide_voice::tests::voiced();
+    let mut s = screen(&ctx);
+    press(&mut s, &mut ctx, &[]);
+    assert_eq!(s.voices_at.as_deref(), Some("home"));
+    press(
+        &mut s,
+        &mut ctx,
+        &[Action::CursorRight, Action::CursorRight],
+    );
+    press(&mut s, &mut ctx, &[Action::Confirm]);
+    press(&mut s, &mut ctx, &[]);
+    assert_eq!(s.voices_at.as_deref(), Some("ford"));
 }

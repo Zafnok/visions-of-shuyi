@@ -103,6 +103,7 @@ fn classes() -> ClassTable {
 /// A sword-kind weapon.
 fn weapon(name: &str, might: StatValue, hit: StatValue, (min, max): (u32, u32)) -> WeaponDef {
     WeaponDef {
+        short_name: None,
         name: name.into(),
         kind: WeaponKind::Sword,
         rank: WeaponRank::E,

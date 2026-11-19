@@ -21,6 +21,9 @@
     credits: [
         (id: "terminus", group: Fonts, title: "Terminus Font", author: "Dimitar Toshkov Zhekov",
          source: "https://terminus-font.sourceforge.net/", license: "OFL-1.1"),
+        // The chapter title card's lettering (0812, ADR-0128).
+        (id: "cinzel", group: Fonts, title: "Cinzel", author: "Natanael Gama",
+         source: "https://github.com/NDISCOVER/Cinzel", license: "OFL-1.1"),
 
         // The bought Tiny Tales bundle (THIRD_PARTY_ASSETS.md): the map
         // sprites (0436), the two test portraits (0711), the terrain tiles
@@ -49,7 +52,12 @@
             "portraits/messenger", "portraits/poacher", "portraits/red_captain",
             "portraits/retainer", "portraits/rival", "portraits/sergeant", "portraits/soldier",
             "portraits/test_knight", "portraits/test_lord",
-            "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "title/", "units/",
+            "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "title/",
+            // The map sprites, but the riders (MattWalkden's, below).
+            "units/adventurer_m1.", "units/archer.", "units/church_cleric.",
+            "units/church_knight.", "units/fighter_female.", "units/fighter_m1.",
+            "units/fighter_male.", "units/fire_elemental.", "units/ice_elemental.",
+            "units/knight_m1.", "units/warrior_m1.", "units/witch.",
             "worldmaps/act1.png",
          ]),
 
@@ -63,6 +71,29 @@
          author: "Shironejiya (Shiro Nejiya)",
          source: "http://hi79.web.fc2.com/", license: "Custom (Shironejiya)",
          private: ["battlers/brigand.", "battlers/raider.", "battlers/red_captain."]),
+
+        // Pixel Flag's Paladin (0446): the riders in the combat scene, the
+        // enemy's and Tamsin's, recoloured. Bought on BOOTH; its terms ask
+        // for no credit, but every bought work has one (THIRD_PARTY_ASSETS.md).
+        (id: "pixel_flag", group: Art,
+         title: "Classes and Mobs pixel-art TRPG pieces",
+         author: "Pixel Flag",
+         source: "https://booth.pm/ja/items/7851483", license: "Custom (Pixel Flag)",
+         private: ["battlers/rider.", "battlers/sergeant."]),
+
+        // MattWalkden's riders (0499): the mounted classes' map sprites,
+        // cut to the game's walking sheet. Pay what you want on itch.io;
+        // no credit asked, but every bought work has one.
+        (id: "mattwalkden", group: Art,
+         title: "Fantasy Battle Pack",
+         author: "MattWalkden",
+         source: "https://mattwalkden.itch.io/fantasy-battle-pack", license: "Custom (MattWalkden)",
+         private: ["units/lance_cavalier.", "units/mounted_archer."]),
+
+        // The title screen's campfire (0922).
+        (id: "idylwild_campfires", group: Art, title: "Idylwild's Chromatic Campfires",
+         author: "Idylwild", source: "https://opengameart.org/content/idylwilds-chromatic-campfires",
+         license: "CC0-1.0"),
 
         // The AI voice tools that made the voice clips (0722, ADR-0107).
         // Hidden from the list: the credits screen shows them under its

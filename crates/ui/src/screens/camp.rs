@@ -28,6 +28,7 @@ pub mod music;
 pub mod view;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 pub use view::CampView;
 
 use trpg_content::Present;
@@ -281,14 +282,14 @@ impl CampScreen {
     }
 
     /// The bottom help line.
-    fn help(&self, ctx: &Ctx) -> String {
+    fn help(&self, ctx: &Ctx) -> StyledText {
         let key = match (&self.focus, self.section()) {
             (Focus::Sections, Section::Leave) => "camp.help.leave",
             (Focus::Sections, _) => "camp.help.sections",
             (Focus::Units, _) => "camp.help.units",
             (Focus::Talks(_) | Focus::Events, _) => "camp.help.watch",
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// The screen as it is now, as plain data for a skin to paint

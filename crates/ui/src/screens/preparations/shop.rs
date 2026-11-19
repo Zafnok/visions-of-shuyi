@@ -11,6 +11,7 @@
 //! (0329): no shop sells it back.
 
 use crate::prelude::*;
+use shuyi_ui::text::ToArg;
 
 use trpg_core::{
     Gold, ItemDef, ItemId, PrepUnit, ShopKind, StockItem, WEAPON_SLOTS, WeaponAt, repair_cost,
@@ -326,7 +327,7 @@ impl PreparationsScreen {
         let deal = deals.get(*line)?;
         let item = ctx.words().item(&deal.item, &self.prep.setup.items);
         let gold = gold_text(deal.gold);
-        let args: [(&str, &dyn core::fmt::Display); 2] = [("item", &item), ("gold", &gold)];
+        let args: [(&str, &dyn ToArg); 2] = [("item", &item), ("gold", &gold)];
         Some(ask.view_with_keys(ctx, ctx.help_keys(), &args))
     }
 
@@ -413,7 +414,7 @@ impl PreparationsScreen {
             empty: ctx.text(empty).to_owned(),
             selling: self.sell_view(ctx, &deals),
             special: self.special_view(ctx, &deals),
-            help: String::new(),
+            help: shuyi_ui::text::StyledText::new(),
             debug_hint: None,
         }
     }

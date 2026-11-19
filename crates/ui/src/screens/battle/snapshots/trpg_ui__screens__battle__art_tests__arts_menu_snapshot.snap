@@ -1,144 +1,146 @@
 ---
 source: crates/ui/src/screens/battle/art_tests.rs
-expression: "render(&s, &c).to_snapshot(&c.palette)"
+expression: "snap(&render(&s, &c), &c, MAP_VIEW)"
 ---
-                                                                      ╔════════════════════════════╗
-                                                                      ║ Road                       ║
-                                                                      ║ DEF +0  AVO +0             ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║ Test Lord                  ║
-                                                                      ║ Swordsman  Lv 1            ║
-                                                                      ║ HP 19/19   ██████████      ║
-                                                                      ║ Player                     ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║                            ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║                            ║
-                    ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      ║                            ║
-                    ..≈≈≈≈..··....┌─ Iron Sword 20/20 ─────────────┐  ║                            ║
-                    ....······....│ Flowing Cut     −2 dur  E      │  ║                            ║
-                    ..♣♣··....╦╦..│ Guard Break     −4 dur  D      │  ║                            ║
-                    ♣♣♣♣··MaKn....│ Keen Edge       −3 dur  active │  ║                            ║
-                    ♣♣♠♠··........├────────────────────────────────┤  ║                            ║
-                                  │ +10 hit; no counter            │  ║                            ║
-                                  └────────────────────────────────┘  ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
-                                                                      ║ Gold 0                     ║
-                                                                      ╚════════════════════════════╝
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
- arrows choose · f confirm · d back                                                        F2 debug 
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      
+                    ≈≈≈≈≈≈====····LoBr..♣♣♣♣....                      
+                    ..≈≈≈≈..··....┌─ Iron Sword 20/20 ──────────────┐ 
+                    ....······....│ Flowing Cut     −2 dur  E       │ 
+                    ..♣♣··....╦╦..│ Guard Break     −4 dur  D       │ 
+                    ♣♣♣♣··MaKn....│ Keen Edge       −3 dur  active  │ 
+                    ♣♣♠♠··........├─────────────────────────────────┤ 
+                                  │ Attack: +10 hit; no counter     │ 
+                                  └─────────────────────────────────┘ 
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcddddcccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabceeeeeeeeeccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooorrssjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjbbddddddddddddccccccbbbbbbbbbbbbbbaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjjjoooooojjjjbccccccccccccccccccccccccccccccccbaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkoojjjjttjjbuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuubaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkoovvvvjjjjbccccccccccccccccccccccccccccccccbaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakklloojjjjjjjjbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccccbaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwa
-awwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbbbbbccccddddeeeeffffgggghhaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbbbccccddddiijjiieeeeggggggaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabbcccckkkkiiiillmmddeeeeddddaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaddccccddiiddddnnooooooooooooppppppnnnnnnnnnnnnnnna
+aaaaaaaaaaaaaaaaaaaaddddiiiiiiddddnpppppppppppppppppppppppppppppppppna
+aaaaaaaaaaaaaaaaaaaaddeeiiddddqqddnrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrna
+aaaaaaaaaaaaaaaaaaaaeeeeiissssddddnpppppppppppppppppppppppppppppppppna
+aaaaaaaaaaaaaaaaaaaaeeffiiddddddddnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnna
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaanpppppppppppppppppppppppppppppppppna
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnna
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
-b = fg:panel_border bg:panel_bg
-c = fg:text bg:panel_bg
-d = fg:text_highlight bg:panel_bg
-e = fg:player bg:panel_bg
-f = fg:hp_high bg:panel_bg
-g = fg:text_dim bg:panel_bg
-h = fg:water bg:sea
-i = fg:water bg:water_bg
-j = fg:grass bg:grass_bg
-k = fg:forest bg:forest_bg
-l = fg:thicket bg:thicket_bg
-m = fg:mountain bg:mountain_bg
-n = fg:peak bg:peak_bg
-o = fg:road bg:road_bg
-p = fg:enemy bg:road_bg
-q = fg:wood bg:water_bg
-r = fg:player bg:road_bg
-s = fg:enemy bg:grass_bg
-t = fg:fort bg:fort_bg
-u = fg:panel_bg bg:panel_border_focus
-v = fg:player bg:grass_bg
-w = fg:text_dim bg:black
+b = fg:water bg:sea
+c = fg:water bg:water_bg
+d = fg:grass bg:grass_bg
+e = fg:forest bg:forest_bg
+f = fg:thicket bg:thicket_bg
+g = fg:mountain bg:mountain_bg
+h = fg:peak bg:peak_bg
+i = fg:road bg:road_bg
+j = fg:enemy bg:road_bg
+k = fg:wood bg:water_bg
+l = fg:player bg:road_bg
+m = fg:enemy bg:grass_bg
+n = fg:panel_border bg:panel_bg
+o = fg:text_highlight bg:panel_bg
+p = fg:text bg:panel_bg
+q = fg:fort bg:fort_bg
+r = fg:panel_bg bg:panel_border_focus
+s = fg:player bg:grass_bg
 --- overlays ---
 over  273,222 14x2  hp_high
 over  225,286 14x2  hp_high
 over  289,222 14x2  hp_high
 over  273,206 14x2  hp_high
 over  209,286 14x2  hp_high
-over  282,215 7x3  black
-over  282,215 3x3  black
-over  283,216 4x3  black
-over  285,217 3x3  black
-over  282,215 3x3  black
-over  283,214 4x3  black
-over  285,213 3x3  black
-over  279,218 3x6  black
+over  284,212 5x4  black
+over  284,212 3x4  black
+over  283,213 3x4  black
+over  284,209 3x3  black
+over  284,210 3x3  black
+over  283,211 5x3  black
+over  283,212 5x3  black
+over  282,213 7x3  black
+over  281,214 8x3  black
+over  287,215 3x3  black
+over  279,222 4x2  black
+over  279,220 4x4  black
+over  279,219 4x4  black
+over  279,217 3x3  black
 over  279,218 3x3  black
-over  278,219 3x4  black
-over  277,221 3x3  black
-over  279,218 3x3  black
-over  280,219 3x4  black
-over  281,221 3x3  black
-over  279,207 3x8  black
-over  279,212 3x3  black
-over  280,210 3x4  black
-over  281,209 3x3  black
-over  279,212 3x3  black
-over  278,210 3x4  black
-over  277,209 3x3  black
-over  283,216 5x1  enemy
-over  283,216 1x1  enemy
-over  284,217 2x1  enemy
-over  286,218 1x1  enemy
-over  283,216 1x1  enemy
-over  284,215 2x1  enemy
-over  286,214 1x1  enemy
-over  280,219 1x5  enemy
+over  278,219 5x3  black
+over  278,220 5x3  black
+over  277,221 7x3  black
+over  276,222 9x2  black
+over  279,207 4x5  black
+over  276,206 9x3  black
+over  277,207 7x3  black
+over  278,208 5x3  black
+over  278,209 5x3  black
+over  279,210 3x3  black
+over  279,211 3x3  black
+over  285,213 3x2  enemy
+over  285,213 1x2  enemy
+over  284,214 1x2  enemy
+over  285,210 1x1  enemy
+over  285,211 1x1  enemy
+over  284,212 3x1  enemy
+over  284,213 3x1  enemy
+over  283,214 5x1  enemy
+over  282,215 6x1  enemy
+over  288,216 1x1  enemy
+over  280,223 2x1  enemy
+over  280,221 2x3  enemy
+over  280,220 2x2  enemy
+over  280,218 1x1  enemy
 over  280,219 1x1  enemy
-over  279,220 1x2  enemy
-over  278,222 1x1  enemy
-over  280,219 1x1  enemy
-over  281,220 1x2  enemy
-over  282,222 1x1  enemy
-over  280,208 1x6  enemy
-over  280,213 1x1  enemy
-over  281,211 1x2  enemy
-over  282,210 1x1  enemy
-over  280,213 1x1  enemy
-over  279,211 1x2  enemy
-over  278,210 1x1  enemy
+over  279,220 3x1  enemy
+over  279,221 3x1  enemy
+over  278,222 5x1  enemy
+over  277,223 7x1  enemy
+over  280,208 2x3  enemy
+over  277,207 7x1  enemy
+over  278,208 5x1  enemy
+over  279,209 3x1  enemy
+over  279,210 3x1  enemy
+over  280,211 1x1  enemy
+over  280,212 1x1  enemy
 over  293,195 5x11  black
 over  277,179 5x11  black
 over  294,196 3x6  text_highlight

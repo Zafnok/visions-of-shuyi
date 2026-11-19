@@ -168,7 +168,7 @@ pub fn check_lights(maps: &BTreeMap<String, MapDef>, lighting: &Lighting) -> Vec
             let source = bundle::file(&path).unwrap_or_default();
             light_error(
                 &bundle::display_path(&path),
-                source,
+                &source,
                 &def.look.light,
                 lighting,
             )
@@ -390,6 +390,7 @@ mod tests {
     fn feature_items() -> ItemTable {
         let mut items = ItemTable::default();
         let weapon = trpg_core::WeaponDef {
+            short_name: None,
             name: "Sword".into(),
             kind: trpg_core::WeaponKind::Sword,
             rank: trpg_core::WeaponRank::E,

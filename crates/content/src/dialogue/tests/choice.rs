@@ -193,7 +193,7 @@ fn option_text_limit() {
     );
     assert_eq!(
         errors(&scene(&long)),
-        ["t.dlg:5: option text is 61 characters; the limit is 60, so it fits the menu"]
+        ["t.dlg:5: option text is 61 cells; the limit is 60, so it fits the menu"]
     );
 }
 
@@ -281,7 +281,7 @@ fn text_length_counts_the_longest_substitution() {
         errors(&scene(&format!(
             "> {base}{{lead}}\n> {base}{{lead}}{{they}}"
         ))),
-        ["t.dlg:5: text is 203 characters; the limit is 200"]
+        ["t.dlg:5: text is 203 cells; the limit is 200"]
     );
 }
 
@@ -291,7 +291,7 @@ fn the_lead_speaks_in_short_lines() {
     let at_limit = "a".repeat(MAX_LEAD_LINE_LEN);
     assert_eq!(errors(&scene(&body(&at_limit))), Vec::<String>::new());
     assert_eq!(errors(&scene(&body("Let's move."))), Vec::<String>::new());
-    let message = "the lead's line is 41 characters; the limit is 40: the lead speaks in short, \
+    let message = "the lead's line is 41 cells; the limit is 40: the lead speaks in short, \
                    neutral lines and otherwise through reply choices \
                    (assets-private/story/design/setting-and-tone.md, \"Rules for writing the lead\")";
     assert_eq!(

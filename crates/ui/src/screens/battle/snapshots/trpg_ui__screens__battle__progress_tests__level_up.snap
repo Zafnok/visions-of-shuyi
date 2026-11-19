@@ -1,82 +1,75 @@
 ---
 source: crates/ui/src/screens/battle/progress_tests.rs
-expression: h.snapshot()
+expression: h.snapshot_of(MAP_VIEW)
 ---
-                                                                      ┌────────────────────────────┐
-                                                                      │ Plain                      │
-                                                                      │ DEF +0  AVO +0             │
-                                                                      │                            │
-                                                                      │                            │
-     ╔══════════════════════════════════════════════════════════╗     │ Brigand                    │
-     ║ ┌────────────────────────────────┐                       ║     │ Brigand  Lv 1              │
-     ║ │                                │  LEVEL UP!            ║     │ HP 3/20    ██░░░░░░░░      │
-     ║ │                                │                       ║     │ Enemy                      │
-     ║ │                                │  Test Lord            ║     │                            │
-     ║ │                                │  Lv 1 → 2             ║     │                            │
-     ║ │                                │                       ║     │                            │
-     ║ │                                │  HP   19 → 20  +1     ║     │                            │
-     ║ │                                │  Str   6              ║     │                            │
-     ║ │                                │  Mag   1              ║     │                            │
-     ║ │                                │  Dex   7              ║     │                            │
-     ║ │                                │  Spd   7 → 8   +1     ║     │                            │
-     ║ │                                │  Def   4              ║     │                            │
-     ║ │                                │  Res   3              ║     │                            │
-     ║ │                                │                       ║     │                            │
-     ║ │                                │                       ║     │                            │
-     ║ │                                │                       ║     │                            │
-     ║ │                                │                       ║     │                            │
-     ║ └────────────────────────────────┘                       ║     │                            │
-     ╚══════════════════════════════════════════════════════════╝     │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │                            │
-                                                                      │ Gold 0                     │
-                                                                      └────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
- f continue                                                                                F2 debug 
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+     ╔══════════════════════════════════════════════════════════╗     
+     ║ ┌────────────────────────────────┐                       ║     
+     ║ │                                │  LEVEL UP!            ║     
+     ║ │                                │                       ║     
+     ║ │                                │  Test Lord            ║     
+     ║ │                                │  Lv 1 → 2             ║     
+     ║ │                                │                       ║     
+     ║ │                                │  HP   19 → 20  +1     ║     
+     ║ │                                │  Str   6              ║     
+     ║ │                                │  Mag   1              ║     
+     ║ │                                │  Dex   7              ║     
+     ║ │                                │  Spd   7 → 8   +1     ║     
+     ║ │                                │  Def   4              ║     
+     ║ │                                │  Res   3              ║     
+     ║ │                                │                       ║     
+     ║ │                                │                       ║     
+     ║ │                                │                       ║     
+     ║ │                                │                       ║     
+     ║ └────────────────────────────────┘                       ║     
+     ╚══════════════════════════════════════════════════════════╝     
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeaaaaabcfffffffccccccccccccccccccccb
-aaaaaecbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccdddddddddcccccccccccceaaaaabccccccccccccgghhhhhhhhccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabchhhhhccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbcciiiiiiiiicccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccddccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccddccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbcchhhhhhhcccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbccccccccccccccccccccccccccccccccbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaecbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccccccccccceaaaaabccccccccccccccccccccccccccccb
-aaaaaeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaajjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjja
-ajjjjjjjjjjaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaajjjjjjjja
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaa
+aaaaabcddddddddddddddddddddddddddddddddddcccccccccccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcceeeeeeeeeccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdccfffffffffccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccceecccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdccgggggggccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdccgggggggccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdccgggggggccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccceecccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdccgggggggccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdccgggggggccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaa
+aaaaabcddddddddddddddddddddddddddddddddddcccccccccccccccccccccccbaaaaa
+aaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
-b = fg:panel_border bg:panel_bg
+b = fg:panel_border_focus bg:panel_bg
 c = fg:text bg:panel_bg
-d = fg:text_highlight bg:panel_bg
-e = fg:panel_border_focus bg:panel_bg
-f = fg:enemy bg:panel_bg
-g = fg:hp_low bg:panel_bg
-h = fg:text_dim bg:panel_bg
-i = fg:player bg:panel_bg
-j = fg:text_dim bg:black
+d = fg:panel_border bg:panel_bg
+e = fg:text_highlight bg:panel_bg
+f = fg:player bg:panel_bg
+g = fg:text_dim bg:panel_bg
 --- overlays ---
 under sprite 64,112 256x256  portraits/test_lord/happy.png 0,0 32x32

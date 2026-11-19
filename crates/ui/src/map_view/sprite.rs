@@ -24,6 +24,7 @@ pub mod units;
 
 use alloc::rc::Rc;
 
+use shuyi_ui::grid::glyph::GlyphSkin;
 use shuyi_ui::grid::skin::UnitPainter;
 use shuyi_ui::grid::sprite::SpriteSkin;
 use trpg_content::Tileset;
@@ -49,8 +50,13 @@ impl MapSkin {
     /// to every [`MapZoom`]), `"sprite_units"` when only the units. Its
     /// walk is slower than the glyph skin's: a sprite is seen to walk.
     pub fn sprite(tileset: Tileset) -> Self {
+        Self::sprite_on(tileset, GLYPH)
+    }
+
+    /// [`sprite`](Self::sprite), its colours and threat arrows `glyph`'s.
+    pub(super) fn sprite_on(tileset: Tileset, glyph: GlyphSkin) -> Self {
         let zooms = MapZoom::ALL.map(MapZoom::factor);
-        let grid = SpriteSkin::new(tileset.terrain.clone(), GLYPH, SPRITE_WALK).with_zooms(&zooms);
+        let grid = SpriteSkin::new(tileset.terrain.clone(), glyph, SPRITE_WALK).with_zooms(&zooms);
         Self::new(Rc::new(grid), Units::Sprite(Rc::new(tileset)))
     }
 }
@@ -174,6 +180,7 @@ pub(crate) mod tests {
     use crate::map_view::threat;
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
+    use shuyi_ui::grid::scene::RangesShown;
     use shuyi_ui::grid::{Ends, MapEdges};
 
     /// The picture of mix `m` in a test layer: one rectangle of the test
@@ -348,11 +355,18 @@ pub(crate) mod tests {
             skin.paint(&c, &scene, area, &mut buf);
             let grid = skin.grid(&scene, area);
             let arrows = threat(p(0, 0), &[p(1, 1)]);
-            let expect: Vec<Item> =
-                threat::threat_overlays(&arrows, &grid, threat::Start::Middle, colors)
-                    .into_iter()
-                    .map(Item::Rect)
-                    .collect();
+            // Arcs, the default (ticket 0908).
+            let shape = threat::Shape::Arc;
+            let expect: Vec<Item> = threat::threat_overlays_shaped(
+                &arrows,
+                &grid,
+                threat::Start::Middle,
+                shape,
+                colors,
+            )
+            .into_iter()
+            .map(Item::Rect)
+            .collect();
             assert!(expect.len() > 4, "{}", skin.name());
             assert_eq!(&buf.items()[before..], expect, "{}", skin.name());
             // The mark is over the brigand's tile, in the highlight colour.
@@ -544,16 +558,16 @@ pub(crate) mod tests {
             assert_eq!(small.items().len(), big.items().len());
             for (one, two) in small.items().iter().zip(big.items()) {
                 let expected = match *one {
-                    Item::Rect(o) => Item::Rect(Overlay {
-                        rect: double(o.rect),
-                        ..o
-                    }),
-                    Item::Sprite(sprite) => Item::Sprite(Sprite {
-                        dest: double(sprite.dest),
-                        clip: double(sprite.clip),
-                        base: sprite.base.map(double),
-                        ..sprite
-                    }),
+                    Item::Rect(mut o) => {
+                        o.rect = double(o.rect);
+                        Item::Rect(o)
+                    }
+                    Item::Sprite(mut sprite) => {
+                        sprite.dest = double(sprite.dest);
+                        sprite.clip = double(sprite.clip);
+                        sprite.base = sprite.base.map(double);
+                        Item::Sprite(sprite)
+                    }
                     ref other => panic!("an item the sprite skin doesn't paint: {other:?}"),
                 };
                 assert_eq!(*two, expected, "at {clock_ms} ms");
@@ -838,11 +852,20 @@ pub(crate) mod tests {
         let scene_fields = [
             "origin", // where the tiles are: every feature moves with it
             "size",   // how many tiles: likewise
-            "more", "tiles", "ranges",
+            "more",
+            "tiles",
+            "ranges",
             // Painted only by a tileset with layers, and one with other
             // looks: `the_ring_and_the_look_are_painted_by_a_tileset_
             // that_has_layers_and_looks`.
-            "rim", "look", "units", "cursor", "path", "threat", "clock_ms",
+            "rim",
+            "look",
+            "units",
+            "cursor",
+            "path",
+            "threat",
+            "clock_ms",
+            "ranges_shown",
         ];
         assert_eq!(fields(&format!("{scene:#?}")), scene_fields);
         let TileView {
@@ -937,6 +960,13 @@ pub(crate) mod tests {
         for kind in range::ALL {
             out.push(feature("range", &move |s| s.tint([p(0, 0)], kind)));
         }
+        // Ranges opened this moment haven't spread to their tile yet
+        // (ticket 0923).
+        let opened = RangesShown::new(p(0, 0), 0);
+        let mut spread = feature("ranges shown", &move |s| s.ranges_shown = Some(opened));
+        spread.without.tint([p(0, 0)], range::MOVE);
+        spread.with.tint([p(0, 0)], range::MOVE);
+        out.push(spread);
         let styles = [
             CursorStyle::Corners,
             CursorStyle::LargeCorners,
@@ -965,7 +995,8 @@ pub(crate) mod tests {
         let own = with_walking_brigand(&c, &with_lord(&skin(&c)));
         for s in [own, with_lord(&sheets(&c))] {
             let features = features(&c);
-            assert_eq!(features.len(), 23 + 5 + 6);
+            // The fields, the ranges, the cursors and the spread (0923).
+            assert_eq!(features.len(), 23 + 5 + 6 + 1);
             for f in features {
                 assert_ne!(f.without, f.with, "{}: no change", f.name);
                 let (without, with) = (painted(&c, &s, &f.without), painted(&c, &s, &f.with));
@@ -1097,7 +1128,10 @@ pub(crate) mod tests {
                 _ => "other",
             })
             .collect();
-        let mut expect = vec!["path"];
+        // First, under everything, the move tile's outline and its slab's
+        // shadow (ticket 0923: four sides, and below and right).
+        let mut expect = vec!["bar"; 6];
+        expect.push("path");
         expect.extend(["sprite"; 5]);
         expect.push("bar");
         expect.extend(["path"; 6]);

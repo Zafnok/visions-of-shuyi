@@ -1,5 +1,5 @@
-//! The game's binary: macroquad's entry point, which must be here, and what
-//! the engine's platform shell (`shuyi-app`) needs to know about the game.
+//! The game's binary: its entry point, and what the engine's platform
+//! shell (`shuyi-app`) needs to know about the game.
 //! See ADR-0004.
 
 // A release build on Windows is a GUI program: no console window (ticket 0902).
@@ -10,10 +10,10 @@ mod args;
 #[cfg(test)]
 mod tests;
 
-use macroquad::window::Conf;
 use shuyi_app::storage::DesktopFolder;
 use shuyi_app::{AppConfig, CrashReports, VoiceFiles, Window};
 use trpg_content::{bundle, font, voice};
+use trpg_ui::console::{ConsoleSizes, ConsoleSpec};
 
 use crate::app_info::APP;
 
@@ -28,10 +28,11 @@ const _: () = assert!(
      alone, with `-p trpg-app` (ADR-0057)"
 );
 
-/// The window: the console at 2x (1600x1024) plus a small margin, since the
+/// The window: the console at 2x plus a margin of 40 pixels, since the
 /// framebuffer can come out a pixel smaller than asked, which would drop
-/// to 1x. Its title and icon are `shuyi.ron`'s `app` (tickets 1199, 1201).
-const WINDOW: Window = Window::new(APP.name, 1640, 1064).with_icon(APP.window_icon);
+/// to 1x (ticket 1283). Its title and icon are `shuyi.ron`'s `app`
+/// (tickets 1199, 1201).
+const WINDOW: Window = Window::console(APP.name, ConsoleSpec::PC, 2, 40).with_icon(APP.window_icon);
 
 /// The storage's name: never change it, or every player's saves are lost
 /// (`localStorage` keys under `tactical-rpg/` on the web, the folder
@@ -65,10 +66,6 @@ fn config() -> AppConfig {
     // keeps it to debug builds unless asked).
     config.crash = CrashReports::new(APP.version).with_record_in_release();
     config
-}
-
-fn window_conf() -> Conf {
-    shuyi_app::window_conf(&WINDOW)
 }
 
 /// Where the game starts (the command line's), once a packed build has
@@ -125,10 +122,9 @@ fn folders_on_disk(root: &std::path::Path) -> Vec<shuyi::assets::bundle::Layer> 
         .collect()
 }
 
-#[macroquad::main(window_conf)]
-async fn main() {
+fn main() {
     // The game's name in white on black while it loads, as on the
     // Playdate (ticket 1036).
     let start = trpg_ui::start::start(WINDOW.title, startup());
-    shuyi_app::run(config(), start).await;
+    shuyi_app::run_app(config(), start);
 }

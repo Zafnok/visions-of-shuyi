@@ -27,7 +27,7 @@ fn header(snapshot: &str) -> &str {
 #[test]
 fn each_whole_zoom_is_a_header_line_and_the_scene() {
     let mut h = opened();
-    let one = h.snapshot();
+    let one = h.snapshot_whole();
     assert_eq!(
         header(&one),
         "--- backdrop: clip 26,4 48x14  origin -80.0,-48.0  zoom 1 ---"
@@ -38,21 +38,21 @@ fn each_whole_zoom_is_a_header_line_and_the_scene() {
     assert!(one.ends_with(&scene.to_snapshot(&h.game().ctx().palette)));
     assert_snapshot!("scene_camera_1x", one);
     h.keys("f");
-    let two = h.snapshot();
+    let two = h.snapshot_whole();
     assert_eq!(
         header(&two),
         "--- backdrop: clip 26,4 48x14  origin 16.0,8.0  zoom 2 ---"
     );
     assert_snapshot!("scene_camera_2x", two);
     h.keys("f");
-    let three = h.snapshot();
+    let three = h.snapshot_whole();
     assert_eq!(
         header(&three),
         "--- backdrop: clip 26,4 48x14  origin 48.0,26.7  zoom 3 ---"
     );
     assert_snapshot!("scene_camera_3x", three);
     h.keys("f");
-    let four = h.snapshot();
+    let four = h.snapshot_whole();
     assert_eq!(
         header(&four),
         "--- backdrop: clip 26,4 48x14  origin 64.0,36.0  zoom 4 ---"
@@ -60,7 +60,7 @@ fn each_whole_zoom_is_a_header_line_and_the_scene() {
     assert_snapshot!("scene_camera_4x", four);
     // Round again: no step past 4×, none in between.
     h.keys("f");
-    assert_eq!(h.snapshot(), one);
+    assert_eq!(h.snapshot_whole(), one);
     assert_eq!(h.sounds().iter().filter(|s| *s == "menu_select").count(), 5);
 }
 
@@ -74,7 +74,7 @@ fn holding_a_cursor_key_pans_by_the_pixel() {
     assert!((origin.0 - 94.0).abs() < 0.05, "{origin:?}");
     assert!((origin.1 - 36.0).abs() < 0.05, "{origin:?}");
     assert_eq!(
-        header(&h.snapshot()),
+        header(&h.snapshot_whole()),
         "--- backdrop: clip 26,4 48x14  origin 94.0,36.0  zoom 4 ---"
     );
     // Part of a pixel: a quarter of a second up is 15 px; one frame is 1.
@@ -84,7 +84,7 @@ fn holding_a_cursor_key_pans_by_the_pixel() {
     // The window stops at the scene's edge.
     h.hold("Left", 5.0).hold("Down", 5.0);
     assert_eq!(
-        header(&h.snapshot()),
+        header(&h.snapshot_whole()),
         "--- backdrop: clip 26,4 48x14  origin 0.0,72.0  zoom 4 ---"
     );
     // The same keys, the same frame.
@@ -92,7 +92,7 @@ fn holding_a_cursor_key_pans_by_the_pixel() {
     again.keys("f f f");
     again.hold("Right", 0.5).hold("Up", 1.0 / 240.0);
     again.hold("Left", 5.0).hold("Down", 5.0);
-    assert_eq!(again.snapshot(), h.snapshot());
+    assert_eq!(again.snapshot_whole(), h.snapshot_whole());
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn the_window_shows_the_scene_and_the_box_over_it_hides_it() {
     // Outside it: nothing is.
     assert!(!buf.get(clip.x - 1, clip.y).unwrap().see_through);
     assert!(!buf.get(clip.x, clip.y + clip.h).unwrap().see_through);
-    let snapshot = h.snapshot();
+    let snapshot = h.snapshot_whole();
     assert!(snapshot.contains("bg:see-through"), "{snapshot}");
     assert!(snapshot.contains("A text box drawn"), "{snapshot}");
 }
@@ -123,7 +123,7 @@ fn cancel_closes_it_and_the_next_frame_has_no_backdrop() {
     assert_eq!(h.top_screen(), "debug_menu");
     assert_eq!(h.sounds(), ["menu_cancel"]);
     assert!(h.game().buffer().backdrop().is_none());
-    assert!(!h.snapshot().contains("backdrop"));
+    assert!(!h.snapshot_whole().contains("backdrop"));
 }
 
 #[test]
@@ -136,18 +136,18 @@ fn a_sprite_skinned_map_is_a_scene_of_sprites() {
     assert!(scene.sprites().len() >= 14 * 8);
     // The console's own items stay its own: the scene's aren't copied in.
     assert_eq!(h.game().buffer().items(), []);
-    assert!(h.snapshot().contains(" sprite "));
+    assert!(h.snapshot_whole().contains(" sprite "));
 }
 
 #[test]
 fn the_help_line_names_the_keys_or_the_buttons() {
     let mut h = opened();
-    let keys = h.snapshot();
+    let keys = h.snapshot_whole();
     assert!(keys.contains("arrows pan (hold)"), "{keys}");
     assert!(keys.contains("f zoom"), "{keys}");
     assert!(keys.contains("d back"), "{keys}");
     h.use_pad(PadKind::Xbox).pad("South");
-    let pad = h.snapshot();
+    let pad = h.snapshot_whole();
     assert!(pad.contains("D-pad/L-stick pan (hold)"), "{pad}");
     assert!(pad.contains("A zoom"), "{pad}");
     assert!(pad.contains("B back"), "{pad}");

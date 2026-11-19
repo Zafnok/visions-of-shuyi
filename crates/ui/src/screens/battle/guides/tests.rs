@@ -3,6 +3,7 @@
 //! menu at every tutorial level, closed by Cancel.
 
 use crate::input::LEFT_HANDED;
+use crate::screens::battle::layout::{ABOVE_HELP_ROW, snap};
 use crate::screens::battle::testing::Values as _;
 use insta::assert_snapshot;
 use trpg_core::TutorialLevel;
@@ -179,7 +180,7 @@ fn the_map_menu_opens_it_at_every_level_and_cancel_goes_back() {
         let shown = s.guides().expect("the list is open").view(&c);
         let guides = &shown.list;
         assert_eq!(guides.heading, "Moving the cursor", "{level:?}");
-        assert_eq!(shown.help, "arrows choose · d close");
+        assert_eq!(shown.help.plain(), "arrows choose · d close");
         // No tip or lesson shows over it.
         assert_eq!(s.shown_tip(), None, "{level:?}");
         assert_eq!(s.shown_lesson(), None, "{level:?}");
@@ -216,23 +217,26 @@ fn the_text_names_the_keys_the_player_has_bound() {
     press(&mut s, &mut c, &[Action::CursorDown]);
     let lines = s.guides().unwrap().list_view(&c).lines;
     assert!(
-        lines.contains(&"Move the cursor: wasd".to_owned()),
+        lines.contains(&"Move the cursor: w\u{a0}a\u{a0}s\u{a0}d".to_owned()),
         "{lines:?}"
     );
     assert!(
         lines.contains(&"Open Options from the map menu: k".to_owned()),
         "{lines:?}"
     );
-    assert_eq!(s.guides().unwrap().view(&c).help, "wasd choose · k close");
+    assert_eq!(
+        s.guides().unwrap().view(&c).help.plain(),
+        "w\u{a0}a\u{a0}s\u{a0}d choose · k close"
+    );
 }
 
 #[test]
 fn the_list_renders() {
     let mut c = ctx();
     let mut s = opened(&mut c);
-    assert_snapshot!("lesson", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("lesson", snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
     press(&mut s, &mut c, &[Action::CursorUp]);
-    assert_snapshot!("tip", render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!("tip", snap(&render(&s, &c), &c, ABOVE_HELP_ROW));
 }
 
 #[test]

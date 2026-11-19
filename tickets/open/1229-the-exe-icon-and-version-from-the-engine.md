@@ -17,7 +17,7 @@ completed:
 
 Ticket 0902 gave the exe its icon and version info on the game's side:
 `cargo xtask icon build` writes `assets/icon/icon.ico` with its own
-PNG-in-ICO writer (`fn ico` in `crates/xtask/src/icon.rs`, lines
+PNG-in-ICO writer (`fn ico` in `crates/tools/src/icon.rs`, lines
 114-130, at `ICO_SIZES` 16/32/48/256), and `crates/app/build.rs`
 (`embed_windows_resources`, lines 22-44) compiles it with the
 `winresource` build dependency, with `FileDescription`, `ProductName`,
@@ -49,7 +49,7 @@ release package check and the engine's resource test.
 **In:**
 - Move the pin past engine#3049 (`engine-change` skill §7, the
   `engine-pin` skill), unless an open `engine-pin` PR has done so.
-- `crates/xtask/src/icon.rs`: `fn ico`, `ICO_SIZES`, the `icon.ico`
+- `crates/tools/src/icon.rs`: `fn ico`, `ICO_SIZES`, the `icon.ico`
   write in `build` and the `ico_header_points_at_the_pictures` test go;
   `every_option_draws_at_every_size` keeps the sizes the PNGs need.
 - `assets/icon/icon.ico` goes, with its lines in
@@ -58,6 +58,9 @@ release package check and the engine's resource test.
 - `crates/app/build.rs`: `embed_windows_resources` (both `cfg`s) goes;
   its wasm `--allow-undefined` line stays. The `winresource` build
   dependency goes from `crates/app/Cargo.toml` and `Cargo.lock`.
+- `crates/story-preview/build.rs` copies that function and embeds
+  `icon.ico` too (ticket 1269): it goes, or moves to the engine's
+  export, in the same PR, with its `winresource` dependency.
 - The module docs of `icon.rs` and `build.rs`, and any doc that says
   where the exe's icon comes from, name the engine's export.
 

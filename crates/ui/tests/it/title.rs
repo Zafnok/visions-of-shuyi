@@ -62,7 +62,7 @@ fn title_renders() {
     ];
     assert_eq!(labels, want);
     assert_eq!(focused.as_deref(), Some("New Game"));
-    let help = view(&h).help;
+    let help = view(&h).help.map(|h| h.plain());
     assert_eq!(help.as_deref(), Some("arrows move · f select · d back"));
     assert_snapshot!(h.snapshot());
 }
@@ -180,10 +180,7 @@ fn music(h: &Harness) -> Vec<String> {
 fn the_title_asks_for_its_music_once() {
     let mut h = title();
     h.wait(0.1);
-    assert_eq!(
-        h.audio_requests(),
-        [AudioRequest::play_music("title", None)]
-    );
+    assert_eq!(music(&h), ["title"]);
     // Moving around the menu doesn't ask again.
     h.keys("Down Up");
     assert_eq!(music(&h), ["title"]);
@@ -195,27 +192,89 @@ fn the_title_asks_for_its_music_once() {
     assert!(h.music_commands().is_empty(), "{:?}", h.music_commands());
 }
 
+/// The campfire's crackle (ticket 0922, `look-and-feel.md`, *Title
+/// screen*): it starts with the title song and loops; left alone, the
+/// title goes to black and the crackle fades out with it over the same
+/// 0.2 s, then the cinematic comes in.
+#[test]
+fn the_crackle_fades_with_the_picture_as_the_cinematic_starts() {
+    let mut h = title();
+    h.wait(0.1);
+    let started: Vec<_> = h
+        .audio_requests()
+        .into_iter()
+        .filter(|r| matches!(r, AudioRequest::StartSound { .. }))
+        .collect();
+    assert_eq!(
+        started.iter().map(AudioRequest::cue).collect::<Vec<_>>(),
+        [Some("title_campfire")]
+    );
+    let AudioRequest::StartSound { id, .. } = started[0] else {
+        unreachable!()
+    };
+    // It plays on under the menu: nothing more is asked of it.
+    h.clear_audio().wait(14.5);
+    assert_eq!(view(&h).picture, u8::MAX);
+    let fire = |h: &Harness| -> Vec<AudioRequest> {
+        h.audio_requests()
+            .into_iter()
+            .filter(|r| match r {
+                AudioRequest::SoundVolume { id: of, .. } | AudioRequest::StopSound { id: of } => {
+                    *of == id
+                }
+                _ => false,
+            })
+            .collect()
+    };
+    assert_eq!(fire(&h), []);
+    // The 15 seconds run out: the picture and the crackle go together.
+    h.wait(0.6);
+    let fading = fire(&h);
+    let volumes: Vec<f32> = fading
+        .iter()
+        .filter_map(|r| match r {
+            AudioRequest::SoundVolume { volume, .. } => Some(*volume),
+            _ => None,
+        })
+        .collect();
+    assert!(!volumes.is_empty(), "{fading:?}");
+    assert!(volumes.windows(2).all(|w| w[1] <= w[0]), "{volumes:?}");
+    assert!(
+        volumes.iter().all(|v| (0.0..1.0).contains(v)),
+        "{volumes:?}"
+    );
+    assert!(view(&h).picture < u8::MAX);
+    h.wait(0.3);
+    assert!(
+        fire(&h).ends_with(&[AudioRequest::StopSound { id }]),
+        "{:?}",
+        fire(&h)
+    );
+    assert_eq!(view(&h).picture, 0);
+    assert!(view(&h).cinematic.is_some());
+}
+
 /// Menu sounds (ticket 0425): the highlight moving, choosing, backing out;
 /// nothing when a key does nothing.
 #[test]
 fn menu_sounds() {
     let mut h = title();
     h.keys("Down Up");
-    assert_eq!(h.sounds(), ["menu_move", "menu_move"]);
+    assert_eq!(crate::one_shots(&h), ["menu_move", "menu_move"]);
     // Nothing to back out of on the title screen.
     h.clear_audio().keys("d");
-    assert_eq!(h.sounds(), [] as [std::string::String; 0]);
+    assert_eq!(crate::one_shots(&h), [] as [std::string::String; 0]);
     h.keys("f");
     assert_eq!(h.top_screen(), "mode_select");
-    assert_eq!(h.sounds(), ["menu_select"]);
+    assert_eq!(crate::one_shots(&h), ["menu_select"]);
     // New Game's first screen sounds like a menu too.
     h.clear_audio().keys("Down");
-    assert_eq!(h.sounds(), ["menu_move"]);
+    assert_eq!(crate::one_shots(&h), ["menu_move"]);
     h.clear_audio().keys("d");
-    assert_eq!(h.sounds(), ["menu_cancel"]);
+    assert_eq!(crate::one_shots(&h), ["menu_cancel"]);
     // Holding Down: one tick per step of the highlight.
     h.clear_audio().hold("Down", 0.43);
-    assert_eq!(h.sounds(), ["menu_move"; 4]);
+    assert_eq!(crate::one_shots(&h), ["menu_move"; 4]);
 }
 
 /// The debug tools sound like the other menus.
@@ -224,7 +283,7 @@ fn debug_tool_sounds() {
     let mut h = title();
     h.keys("F2").clear_audio().keys("Down f Down Right d d");
     assert_eq!(
-        h.sounds(),
+        crate::one_shots(&h),
         [
             "menu_move",
             "menu_select",
@@ -236,7 +295,7 @@ fn debug_tool_sounds() {
     );
     assert_eq!(h.top_screen(), "title");
     h.keys("F2 f").clear_audio().keys("d");
-    assert_eq!(h.sounds(), ["menu_cancel"]);
+    assert_eq!(crate::one_shots(&h), ["menu_cancel"]);
 }
 
 /// The game's launch on every build, a layout picked before (tickets 0224
@@ -291,7 +350,7 @@ fn the_key_that_ends_the_wait_does_nothing_else() {
     // and nothing opens, and no menu sound plays.
     h.keys("f");
     assert_eq!(h.screens(), ["title"]);
-    assert_eq!(h.sounds(), [] as [std::string::String; 0]);
+    assert_eq!(crate::one_shots(&h), [] as [std::string::String; 0]);
     assert_eq!(h.snapshot(), title().snapshot());
     h.keys("f");
     assert_eq!(h.top_screen(), "mode_select");
@@ -370,7 +429,7 @@ fn a_button_closes_the_layout_picker_without_choosing() {
     assert_eq!(h.screens(), ["title"]);
     assert!(!prompt_shows(&h));
     assert_eq!(h.game().ctx().layout(), None);
-    assert!(h.sounds().is_empty(), "{:?}", h.sounds());
+    assert!(crate::one_shots(&h).is_empty(), "{:?}", h.sounds());
     let h = Harness::with_storage(h.into_storage());
     assert_eq!(h.game().ctx().layout(), None, "no layout was saved");
 }
@@ -381,8 +440,9 @@ fn a_button_closes_the_layout_picker_without_choosing() {
 #[test]
 fn a_key_mid_battle_opens_the_layout_picker_until_one_is_picked() {
     let mut h = Harness::at_prompt();
-    // The prompt, then Quick Battle, `Fight!` and the phase banner.
-    h.pad("South DpadDown South DpadLeft South South");
+    // The prompt, then Quick Battle, `Fight!`, the objective's banner and
+    // the phase banner.
+    h.pad("South DpadDown South DpadLeft South South South");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.pad("DpadRight");
     let cursor = h.cursor_tile();
@@ -439,7 +499,7 @@ fn the_title_in_the_test_language() {
     assert_snapshot!(h.snapshot());
     let shown = view(&h);
     assert_eq!(
-        shown.help.as_deref(),
+        shown.help.map(|h| h.plain()).as_deref(),
         Some("ARROWS MOVE · f SELECT · d BACK")
     );
     let (labels, _) = menu(&h);

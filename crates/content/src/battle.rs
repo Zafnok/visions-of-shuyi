@@ -270,7 +270,7 @@ pub fn load_lights(lighting: &Lighting) -> Result<BTreeMap<String, String>, Vec<
         let (Some(stem), Some(source)) = (stem, bundle::file(path)) else {
             continue;
         };
-        match light_of(&bundle::display_path(path), source, lighting) {
+        match light_of(&bundle::display_path(path), &source, lighting) {
             Ok(Some(light)) => {
                 lights.insert(stem.to_owned(), light);
             }
@@ -322,7 +322,7 @@ pub fn light_of(
 /// reports that).
 pub fn unit_names(battle: &str) -> BTreeMap<String, UnitId> {
     let path = format!("{BATTLES_DIR}/{battle}{EXTENSION}");
-    bundle::file(&path).map(unit_names_of).unwrap_or_default()
+    bundle::file(&path).map_or_default(|source| unit_names_of(&source))
 }
 
 /// The enemies battle file `source` gives an `id`, by it, as their unit
@@ -1049,7 +1049,7 @@ pub fn random_skirmish(
     let file = format!("{BATTLES_DIR}/{}.ron", group.battle);
     let source = bundle::file(&file)
         .ok_or_else(|| vec![ContentError::new(&file, "missing skirmish battle")])?;
-    let mut raw: RawBattle = parse_ron(&file, source).map_err(|e| vec![e])?;
+    let mut raw: RawBattle = parse_ron(&file, &source).map_err(|e| vec![e])?;
     if group.size == 0 || group.size as usize > raw.enemies.len() || group.level == 0 {
         return Err(vec![ContentError::new(
             &file,
@@ -1075,7 +1075,7 @@ pub fn random_skirmish(
 /// enemies and no scripts, unique loot, map chests, green units or reinforcements.
 pub(crate) fn random_pool(battle: &BattleDef, maximum: u32) -> bool {
     let file = format!("{BATTLES_DIR}/{}.ron", battle.id);
-    bundle::file(&file).is_some_and(|source| pool_source_fits(source, battle, maximum))
+    bundle::file(&file).is_some_and(|source| pool_source_fits(&source, battle, maximum))
 }
 
 /// `random_pool` for battle file text not in the bundle yet (a generated

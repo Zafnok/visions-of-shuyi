@@ -60,13 +60,21 @@ fn to_battle_answering_voices(h: &mut Harness, answer: &str) {
 }
 
 /// From the lead screen: the default lead, the intro scene skipped, the
-/// battle notes and turn 1's banner closed.
+/// battle notes, the objective's banner and turn 1's banner closed.
 fn from_the_lead(h: &mut Harness) {
     h.keys("Up f");
+    // The chapter's title card (0812), then its scene.
+    assert_eq!(h.top_screen(), "chapter_card");
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    h.keys("f").wait(0.1).keys("f").wait(0.1);
+    h.keys("f")
+        .wait(0.1)
+        .keys("f")
+        .wait(0.1)
+        .keys("f")
+        .wait(0.1);
 }
 
 fn battle(h: &Harness) -> &BattleScreen {
@@ -200,10 +208,7 @@ fn voice_requests(h: &Harness) -> Vec<AudioRequest> {
 }
 
 fn play(text: &str) -> AudioRequest {
-    AudioRequest::PlayVoice {
-        line: trpg_content::voice::guide_line(text),
-        variant: Variant::None,
-    }
+    AudioRequest::play_voice(trpg_content::voice::guide_line(text), Variant::None)
 }
 
 /// Acceptance (0476): the lesson opening, with a clip in the manifest,
@@ -241,7 +246,7 @@ fn a_tip_says_its_line_and_the_next_box_takes_over() {
     h.ctx_mut().set_voice_manifest(&manifest);
     let content = &h.game().ctx().game.content;
     let tip = content.tips.for_trigger(TipTrigger::FirstBattleStart);
-    let tip = tip.map(|t| t.text.clone()).unwrap_or_default();
+    let tip = tip.map_or_default(|t| t.text.clone());
     let lesson = content.lessons.lessons[0].text.clone();
     to_battle_answering_voices(&mut h, "f");
     assert_eq!(battle(&h).shown_tip(), Some(TipTrigger::FirstBattleStart));
@@ -290,7 +295,7 @@ fn the_battle_keeps_her_lines_before_her_box_asks_for_one() {
     h.ctx_mut().set_voice_manifest(&manifest);
     let content = &h.game().ctx().game.content;
     let tip = content.tips.for_trigger(TipTrigger::FirstBattleStart);
-    let tip = tip.map(|t| t.text.clone()).unwrap_or_default();
+    let tip = tip.map_or_default(|t| t.text.clone());
     let lesson = content.lessons.lessons[0].text.clone();
     let line = trpg_content::voice::guide_line;
     let mut every: Vec<_> = content.tips.tips.iter().map(|t| line(&t.text)).collect();

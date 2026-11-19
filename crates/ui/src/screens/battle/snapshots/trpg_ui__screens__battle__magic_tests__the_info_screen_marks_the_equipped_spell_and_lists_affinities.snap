@@ -1,6 +1,6 @@
 ---
 source: crates/ui/src/screens/battle/magic_tests.rs
-expression: buf.to_snapshot(&c.palette)
+expression: "snap(&render(&s, &c), &c, ABOVE_HELP_BAR)"
 ---
 ╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
 ║ ┌──────────────────────┐   Frost Elemental            Weapons                                    ║
@@ -32,8 +32,6 @@ expression: buf.to_snapshot(&c.palette)
 ║                                                                                                  ║
 ║                                                                                                  ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
- s next unit · a previous · d close                                                        F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 abccccccccccccccccccccccccbbbdddddddddddddddbbbbbbbbbbbbeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
@@ -65,8 +63,6 @@ abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-ggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhg
-ghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhgggggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhg
 --- legend ---
 a = fg:panel_border bg:panel_bg
 b = fg:text bg:panel_bg
@@ -74,5 +70,3 @@ c = fg:text_dim bg:panel_bg
 d = fg:enemy bg:panel_bg
 e = fg:text_highlight bg:panel_bg
 f = fg:hp_high bg:panel_bg
-g = fg:text bg:black
-h = fg:text_dim bg:black

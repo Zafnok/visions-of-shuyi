@@ -18,6 +18,7 @@
 NOTICES-game.txt
 audio/licenses/
 fonts/Terminus-LICENSE.txt
+fonts/Cinzel-LICENSE.txt
 
 # The PC's window and taskbar icons (the Playdate's card and icon are
 # 1052's, in the `.pdx`).
@@ -28,3 +29,15 @@ icon/
 # ADR-0084). `audio/audio.ron` stays: the game's scenes and battles name
 # its cues, and the Playdate's player reads their files and volumes.
 audio/sfx/
+
+# The chapter title card's Cinzel sheets (ticket 0812, ADR-0128): the
+# Playdate's card is in the cell font. The title art loads without them.
+title/chapter_name.png
+title/chapter_name.ron
+title/chapter_line.png
+title/chapter_line.ron
+
+# The title's campfire (ticket 0922): the Playdate's title is decided by a
+# ticket of its own (0924); the title art loads without it, and with no
+# fire the title plays no crackle.
+title/campfire.png

@@ -247,10 +247,15 @@ fn a_name_in_a_pack_is_not_empty_and_holds_no_brace() {
             "xx/data.ron: \"names.keep\": a name can't hold a brace",
         ]
     );
+    // An unclosed `{` is also not a message, which the engine reports
+    // first (engine 2261).
     let ron = r#"[(key: "names.keep", source: "Heth Keep", text: "{Burg")]"#;
     assert_eq!(
         data_errors(ron),
-        ["xx/data.ron: \"names.keep\": a name can't hold a brace"]
+        [
+            "xx/data.ron: \"names.keep\": the text isn't a message: at character 5: expected `}` or `,` after the argument's name",
+            "xx/data.ron: \"names.keep\": a name can't hold a brace",
+        ]
     );
     // Any other data text may be anything, even empty.
     let ron = r#"[(key: "items.potion.name", source: "Potion", text: "")]"#;
@@ -455,6 +460,17 @@ fn the_names_table_of_a_language_has_the_packs_names() {
     // A name the data has renamed since keeps its new English.
     let renamed = names(&[("king", "the Queen")]);
     assert_eq!(lang.names(&code("xx"), &renamed), renamed);
+}
+
+/// A weapon's short name (0498): the pack's, or the English given.
+#[test]
+fn the_test_pack_translates_a_weapons_short_name() {
+    let content = crate::load_embedded().unwrap();
+    let (test, en) = (code(TEST), LangCode::default());
+    let steel = ItemId::new("steel_sword");
+    let short = |code| content.lang.short_name(code, &steel, "Stl Sword");
+    assert_eq!(short(&test), "STL SWORD");
+    assert_eq!(short(&en), "Stl Sword");
 }
 
 #[test]

@@ -7,7 +7,7 @@
 
 use crate::prelude::*;
 use alloc::sync::Arc;
-use core::fmt::Display;
+use shuyi_ui::text::Args;
 
 use trpg_content::{ChapterDef, Lang, LangCode, Lesson, Names, Scene, Tip, WorldMapDef};
 use trpg_core::lead::LEAD_ID;
@@ -56,6 +56,10 @@ impl Language {
     }
 }
 
+/// The tag of the language the game is written in, English: the text
+/// [`Words::ENGLISH`] gives, and whose plural rules its messages follow.
+pub const SOURCE_LANG: &str = "en";
+
 impl<'a> Words<'a> {
     /// English: every text as the data has it.
     pub const ENGLISH: Words<'static> = Words { pack: None };
@@ -90,8 +94,12 @@ impl<'a> Words<'a> {
     /// [`text`](Self::text) with each `{name}` that `args` names replaced
     /// by its value. It names no key: text with `{Confirm}` in it is
     /// asked of [`Ctx::text_with`](crate::Ctx::text_with).
-    pub fn text_with(self, key: &str, args: &[(&str, &dyn Display)]) -> String {
-        crate::tips::fill_values(self.text(key), args)
+    pub fn text_with(self, key: &str, args: &Args<'_>) -> String {
+        let (text, lang) = match self.pack {
+            Some((lang, code)) => lang.text_in(code, key),
+            None => (self.text(key), SOURCE_LANG),
+        };
+        crate::tips::fill_values(text, lang, args)
     }
 
     /// The name of `class`.
@@ -116,6 +124,16 @@ impl<'a> Words<'a> {
             Some((lang, code)) => lang.item_name(code, id, english),
             None => english,
         }
+    }
+
+    /// The short name of weapon `id` of `items` (`Stl Sword`), shown where
+    /// its name doesn't fit, if it has one (ticket 0498).
+    pub fn short_name(self, id: &ItemId, items: &'a ItemTable) -> Option<&'a str> {
+        let english = items.weapon(id)?.short_name.as_deref()?;
+        Some(match self.pack {
+            Some((lang, code)) => lang.short_name(code, id, english),
+            None => english,
+        })
     }
 
     /// The name of the passive of weapon `id` of `items`, if it has one.
@@ -354,6 +372,11 @@ mod tests {
 
     /// Ticket 0243: screen text where there is no `Ctx`.
     #[test]
+    fn the_source_language_is_the_engines_default() {
+        assert_eq!(SOURCE_LANG, LangCode::default().as_str());
+    }
+
+    #[test]
     fn screen_text_is_asked_by_key_in_either_language() {
         let c = ctx();
         let code = test();
@@ -362,7 +385,7 @@ mod tests {
         assert_eq!(words.text("battle.menu.attack"), "ATTACK");
         // What the pack lacks is English.
         assert_eq!(words.text("title.credits"), "Credits");
-        let values: [(&str, &dyn Display); 2] = [("turn", &2), ("limit", &8)];
+        let values: [(&str, &dyn shuyi_ui::text::ToArg); 2] = [("turn", &2), ("limit", &8)];
         assert_eq!(
             Words::ENGLISH.text_with("battle.turn_of", &values),
             "Turn 2/8"
@@ -454,6 +477,14 @@ mod tests {
         assert_eq!(item("nope"), "nope");
         let nope = ItemId::new("nope");
         assert_eq!(Words::ENGLISH.item(&nope, &content.items), "nope");
+        // A weapon's short name (0498): translated, English, or none.
+        let short = |id: &str| words.short_name(&ItemId::new(id), &content.items);
+        assert_eq!(short("steel_sword"), Some("STL SWORD"));
+        assert_eq!(short("steel_spear"), Some("Stl Spear"));
+        assert_eq!(short("iron_sword"), None);
+        assert_eq!(short("potion"), None);
+        let english = Words::ENGLISH.short_name(&ItemId::new("steel_sword"), &content.items);
+        assert_eq!(english, Some("Stl Sword"));
         let spell = |id: &str| content.spells.spells.values().find(|s| s.id.0 == id);
         assert_eq!(spell("fire").map(|s| words.spell(s)), Some("FIRE"));
         assert_eq!(spell("frost").map(|s| words.spell(s)), Some("Frost"));

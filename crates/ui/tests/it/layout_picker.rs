@@ -17,14 +17,14 @@ fn focus_and_help(h: &Harness) -> (Option<Layout>, String) {
     let screen = h.game().screen::<LayoutPickerScreen>();
     let screen = screen.unwrap_or_else(|| panic!("no layout picker"));
     let view = screen.view(h.game().ctx());
-    (view.focused().map(|l| l.layout), view.help)
+    (view.focused().map(|l| l.layout), view.help.plain())
 }
 
 /// The title's help line.
 fn title_help(h: &Harness) -> Option<String> {
     let screen = h.game().screen::<TitleScreen>();
     let screen = screen.unwrap_or_else(|| panic!("no title screen"));
-    screen.view(h.game().ctx()).help
+    screen.view(h.game().ctx()).help.map(|h| h.plain())
 }
 
 /// A first launch with the picker open: no layout is chosen, so the first
@@ -60,7 +60,7 @@ fn every_glyph_drawn_is_in_the_font() {
     let mut h = picker();
     for script in ["", "Down"] {
         h.keys(script);
-        let snap = h.snapshot();
+        let snap = h.snapshot_whole();
         let glyphs = snap.split("\n--- colours ---").next().unwrap_or("");
         for g in glyphs.chars().filter(|&c| c != '\n') {
             assert!(font.glyph_rect(g).is_some(), "{g:?} missing from the font");
@@ -110,12 +110,15 @@ fn left_handed_wasd_moves_and_j_confirms() {
     h.keys("s w j");
     assert_eq!(h.top_screen(), "mode_select");
     // The help text names the left-handed keys.
-    assert!(h.snapshot().contains("wasd choose · j select · k back"));
+    assert!(
+        h.snapshot_whole()
+            .contains("w a s d choose · j select · k back")
+    );
     h.keys("k");
     assert_eq!(h.top_screen(), "title");
     assert_eq!(
         title_help(&h).as_deref(),
-        Some("wasd move · j select · k back")
+        Some("w\u{a0}a\u{a0}s\u{a0}d move · j select · k back")
     );
     // Right-handed keys do nothing now.
     h.keys("f Down");

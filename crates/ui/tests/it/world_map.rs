@@ -13,6 +13,7 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::{PadKind, RIGHT_HANDED};
 use trpg_ui::save::slot_key;
 use trpg_ui::screen::SkinSet;
+use trpg_ui::screens::world_map::glyph::MAP;
 use trpg_ui::screens::{TownScreen, WorldMapScreen};
 use trpg_ui::{Ctx, MemoryStorage, Storage};
 
@@ -52,7 +53,8 @@ fn launch_with(storage: Box<dyn Storage>, edit: impl FnOnce(&mut Ctx)) -> Harnes
 
 /// From the title: New Game in Classic with the default lead, to the map.
 fn new_game(h: &mut Harness) {
-    h.keys("f f f Up f");
+    // The lead, then Confirm on the chapter's title card (0812).
+    h.keys("f f f Up f f");
     assert_eq!(h.screens(), ["title", "game_flow", "world_map"]);
 }
 
@@ -88,11 +90,11 @@ fn skip_scene(h: &mut Harness) {
     h.keys("d f");
 }
 
-/// From the battle's start (its notes and banner), wins the test battle,
+/// From the battle's start (its notes and banners), wins the test battle,
 /// through its results and victory scene.
 fn win(h: &mut Harness) {
     assert_eq!(h.top_screen(), "battle");
-    h.keys("f f");
+    h.keys("f f f");
     let seize = Command::Act {
         unit: LEAD,
         dest: FORT,
@@ -184,6 +186,9 @@ fn win_a_story_battle_then_the_acts_final_one() {
     // Battles are forced: its chapter's intro scene, then the battle.
     skip_scene(&mut h);
     win(&mut h);
+    // The next chapter's title card (0812), then its map.
+    assert_eq!(h.top_screen(), "chapter_card");
+    h.keys("f");
     assert_eq!(h.screens(), ["title", "game_flow", "world_map"]);
     let won = campaign(&h);
     let world = won.world.clone().unwrap_or_else(|| panic!("not on a map"));
@@ -202,7 +207,8 @@ fn win_a_story_battle_then_the_acts_final_one() {
     walk(&mut h);
     skip_scene(&mut h);
     assert_eq!(h.top_screen(), "battle");
-    h.keys("f f");
+    // Its notes, its objective's banner (0481) and turn 1's.
+    h.keys("f f f");
     let seize = Command::Act {
         unit: LEAD,
         dest: FORT,
@@ -225,6 +231,9 @@ fn win_a_story_battle_then_the_acts_final_one() {
     walk(&mut h);
     skip_scene(&mut h);
     win(&mut h);
+    // The next act's chapter: its title card (0812), then its map.
+    assert_eq!(h.top_screen(), "chapter_card");
+    h.keys("f");
     assert_eq!(h.screens(), ["title", "game_flow", "world_map"]);
     let world = campaign(&h).world.unwrap_or_else(|| panic!("not on a map"));
     assert_eq!(
@@ -252,8 +261,11 @@ fn a_win_whose_next_chapter_has_no_map_starts_it() {
     skip_scene(&mut h);
     win(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "save_prompt"]);
-    // Yes, into the first empty slot.
+    // Yes, into the first empty slot; the next chapter's title card
+    // (0812).
     h.keys("f f");
+    assert_eq!(h.top_screen(), "chapter_card");
+    h.keys("f");
     assert_eq!(h.top_screen(), "dialogue");
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     assert_eq!(flow.chapter().map(|c| c.id.as_str()), Some("test"));
@@ -262,7 +274,8 @@ fn a_win_whose_next_chapter_has_no_map_starts_it() {
     assert_eq!(saved.campaign.chapter, "test_wm1", "the chapter just won");
 
     let mut h = launch_with(h.into_storage(), next_off_map);
-    h.keys("Down f f");
+    // Load Game, the slot, the chapter's title card (0812).
+    h.keys("Down f f f");
     assert_eq!(h.top_screen(), "dialogue");
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     assert_eq!(flow.chapter().map(|c| c.id.as_str()), Some("test"));
@@ -408,7 +421,8 @@ fn act1_the_army_walks_chapter_4s_open_places() {
         assert!(def.is_shown(shown, &start), "{shown} shows, greyed");
         assert!(!def.is_open(shown, &start), "{shown} isn't open");
     }
-    assert_private_snapshot!(dir, "act1_start", h.snapshot());
+    // The map alone, without its panel or help (1290).
+    assert_private_snapshot!(dir, "act1_start", h.snapshot_of(MAP));
     // Next place: `valley_road`, then `millhaven`.
     h.keys("s f");
     walk(&mut h);
@@ -512,8 +526,9 @@ fn on_the_playdate_shop_in_a_town_then_save_on_the_map_and_load_it_again() {
     let playdate = crate::playdate::playdate_skins;
     let mut h = launch_with(Box::new(MemoryStorage::new()), playdate);
     h.use_pad(PadKind::Playdate);
-    // The title's wait, New Game, Classic, the familiarity answer; Start.
-    h.pad("East East East East DpadUp East");
+    // The title's wait, New Game, Classic, the familiarity answer; Start;
+    // the chapter's title card (0812).
+    h.pad("East East East East DpadUp East East");
     assert_eq!(h.screens(), ["title", "game_flow", "world_map"]);
     let ctx = h.game().ctx();
     assert_eq!(ctx.game.skin_set, SkinSet::Playdate);

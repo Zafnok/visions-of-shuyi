@@ -48,6 +48,11 @@ fn playdate(ctx: &mut Ctx) {
 /// Skips every scene on screen: B, then A on "Skip scene?".
 fn skip_scenes(h: &mut Harness) {
     for _ in 0..8 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.pad("East");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }
@@ -77,8 +82,9 @@ fn the_d_pad_a_and_b_play_from_the_title_into_the_first_battle() {
     // Then down to Start, and A.
     h.pad("DpadDown East");
     skip_scenes(&mut h);
-    // The battle's banner (A), then its opening scene.
-    h.pad("East");
+    // The battle's banners (A, A: its objective's, turn 1's), then its
+    // opening scene.
+    h.pad("East East");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.game().ctx().layout(), None);
@@ -246,10 +252,10 @@ fn options_and_a_chord_rebound_and_restored_on_the_playdate() {
         h.frame(&[event], 1.0 / 30.0);
     };
     let pad = PadKind::Playdate;
-    frame(&mut h, RawInputEvent::PadDown(Button::West, pad));
-    frame(&mut h, RawInputEvent::PadDown(Button::DpadDown, pad));
-    frame(&mut h, RawInputEvent::PadUp(Button::DpadDown));
-    frame(&mut h, RawInputEvent::PadUp(Button::West));
+    frame(&mut h, RawInputEvent::PadDown(Button::West, pad, 0));
+    frame(&mut h, RawInputEvent::PadDown(Button::DpadDown, pad, 0));
+    frame(&mut h, RawInputEvent::PadUp(Button::DpadDown, 0));
+    frame(&mut h, RawInputEvent::PadUp(Button::West, 0));
     assert_eq!(h.top_screen(), "key_bindings");
     let (_, view) = kb(&h);
     let chord = |h: &Harness| h.game().ctx().pad_bindings().slots(Action::DangerZone)[0];
@@ -291,7 +297,7 @@ impl OneBit {
     }
 
     fn check(&mut self, h: &Harness) {
-        let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH);
+        let bits = trpg_content::bundle::lent_bytes(ATLAS_1BIT_PATH);
         let Some(font) = bits.and_then(|bits| onebit::Font::new(&self.atlas, bits).ok()) else {
             panic!("no one-bit font");
         };
@@ -337,9 +343,10 @@ fn the_one_bit_frames_are_the_references_whole_or_changed() {
     one_bit.check(&h);
     h.pad("DpadDown DpadDown East");
     one_bit.check(&h);
-    // The opening scene, a line typing out a frame at a time.
+    // The chapter's title card (0812), then the opening scene, a line
+    // typing out a frame at a time.
     let mut saw_dialogue = false;
-    for _ in 0..40 {
+    for _ in 0..140 {
         h.wait(1.0 / 30.0);
         one_bit.check(&h);
         saw_dialogue |= h.top_screen() == "dialogue";
@@ -377,10 +384,10 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
     let mut h = Harness::first_launch_and(playdate);
     h.use_pad(PadKind::Playdate);
     // A to New Game, Classic and the familiarity answer, the name as it
-    // is, Start; past the scenes and the banner.
+    // is, Start; past the scenes and the banners.
     h.pad("East East East East DpadDown DpadDown East");
     skip_scenes(&mut h);
-    h.pad("East");
+    h.pad("East East");
     skip_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -418,7 +425,7 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
 
 /// The first battle on the Playdate, lessons off: New Game,
 /// Classic, the familiarity answer, the name as it is, Start, past the
-/// scenes and the banner, with the cursor on the lead.
+/// scenes and the banners, with the cursor on the lead.
 fn first_battle() -> Harness {
     first_battle_and(|_| {})
 }
@@ -432,7 +439,7 @@ fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
     h.use_pad(PadKind::Playdate);
     h.pad("East East East East DpadDown DpadDown East");
     skip_scenes(&mut h);
-    h.pad("East");
+    h.pad("East East");
     skip_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -518,7 +525,7 @@ fn the_playdates_battle_screen_browses_opens_its_menus_and_ends_the_turn() {
     let Some(DialogView::Question(question)) = battle_view(&h).dialog else {
         panic!("no question: {:?}", battle(&h).mode());
     };
-    assert_eq!(question.answers, "A yes / B no");
+    assert_eq!(question.answers.plain(), "A yes / B no");
     // A: the enemy's phase, its banner over the map.
     h.pad("East");
     let banner = battle_view(&h).banner.map(|b| b.title);
@@ -692,7 +699,9 @@ fn the_pcs_map_menu_has_no_shortcut_entries() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("f f f Up f");
     for _ in 0..8 {
-        if h.top_screen() == "dialogue" {
+        if h.top_screen() == "chapter_card" {
+            h.keys("f");
+        } else if h.top_screen() == "dialogue" {
             h.keys("d f");
         } else if h.battle().is_some() {
             h.keys("f");
@@ -751,7 +760,7 @@ fn the_system_menu_entries_work_where_they_can() {
     h.pad("West");
     assert!(!log_open(&h));
     skip_scenes(&mut h);
-    h.pad("East");
+    h.pad("East East");
     skip_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
@@ -779,18 +788,18 @@ fn the_system_menu_entries_work_where_they_can() {
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }
 
-/// The debug Quick Battle on the Playdate's skins, past its banner, the
-/// cursor on the lord.
+/// The debug Quick Battle on the Playdate's skins, past its objective's
+/// banner and its phase banner, the cursor on the lord.
 fn quick_battle_on_the_playdate() -> Harness {
     let mut h = Harness::first_launch_and(playdate_skins);
     h.use_pad(PadKind::Playdate);
     // A ends the title's wait; Quick Battle, then Preparations: left wraps
-    // to `Fight!`; A closes the banner.
+    // to `Fight!`; A closes the objective's banner, A the phase banner.
     h.pad("East DpadDown East").wait(trpg_ui::harness::FRAME_DT);
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h.pad("DpadLeft East").wait(trpg_ui::harness::FRAME_DT);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    h.pad("East");
+    h.pad("East East");
     h
 }
 
@@ -889,7 +898,7 @@ fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
     h.pad("East");
     let rewind = view_of(&h, RewindScreen::view);
     assert!(rewind.list.prompt.is_some());
-    assert_eq!(rewind.help, "A rewind · B back");
+    assert_eq!(rewind.help.plain(), "A rewind · B back");
     h.pad("West West");
     assert!(h.screen::<RewindScreen>().is_none());
 }
@@ -1006,7 +1015,7 @@ fn with_every_kind_of_shot(ctx: &mut Ctx) {
         from: Side::Right,
     };
     let shots = [(15_000, talk), (30_750, faces), (48_000, pan)];
-    let shots = shots.map(|(at_ms, shot)| ShotDef { at_ms, shot });
+    let shots = shots.map(|(at_ms, shot)| ShotDef::new(at_ms, shot));
     title.shots.splice(1..1, shots);
 }
 
@@ -1174,7 +1183,7 @@ fn b_with_left_or_right_steps_the_unit_in_the_loadouts() {
                 PrepBody::Loadouts(l) => l.gear.as_ref().map(|g| g.slots.title.clone()),
                 _ => None,
             };
-            (s.focus(), unit.unwrap_or_default(), v.help)
+            (s.focus(), unit.unwrap_or_default(), v.help.plain())
         })
     };
     let (focus, unit, help) = shown(&h);

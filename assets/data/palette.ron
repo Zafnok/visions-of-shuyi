@@ -17,6 +17,13 @@
     "panel_border": "#6a5a40",
     "panel_border_focus": "#c89a50",
 
+    // Key caps (ticket 0254, look-and-feel.md *Key names in hints*): a
+    // key's name in a hint, in `key`, on a box of `key_bg` with a 1 px
+    // `key_edge`, a shade lighter than the panel. Tunable.
+    "key": "#d0c4a8",
+    "key_bg": "#4a402e",
+    "key_edge": "#807052",
+
     // Factions: player blue, enemy red, ally green, neutral yellow
     "player": "#7ea8e0",
     "enemy": "#d46a50",
@@ -38,12 +45,14 @@
     // Background of a unit under a timed effect (a buff or a debuff).
     "effect": "#4a3468",
     // The arrows on a sprite unit under a timed effect: up for a bonus,
-    // down for a penalty (tunable). Baked into images/effect_marks.png:
-    // rerun `cargo xtask effect-marks` after changing them.
+    // down for a penalty (tunable). The arrows are baked into
+    // `images/effect_marks.png`: restore its tool (`assets/images/README.md`)
+    // when changing them.
     "effect_bonus": "#70d8e8",
     "effect_penalty": "#c878e8",
 
     // Cursor brackets and the movement path line
+    // Also baked into `images/edge_marks.png` (`assets/images/README.md`).
     "cursor": "#f0dca0",
     "path": "#f0d8a0",
 

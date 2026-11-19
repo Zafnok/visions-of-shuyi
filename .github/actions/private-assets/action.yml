@@ -26,6 +26,13 @@ inputs:
       §5).
     required: false
     default: "true"
+  voice:
+    description: >-
+      With art 'true': 'false' leaves the voice clips out, for a build that
+      ships none (the script preview, 0769); a web build ships voice/
+      whenever it is there.
+    required: false
+    default: "true"
   content:
     description: >-
       'true' checks out the game's content (content/): the build lays it over
@@ -64,6 +71,7 @@ runs:
         HAS_KEY: ${{ inputs.key != '' }}
         REQUIRED: ${{ inputs.required }}
         ART: ${{ inputs.art }}
+        VOICE: ${{ inputs.voice }}
         CONTENT: ${{ inputs.content }}
       run: |
         set -euo pipefail
@@ -83,7 +91,10 @@ runs:
           # build with the debug tools embeds it too, ADR-0057) and the
           # voice clips that ship beside the game (ADR-0046); the bought
           # packs themselves stay behind.
-          folders="game test voice"
+          folders="game test"
+          if [ "$VOICE" = "true" ]; then
+            folders="$folders voice"
+          fi
           {
             echo "features=private-assets"
             echo "web-flag=--private-assets"
@@ -128,7 +139,7 @@ runs:
         fi
         echo "Content: $(find assets-private/content -type f | wc -l) files"
     - name: Put the voice clips beside the game
-      if: steps.plan.outputs.rev != '' && inputs.art == 'true'
+      if: steps.plan.outputs.rev != '' && inputs.art == 'true' && inputs.voice == 'true'
       shell: bash
       run: |
         set -euo pipefail

@@ -1,0 +1,614 @@
+//! What Shuyi's tools (`shuyi-cli`, ticket 1117) need from this game:
+//! [`Trpg`], the game's `GameTools`. xtask is the game's tool program
+//! (`shuyi.ron`'s `game`): every `cargo shuyi` command that runs the game
+//! (`frame-png`, `lang-status`, `run`, `scene`, the MCP server's session)
+//! runs as `cargo xtask shuyi <command>`, the engine's commands with these.
+//!
+//! `check`, `bots` and `replay` (ticket 1193) are [`plays`]'s;
+//! `autobalance` (ticket 0509) is [`balance`]'s.
+//!
+//! The session (ticket 1181) is the game started as `frame-png` starts it,
+//! its scene the battle's map and its picture `frame-png`'s. A session
+//! record (`run --session`, ticket 1210) plays from the game's real start
+//! instead, the one its debug build recorded from.
+//!
+//! `frame-png` starts the game in the test Harness with the game's own
+//! options: the layout picked before, the Playdate's screen (ADR-0074),
+//! the map alone, the prompt start, the tips and a light for every battle.
+
+use std::path::Path;
+
+use shuyi_assets::font::FontAtlasDef;
+use shuyi_assets::pack::Bake;
+use shuyi_assets::{ContentError, Formats};
+use shuyi_cli::contract::autobalance::AutobalanceInput;
+use shuyi_cli::contract::playtest::PlaytestInput;
+use shuyi_cli::contract::replay::{Record, ReplayRun};
+use shuyi_cli::contract::session::{Headless, Scene, Session};
+use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
+use shuyi_cli::{
+    AutobalancePlan, GameArg, GameBake, GameLang, GameOption, GameTools, OneBitSkin, PlaytestPlan,
+};
+use shuyi_core::bots::playtest::Tries;
+use shuyi_platform::session::{SessionRecord, Stamps};
+use shuyi_platform::{Frame, Show};
+use trpg_content::font::ATLAS_1BIT_PATH;
+use trpg_content::palette::PaletteDef;
+use trpg_core::{BattleState, LeadGender};
+use trpg_ui::harness::{self, Core, Harness};
+use trpg_ui::input::fit::{Controls, GameControls};
+use trpg_ui::input::{Device, LEFT_HANDED, Layout, PadKind, RIGHT_HANDED};
+use trpg_ui::onebit::{self, FRAME_BYTES};
+use trpg_ui::platform::playdate_facts;
+use trpg_ui::screen::{Ctx, Shuyi, ShuyiCtx};
+use trpg_ui::screens::BattleScreen;
+use trpg_ui::start::Startup;
+use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, FileDrops, GlyphBuffer, Palette, Rect, UiColor};
+
+/// The target the game's Playdate build is for, its one target in one bit
+/// (`shuyi.ron`'s `targets`).
+const PLAYDATE: &str = "playdate";
+
+/// The loading card's title, as the binary's window has it (`shuyi.ron`'s
+/// `app`).
+const TITLE: &str = "Visions of Shuyi";
+
+/// The game's `frame-png` options.
+const OPTIONS: [GameOption; 10] = [
+    GameOption::new("--layout", "the key layout picked before (default right)")
+        .with_value(Some("right|left")),
+    GameOption::new(
+        "--playdate",
+        "the Playdate's screen: a 50×15 console in the Playdate's\n\
+               palette, drawn black and white by the one-bit renderer,\n\
+               with the one-bit pictures the Playdate's build makes (1040);\n\
+               no keyboard and the Playdate's buttons, as on the device\n\
+               (steer it with --pad)",
+    ),
+    GameOption::new(
+        "--map",
+        "the battle's map alone over the whole screen, painted by\n\
+               the game's map skin (with --playdate the Playdate's), with\n\
+               no windows over it",
+    ),
+    GameOption::new(
+        "--prompt",
+        "start as the game does (the title waits for a key or button)",
+    ),
+    GameOption::new(
+        "--tips",
+        "show the guide's tips and lessons, as the game does",
+    ),
+    GameOption::new(
+        "--light",
+        "fight every battle in this light of assets/data/lighting.ron,\n\
+               whatever its map and its battle file say",
+    )
+    .with_value(Some("NAME")),
+    GameOption::new(
+        "--battle",
+        "open straight on this battle of assets/battles/ at its start,\n\
+               fought by its own characters, with no chapter around it\n\
+               (`cargo shuyi bench`'s scenarios, 1244)",
+    )
+    .with_value(Some("ID")),
+    GameOption::new(
+        "--scene",
+        "open straight on this dialogue scene, as the game's own\n\
+               --scene does (the default lead, male)",
+    )
+    .with_value(Some("ID")),
+    GameOption::new(
+        "--story-preview",
+        "open the writer's script preview (story-preview, 0764) on the\n\
+               .dlg files of this folder",
+    )
+    .with_value(Some("FOLDER")),
+    // engine-friction: engine#2540
+    GameOption::new(
+        "--then-pad",
+        "after the steps, press and release each button in turn, as --pad",
+    )
+    .with_value(Some("BUTTONS")),
+];
+
+/// What `frame-png --help` adds about the game's pictures.
+const NOTES: &str = "\
+The picture is 800×512 times the scale (2 by default), or 400×240 times
+it with --playdate (1 by default).
+
+With the private-assets feature the picture shows the bought art: commit
+it only as a screenshot of the game (CLAUDE.md, Bought art).";
+
+/// What the summary warns about a picture built with the bought art.
+const BOUGHT_ART: &str = "built with private-assets: the picture shows bought art; commit it \
+                          only as a screenshot of the game (CLAUDE.md, Bought art)";
+
+/// What a picture shows.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Shows {
+    /// The game's screen.
+    Screen,
+    /// The battle's map alone, over the whole screen (`--map`).
+    MapAlone,
+}
+
+/// The game's options as given.
+#[derive(Debug, Clone, PartialEq)]
+struct Start {
+    /// The layout picked before.
+    layout: Layout,
+    /// The Playdate's console, palette and one-bit renderer.
+    playdate: bool,
+    /// What the picture shows.
+    shows: Shows,
+    /// Start as the game does: the title waits for a key or button.
+    prompt: bool,
+    /// The light every battle is fought in, instead of its own.
+    light: Option<String>,
+    /// Show the guide's one-time tips and checklist lessons, as `app`
+    /// does.
+    tips: bool,
+    /// Where the game opens: the title, a battle or a scene.
+    opens: Opens,
+    /// What is done after the script's steps, in turn (`--then-pad`).
+    /// Ticket 1039 added it beside a `--crank` of the game's own, before
+    /// the engine's script had a crank step; the engine's `--crank` now
+    /// takes that flag, and 1182 deletes this.
+    // engine-friction: engine#2540
+    after: Vec<After>,
+}
+
+/// Where the game opens.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Opens {
+    /// At the title, as players start it.
+    Title,
+    /// On a battle at its start (`--battle`).
+    Battle(String),
+    /// On a dialogue scene (`--scene`).
+    Scene(String),
+    /// The writer's script preview on a folder's scripts (`--story-preview`).
+    Preview(String),
+}
+
+/// A step played after the script's.
+#[derive(Debug, Clone, PartialEq)]
+enum After {
+    /// Each button pressed and released in turn.
+    Pad(String),
+}
+
+impl Start {
+    /// The start `options` ask for.
+    fn of(options: &[GameArg]) -> Result<Self, String> {
+        let mut start = Self {
+            layout: RIGHT_HANDED,
+            playdate: false,
+            shows: Shows::Screen,
+            prompt: false,
+            light: None,
+            tips: false,
+            opens: Opens::Title,
+            after: Vec::new(),
+        };
+        for option in options {
+            let value = option.value.clone().unwrap_or_default();
+            match option.flag.as_str() {
+                "--layout" => {
+                    start.layout = match value.as_str() {
+                        "right" => RIGHT_HANDED,
+                        "left" => LEFT_HANDED,
+                        other => return Err(format!("--layout: right or left, not {other}")),
+                    };
+                }
+                "--playdate" => start.playdate = true,
+                "--map" => start.shows = Shows::MapAlone,
+                "--prompt" => start.prompt = true,
+                "--tips" => start.tips = true,
+                "--light" => start.light = Some(value),
+                "--battle" | "--scene" | "--story-preview" if start.opens != Opens::Title => {
+                    return Err("--battle, --scene and --story-preview: one of them, once".into());
+                }
+                "--battle" => start.opens = Opens::Battle(value),
+                "--scene" => start.opens = Opens::Scene(value),
+                "--story-preview" => start.opens = Opens::Preview(value),
+                "--then-pad" => start.after.push(After::Pad(value)),
+                other => return Err(format!("unknown option: {other}")),
+            }
+        }
+        if start.prompt && start.opens != Opens::Title {
+            return Err(
+                "--prompt: only at the title, not with --battle, --scene or --story-preview".into(),
+            );
+        }
+        Ok(start)
+    }
+}
+
+/// This game's tools.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Trpg;
+
+impl GameTools for Trpg {
+    fn frame_options(&self) -> &[GameOption] {
+        &OPTIONS
+    }
+
+    fn frame_notes(&self) -> &'static str {
+        NOTES
+    }
+
+    fn frame(
+        &self,
+        options: &[GameArg],
+        script: &Script,
+        scale: Option<u32>,
+    ) -> Result<Shot, String> {
+        frame(&Start::of(options)?, script, scale)
+    }
+
+    fn session(&self, options: &[GameArg]) -> Result<Box<dyn Session>, String> {
+        let start = Start::of(options)?;
+        Ok(Box::new(session(harness(&start)?.into_core(), start)))
+    }
+
+    /// `bench` on the Playdate: [`session`](Self::session) on its console
+    /// and buttons (`--playdate`), each frame presented drawn in one bit
+    /// as the Playdate's build draws it, with its pictures (ticket 1244).
+    fn session_on(&self, target: &str, options: &[GameArg]) -> Result<Box<dyn Session>, String> {
+        if target != PLAYDATE {
+            return Err(format!("{target}: the game's one-bit target is {PLAYDATE}"));
+        }
+        let mut start = Start::of(options)?;
+        start.playdate = true;
+        let mut h = harness(&start)?.into_core();
+        // Built once for the session, as the device's are: a session runs
+        // once in a tool program.
+        let atlas = Box::leak(Box::new(h.game().ctx().game.content.font.clone()));
+        let bits = trpg_content::bundle::lent_bytes(ATLAS_1BIT_PATH).unwrap_or_default();
+        let font = onebit::Font::new(atlas, bits)?;
+        let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
+        let shades = onebit::playdate_map()?;
+        let mut frame = Box::new([0; FRAME_BYTES]);
+        h.set_present_hook(Some(Box::new(move |presented: &Frame<'_>| {
+            if let Show::Game { buffer, .. } = presented.show {
+                onebit::render(buffer, &font, &pictures, &shades, &mut frame);
+            }
+        })));
+        Ok(Box::new(session(h, start)))
+    }
+
+    /// `record` played from the game's real start, the one its debug build
+    /// recorded from (ticket 1210), with the session's scene and picture.
+    fn session_from(
+        &self,
+        record: &SessionRecord,
+        stamps: Stamps,
+    ) -> Result<Box<dyn Session>, String> {
+        let real = trpg_ui::start::start(TITLE, Ok(Startup::Title));
+        let h = Core::from_session(real, record, stamps).map_err(|e| e.to_string())?;
+        Ok(Box::new(session(h, Start::of(&[])?)))
+    }
+
+    fn lang(&self) -> Result<GameLang, String> {
+        let content = trpg_content::load_embedded().map_err(|e| e.to_string())?;
+        Ok(GameLang::new(
+            (**content.lang).clone(),
+            trpg_content::lang::RULES
+                .variants
+                .iter()
+                .map(|&variant| variant.to_owned())
+                .collect(),
+        ))
+    }
+
+    fn check(&self) -> Result<Vec<ContentError>, String> {
+        Ok(plays::check())
+    }
+
+    fn replay(&self, record: &Record) -> Result<ReplayRun, String> {
+        plays::replay(record)
+    }
+
+    /// The battles, by id: what `autobalance --stage` takes.
+    fn playtest_stages(&self) -> Vec<String> {
+        balance::stages()
+    }
+
+    /// The bot run ([`plays::plan`]) on `stage`, else the story's first
+    /// battle; no checks, since a battle's are the game's own `cargo xtask
+    /// playtest`. The options are about the look, which the bots never see
+    /// (ADR-0038 §5): checked, and the same battle played whatever they say.
+    fn playtest_plan(
+        &self,
+        stage: Option<&str>,
+        input: &PlaytestInput,
+    ) -> Result<PlaytestPlan, String> {
+        Start::of(&input.start)?;
+        plays::plan(stage)
+    }
+
+    /// 0506's playtest: 100 tries from seed 1, each stopped at turn 60.
+    fn playtest_defaults(&self) -> Tries {
+        Tries::new(100, 1, 60)
+    }
+
+    fn autobalance_plan(
+        &self,
+        stage: Option<&str>,
+        input: &AutobalanceInput,
+    ) -> Result<AutobalancePlan, String> {
+        balance::plan(&crate::repo_root(), stage, input)
+    }
+
+    /// The keymap file's buttons and every screen's actions.
+    fn controls(&self) -> Option<Result<Box<dyn Controls>, String>> {
+        let content = trpg_content::load_embedded().map_err(|e| e.to_string());
+        Some(content.map(|content| {
+            let keymap = content.keymap;
+            let game = trpg_ui::screens::actions::every_screen()
+                .into_iter()
+                .fold(GameControls::new(keymap), GameControls::with);
+            Box::new(game) as Box<dyn Controls>
+        }))
+    }
+
+    /// The atlas the game loads, which `check` checks its text against.
+    fn font_atlas(&self) -> Option<Result<FontAtlasDef, String>> {
+        Some(trpg_content::font::load().map_err(|errors| shown(&errors)))
+    }
+
+    /// The Playdate is the one one-bit target (`shuyi.ron`).
+    fn one_bit(&self, _target: &str) -> Option<Result<OneBitSkin, String>> {
+        Some(playdate_palette_def().and_then(one_bit::skin))
+    }
+
+    /// The pack a release export of the desktops and the web ships beside
+    /// the program (ADR-0120): every file of `assets/` with the content
+    /// laid over it (the demo's table in the demo edition), each as its own
+    /// bytes, stamped with the game's version. The Playdate bakes its own
+    /// files (`cargo xtask playdate`, ADR-0070).
+    fn bake(&self, target: Option<&str>) -> Result<GameBake, String> {
+        if target == Some(PLAYDATE) {
+            return Err(format!(
+                "{PLAYDATE}: its files are baked by `cargo xtask playdate` (ADR-0070)"
+            ));
+        }
+        Ok(pack_bake())
+    }
+}
+
+/// What [`Trpg::bake`] bakes for the desktops and the web. It lays no
+/// folder first (`Bake::first`, engine ADR-0128 §3): the start's load
+/// reads and checks every folder before the title, and on the web the
+/// page has the whole pack about 2.5 s before the `.wasm` it fetches beside
+/// it (ticket 1298), so a folder laid first would start nothing sooner.
+pub fn pack_bake() -> GameBake {
+    GameBake::new(
+        Bake::new(trpg_content::bundle::PACK_STAMP),
+        trpg_content::bundle::Bundle::new(trpg_content::bundle::pack_layers()),
+        Formats::new(),
+    )
+}
+
+/// Plays `script` in a Harness started as `start` says and paints the
+/// frame.
+fn frame(start: &Start, script: &Script, scale: Option<u32>) -> Result<Shot, String> {
+    let mut h = harness(start)?;
+    script.play(&mut h);
+    // engine-friction: engine#2540
+    for step in &start.after {
+        match step {
+            After::Pad(buttons) => h.pad(buttons),
+        };
+    }
+    let mut shot = Shot::new(picture(start, &h, scale)?, h.top_screen());
+    shot.warning = cfg!(feature = "private-assets").then(|| BOUGHT_ART.to_owned());
+    Ok(shot)
+}
+
+/// The session (`cargo shuyi run`, `scene`, the MCP server's; ticket
+/// 1181) of `h`: its scene the battle's map and its picture `frame`'s, as
+/// `start` paints it.
+fn session(h: Core, start: Start) -> Headless<Shuyi> {
+    Headless::new(h)
+        .with_scene(scene)
+        .with_picture(move |h, scale| picture(&start, h, scale))
+}
+
+/// The battle on `h`'s screen: its map scene as text, its state as data
+/// ([`battle_data`]).
+fn scene(h: &Core) -> Result<Scene, String> {
+    let battle = h.screen::<BattleScreen>().ok_or_else(|| {
+        format!(
+            "no battle on screen (the top screen is `{}`)",
+            h.top_screen()
+        )
+    })?;
+    let mut scene = Scene::new(h.top_screen(), "grid map", harness::map_text(h));
+    scene.data = battle_data(battle.state());
+    Ok(scene)
+}
+
+/// `state` as JSON: all of it but its map, which is the scene's text (JSON
+/// can't key the map's features by tile).
+fn battle_data(state: &BattleState) -> serde_json::Value {
+    serde_json::json!({
+        "turn": state.turn(),
+        "phase": state.phase(),
+        "units": state.units(),
+        "fallen": state.fallen(),
+        "down": state.down(),
+        "escaped": state.escaped(),
+        "outcome": state.outcome(),
+    })
+}
+
+/// The `.dlg` files of `folder`, as the preview reads them: a layer named
+/// as the program names its folder.
+fn dlg_folder(folder: &Path) -> Result<shuyi_assets::bundle::Layer, String> {
+    let read = |e: std::io::Error| format!("--story-preview: can't read {}: {e}", folder.display());
+    let mut files = std::collections::BTreeMap::new();
+    for entry in std::fs::read_dir(folder).map_err(read)? {
+        let path = entry.map_err(read)?.path();
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default();
+        if name.ends_with(trpg_content::dialogue::DIALOGUE_EXTENSION) {
+            files.insert(name.to_owned(), std::fs::read(&path).map_err(read)?);
+        }
+    }
+    shuyi_assets::bundle::Layer::owned("dialogue".to_owned(), files).map_err(|e| format!("{e:?}"))
+}
+
+/// A Harness started as `start` says.
+fn harness(start: &Start) -> Result<Harness, String> {
+    let playdate = start
+        .playdate
+        .then(|| Ok::<_, String>((playdate_palette()?, playdate_facts()?)))
+        .transpose()?;
+    let setup = |ctx: &mut Ctx| {
+        if let Some((palette, facts)) = playdate {
+            // As `crates/playdate/src/start.rs` starts the game.
+            ctx.console = ConsoleSpec::PLAYDATE;
+            ctx.palette = palette;
+            ctx.platform = facts;
+            ctx.device = Device::Pad(PadKind::Playdate);
+            ctx.use_playdate_buttons();
+            ctx.use_playdate_skins();
+        }
+    };
+    let h = match &start.opens {
+        Opens::Title if start.prompt => Harness::at_prompt_with_layout_and(start.layout, setup),
+        Opens::Title => Harness::with_layout_and(start.layout, setup),
+        Opens::Battle(id) => Harness::with_layout_starting(start.layout, setup, |ctx| {
+            trpg_ui::game::start_on_battle(ctx, id)
+        })?,
+        Opens::Scene(id) => Harness::with_layout_starting(start.layout, setup, |ctx| {
+            trpg_ui::game::start_on_scene(ctx, id, LeadGender::Male)
+        })?,
+        Opens::Preview(folder) => {
+            let folder = dlg_folder(Path::new(folder))?;
+            // As the program on the desktop and the web: a `.dlg` file
+            // dropped (`--drop`) joins the folder (ticket 0767).
+            let setup = |ctx: &mut Ctx| {
+                ctx.platform = ctx.platform.clone().with_file_drops(FileDrops::Heard);
+                setup(ctx);
+            };
+            Harness::with_layout_starting(start.layout, setup, |ctx| {
+                trpg_ui::story_preview::game(ctx, folder)
+            })?
+            .hearing(trpg_ui::story_preview::hear)
+        }
+    };
+    // The game as players get it: New Game starts the story.
+    let mut h = h.with_shipped_story();
+    if start.playdate {
+        // `--pad` presses the Playdate's buttons, and text names them.
+        h.use_pad(PadKind::Playdate);
+    }
+    // And as `app` shows it: with the idle motion on, and the keys in
+    // hints as key caps.
+    h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
+    h.with_key_caps();
+    if start.tips {
+        h.with_tips().with_lessons();
+    }
+    if let Some(light) = &start.light {
+        let content = &mut h.ctx_mut().game.content;
+        if content.lighting.get(light).is_none() {
+            let known = content.lighting.names();
+            return Err(format!(
+                "--light: no light \"{light}\"; the lights are {known}"
+            ));
+        }
+        let battles: Vec<String> = content.battles.keys().cloned().collect();
+        content
+            .battle_lights
+            .extend(battles.into_iter().map(|id| (id, light.clone())));
+    }
+    Ok(h)
+}
+
+/// `h`'s frame painted as `start` says.
+fn picture(start: &Start, h: &Core, scale: Option<u32>) -> Result<Image, String> {
+    let ctx = h.game().ctx();
+    let map;
+    let buffer = if start.shows == Shows::MapAlone {
+        map = map_alone(h)?;
+        &map
+    } else {
+        h.game().buffer()
+    };
+    if start.playdate {
+        let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
+        let font = onebit::Font::new(&ctx.game.content.font, &bits)?;
+        let mut frame = Box::new([0; FRAME_BYTES]);
+        // The pictures the Playdate's build makes (ticket 1040).
+        let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
+        let shades = onebit::playdate_map()?;
+        onebit::render(buffer, &font, &pictures, &shades, &mut frame);
+        Ok(one_bit_picture(&frame, scale.unwrap_or(1)))
+    } else {
+        painted(ctx, buffer, scale.unwrap_or(2))
+    }
+}
+
+/// `buffer` painted with the game's font and images, each console pixel
+/// `scale` × `scale`.
+fn painted(ctx: &Ctx, buffer: &GlyphBuffer, scale: u32) -> Result<Image, String> {
+    let painter = Painter::new(
+        ctx.game.content.font.clone(),
+        &trpg_content::bundle::bytes(trpg_content::font::ATLAS_PNG_PATH).unwrap_or_default(),
+        &ctx.game.content.images,
+        trpg_content::bundle::bytes,
+        ctx.palette.get(UiColor::Black),
+    )?;
+    Ok(painter.render(buffer, scale))
+}
+
+/// The battle on `h`'s screen, its map alone over the whole console as the
+/// game's map skin paints it, the view centred on the cursor (`--map`).
+fn map_alone(h: &Core) -> Result<GlyphBuffer, String> {
+    let ctx = h.game().ctx();
+    let console = ctx.console;
+    let screen = Rect::new(0, 0, i32::from(console.cols), i32::from(console.rows));
+    let scene = harness::map_scene_in(h, screen)
+        .ok_or_else(|| format!("--map: no battle on screen ({})", h.top_screen()))?;
+    let blank = Cell::new(
+        ' ',
+        ctx.palette.get(UiColor::Text),
+        ctx.palette.get(UiColor::Black),
+    );
+    let mut buf = GlyphBuffer::with_spec(console, blank);
+    ctx.game.map_skin.paint(ctx, &scene, screen, &mut buf);
+    Ok(buf)
+}
+
+/// The Playdate's palette (ADR-0074), over the default theme's names.
+fn playdate_palette() -> Result<Palette, String> {
+    let def = playdate_palette_def()?;
+    Palette::new::<UiColor>(&def)
+        .map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
+}
+
+/// The Playdate's palette file, as loaded.
+fn playdate_palette_def() -> Result<PaletteDef, String> {
+    let base = trpg_content::palette::load().map_err(|errors| shown(&errors))?;
+    trpg_content::playdate_palette::load_playdate(&base).map_err(|errors| shown(&errors))
+}
+
+/// `errors` on one line.
+fn shown(errors: &[trpg_content::ContentError]) -> String {
+    let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
+    errors.join("; ")
+}
+
+pub mod balance;
+mod one_bit;
+mod plays;
+
+#[cfg(test)]
+mod tests;

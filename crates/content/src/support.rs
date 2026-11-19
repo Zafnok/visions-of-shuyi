@@ -67,8 +67,10 @@ pub fn load(
         )]
     })?;
     let part = bundle::test_part(SUPPORTS_PATH);
-    let part = part.as_ref().map(|(file, source)| (file.as_str(), *source));
-    from_sources(&display, source, part, characters, dialogue)
+    let part = part
+        .as_ref()
+        .map(|(file, source)| (file.as_str(), source.as_ref()));
+    from_sources(&display, &source, part, characters, dialogue)
 }
 
 /// Parses and validates support `source`, attributing errors to `file`.

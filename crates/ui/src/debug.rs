@@ -455,10 +455,11 @@ mod tests {
         );
         // "Voice test" stays on the menu.
         assert_eq!(outcome(&mut menu, &[CursorDown, Confirm]), "None");
-        // "Test world map" starts its flow (1007).
+        // "Test world map" starts its flow (1007), at its chapter's title
+        // card (0812).
         assert_eq!(
             outcome(&mut menu, &[CursorDown, Confirm]),
-            "Push(world_map)"
+            "Push(chapter_card)"
         );
         assert_eq!(
             outcome(&mut menu, &[CursorDown, Confirm]),
@@ -523,10 +524,7 @@ mod tests {
         // No voices: only the menu's own sound.
         assert_eq!(choose(&mut ctx, &mut menu), []);
         ctx.set_voice_manifest(&manifest);
-        let play = |i: usize| AudioRequest::PlayVoice {
-            line: lines[i].clone(),
-            variant: Variant::None,
-        };
+        let play = |i: usize| AudioRequest::play_voice(lines[i].clone(), Variant::None);
         let preload = AudioRequest::PreloadVoices {
             lines: lines.iter().map(|l| (l.clone(), Variant::None)).collect(),
         };

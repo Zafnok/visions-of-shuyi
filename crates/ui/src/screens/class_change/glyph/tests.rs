@@ -341,7 +341,7 @@ fn every_cell_is_painted_and_an_empty_view_shows_only_the_help() {
         s.view(&c),
         ClassChangeView {
             body: ClassChangeBody::Done,
-            help: "help".to_owned(),
+            help: "help".into(),
         },
     ] {
         let buf = render_view(&c, &view);
@@ -353,7 +353,7 @@ fn every_cell_is_painted_and_an_empty_view_shows_only_the_help() {
     }
     let done = ClassChangeView {
         body: ClassChangeBody::Done,
-        help: "help".to_owned(),
+        help: "help".into(),
     };
     let buf = render_view(&c, &done);
     let bottom = i32::from(ConsoleSpec::PC.rows) - 1;

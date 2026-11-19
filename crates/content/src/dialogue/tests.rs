@@ -525,8 +525,8 @@ fn text_length_limit() {
             "test_lord: {at_limit}x\n> {half}\n  {half}"
         ))),
         [
-            "t.dlg:4: text is 201 characters; the limit is 200",
-            "t.dlg:5: text is 201 characters; the limit is 200",
+            "t.dlg:4: text is 201 cells; the limit is 200",
+            "t.dlg:5: text is 201 cells; the limit is 200",
         ]
     );
 }

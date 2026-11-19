@@ -18,7 +18,7 @@ completed:
 From the game/engine boundary audit of 2026-11-03. 1192 (ADR-0097) copied
 the engine's skill pack into `.claude/skills/shuyi-*` with a command of
 our own, `cargo xtask skill-pack [--check]`
-(`crates/xtask/src/skill_pack.rs`, 114 production lines and about 130 of
+(`crates/tools/src/skill_pack.rs`, 114 production lines and about 130 of
 tests); 1194 added `check-skills` beside it. Every game on Shuyi needs the
 same after a pin move, so the engine now does it:
 [engine#2578](https://github.com/Zafnok/shuyi-engine/blob/main/tickets/open/2578-shuyi-skills-write-and-check-a-games-copy-of-the-skill-pack.md)
@@ -37,7 +37,9 @@ None.
 - `cargo shuyi skills [--check]` replaces `cargo xtask skill-pack
   [--check]` everywhere; `skill_pack.rs` and its tests go.
 - The one test that checks the real repository's copy stays, on the
-  engine's `shuyi_cli::skills::install::problems`.
+  engine's `shuyi_cli::skills::install::problems`. **Either order with
+  0176:** if 0176 is done, that test is gone (the `tickets` job's pack
+  check covers it): delete `skill_pack.rs` with nothing moved.
 - **Either order with 1235:** if 1235 is done, `skill-pack` is routed
   through its report helper in `main.rs`: delete that call and its row
   too; if not, delete the arm and `fn skill_pack` as they are, and 1235
@@ -58,8 +60,8 @@ None.
    and run `pwsh -File scripts/sync-agent-skills.ps1`.
 2. `crates/xtask/src/main.rs`: delete `mod skill_pack`, the `skill-pack`
    usage line, the `Some("skill-pack")` arm and `fn skill_pack`.
-3. Delete `crates/xtask/src/skill_pack.rs`. Keep its test
-   `the_real_repo_has_the_pinned_engine_s_pack` (skipped when
+3. Delete `crates/tools/src/skill_pack.rs`. Unless 0176 deleted it,
+   keep its test `the_real_repo_has_the_pinned_engine_s_pack` (skipped when
    `crate::engine::PATCH_FILE` exists) as a test in `main.rs`'s tests or
    a small `crates/xtask/src/skills_copy_tests.rs`, asserting
    `shuyi_cli::skills::install::problems(...)` is empty.
@@ -82,12 +84,12 @@ None.
 
 - [ ] `shuyi-engine.rev` is at or past the commit that closed
       engine#2578.
-- [ ] `crates/xtask/src/skill_pack.rs` is gone; `cargo xtask skill-pack`
+- [ ] `crates/tools/src/skill_pack.rs` is gone; `cargo xtask skill-pack`
       prints xtask's usage.
 - [ ] `grep -rn "xtask skill-pack" --exclude-dir=done --exclude-dir=target .`
       finds nothing outside `shuyi-engine/`.
 - [ ] `cargo shuyi skills --check` passes, in CI and locally, and the
-      real-repository test passes.
+      real-repository test passes (if 0176 isn't done).
 - [ ] All gates in the `run-gates` skill pass, including
       `cargo xtask ticket-lint --check-engine`.
 

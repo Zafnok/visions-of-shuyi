@@ -50,8 +50,8 @@ pub use art::{ArtArea, ArtDef, ArtEffect, ArtId, ArtNote, ArtStatus, ArtTable, D
 pub use battle::{
     AttackPreview, BattleNote, BattleSetup, BattleState, Burning, CastTarget, Command,
     CommandError, Destination, Event, GameMode, HouseState, Leftovers, Objective, Outcome,
-    PendingMove, Phase, PlannedMove, Reinforcement, SellFrom, ShopTxn, StrikePreview, TileRect,
-    Trigger, TriggerWhen, Turn, UnitAction, Village, VillageGoal, Who,
+    PendingMove, Phase, PlannedMove, Reinforcement, SellFrom, ShopTxn, StatCard, StrikePreview,
+    TileRect, Trigger, TriggerWhen, Turn, UnitAction, Village, VillageGoal, Who,
 };
 pub use camp::CampEvent;
 pub use campaign::{
@@ -64,8 +64,8 @@ pub use class::{
 };
 pub use combat::{
     CombatHp, CombatMods, CombatOutcome, CombatRules, CombatantInput, DamageType, Forecast,
-    MitigationStat, PlannedStrike, PowerStat, Reactions, Side, SideForecast, Strike, StrikePlan,
-    StrikeReaction, WeaponStats, WeaponTrait, forecast, if_all_hit, resolve, roll_hit,
+    MitigationStat, OneSided, PlannedStrike, PowerStat, Reactions, Side, SideForecast, Strike,
+    StrikePlan, StrikeReaction, WeaponStats, WeaponTrait, forecast, if_all_hit, resolve, roll_hit,
     strike_order,
 };
 pub use geom::{Dir, Grid, GridSizeError, Pos};
@@ -81,7 +81,7 @@ pub use magic::{Affinity, Element};
 pub use map::{BattleMap, TileFeature};
 pub use movement::{
     AttackRange, MoveError, PathError, Reach, ThreatAreas, ThreatPlanner, TileSet, area_tiles,
-    attack_tiles, danger_zone, path_cost, reachable, threat_area, threats_at,
+    attack_tiles, danger_zone, path_cost, reachable, threat_area, threat_tiles, threats_at,
 };
 pub use prep::{GearSlot, PrepError, PrepUnit, Preparations, StockItem, Unusable, WeaponAt};
 pub use progression::{

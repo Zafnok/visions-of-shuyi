@@ -317,7 +317,7 @@ fn screen(h: &Harness) -> &ProfileScreen {
 fn question(h: &Harness) -> Option<(String, String)> {
     fn focused<T>(answers: &[shuyi_ui::widgets::AnswerView<T>]) -> String {
         let a = answers.iter().find(|a| a.focused);
-        a.map(|a| a.label.clone()).unwrap_or_default()
+        a.map_or_default(|a| a.label.clone())
     }
     let view = screen(h).view(h.game().ctx());
     if let Some(q) = view.list.leaving {
@@ -332,7 +332,7 @@ fn title_items(h: &Harness) -> Vec<String> {
     let title = h.game().screen::<TitleScreen>();
     let title = title.unwrap_or_else(|| panic!("no title"));
     let menu = title.view(h.game().ctx()).menu;
-    let items = menu.map(|m| m.items).unwrap_or_default();
+    let items = menu.map_or_default(|m| m.items);
     items
         .into_iter()
         .map(|i| h.game().ctx().label(&i.label))
@@ -342,7 +342,7 @@ fn title_items(h: &Harness) -> Vec<String> {
 fn current(h: &Harness) -> String {
     let profiles = h.game().ctx().profiles();
     let p = profiles.get(profiles.current());
-    p.map(|p| p.name.clone()).unwrap_or_default()
+    p.map_or_default(|p| p.name.clone())
 }
 
 /// Adds a profile on the screen (from the first row, up round to the row
@@ -464,7 +464,7 @@ fn cancel_in_the_name_box_with_a_name_typed_asks_first_on_go_back() {
     let asked = question(&h).unwrap_or_else(|| panic!("not asked"));
     assert_eq!(asked, ("Keep this name?".to_owned(), "Back".to_owned()));
     let help = screen(&h).help(h.game().ctx());
-    assert_eq!(help, "arrows choose · f pick · d back");
+    assert_eq!(help.plain(), "arrows choose · f pick · d back");
     // Back: the box again, the name as it was.
     h.keys("f");
     assert_eq!(question(&h), None);

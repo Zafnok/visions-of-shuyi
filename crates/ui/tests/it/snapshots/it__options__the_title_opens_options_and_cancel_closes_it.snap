@@ -4,27 +4,28 @@ expression: h.snapshot()
 ---
                                                                                                     
                                                                                                     
-                                                                                                    
                     ┌─ Options ────────────────────────────────────────────────┐                    
                     │                                                          │                    
-                    │   Text speed              ◄ Normal ►                     │                    
-                    │   Animation speed           Normal                       │                    
-                    │   Combat animations         On                           │                    
-                    │   Enemy phase speed         Normal                       │                    
-                    │   Auto-end turn             Off                          │                    
-                    │   Fullscreen                Off                          │                    
-                    │   Cursor                    Corners                      │                    
-                    │   Intro                     On                           │                    
-                    │   Open towns on arrival     On                           │                    
-                    │   Colors                    Earthy painterly             │                    
-                    │   Music volume              █████████▒  97               │                    
-                    │   Sound volume              █████████▒  97               │                    
-                    │   Voices (AI-generated)     On                           │                    
-                    │   Voice volume              █████████▒  97               │                    
-                    │   Voice on hover in the log On                           │                    
-                    │   Auto-advance              Off                          │                    
+                    │   Text speed               ◄ Normal ►                    │                    
+                    │   Animation speed            Normal                      │                    
+                    │   Combat animations          On                          │                    
+                    │   Enemy phase speed          Normal                      │                    
+                    │   Auto-end turn              Off                         │                    
+                    │   Fullscreen                 Off                         │                    
+                    │   Cursor                     Corners                     │                    
+                    │   Threat arrows              Arcs                        │                    
+                    │   Range look                 Slab                        │                    
+                    │   Intro                      On                          │                    
+                    │   Open towns on arrival      On                          │                    
+                    │   Colors                     Earthy painterly            │                    
+                    │   Music volume               █████████▒  97              │                    
+                    │   Sound volume               █████████▒  97              │                    
+                    │   Voices (AI-generated)      On                          │                    
+                    │   Voice volume               █████████▒  97              │                    
+                    │   Voice on hover in the log  On                          │                    
+                    │   Auto-advance               Off                         │                    
                     │                                                          │                    
-                    │   Layout                    Right-handed                 │                    
+                    │   Layout                     Right-handed                │                    
                     │   Key bindings                                           │                    
                     │                                                          │                    
                     │   Reset tips                                             │                    
@@ -32,15 +33,14 @@ expression: h.snapshot()
                     └──────────────────────────────────────────────────────────┘                    
                                                                                                     
                                                                                                     
-                                                                                                    
-                                  arrows move · f change · d back                                   
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbcccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddeeeeeeeeeeeedddddddddddddfdccccccdfdddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddeeeeeeeeeeeeddddddddddddddfdccccccdfddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
@@ -65,8 +65,6 @@ aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaagggggggggggggggggggggggggggggggaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -74,4 +72,3 @@ c = fg:text_highlight bg:panel_bg
 d = fg:text bg:panel_bg
 e = fg:panel_bg bg:panel_border_focus
 f = fg:text_dim bg:panel_bg
-g = fg:text_dim bg:black

@@ -12,15 +12,15 @@ expression: h.snapshot()
                                                                       │ HP 19/19   ██████████      │
                                                                       │ Player                     │
                                                                       │                            │
-                                                                      │                            │
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │                            │
-                    ≈≈≈≈≈≈≈≈....······♣♣♣♣^^^^^^                      │                            │
-                    ≈≈≈≈≈≈====······....♣♣♣♣....                      │                            │
+                                                                      │ Str   8     Mag   1        │
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │ Dex   7     Spd   7        │
+                    ≈≈≈≈≈≈≈≈....······♣♣♣♣^^^^^^                      │ Def   6     Res   5        │
+                    ≈≈≈≈≈≈====······....♣♣♣♣....                      │ Mov   5                    │
                     ..≈≈≈≈..··......Br......╦╦..                      │                            │
-                    ....······........▓▓▓▓▓▓▓▓..                      │                            │
-                    ..♣♣··El..╦╦......▓▓░░╦╦▓▓..                      │                            │
-                    ♣♣♣♣··Kn..........▓▓░░░░▓▓..                      │                            │
-                    ♣♣♠♠··............▓▓▓▓▐▌▓▓..                      │                            │
+                    ....······........▓▓▓▓▓▓▓▓..                      │ Iron Sword        20/20    │
+                    ..♣♣··El..╦╦......▓▓░░╦╦▓▓..                      │ Atk  13     Hit 104        │
+                    ♣♣♣♣··Kn..........▓▓░░░░▓▓..                      │ Crit  3     Avo  14        │
+                    ♣♣♠♠··............▓▓▓▓▐▌▓▓..                      │ AS    5                    │
                                                                       │                            │
                                                                       │                            │
                                                                       │                            │
@@ -32,8 +32,7 @@ expression: h.snapshot()
                                                                       │                            │
                                                                       │ Gold 0                     │
                                                                       └────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
- arrows move · e info · s next unit · d menu · Space end turn                              F2 debug 
+ w danger zone: OFF                                      Shift+Space auto-end: OFF                  
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
@@ -45,15 +44,15 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooooookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaahhiiiippppoooooojjjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooooookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhiiiippppoooooojjjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabcgggccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjjjqqjjjjjjrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjjjoooooojjjjjjjjssssssssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkoottjjrrjjjjjjssuurrssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkoottjjjjjjjjjjssuuuussjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakklloojjjjjjjjjjjjssssvvssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjkkoottjjrrjjjjjjssuurrssjjaaaaaaaaaaaaaaaaaaaaaabcgggcccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkkoottjjjjjjjjjjssuuuussjjaaaaaaaaaaaaaaaaaaaaaabcggggccccccccgggccccccccccccb
+aaaaaaaaaaaaaaaaaaaakklloojjjjjjjjjjjjssssvvssjjaaaaaaaaaaaaaaaaaaaaaabcggcccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
@@ -65,8 +64,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwa
-awwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwa
+awxxxxxxxxxxxxxxxxxaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwwwwxxxxxxxxxxxxxxaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:#cbc0a4 bg:black
 b = fg:#68583f bg:#1b1612
@@ -90,16 +88,17 @@ s = fg:#979185 bg:#211f1f
 t = fg:#7ba4db bg:#1b1b10
 u = fg:#686056 bg:#191716
 v = fg:#976839 bg:#211f1f
-w = fg:#7d725e bg:black
+w = fg:#cbc0a4 bg:#483f2d
+x = fg:#7d725e bg:black
 --- overlays ---
 over  209,270 14x2  #87ac4e
 over  209,286 14x2  #87ac4e
 over  289,238 14x2  #87ac4e
-over  207,256 3x1  #c7b785
-over  207,256 1x3  #c7b785
-over  221,256 3x1  #c7b785
-over  223,256 1x3  #c7b785
-over  207,269 3x1  #c7b785
-over  207,267 1x3  #c7b785
-over  221,269 3x1  #c7b785
-over  223,267 1x3  #c7b785
+over  207,256 3x1  #ebd79c
+over  207,256 1x3  #ebd79c
+over  221,256 3x1  #ebd79c
+over  223,256 1x3  #ebd79c
+over  207,269 3x1  #ebd79c
+over  207,267 1x3  #ebd79c
+over  221,269 3x1  #ebd79c
+over  223,267 1x3  #ebd79c

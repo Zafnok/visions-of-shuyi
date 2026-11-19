@@ -32,6 +32,14 @@ checks them. Their contents slipped all the same:
 which Nick dropped for gameplay tickets, and lacks the three lines. None
 of the PRs sampled used it.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md), *Processes that slow us
+down*): this ticket folds into 0181. Its check (the closing lines in the
+PR body, and `PR size:` within 10% of `pr-size`) is now one of the checks
+of 0181's `cargo xtask check-pr`, in one CI job with those of 1174, 1257
+and 1239, and the `Engine friction:` line is left out when a PR changes no
+production Rust. What stays here is the PR template's rewrite or removal.
+Worked before or after 0181, this ticket now does only that part.
+
 ## Nick input
 
 None.
@@ -39,40 +47,32 @@ None.
 ## Scope
 
 **In:**
-- A CI step that reads the PR body (passed through `env:`) on a ticket
-  PR and fails when:
-  - a line is missing;
-  - `PR size:` has no measured number;
-  - the measured number differs from `cargo xtask pr-size`'s count by
-    more than 10%;
-  - `Engine friction:` has no `estimate N`.
+- The closing-line check is 0181's `cargo xtask check-pr` (see the
+  2026-11-17 line), not this ticket's.
 - `.github/pull_request_template.md` rewritten from `work-ticket` §6, or
   deleted if §6 is enough. Say which and why.
 
 **Out (do not do):**
-- Judging whether an estimate came before the code (0148's skill text
-  covers that).
+- Judging whether an estimate came before the code (0181: the
+  `**Estimated size:**` line and the pr-size hook's nudge).
+- The PR-body check and its CI step (0181).
 - The friction log's rows (1257).
 
 ## Implementation steps
 
-1. Add a `cargo xtask check-pr-body` reading `$PR_BODY`, used only on
-   ticket PRs (the kind 0143 reads from the title, or `[NNNN]` until
-   0143 lands).
-2. Wire it in the tickets job beside `check-mentions`, with `edited` in
-   the `pull_request` types.
-3. Rewrite or remove the template.
+1. Rewrite or remove the template, matching `work-ticket` §6 as it
+   stands (after 0181, without `Engine friction:` on a PR with no
+   production Rust).
 
 ## Acceptance criteria
 
-- [ ] A ticket PR body without `PR size:` fails the step.
-- [ ] A `PR size:` 30% off `pr-size`'s count fails.
 - [ ] The template matches `work-ticket` §6, or is gone.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: the body parser over fixture bodies.
+- None beyond the gates: a template change (the body checks' tests are
+  0181's).
 
 ## Completion notes
 

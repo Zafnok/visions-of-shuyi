@@ -9,14 +9,23 @@ use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::range;
 use trpg_ui::screens::BattleScreen;
+use trpg_ui::screens::battle::layout::MAP_VIEW;
 
 /// At the title with the right-handed layout, then Quick Battle, still
-/// under turn 1's `PLAYER PHASE` banner.
-fn quick_battle_banner() -> Harness {
+/// under its objective's banner (0481).
+fn quick_battle_objective() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     // Quick Battle, then Preparations: Left wraps to `Fight!`.
     h.keys("Down f Left f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    h
+}
+
+/// [`quick_battle_objective`], the objective's banner closed: under turn
+/// 1's `PLAYER PHASE` banner.
+fn quick_battle_banner() -> Harness {
+    let mut h = quick_battle_objective();
+    h.keys("f");
     h
 }
 
@@ -28,9 +37,27 @@ fn quick_battle() -> Harness {
     h
 }
 
-/// A battle opens on turn 1's `PLAYER PHASE` banner (ticket 0435): only
-/// Confirm does anything while it is up, and it closes by itself after a
-/// second.
+/// A battle opens on its objective's banner (ticket 0481): only Confirm
+/// does anything while it is up, and it never closes by itself.
+#[test]
+fn quick_battle_opens_on_its_objective_until_confirmed() {
+    let mut h = quick_battle_objective();
+    assert!(shows(&h, "OBJECTIVE"));
+    assert!(shows(&h, "Rout the enemy"));
+    assert_eq!(help(&h), "f continue");
+    h.keys("Right d Space");
+    h.wait(5.0);
+    assert!(shows(&h, "OBJECTIVE"));
+    assert!(!shows(&h, "PHASE"));
+    h.keys("f");
+    assert!(!shows(&h, "OBJECTIVE"));
+    assert!(shows(&h, "PLAYER PHASE"));
+    assert_eq!(h.cursor_tile(), Some(LORD));
+}
+
+/// After its objective, a battle shows turn 1's `PLAYER PHASE` banner
+/// (ticket 0435): only Confirm does anything while it is up, and it closes
+/// by itself after a second.
 #[test]
 fn quick_battle_opens_on_the_player_phase_banner() {
     let mut h = quick_battle_banner();
@@ -58,14 +85,15 @@ fn quick_battle_opens_on_the_player_phase_banner() {
 }
 
 /// The Quick Battle screen at the start of the battle, its `PLAYER PHASE`
-/// banner just closed (the cursor a little into its pulse): `test_small.map`
+/// banner just closed: `test_small.map`
 /// centred in the viewport, four ready player units and four enemies, all
 /// at full HP, the cursor on the lord, the side panel showing the lord and
-/// its tile, and the help line.
+/// its tile (its help bar is `key_caps`' look test).
 #[test]
 fn quick_battle_renders() {
     let h = quick_battle();
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    // The whole screen but its help bar, whose look is `key_caps`' (1290).
     assert_snapshot!(h.snapshot());
 }
 
@@ -77,7 +105,7 @@ fn quick_battle_in_every_theme() {
     for theme in Theme::ALL {
         let mut h = Harness::with_layout(RIGHT_HANDED);
         h.ctx_mut().change_settings(|s| s.theme = theme).unwrap();
-        h.keys("Down f Left f f");
+        h.keys("Down f Left f f f");
         assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
         let snapshot = h.snapshot();
         let legend = snapshot.split("--- overlays ---").next().unwrap_or("");
@@ -91,6 +119,7 @@ fn quick_battle_in_every_theme() {
             (0..32).any(|y| (0..100).any(|x| bg(x, y) == Some(grass.clone()))),
             "{theme:?} shows no grass_bg"
         );
+        // The whole screen but its help bar: a theme colours all of it (1290).
         insta::with_settings!({snapshot_suffix => format!("{theme:?}")}, {
             assert_snapshot!(snapshot);
         });
@@ -191,9 +220,9 @@ fn wait_all(h: &mut Harness, units: usize) {
 #[test]
 fn a_full_turn_of_waits_ends_with_auto_end_and_starts_turn_two() {
     let mut h = quick_battle();
-    // Auto-end on (off by default): a message says so.
+    // Auto-end on (off by default): a note over the map says so.
     h.keys("Shift+Space");
-    assert!(row(&h, 30).starts_with("Auto-end: ON"), "{}", row(&h, 30));
+    assert!(row(&h, 29).starts_with("Auto-end: ON"), "{}", row(&h, 29));
     wait_all(&mut h, 4);
     // The enemy phase's banner, then the enemies act, then the player's
     // turn 2.
@@ -271,9 +300,71 @@ fn info_and_danger_zone_keys() {
     assert!(shows(&h, "Test Mage"));
     h.keys("d");
     assert!(!shows(&h, "Weapon ranks"));
-    assert!(row(&h, 30).ends_with("w danger zone: OFF · Shift+Space auto-end: OFF"));
+    let toggles = |h: &Harness| crate::unpadded(&row(h, 30));
+    assert_eq!(
+        toggles(&h),
+        "w danger zone: OFF · Shift+Space auto-end: OFF"
+    );
     h.keys("w");
-    assert!(row(&h, 30).ends_with("w danger zone: ON · Shift+Space auto-end: OFF"));
+    assert_eq!(toggles(&h), "w danger zone: ON · Shift+Space auto-end: OFF");
+}
+
+/// The Quick Battle's Frost Elemental never moves (ticket 0450): the
+/// danger zone and the range shown when it is picked are only what it
+/// reaches from its tile, not what it could reach after walking its Mov.
+#[test]
+fn the_frost_elemental_threatens_only_from_its_tile() {
+    use trpg_core::ai::AiBehavior;
+    use trpg_core::{threat_area, threat_tiles};
+    let mut h = quick_battle();
+    h.keys("w");
+    let state = h.battle().unwrap().state().clone();
+    let elemental = state
+        .units()
+        .iter()
+        .find(|u| u.ai == AiBehavior::Stationary)
+        .unwrap()
+        .clone();
+    assert_eq!(elemental.pos, Pos::new(8, 7));
+    let area = |id, still: bool| {
+        let unit = state.unit(id).unwrap();
+        let ranges = state.threat_ranges(unit);
+        let (map, terrain, classes) = (state.map(), state.terrain(), state.classes());
+        let get = if still { threat_tiles } else { threat_area };
+        get(map, terrain, classes, state.units(), id, &ranges).unwrap()
+    };
+    // Four tiles from it, out of every other enemy's reach, yet in what it
+    // could reach if it walked.
+    let others: Vec<_> = state
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Enemy && u.id != elemental.id)
+        .map(|u| area(u.id, false))
+        .collect();
+    let walked = area(elemental.id, false);
+    let far: Vec<Pos> = state
+        .map()
+        .tiles
+        .positions()
+        .filter(|&t| Pos::manhattan(t, elemental.pos) == 4)
+        .filter(|&t| others.iter().all(|a| !a.contains(t)))
+        .filter(|&t| walked.contains(t))
+        .collect();
+    assert_eq!(far, [Pos::new(10, 5)], "a tile of the walled fort");
+    let near = Pos::new(8, 6);
+    assert!(area(elemental.id, true).contains(near));
+    for &t in &far {
+        assert!(!h.tints_at(t).contains(&range::DANGER), "{t:?}");
+    }
+    assert!(h.tints_at(near).contains(&range::DANGER));
+    // Picked, its range is the same few tiles.
+    h.keys("w");
+    go(&mut h, elemental.pos);
+    h.keys("f");
+    assert!(h.tints_at(near).contains(&range::ATTACK));
+    for &t in &far {
+        assert!(!h.tints_at(t).contains(&range::ATTACK), "{t:?}");
+    }
 }
 
 /// The info screen, the map menu, the end-turn prompt and a banner only
@@ -373,11 +464,10 @@ fn next_unit_jumps_between_ready_units() {
 /// The key-help line, left of the right-aligned debug hint.
 fn help(h: &Harness) -> String {
     let buf = h.game().buffer();
-    (0..90)
+    let row = (0..90)
         .map(|x| buf.get(x, 31).map_or(' ', |c| c.glyph))
-        .collect::<String>()
-        .trim()
-        .to_owned()
+        .collect::<String>();
+    crate::unpadded(&row)
 }
 
 /// The lord (at (3, 5)) selected, the path steered two tiles right onto
@@ -395,7 +485,7 @@ fn lord_path() -> Harness {
 fn selected_unit_with_ranges_and_path_snapshot() {
     let h = lord_path();
     assert_eq!(help(&h), "arrows move · f move here · d cancel");
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 /// The lord walked to the fort, its action menu open beside it.
@@ -404,7 +494,7 @@ fn action_menu_snapshot() {
     let mut h = lord_path();
     h.keys("f").wait(0.5);
     assert_eq!(help(&h), "arrows choose · f confirm · d back");
-    assert_snapshot!(h.snapshot());
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
 #[test]
@@ -558,8 +648,10 @@ fn an_art_from_the_arts_menu_and_a_spell_active_from_the_spell_list() {
     assert!(shows(&h, "Guard Break     −4 dur  D"));
     // Guard Break: its forecast on the brigand, which can't counter.
     h.keys("Down f");
-    assert_eq!(panel(&h)[0], "Guard Break (20 → 16)");
+    assert_eq!(panel(&h)[0], "Guard Break");
     assert_eq!(panel(&h)[1], "Test Lord     Brigand");
+    // The uses it spends under the sword (0480).
+    assert_eq!(panel(&h)[3], "20 → 16");
     assert!(shows(&h, "no counter"));
     assert!(!shows(&h, "Flowing Cut"));
     // Cancel goes back to the arts menu, on Guard Break; Confirm again.
@@ -618,7 +710,10 @@ fn an_art_from_the_arts_menu_and_a_spell_active_from_the_spell_list() {
 fn tips_show_when_switched_on() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_tips().keys("Down f Left f");
-    // The start tip waits for the `PLAYER PHASE` banner.
+    // The start tip waits for the objective's and `PLAYER PHASE` banners.
+    assert!(shows(&h, "OBJECTIVE"));
+    assert!(!shows(&h, "Your move"));
+    h.keys("f");
     assert!(shows(&h, "PLAYER PHASE"));
     assert!(!shows(&h, "Your move"));
     h.keys("f");
@@ -654,6 +749,8 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
     h.keys("f f f Up f");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    assert!(shows(&h, "OBJECTIVE"));
+    h.keys("f");
     assert!(shows(&h, "PLAYER PHASE"));
     // Closing the banner starts the scene: no tip under it.
     h.keys("f");
@@ -672,6 +769,11 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
 /// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
 fn skip_scenes(h: &mut Harness) {
     for _ in 0..8 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.keys("f");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }
@@ -738,8 +840,7 @@ fn nothing_changes_the_music(h: &mut Harness) {
     let cues = h.audio_requests();
     play_into_turn_two(h);
     let music = |all: Vec<AudioRequest>| -> Vec<AudioRequest> {
-        let sound = |r: &AudioRequest| matches!(r, AudioRequest::PlaySound { .. });
-        all.into_iter().filter(|r| !sound(r)).collect()
+        all.into_iter().filter(crate::is_music).collect()
     };
     assert_eq!(music(h.audio_requests()), music(cues));
 }
@@ -840,9 +941,7 @@ fn a_foot_unit_beside_a_river_shows_the_wading_tip_once() {
     let close = |h: &mut Harness| {
         let mut seen = Vec::new();
         for _ in 0..10 {
-            // A press on the map that changes nothing (Zoom, with glyphs):
-            // a tip waits for one (0495).
-            h.keys("q").wait(0.1);
+            h.wait(0.1);
             let Some(tip) = h.battle().and_then(BattleScreen::shown_tip) else {
                 return seen;
             };
@@ -862,4 +961,57 @@ fn a_foot_unit_beside_a_river_shows_the_wading_tip_once() {
     assert!(close(&mut h).contains(&TipTrigger::FirstWadeInReach));
     h.keys("d f");
     assert!(!close(&mut h).contains(&TipTrigger::FirstWadeInReach));
+}
+
+/// Ticket 1296: a scene the battle plays over itself has its first line in
+/// the last set the game keeps loaded before the line's box asks for its
+/// clip (on the web a clip is fetched, and one not loaded in time is
+/// skipped). The test chapter's battle is given a turn-1 scene, its line
+/// voiced, as Chapter 1's `ch01_first_turn` is.
+#[test]
+fn a_scene_over_the_battle_has_its_first_line_kept_before_it_plays() {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    let battle = h.ctx_mut().game.content.battles.get_mut("test");
+    let battle = battle.unwrap_or_else(|| panic!("no test battle"));
+    battle.triggers.push(Trigger {
+        when: TriggerWhen::TurnStart {
+            turn: 1,
+            phase: Phase::Player,
+        },
+        scene: "test_turn_3".into(),
+        once: true,
+    });
+    battle.battle_notes.clear();
+    let content = &h.game().ctx().game.content;
+    let lines = content.dialogue.scenes["test_turn_3"].lines();
+    let line = lines[0].id.clone();
+    let manifest = format!(
+        "(clips: [(line: \"{line}\", spoken: \"{}\", voice: \"v\", made_by: Recorded(actor: \"a\"))])",
+        lines[0].text
+    );
+    h.ctx_mut().set_voice_manifest(&manifest);
+    assert_eq!(h.ctx_mut().take_warnings(), [] as [String; 0]);
+    // New Game, Classic, Not familiar, voices on, the default lead; the
+    // intro scenes skipped; the objective's and turn 1's banners closed.
+    h.keys("f f f");
+    assert_eq!(h.top_screen(), "voices_question");
+    h.keys("f Up f");
+    skip_scenes(&mut h);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    h.keys("f f").wait(0.5);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "dialogue"]);
+    let requests = h.audio_requests();
+    let played = requests
+        .iter()
+        .position(|r| matches!(r, AudioRequest::PlayVoice { line: l, .. } if *l == line));
+    let played = played.unwrap_or_else(|| panic!("{line} never asked for: {requests:?}"));
+    let last_kept = requests[..played].iter().rev().find_map(|r| match r {
+        AudioRequest::KeepVoices { lines } => Some(lines),
+        _ => None,
+    });
+    let last_kept = last_kept.unwrap_or_else(|| panic!("nothing kept: {requests:?}"));
+    assert!(
+        last_kept.iter().any(|(l, _)| *l == line),
+        "{line} not in {last_kept:?}"
+    );
 }

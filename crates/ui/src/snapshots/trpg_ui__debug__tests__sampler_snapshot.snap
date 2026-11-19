@@ -15,19 +15,19 @@ expression: snap
   ╁ ╂ ╃ ╄ ╅ ╆ ╇ ╈ ╉ ╊ ╋ ═ ║ ╒ ╓ ╔ ╕ ╖ ╗ ╘ ╙ ╚ ╛ ╜ ╝ ╞ ╟ ╠ ╡ ╢ ╣ ╤ ╥ ╦ ╧ ╨ ╩ ╪ ╫ ╬ ╭ ╮ ╯ ╰ ╱ ╲ ╳ ╴   
   ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿ ▀ ▁ ▂ ▃ ▄ ▅ ▆ ▇ █ ▉ ▊ ▋ ▌ ▍ ▎ ▏ ▐ ░ ▒ ▓ ▖ ▗ ▘ ▙ ▚ ▛ ▜ ▝ ▞ ▟ ■ □ ▬ ▮ ▲ △ ▶   
   ► ▼ ◀ ◄ ◆ ◊ ○ ● ◘ ◙ ◯ ☖ ☗ ☺ ☻ ☼ ♀ ♂ ♔ ♕ ♠ ♣ ♥ ♦ ♪ ♫ ⛨ ⛩ ✕                                         
- Palette (56)                                                                                       
+ Palette (59)                                                                                       
  ██ ally            ██ ash             ██ ash_bg          ██ attack_range    ██ black               
  ██ cursor          ██ danger_zone     ██ effect          ██ effect_bonus    ██ effect_penalty      
  ██ enemy           ██ exit_area       ██ exp_bar         ██ fire            ██ fire_bg             
  ██ floor           ██ floor_bg        ██ forest          ██ forest_bg       ██ fort                
  ██ fort_bg         ██ grass           ██ grass_bg        ██ heal_range      ██ hp_high             
- ██ hp_low          ██ hp_mid          ██ ice             ██ ice_bg          ██ mountain            
- ██ mountain_bg     ██ move_range      ██ neutral         ██ panel_bg        ██ panel_border        
- ██ panel_border_f  ██ path            ██ peak            ██ peak_bg         ██ player              
- ██ player_outline  ██ road            ██ road_bg         ██ sea             ██ stone               
- ██ stone_bg        ██ text            ██ text_dim        ██ text_highlight  ██ thicket             
- ██ thicket_bg      ██ water           ██ water_bg        ██ white           ██ wood                
- ██ wood_bg                                                                                         
+ ██ hp_low          ██ hp_mid          ██ ice             ██ ice_bg          ██ key                 
+ ██ key_bg          ██ key_edge        ██ mountain        ██ mountain_bg     ██ move_range          
+ ██ neutral         ██ panel_bg        ██ panel_border    ██ panel_border_f  ██ path                
+ ██ peak            ██ peak_bg         ██ player          ██ player_outline  ██ road                
+ ██ road_bg         ██ sea             ██ stone           ██ stone_bg        ██ text                
+ ██ text_dim        ██ text_highlight  ██ thicket         ██ thicket_bg      ██ water               
+ ██ water_bg        ██ white           ██ wood            ██ wood_bg                                
  The quick brown fox jumps over the lazy dog. 0123456789 ÀÉÎÕÜ àéîõü ß ¿¡ «» ← ↑ → ↓                
  ┌─ Unit ───────────────────────────────┐  ╔═ Ranges ═════════════════════════════════════════════╗ 
  │ Aldo vs Brigand                      │  ║     move        attack        heal        danger     ║ 
@@ -54,19 +54,19 @@ aiiaddddddaaaaaaaaaajjadddddddddddaaaaakkaddddddaaaaaaaaaalladdddddddddddaaaamma
 annadddddaaaaaaaaaaaooadddddddddaaaaaaappadddddddaaaaaaaaaqqaddddaaaaaaaaaaaarradddddddaaaaaaaaaaaaa
 assadddddaaaaaaaaaaattaddddddddaaaaaaaauuaddddddaaaaaaaaaavvadddddddddaaaaaaawwaddddaaaaaaaaaaaaaaaa
 axxadddddddaaaaaaaaayyadddddaaaaaaaaaaazzaddddddddaaaaaaaaAAaddddddddddaaaaaaBBadddddddaaaaaaaaaaaaa
-aCCaddddddaaaaaaaaaaDDaddddddaaaaaaaaaaEEadddaaaaaaaaaaaaaFFaddddddaaaaaaaaaaGGaddddddddaaaaaaaaaaaa
-aHHadddddddddddaaaaaIIaddddddddddaaaaaaJJadddddddaaaaaaaaaKKaddddddddaaaaaaaaLLaddddddddddddaaaaaaaa
-aMMaddddddddddddddaaNNaddddaaaaaaaaaaaaOOaddddaaaaaaaaaaaaPPadddddddaaaaaaaaaQQaddddddaaaaaaaaaaaaaa
-aRRaddddddddddddddaaSSaddddaaaaaaaaaaaaTTadddddddaaaaaaaaaUUadddaaaaaaaaaaaaaVVadddddaaaaaaaaaaaaaaa
-aWWaddddddddaaaaaaaaaaaddddaaaaaaaaaaaaddaddddddddaaaaaaaabbaddddddddddddddaaXXadddddddaaaaaaaaaaaaa
-aYYaddddddddddaaaaaaZZadddddaaaaaaaaaaa00addddddddaaaaaaaa11adddddaaaaaaaaaaa22addddaaaaaaaaaaaaaaaa
-a33adddddddaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aCCaddddddaaaaaaaaaaDDaddddddaaaaaaaaaaEEadddaaaaaaaaaaaaaFFaddddddaaaaaaaaaaaaadddaaaaaaaaaaaaaaaaa
+aGGaddddddaaaaaaaaaaHHaddddddddaaaaaaaaIIaddddddddaaaaaaaaJJadddddddddddaaaaaKKaddddddddddaaaaaaaaaa
+aLLadddddddaaaaaaaaaMMaddddddddaaaaaaaaNNaddddddddddddaaaaOOaddddddddddddddaaPPaddddaaaaaaaaaaaaaaaa
+aQQaddddaaaaaaaaaaaaRRadddddddaaaaaaaaaSSaddddddaaaaaaaaaaTTaddddddddddddddaaUUaddddaaaaaaaaaaaaaaaa
+aVVadddddddaaaaaaaaaWWadddaaaaaaaaaaaaaXXadddddaaaaaaaaaaaYYaddddddddaaaaaaaaaaaddddaaaaaaaaaaaaaaaa
+addaddddddddaaaaaaaabbaddddddddddddddaaZZadddddddaaaaaaaaa00addddddddddaaaaaa11adddddaaaaaaaaaaaaaaa
+a22addddddddaaaaaaaa33adddddaaaaaaaaaaa44addddaaaaaaaaaaaa55adddddddaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-a4455555544444444444444444444444444444444aa66555555556666666666666666666666666666666666666666666666a
-a4788887997一一一一一一一77777777777777777777774aa67丁丁丁丁丁丁丁丁丁丁丁丁7丂丂丂丂丂丂丂丂丂丂丂丂7七七七七七七七七七七七七7丄丄丄丄丄丄丄丄丄丄丄丄776a
-a47777丅丅丅丅丅丅丆丆丆万77丈丈丈丈丈丈丈丈777777777777774aa67三三7上上7下下7丌丌7不不77887与与7丏丏7丐丐7丑丑777777777777777777777776a
-a4777777777777777777777777777777777777774aa67777777777777777777777777777777777777777777777777777776a
-a4444444444444444444444444444444444444444aa66666666666666666666666666666666666666666666666666666666a
+a6677777766666666666666666666666666666666aa88777777778888888888888888888888888888888888888888888888a
+a69一一一一9丁丁9丂丂丂丂丂丂丂99999999999999999999996aa89七七七七七七七七七七七七9丄丄丄丄丄丄丄丄丄丄丄丄9丅丅丅丅丅丅丅丅丅丅丅丅9丆丆丆丆丆丆丆丆丆丆丆丆998a
+a69999万万万万万万丈丈丈三99上上上上上上上上999999999999996aa89下下9丌丌9不不9与与9丏丏99一一9丐丐9丑丑9丒丒9专专999999999999999999999998a
+a6999999999999999999999999999999999999996aa89999999999999999999999999999999999999999999999999999998a
+a6666666666666666666666666666666666666666aa88888888888888888888888888888888888888888888888888888888a
 --- legend ---
 a = fg:text bg:black
 b = fg:text_highlight bg:black
@@ -100,51 +100,53 @@ C = fg:hp_low bg:black
 D = fg:hp_mid bg:black
 E = fg:ice bg:black
 F = fg:ice_bg bg:black
-G = fg:mountain bg:black
-H = fg:mountain_bg bg:black
-I = fg:move_range bg:black
-J = fg:neutral bg:black
-K = fg:panel_bg bg:black
-L = fg:panel_border bg:black
-M = fg:panel_border_focus bg:black
-N = fg:path bg:black
-O = fg:peak bg:black
-P = fg:peak_bg bg:black
-Q = fg:player bg:black
-R = fg:player_outline bg:black
-S = fg:road bg:black
-T = fg:road_bg bg:black
-U = fg:sea bg:black
-V = fg:stone bg:black
-W = fg:stone_bg bg:black
-X = fg:thicket bg:black
-Y = fg:thicket_bg bg:black
-Z = fg:water bg:black
-0 = fg:water_bg bg:black
-1 = fg:white bg:black
-2 = fg:wood bg:black
-3 = fg:wood_bg bg:black
-4 = fg:panel_border bg:panel_bg
-5 = fg:text_highlight bg:panel_bg
-6 = fg:panel_border_focus bg:panel_bg
-7 = fg:text bg:panel_bg
-8 = fg:player bg:panel_bg
-9 = fg:text_dim bg:panel_bg
-一 = fg:enemy bg:panel_bg
-丁 = fg:text bg:move_range
-丂 = fg:text bg:attack_range
-七 = fg:text bg:heal_range
-丄 = fg:text bg:danger_zone
-丅 = fg:hp_high bg:panel_bg
-丆 = fg:hp_mid bg:panel_bg
-万 = fg:hp_low bg:panel_bg
-丈 = fg:exp_bar bg:panel_bg
-三 = fg:grass bg:panel_bg
-上 = fg:forest bg:panel_bg
-下 = fg:water bg:panel_bg
-丌 = fg:mountain bg:panel_bg
-不 = fg:stone bg:panel_bg
-与 = fg:#6a3528 bg:panel_bg
-丏 = fg:ally bg:panel_bg
-丐 = fg:neutral bg:panel_bg
-丑 = fg:cursor bg:panel_bg
+G = fg:key_bg bg:black
+H = fg:key_edge bg:black
+I = fg:mountain bg:black
+J = fg:mountain_bg bg:black
+K = fg:move_range bg:black
+L = fg:neutral bg:black
+M = fg:panel_bg bg:black
+N = fg:panel_border bg:black
+O = fg:panel_border_focus bg:black
+P = fg:path bg:black
+Q = fg:peak bg:black
+R = fg:peak_bg bg:black
+S = fg:player bg:black
+T = fg:player_outline bg:black
+U = fg:road bg:black
+V = fg:road_bg bg:black
+W = fg:sea bg:black
+X = fg:stone bg:black
+Y = fg:stone_bg bg:black
+Z = fg:thicket bg:black
+0 = fg:thicket_bg bg:black
+1 = fg:water bg:black
+2 = fg:water_bg bg:black
+3 = fg:white bg:black
+4 = fg:wood bg:black
+5 = fg:wood_bg bg:black
+6 = fg:panel_border bg:panel_bg
+7 = fg:text_highlight bg:panel_bg
+8 = fg:panel_border_focus bg:panel_bg
+9 = fg:text bg:panel_bg
+一 = fg:player bg:panel_bg
+丁 = fg:text_dim bg:panel_bg
+丂 = fg:enemy bg:panel_bg
+七 = fg:text bg:move_range
+丄 = fg:text bg:attack_range
+丅 = fg:text bg:heal_range
+丆 = fg:text bg:danger_zone
+万 = fg:hp_high bg:panel_bg
+丈 = fg:hp_mid bg:panel_bg
+三 = fg:hp_low bg:panel_bg
+上 = fg:exp_bar bg:panel_bg
+下 = fg:grass bg:panel_bg
+丌 = fg:forest bg:panel_bg
+不 = fg:water bg:panel_bg
+与 = fg:mountain bg:panel_bg
+丏 = fg:stone bg:panel_bg
+丐 = fg:#6a3528 bg:panel_bg
+丑 = fg:ally bg:panel_bg
+丒 = fg:neutral bg:panel_bg
+专 = fg:cursor bg:panel_bg

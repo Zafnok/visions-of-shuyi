@@ -85,7 +85,11 @@ fn a_scene_at_the_battles_start_plays_after_the_banner_and_tips_wait() {
         ..setup(&c, map, units, Objective::Rout { turn_limit: None })
     });
     let mut s = BattleScreen::start(state, &events);
-    // The events' order: the phase starts (its banner), then the scene.
+    // The objective's banner first (0481), then the events' order: the
+    // phase starts (its banner), then the scene.
+    assert!(s.banner().is_some());
+    assert_eq!(s.queued_scene(), None);
+    assert_eq!(frame(&mut s, &mut c, &[Action::Confirm], 0.0), "None");
     assert!(s.banner().is_some());
     assert_eq!(s.queued_scene(), None);
     assert_eq!(frame(&mut s, &mut c, &[], 0.0), "None");
@@ -98,11 +102,11 @@ fn a_scene_at_the_battles_start_plays_after_the_banner_and_tips_wait() {
     assert_eq!(s.shown_tip(), None);
     assert_eq!(s.queued_scene(), None);
     assert_eq!(frame(&mut s, &mut c, &[], 0.0), "None");
-    // Without events, `start` is `new`.
+    // Without events, `start` has only the objective's banner (0481).
     let q = quick_battle(&c.game.content).unwrap();
     let s = BattleScreen::start(q, &[]);
     assert_eq!(s.queued_scene(), None);
-    assert_eq!(s.banner(), None);
+    assert_eq!(s.banner().map(|b| b.kind), Some(BannerKind::Objective));
 }
 
 #[test]
@@ -386,7 +390,7 @@ fn engaging_the_rogue_plays_its_line_over_the_map_then_the_combat() {
     assert!(shows(&h, "That all you've got?"), "{}", h.snapshot());
     close_line(&mut h);
     h.wait(2.0);
-    assert!(shows(&h, "d menu · Space end turn"));
+    assert!(shows(&h, "Space end turn"));
     assert_eq!(h.screens(), ["battle"]);
 }
 
@@ -413,7 +417,7 @@ fn a_fallen_rogue_says_its_last_words_before_it_fades() {
     // Then it fades and the battle goes on.
     h.wait(3.0);
     assert_eq!(h.unit_at(ROGUE_AT), None);
-    assert!(shows(&h, "d menu · Space end turn"));
+    assert!(shows(&h, "Space end turn"));
 }
 
 #[test]
@@ -433,7 +437,7 @@ fn skipping_a_combat_still_stops_for_its_scenes() {
     assert_eq!(h.screens(), ["battle"]);
     // Then the lord's EXP bar (0602), and browsing again.
     h.wait(3.0);
-    assert!(shows(&h, "d menu · Space end turn"), "{}", h.snapshot());
+    assert!(shows(&h, "Space end turn"), "{}", h.snapshot());
 }
 
 #[test]
@@ -608,7 +612,9 @@ fn a_battles_scene_has_the_battle_as_it_stands_for_its_place() {
     let standing: Vec<Pos> = s.state().units().iter().map(|u| u.pos).collect();
     assert_eq!(drawn, standing);
     assert_ne!(drawn, [] as [trpg_core::Pos; 0]);
+    // Past the objective's banner (0481), then the phase banner.
     let input = FrameInput::new(vec![Action::Confirm], 0.0, vec![]);
+    assert!(matches!(s.update(&mut c, &input), Transition::None));
     let Transition::Push(screen) = s.update(&mut c, &input) else {
         panic!("no scene");
     };
@@ -620,4 +626,30 @@ fn a_battles_scene_has_the_battle_as_it_stands_for_its_place() {
     let view = dialogue.view(&c);
     assert!(view.overlay);
     assert_eq!(view.place, None);
+}
+
+/// Ticket 1296: a scene fired by a combat and waiting in its playback
+/// (the rogue's half-HP line, after its engage line) is kept loaded,
+/// though its trigger is spent.
+#[test]
+fn a_scene_waiting_in_a_combat_is_kept_loaded() {
+    let mut h = lord_attacks_rogue(22);
+    close_line(&mut h);
+    let scene = &h.game().ctx().game.content.dialogue.scenes["test_rogue_half"];
+    let line = scene.lines()[0];
+    let (id, text) = (line.id.clone(), line.text.to_owned());
+    h.ctx_mut().set_voice_manifest(&format!(
+        "(clips: [(line: \"{id}\", spoken: \"{text}\", voice: \"v\", made_by: Recorded(actor: \"a\"))])"
+    ));
+    assert_eq!(h.ctx_mut().take_warnings(), [] as [String; 0]);
+    let battle = h.battle().expect("the battle");
+    assert!(matches!(battle.mode(), Mode::Combat(_)));
+    let half = battle
+        .state()
+        .triggers()
+        .iter()
+        .position(|t| t.scene == "test_rogue_half");
+    assert!(half.is_some_and(|i| battle.state().has_fired(i)));
+    let lines = battle.coming_scene_lines(h.game().ctx());
+    assert!(lines.contains(&id), "{lines:?}");
 }

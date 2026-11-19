@@ -29,6 +29,19 @@ size. Split it now: this ticket moves bot/rules helpers; 1207, needed
 removal of the old xtask wrapper. Every original requirement lives in one
 of these two tickets; no feature or policy is dropped.
 
+2026-11-17 friction sweep ([report](../../docs/research/friction-2026-11-17.md),
+bucket B5 with 1207, 0173, 1170, 0182 and 1294): this goes first, then
+1207. (0173 landed first anyway, Nick's choice on 2026-11-18: 1207
+carries its playtest CI over to the engine's workflow.) Since the 10-25 pin
+move the game's copies took 27 more commits, including speed work on
+the threat functions this ticket moves (#568, #593 and #610: searches
+kept for the battle, no path search per enemy each cursor step).
+Nothing in `crates/` uses `shuyi_core::threat` yet. Keep those speedups
+when the adapters go over the engine: the seeded traces must agree and
+the hovered-unit and unit-menu paths must not search more than now.
+Those three PRs added about 350 lines to `crates/core/src/movement.rs`
+(about 510 net since 10-25), so the expected size below is stale: re-estimate before coding (ADR-0101).
+
 The game/engine boundary audit of 2026-11-03 checked again: game 0506
 and all seven engine tickets are in `done/`, and the pin (`96e97bf`) is
 past them, so this ticket is ready now. It found two more things here:
@@ -48,6 +61,8 @@ past them, so this ticket is ready now. It found two more things here:
 report (damage dealt, kills, EXP and level for each playable unit, and a
 per-unit table). If 0527 is done, carry those measures over in the move;
 if not, nothing to do (0527 builds them on whichever runner is there).
+
+**The hook chain** (2026-11-16, either order): if this lands after 1095, the bots' targets stay "units hostile to the player", never `Faction::Enemy` alone, because beasts are a third hostile army. If it lands after 1276, carry over the `grinder` field of `Targets` and `targets.ron` and the grinder margin.
 
 ## Nick input
 

@@ -25,10 +25,12 @@
 
 use core::ops::{Deref, DerefMut};
 
+use crate::color::{Palette, Rgb};
+use crate::console::ConsoleSpec;
 use crate::flow::FlowScreen;
 use crate::game::Game;
 use crate::game::system_menu::SystemMenuEntry;
-use crate::glyph_buffer::Rect;
+use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::input::{Layout, PadKind, RIGHT_HANDED};
 use crate::map_view::{MapScene, RangeName, TerrainLooks, UnitView, skin_named};
 use crate::profiles::ProfileId;
@@ -284,6 +286,31 @@ impl Harness {
         self.screen_mut()
     }
 
+    /// The cells `area` of the current frame cover, in the snapshot format
+    /// ([`snapshot_of`]): a snapshot of what a test is about, which a
+    /// change elsewhere on the screen leaves alone (1290).
+    pub fn snapshot_of(&self, area: Rect) -> String {
+        let game = self.game();
+        snapshot_of(game.buffer(), area, &game.ctx().palette)
+    }
+
+    /// The current frame without the top screen's help rows, in the
+    /// snapshot format: what most snapshots show, so a change to the help
+    /// bar re-blesses only its own look tests (1290). It shadows the
+    /// engine's [`Core::snapshot`]; [`snapshot_whole`](Self::snapshot_whole)
+    /// takes the whole frame.
+    pub fn snapshot(&self) -> String {
+        let buf = self.game().buffer();
+        let rows = i32::from(buf.height()) - help_rows(&self.0);
+        self.snapshot_of(Rect::new(0, 0, i32::from(buf.width()), rows))
+    }
+
+    /// The whole frame, help bar and all: for a test of the whole screen,
+    /// which says why.
+    pub fn snapshot_whole(&self) -> String {
+        self.0.snapshot()
+    }
+
     /// What the battle on the stack shows on its map (ADR-0038), as
     /// [`battle`](Self::battle) finds it. Assert on this (or on the
     /// battle's state), not on cells and colours, to check what happened.
@@ -331,13 +358,25 @@ impl Harness {
     /// The ranges the battle map shows on `pos` ([`MapScene::tints_at`]).
     pub fn tints_at(&self, pos: Pos) -> Vec<RangeName> {
         let scene = self.map_scene();
-        scene.map(|s| s.tints_at(pos)).unwrap_or_default()
+        scene.map_or_default(|s| s.tints_at(pos))
     }
 
     /// The selected unit's path on the battle map, its own tile first;
     /// empty with none.
     pub fn path(&self) -> Vec<Pos> {
-        self.map_scene().map(|s| s.path).unwrap_or_default()
+        self.map_scene().map_or_default(|s| s.path)
+    }
+
+    /// Draws a hint's keys as key caps, as the game does (they are words
+    /// in tests by default, ticket 0254).
+    pub fn with_key_caps(&mut self) -> &mut Self {
+        self.ctx_mut().game.key_caps = true;
+        // The frame on screen too, not only the next one: `snapshot_as`
+        // is the engine harness's public call that redraws, here with the
+        // same device, no time passing.
+        let device = self.ctx().device;
+        let _ = self.snapshot_as(device);
+        self
     }
 
     /// Turns the one-time tips on (they are off in tests by default).
@@ -363,6 +402,56 @@ impl Harness {
     /// MCP session's `Headless`, ticket 1181).
     pub fn into_core(self) -> Core {
         self.0
+    }
+}
+
+/// The cells of `buf` that `area` covers, in the snapshot format of
+/// [`GlyphBuffer::to_snapshot`], their top-left cell at `(0, 0)`: a buffer
+/// the size of `area`, with `buf`'s cell size and wide characters, that
+/// `buf` is copied into ([`GlyphBuffer::blit`]). Sprites, rectangles and
+/// painted items come along, clipped and moved by `area`'s corner; a
+/// wide character the edge cuts becomes a space. A backdrop comes along
+/// only when `area` starts at the frame's top-left (as
+/// [`Harness::snapshot`]'s does), cut to `area`; elsewhere a test of one
+/// keeps the whole frame. The part of `area` off `buf` is blank.
+pub fn snapshot_of(buf: &GlyphBuffer, area: Rect, palette: &Palette) -> String {
+    const BLANK: Cell = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+    let spec = buf.spec();
+    let size = |v: i32| u16::try_from(v.max(0)).unwrap_or(u16::MAX);
+    let crop = ConsoleSpec {
+        cols: size(area.w),
+        rows: size(area.h),
+        ..spec
+    };
+    let mut out = GlyphBuffer::with_spec(crop, BLANK).with_widths(buf.widths().clone());
+    out.blit(buf, -area.x, -area.y);
+    if let Some(b) = buf.backdrop().filter(|_| (area.x, area.y) == (0, 0)) {
+        let scene = alloc::rc::Rc::new(b.scene().clone());
+        out.set_backdrop(scene, b.clip(), b.origin_px(), b.zoom());
+    }
+    out.to_snapshot(palette)
+}
+
+/// How many rows at the bottom of `h`'s frame are the top screen's help
+/// bar: the battle's two (its message row and its keys) on the battle and
+/// the rewind over it; none where the bottom holds something else (a
+/// conversation's or a cinematic's text box, the title's own cinematic
+/// before its menu) or on the Playdate, whose screens draw no bar; else
+/// the bottom row, where every other screen puts its help line.
+fn help_rows(h: &Core) -> i32 {
+    use crate::screen::SkinSet;
+    use crate::screens::TitleScreen;
+    if h.ctx().game.skin_set == SkinSet::Playdate {
+        return 0;
+    }
+    match h.top_screen() {
+        "battle" | "rewind" => crate::screens::battle::layout::HELP_BAR.h,
+        "dialogue" | "cinematic" | "scene_preview" | "story_preview" => 0,
+        "title" => {
+            let title = h.screen::<TitleScreen>();
+            i32::from(title.is_some_and(|t| t.view(h.ctx()).help.is_some()))
+        }
+        _ => 1,
     }
 }
 
@@ -395,6 +484,9 @@ fn embedded_ctx() -> Ctx {
     match Ctx::embedded() {
         Ok(mut ctx) => {
             ctx.debug_tools = true;
+            // A hint's keys as their words, not caps: tests read what it
+            // says ([`Harness::with_key_caps`] for its look).
+            ctx.game.key_caps = false;
             // New Game plays the small test chapter, not the story.
             ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
             ctx
@@ -417,29 +509,75 @@ mod tests {
     use std::time::Duration;
 
     #[test]
+    fn snapshot_of_crops_cells_and_moves_sprites() {
+        use crate::glyph_buffer::{Layer, Sprite};
+        let (ink, ground) = (Rgb::new(255, 255, 255), Rgb::new(0, 0, 64));
+        let mut buf = GlyphBuffer::new(6, 4, Cell::new('.', ink, ground));
+        buf.print(2, 1, "abc", ink, ground);
+        buf.print(2, 2, "def", ink, ground);
+        // A one-cell sprite on `e`, at (3, 2): (24, 32) in pixels.
+        let ctx = crate::screen::tests::ctx();
+        let image = ctx
+            .game
+            .content
+            .images
+            .id(trpg_content::image::TEST_CARD_PATH)
+            .unwrap();
+        let cell = Rect::new(0, 0, 8, 16);
+        buf.add_sprite(Sprite::new(
+            image,
+            cell,
+            Rect::new(24, 32, 8, 16),
+            Layer::Over,
+        ));
+        let palette = &ctx.palette;
+        let crop = snapshot_of(&buf, Rect::new(2, 1, 3, 2), palette);
+        let mut want = GlyphBuffer::new(3, 2, Cell::new('.', ink, ground));
+        want.print(0, 0, "abc", ink, ground);
+        want.print(0, 1, "def", ink, ground);
+        // Moved by the area's corner: (1, 1) in cells, (8, 16) in pixels.
+        want.add_sprite(Sprite::new(
+            image,
+            cell,
+            Rect::new(8, 16, 8, 16),
+            Layer::Over,
+        ));
+        assert_eq!(crop, want.to_snapshot(palette));
+        assert!(
+            crop.starts_with(
+                "abc
+def
+"
+            ),
+            "{crop}"
+        );
+        assert!(crop.contains("8,16"), "{crop}");
+    }
+
+    #[test]
     fn use_pad_sets_the_kind_of_pad_pressed_and_snapshot_as_only_looks() {
         let mut h = Harness::with_layout(RIGHT_HANDED);
-        let keys = h.snapshot();
+        let keys = h.snapshot_whole();
         assert_eq!(h.game().ctx().device, Device::Keyboard);
         h.pad("RightStickPress");
         // Unbound: still the keyboard.
         assert_eq!(h.game().ctx().device, Device::Keyboard);
         h.pad("DpadDown DpadUp");
         assert_eq!(h.game().ctx().device, Device::Pad(PadKind::Generic));
-        let pad = h.snapshot();
+        let pad = h.snapshot_whole();
         assert_ne!(pad, keys);
         assert_eq!(h.snapshot_as(Device::Keyboard), keys);
         // Looking doesn't change the device or the frame.
         assert_eq!(h.game().ctx().device, Device::Pad(PadKind::Generic));
-        assert_eq!(h.snapshot(), pad);
+        assert_eq!(h.snapshot_whole(), pad);
         h.use_pad(PadKind::PlayStation).pad("DpadDown DpadUp");
         assert_eq!(h.game().ctx().device, Device::Pad(PadKind::PlayStation));
-        assert_ne!(h.snapshot(), pad);
+        assert_ne!(h.snapshot_whole(), pad);
         h.use_pad(PadKind::Nintendo).hold_pad("DpadDown", 0.0);
         assert_eq!(h.game().ctx().device, Device::Pad(PadKind::Nintendo));
         h.keys("Up");
         assert_eq!(h.game().ctx().device, Device::Keyboard);
-        assert_eq!(h.snapshot(), keys);
+        assert_eq!(h.snapshot_whole(), keys);
     }
 
     /// `hearing` keeps the game it wraps and gives it the hook: a `.dlg`
@@ -480,11 +618,30 @@ mod tests {
     }
 
     #[test]
+    fn a_snapshot_leaves_out_the_help_bar() {
+        let rows = |s: &str| {
+            s.split("--- colours ---")
+                .next()
+                .map_or(0, |t| t.lines().count())
+        };
+        // The title: its help line, the bottom row.
+        let mut h = Harness::with_layout(RIGHT_HANDED);
+        assert_eq!(rows(&h.snapshot_whole()), 32);
+        assert_eq!(h.snapshot(), h.snapshot_of(Rect::new(0, 0, 100, 31)));
+        // The battle: its message row and its keys.
+        h.keys("Down f").keys("Left f");
+        assert_eq!(h.top_screen(), "battle");
+        assert_eq!(h.snapshot(), h.snapshot_of(Rect::new(0, 0, 100, 30)));
+        assert!(h.snapshot_whole().contains("F2 debug"));
+        assert!(!h.snapshot().contains("F2 debug"));
+    }
+
+    #[test]
     fn reports_game_state() {
         let mut h = Harness::with_layout(RIGHT_HANDED);
         assert_eq!(h.top_screen(), "title");
         assert_eq!(
-            h.snapshot(),
+            h.snapshot_whole(),
             h.game().buffer().to_snapshot(&h.game().ctx().palette)
         );
         h.keys("Up f");
@@ -525,7 +682,7 @@ mod tests {
         let state = quick_battle(&embedded_ctx().game.content).unwrap();
         let h = Harness::with_screen(Box::new(BattleScreen::new(state)));
         let bare = h.map_scene().unwrap();
-        // The same map; only the cursor's pulse is a frame behind.
+        // The same map, with the cursor on the same tile.
         assert_eq!((bare.tiles, bare.units), (scene.tiles, scene.units));
         assert_eq!(bare.cursor.map(|c| c.pos), scene.cursor.map(|c| c.pos));
         assert!(h.battle().is_some());
@@ -558,7 +715,7 @@ mod tests {
     fn map_scene_in_is_sized_for_the_area() {
         let mut h = Harness::with_layout(RIGHT_HANDED);
         assert_eq!(h.map_scene_in(Rect::new(0, 0, 10, 4)), None);
-        h.keys("Down f Left f f");
+        h.keys("Down f Left f f f");
         let lord = Pos::new(3, 5);
         let small = h.map_scene_in(Rect::new(0, 0, 10, 4)).unwrap();
         assert_eq!(small.size, (5, 4));
@@ -587,7 +744,7 @@ mod tests {
         );
         assert_eq!(h.path(), [] as [trpg_core::Pos; 0]);
         // The Quick Battle: the cursor on the lord, nothing selected.
-        h.keys("Down f Left f f");
+        h.keys("Down f Left f f f");
         let (lord, plain, fort) = (Pos::new(3, 5), Pos::new(4, 5), Pos::new(5, 5));
         assert_eq!(h.cursor_tile(), Some(lord));
         let unit = h.unit_at(lord).unwrap();
@@ -603,6 +760,32 @@ mod tests {
         // Back on its own tile: the cursor shows again.
         h.keys("Left Left");
         assert_eq!(h.cursor_tile(), Some(lord));
+    }
+
+    /// Ticket 0923: the scene says where and when the selected unit's
+    /// ranges opened, for a skin that spreads them out from it: the
+    /// lord's tile, kept while the cursor steers the path, gone once the
+    /// selection is cancelled. Without idle motion (the clock stands
+    /// still) they show at once.
+    #[test]
+    fn the_scene_says_where_the_ranges_opened() {
+        let mut h = Harness::with_layout(RIGHT_HANDED);
+        h.keys("Down f Left f f f");
+        let lord = Pos::new(3, 5);
+        let shown = |h: &Harness| h.map_scene().and_then(|s| s.ranges_shown);
+        h.keys("f");
+        assert_eq!(h.tints_at(lord), [range::MOVE]);
+        assert_eq!(shown(&h), None, "no idle motion");
+        h.keys("d");
+        h.ctx_mut().idle_motion = crate::screen::IdleMotion::On;
+        assert_eq!(shown(&h), None);
+        h.keys("f");
+        let opened = shown(&h).expect("the lord's ranges opened");
+        assert_eq!(opened.from, lord);
+        h.keys("Right Right");
+        assert_eq!(shown(&h), Some(opened));
+        h.keys("d");
+        assert_eq!(shown(&h), None);
     }
 
     #[test]

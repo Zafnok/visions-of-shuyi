@@ -1,8 +1,9 @@
 //! The look of the title screen (`docs/design/look-and-feel.md`, *Title
 //! screen*): paints a [`TitleView`] as the logo picture over this launch's
-//! backdrop, with sparks drifting up, and the menu box under the logo.
-//! Everything about the look lives here (the rows, the colours, where a
-//! spark is); nothing here decides what the screen shows. Another look is
+//! backdrop, with a campfire in its corner and embers rising from it, and
+//! the menu box under the logo. Everything about the look lives here (the
+//! rows, the colours, where an ember is); nothing here decides what the
+//! screen shows. Another look is
 //! another `paint` of the same view (ADR-0054).
 
 use core::f32::consts::TAU;
@@ -10,18 +11,21 @@ use core::f32::consts::TAU;
 use shuyi_ui::float::Float;
 
 use trpg_content::ImageId;
+use trpg_content::title::Campfire;
 
 use super::view::{FULL, NoteView, TitleView};
 use crate::audio::splitmix64;
+use crate::color::Rgb;
 use crate::color::UiColor;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, PxRect, Rect, Sprite};
 use crate::prelude::*;
 use crate::screen::Ctx;
-use crate::screens::{centre_x, paint_debug_hint, print_centred};
+use crate::screens::{centre_x, paint_debug_hint};
 use crate::tips::glyph::{MARGIN, paint_frame_sized, paint_text};
 use crate::widgets::menu::glyph as menu_glyph;
 use crate::widgets::word_wrap;
+use shuyi_ui::screens::print_centred_styled;
 
 /// Console pixels per logo pixel: a cell's width, the size of the blocks
 /// the lettering is made of.
@@ -34,7 +38,7 @@ pub const BACKDROP_ZOOM: i32 = 2;
 /// its edges to fill the console's width, in backdrop pixels.
 pub const EDGE_PX: i32 = 32;
 /// Top row of the menu box.
-const MENU_ROW: i32 = 18;
+pub const MENU_ROW: i32 = 18;
 /// Row of the "press any key or button" line.
 const PROMPT_ROW: i32 = 20;
 /// Cells between the menu box and the guide's note right of it (0842).
@@ -54,46 +58,195 @@ const PICTURE_GAP: i32 = 5;
 /// Cells of the prompt's band past each picture.
 const BAND_MARGIN: i32 = 2;
 
-/// How many sparks drift up the screen (*tunable*).
-pub const SPARKS: u64 = 46;
-/// The rows sparks cross: every row above the help line.
-pub const SPARK_ROWS: i32 = 31;
-/// How long a spark takes to sway to one side, the other and back, in
-/// milliseconds (*tunable*).
-pub const SWAY_MS: u32 = 3520;
-/// What a spark looks like: its glyph and colour, by kind.
-const SPARK_KINDS: [(char, UiColor); 7] = [
+/// The campfire's corner (ticket 0922, Nick's pick): its left edge, in
+/// console pixels.
+pub const FIRE_LEFT_PX: i32 = 40;
+/// Console pixels per pixel of the campfire's picture (Nick: "Corner, 4×").
+pub const FIRE_SCALE: i32 = 4;
+/// How long each of the campfire's frames shows, in milliseconds
+/// (*tunable*).
+pub const FIRE_FRAME_MS: u32 = 140;
+/// How far down the campfire's picture its flames are, as a part of its
+/// height (the rest above is smoke): where the embers start.
+const FIRE_FLAMES: f32 = 0.62;
+
+/// How many embers rise from the fire (*tunable*).
+pub const EMBERS: u64 = 26;
+/// The rows embers cross: every row above the help line.
+pub const EMBER_ROWS: i32 = 31;
+/// How fast an ember rises, in rows a second, slowest to fastest
+/// (*tunable*).
+pub const EMBER_SPEED: (f32, f32) = (6.0, 11.0);
+/// How many rows an ember rises before it is gone, fewest to most
+/// (*tunable*).
+pub const EMBER_LIFE: (f32, f32) = (8.0, 15.0);
+/// How far from the fire's middle an ember starts, in cells to a side.
+const EMBER_SPREAD: f32 = 2.0;
+/// How far an ember drifts to one side by the end of its rise, in cells.
+const EMBER_DRIFT: f32 = 3.0;
+/// The share of its rise an ember is at its brightest before it fades.
+const EMBER_GLOW: f32 = 0.5;
+/// An ember dimmer than this is gone (dark dots read as soot).
+pub const EMBER_GONE: f32 = 0.3;
+/// What an ember looks like: its glyph and colour, by kind.
+const EMBER_KINDS: [(char, UiColor); 5] = [
     ('•', UiColor::Enemy),
     ('∙', UiColor::Cursor),
     ('∙', UiColor::TextHighlight),
-    ('°', UiColor::Enemy),
     ('•', UiColor::TextHighlight),
     ('*', UiColor::Enemy),
-    ('∙', UiColor::PanelBorderFocus),
 ];
+/// The size embers rise from with no fire picture: the game's own fire's.
+pub const DEFAULT_FIRE: (u32, u32) = (26, 52);
 
-/// A spark on the screen: its cell, glyph and colour.
-pub type Spark = (i32, i32, char, UiColor);
+/// An ember on the screen: its cell, glyph and colour, and how bright it
+/// is.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Ember {
+    /// Its column.
+    pub x: i32,
+    /// Its row.
+    pub y: i32,
+    /// Its glyph.
+    pub glyph: char,
+    /// Its colour at its brightest.
+    pub color: UiColor,
+    /// How bright it is: 1 as it leaves the fire, less as it fades.
+    pub brightness: f32,
+}
 
-/// Where spark `i` is `millis` after the title appeared. Each has its own
-/// column, starting row, speed (9 or 18 rows a second, upward, coming
-/// back in at the bottom) and look, fixed by `i` alone; it sways one or
-/// two cells to each side of its column every [`SWAY_MS`].
-pub fn spark(i: u64, millis: u32) -> Spark {
+/// Where the campfire's picture goes for frames `frame` big: in the
+/// bottom-left corner, standing on the row over the help line, at
+/// [`FIRE_SCALE`].
+pub fn fire_dest(frame: (u32, u32)) -> PxRect {
+    let (w, h) = (
+        i32::try_from(frame.0).unwrap_or(0) * FIRE_SCALE,
+        i32::try_from(frame.1).unwrap_or(0) * FIRE_SCALE,
+    );
+    let ground = EMBER_ROWS * i32::from(ConsoleSpec::PC.cell_h);
+    PxRect::new(FIRE_LEFT_PX, ground - h, w, h)
+}
+
+/// The campfire `fire` as it is `millis` after the title appeared: a frame
+/// every [`FIRE_FRAME_MS`], a little brighter and darker as it flickers.
+/// At `None` (idle motion is off) its first frame, still.
+pub fn fire_sprite(fire: &Campfire, millis: Option<u32>) -> Sprite {
+    let (w, h) = (
+        i32::try_from(fire.frame.0).unwrap_or(0),
+        i32::try_from(fire.frame.1).unwrap_or(0),
+    );
+    let frame = millis.map_or(0, |ms| (ms / FIRE_FRAME_MS) % fire.frames.max(1));
+    let src_x = i32::try_from(frame).unwrap_or(0) * w;
+    let mut sprite = Sprite::new(
+        fire.image,
+        PxRect::new(src_x, 0, w, h),
+        fire_dest(fire.frame),
+        Layer::Under,
+    );
+    if let Some(ms) = millis {
+        // Two quick waves, never in step: 0.8 to 1.0.
+        #[allow(clippy::cast_precision_loss)] // under a minute
+        let t = (ms % 60_000) as f32 / 1000.0;
+        let flicker = 0.9 + 0.06 * (t * 7.3).sin() + 0.04 * (t * 13.1).sin();
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 0.8 to 1
+        let brightness = (flicker.clamp(0.0, 1.0) * f32::from(FULL)).round() as u8;
+        sprite.brightness = brightness;
+    }
+    sprite
+}
+
+/// Where embers start: the middle of the flames of a fire `frame` big, as
+/// a column and a row (in cells, not whole).
+fn ember_source(frame: (u32, u32)) -> (f32, f32) {
+    let dest = fire_dest(frame);
+    let (cell_w, cell_h) = (
+        f32::from(ConsoleSpec::PC.cell_w),
+        f32::from(ConsoleSpec::PC.cell_h),
+    );
+    #[allow(clippy::cast_precision_loss)] // console pixels
+    let (mid, top, h) = ((dest.x + dest.w / 2) as f32, dest.y as f32, dest.h as f32);
+    (mid / cell_w, (top + h * FIRE_FLAMES) / cell_h)
+}
+
+/// A number from 0 to 1 from the 16 of `bits` from `shift` up.
+fn unit(bits: u64, shift: u32) -> f32 {
+    f32::from(u16::try_from((bits >> shift) & 0xffff).unwrap_or(0)) / f32::from(u16::MAX)
+}
+
+/// Where ember `i` is `millis` after the title appeared, over a fire
+/// `frame` big ([`fire_dest`]), if it shows. Each rises from the flames at
+/// its own speed ([`EMBER_SPEED`]) for its own rows ([`EMBER_LIFE`]), both
+/// fixed by `i`, then starts again from the fire; each rise starts at
+/// another place near the fire's middle, drifts its own way and sways. It
+/// is brightest for the first half of its rise, then fades; dimmer than
+/// [`EMBER_GONE`], or off the rows above the help line, it is gone.
+pub fn ember(i: u64, millis: u32, frame: (u32, u32)) -> Option<Ember> {
     let bits = splitmix64(i);
-    let part = |shift: u32, n: u64| i32::try_from((bits >> shift) % n).unwrap_or(0);
-    let (x0, y0) = (part(0, ConsoleSpec::PC.cols.into()), part(16, 31));
-    // Two sparks in three are slow.
-    let speed = if part(24, 3) == 0 { 18 } else { 9 };
-    let rose = i64::from(millis) * speed / 1000;
-    let y = (i64::from(y0) - rose).rem_euclid(i64::from(SPARK_ROWS));
-    #[allow(clippy::cast_precision_loss)] // small numbers
-    let turn = (part(32, 1000) as f32 / 1000.0) + (millis % SWAY_MS) as f32 / SWAY_MS as f32;
-    #[allow(clippy::cast_possible_truncation)] // -2 to 2
-    let sway = (1.5 * (turn * TAU).sin()).round() as i32;
-    let x = (x0 + sway).rem_euclid(ConsoleSpec::PC.cols.into());
-    let (glyph, color) = SPARK_KINDS[usize::try_from(part(40, 7)).unwrap_or(0)];
-    (x, i32::try_from(y).unwrap_or(0), glyph, color)
+    let speed = EMBER_SPEED.0 + (EMBER_SPEED.1 - EMBER_SPEED.0) * unit(bits, 0);
+    let life = EMBER_LIFE.0 + (EMBER_LIFE.1 - EMBER_LIFE.0) * unit(bits, 16);
+    // Whole milliseconds, so that a rise is the same however late it is.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 0.7 to 2.5 s
+    let period = ((life / speed * 1000.0).round() as u64).max(1);
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::cast_precision_loss
+    )]
+    // under a period
+    let offset = (unit(bits, 32) * period as f32) as u64;
+    let t = u64::from(millis) + offset;
+    #[allow(clippy::cast_precision_loss)] // under a period
+    let age = (t % period) as f32 / period as f32;
+    // This rise's own start, drift and look.
+    let rise = splitmix64(bits ^ (t / period));
+    let (sx, sy) = ember_source(frame);
+    let start = sx + (unit(rise, 0) * 2.0 - 1.0) * EMBER_SPREAD;
+    let drift = (unit(rise, 16) * 2.0 - 1.0) * EMBER_DRIFT * age;
+    let sway = 0.8 * ((age * 2.0 + unit(rise, 32)) * TAU).sin() * age;
+    #[allow(clippy::cast_possible_truncation)] // a cell on the console
+    let (x, y) = (
+        (start + drift + sway).round() as i32,
+        (sy - age * life).round() as i32,
+    );
+    // 0 to 4: one of the five kinds.
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let kind = (unit(rise, 48) * 4.99) as usize;
+    let (glyph, color) = EMBER_KINDS[kind];
+    let cols = i32::from(ConsoleSpec::PC.cols);
+    let shows = (0..cols).contains(&x) && (0..EMBER_ROWS).contains(&y);
+    let brightness = ember_glow(age)?;
+    shows.then_some(Ember {
+        x,
+        y,
+        glyph,
+        color,
+        brightness,
+    })
+}
+
+/// How bright an ember `age` of the way up its rise is (0 to 1): whole
+/// until [`EMBER_GLOW`] of it, then fading.
+fn ember_fade(age: f32) -> f32 {
+    1.0 - (age - EMBER_GLOW).max(0.0) * 1.8
+}
+
+/// [`ember_fade`], while it is brighter than [`EMBER_GONE`]: `None` once
+/// the ember is gone.
+fn ember_glow(age: f32) -> Option<f32> {
+    let brightness = ember_fade(age);
+    (brightness > EMBER_GONE).then_some(brightness)
+}
+
+/// The embers that show `millis` after the title appeared, over the
+/// title's fire (or where it would be, at [`DEFAULT_FIRE`]'s size).
+pub fn embers(ctx: &Ctx, millis: u32) -> impl Iterator<Item = Ember> {
+    let frame = ctx
+        .game
+        .content
+        .title
+        .campfire
+        .map_or(DEFAULT_FIRE, |f| f.frame);
+    (0..EMBERS).filter_map(move |i| ember(i, millis, frame))
 }
 
 /// The backdrop `image` across the console: the whole picture in the
@@ -144,13 +297,13 @@ pub fn logo_sprite(image: ImageId, size: (u32, u32)) -> Sprite {
 }
 
 /// Paints the title's picture over the whole of `buf`, with nothing else
-/// on it: `backdrop` (if any), the `sparks` (if any) as they are that
+/// on it: `backdrop` (if any), the `embers` (if any) as they are that
 /// many milliseconds after the title appeared, and the logo. The title screen draws its prompt or
 /// menu over this; the cinematic's logo shot is this alone (ticket 0817).
 pub fn paint_logo(
     ctx: &Ctx,
     backdrop: Option<ImageId>,
-    sparks: Option<u32>,
+    embers: Option<u32>,
     buf: &mut GlyphBuffer,
 ) {
     let c = |u| ctx.palette.get(u);
@@ -159,10 +312,13 @@ pub fn paint_logo(
     for sprite in backdrop.into_iter().flat_map(backdrop_sprites) {
         buf.add_sprite(sprite);
     }
-    if let Some(millis) = sparks {
-        for i in 0..SPARKS {
-            let (x, y, glyph, color) = spark(i, millis);
-            buf.set(x, y, Cell::new(glyph, c(color), black));
+    if let Some(fire) = &ctx.game.content.title.campfire {
+        buf.add_sprite(fire_sprite(fire, embers));
+    }
+    if let Some(millis) = embers {
+        for e in self::embers(ctx, millis) {
+            let fg = c(e.color).scale(e.brightness);
+            buf.set(e.x, e.y, Cell::new(e.glyph, fg, black));
         }
     }
     if let Some((image, size)) = ctx.game.content.title.logo {
@@ -181,12 +337,12 @@ fn paint_black(ctx: &Ctx, buf: &mut GlyphBuffer) {
 
 /// Adds the title's picture over what `buf` already shows, `opacity` (up
 /// to [`FULL`]) solid, changing no cell's background: the pictures of
-/// [`paint_logo`] that much solid, the sparks that much bright. Nothing at
+/// [`paint_logo`] that much solid, the fire and the embers that much bright. Nothing at
 /// 0.
 pub fn paint_logo_over(
     ctx: &Ctx,
     backdrop: Option<ImageId>,
-    sparks: Option<u32>,
+    embers: Option<u32>,
     opacity: u8,
     buf: &mut GlyphBuffer,
 ) {
@@ -201,11 +357,13 @@ pub fn paint_logo_over(
     for sprite in backdrop.into_iter().flat_map(backdrop_sprites) {
         buf.add_sprite(faded(sprite));
     }
-    if let Some(millis) = sparks {
-        for i in 0..SPARKS {
-            let (x, y, glyph, color) = spark(i, millis);
-            let fg = ctx.palette.get(color).scale(part);
-            buf.print_fg(x, y, glyph.encode_utf8(&mut [0; 4]), fg);
+    if let Some(fire) = &ctx.game.content.title.campfire {
+        buf.add_sprite(faded(fire_sprite(fire, embers)));
+    }
+    if let Some(millis) = embers {
+        for e in self::embers(ctx, millis) {
+            let fg = ctx.palette.get(e.color).scale(e.brightness * part);
+            buf.print_fg(e.x, e.y, e.glyph.encode_utf8(&mut [0; 4]), fg);
         }
     }
     if let Some((image, size)) = ctx.game.content.title.logo {
@@ -227,11 +385,11 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
             let brightness = f32::from(shot.brightness) / f32::from(FULL);
             shot.player.draw(ctx, t, brightness, buf);
         }
-        None if view.picture == FULL => paint_logo(ctx, view.backdrop, view.sparks, buf),
+        None if view.picture == FULL => paint_logo(ctx, view.backdrop, view.embers, buf),
         None => paint_black(ctx, buf),
     }
     if view.cinematic.is_some() || view.picture < FULL {
-        paint_logo_over(ctx, view.backdrop, view.sparks, view.picture, buf);
+        paint_logo_over(ctx, view.backdrop, view.embers, view.picture, buf);
     }
     // What is painted from here on fades with the menu.
     let solid = f32::from(view.menu_opacity) / f32::from(FULL);
@@ -272,12 +430,15 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
         }
     }
     if let Some(help) = &view.help {
+        // Faded with the menu, its key caps too.
+        let fade = |(fg, bg): (Rgb, Option<Rgb>)| (fg.scale(solid), bg.map(|b| b.scale(solid)));
         if view.cinematic.is_some() {
             // Over the cinematic: its letters alone, no strip behind them.
-            let x = centre_x(buf, help.chars().count());
-            buf.print_fg(x, bottom, help, dim.scale(solid));
+            let colors = |role| fade(ctx.palette.text_colors(role, dim));
+            print_centred_styled(buf, bottom, help, colors);
         } else {
-            print_centred(buf, bottom, help, dim.scale(solid), c(UiColor::Black));
+            let on = ctx.palette.text_colors_on(dim, c(UiColor::Black));
+            print_centred_styled(buf, bottom, help, |role| fade(on(role)));
         }
     }
     if let Some(hint) = &view.debug_hint {
@@ -317,7 +478,8 @@ fn paint_note(ctx: &Ctx, note: &NoteView, menu: Rect, solid: f32, buf: &mut Glyp
         .map(|f| (f, NOTE_FACE_CELLS, 1.0 - solid));
     let x = paint_frame_sized(ctx, rect, &note.title, face, buf);
     if let Some((heading, lines)) = rows.split_first() {
-        paint_text(ctx, (x, rect.y + 1), heading, lines, buf);
+        let lines: Vec<_> = lines.iter().map(|l| l.as_str().into()).collect();
+        paint_text(ctx, (x, rect.y + 1), heading, &lines, buf);
     }
     buf.dim(rect, solid);
 }
@@ -365,16 +527,15 @@ mod tests {
             picture: FULL,
             menu_opacity: FULL,
             backdrop: None,
-            sparks: None,
+            embers: None,
             prompt: None,
-            menu: Some(MenuView {
-                items: vec![item("New Game", true), item("Quit", false)],
-                first_shown: 0,
-                shown: 2,
-            }),
+            menu: Some(MenuView::new(vec![
+                item("New Game", true),
+                item("Quit", false),
+            ])),
             notice: None,
             note: None,
-            help: Some("help".to_owned()),
+            help: Some("help".into()),
             debug_hint: None,
         }
     }
@@ -393,9 +554,9 @@ mod tests {
         buf
     }
 
-    fn logo_painted(c: &Ctx, backdrop: Option<ImageId>, sparks: Option<u32>) -> GlyphBuffer {
+    fn logo_painted(c: &Ctx, backdrop: Option<ImageId>, embers: Option<u32>) -> GlyphBuffer {
         let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale(c));
-        paint_logo(c, backdrop, sparks, &mut buf);
+        paint_logo(c, backdrop, embers, &mut buf);
         buf
     }
 
@@ -417,8 +578,12 @@ mod tests {
         );
         // Another size is centred too, and as far down.
         assert_eq!(logo_sprite(image, (10, 4)).dest, px(360, 16, 80, 32));
-        // With no backdrop it is the only picture.
-        assert_eq!(logo_painted(&c, None, None).sprites(), [logo]);
+        // With no backdrop, only the campfire is under it, standing still.
+        let fire = c.game.content.title.campfire.unwrap();
+        assert_eq!(
+            logo_painted(&c, None, None).sprites(),
+            [fire_sprite(&fire, None), logo]
+        );
         // The menu sits under it, clear of it.
         let menu_top = MENU_ROW * i32::from(crate::console::ConsoleSpec::PC.cell_h);
         assert!(logo.dest.y + logo.dest.h <= menu_top);
@@ -449,9 +614,10 @@ mod tests {
             assert_eq!((s.image, s.layer, s.opacity), (image, Layer::Under, 255));
         }
         let (logo, size) = c.game.content.title.logo.unwrap();
+        let fire = fire_sprite(&c.game.content.title.campfire.unwrap(), Some(0));
         assert_eq!(
             logo_painted(&c, Some(image), Some(0)).sprites(),
-            [middle, left, right, logo_sprite(logo, size)]
+            [middle, left, right, fire, logo_sprite(logo, size)]
         );
         // The view's backdrop is the one painted.
         let mut v = view();
@@ -460,101 +626,192 @@ mod tests {
         assert_eq!(painted(&c, &v).sprites()[..3], [middle, left, right]);
     }
 
-    /// Pinned by hand from the first run: a change to where sparks are is
+    /// The game's fire's frames.
+    const FIRE: (u32, u32) = (26, 52);
+
+    #[test]
+    fn the_campfire_stands_in_the_corner_and_flickers_through_its_frames() {
+        let c = ctx();
+        let fire = c.game.content.title.campfire.unwrap();
+        // 4× in the bottom-left corner, its foot on the help line's top.
+        assert_eq!(fire_dest(fire.frame), px(40, 288, 104, 208));
+        let still = fire_sprite(&fire, None);
+        assert_eq!(
+            (still.src, still.dest),
+            (px(0, 0, 26, 52), fire_dest(fire.frame))
+        );
+        assert_eq!(
+            (still.layer, still.opacity, still.brightness),
+            (Layer::Under, FULL, FULL)
+        );
+        // A frame every 140 ms, round and round.
+        let frames: Vec<i32> = [0, 139, 140, 280, 420, 560, 700]
+            .map(|ms| fire_sprite(&fire, Some(ms)).src.x)
+            .to_vec();
+        assert_eq!(frames, [0, 0, 26, 52, 78, 0, 26]);
+        // It flickers: a little darker now and then, never brighter than
+        // the picture, never far darker.
+        let lights: Vec<u8> = (0..200)
+            .map(|step| fire_sprite(&fire, Some(step * 37)).brightness)
+            .collect();
+        assert!(
+            lights.iter().all(|&b| (200..=FULL).contains(&b)),
+            "{lights:?}"
+        );
+        assert!(lights.iter().any(|&b| b < 220) && lights.iter().any(|&b| b > 245));
+        // However long the title is left open.
+        assert!((200..=FULL).contains(&fire_sprite(&fire, Some(u32::MAX)).brightness));
+        // Quick: within a few tenths of a second (pinned from the first run).
+        let quick: Vec<u8> = [0, 100, 200, 300, 400]
+            .map(|ms| fire_sprite(&fire, Some(ms)).brightness)
+            .to_vec();
+        assert_eq!(quick, FLICKER_PINS);
+    }
+
+    /// Pinned by hand from the first run: a change to where embers are is
     /// a change of the look.
     #[test]
-    fn sparks_are_where_they_were() {
+    fn embers_are_where_they_were() {
         let now = [
-            spark(0, 0),
-            spark(1, 1234),
-            spark(7, 60_000),
-            spark(45, 3_600_000),
+            ember(0, 0, FIRE),
+            ember(1, 1284, FIRE),
+            ember(7, 60_150, FIRE),
+            ember(25, 3_600_000, FIRE),
         ];
-        assert_eq!(now, SPARK_PINS);
+        assert_eq!(now, EMBER_PINS);
+    }
+
+    /// Three embers' paths through two seconds, a tenth of a second
+    /// apart, as (column, row), pinned from the first run: their sway is
+    /// less than a cell, so only whole paths show it.
+    #[test]
+    fn embers_sway_on_their_way_up() {
+        let paths: Vec<Vec<(i32, i32)>> = [2, 9, 17]
+            .map(|i| {
+                (0..20)
+                    .filter_map(|k| ember(i, k * 100, FIRE).map(|e| (e.x, e.y)))
+                    .collect()
+            })
+            .to_vec();
+        assert_eq!(paths, EMBER_PATHS);
+    }
+
+    /// An ember is gone the moment it fades to [`EMBER_GONE`], not after.
+    #[test]
+    fn an_ember_is_gone_as_it_fades_to_the_last_light() {
+        assert_eq!(ember_glow(0.0), Some(1.0));
+        assert_eq!(ember_glow(EMBER_GLOW), Some(1.0));
+        assert_eq!(ember_glow(1.0), None);
+        // The one moment of a rise whose light is EMBER_GONE exactly.
+        let mut age: f32 = 0.88;
+        while ember_fade(age) > EMBER_GONE {
+            age = f32::from_bits(age.to_bits() + 1);
+        }
+        assert!((ember_fade(age) - EMBER_GONE).abs() < f32::EPSILON, "{age}");
+        assert_eq!(ember_glow(age), None);
+        let before = f32::from_bits(age.to_bits() - 1);
+        assert!(ember_glow(before).is_some());
     }
 
     #[test]
-    fn sparks_rise_sway_and_keep_their_looks() {
-        let rows = i64::from(SPARK_ROWS);
-        let mut speeds = std::collections::BTreeSet::new();
+    fn embers_rise_from_the_fire_and_fade() {
+        let (sx, sy) = ember_source(FIRE);
+        let reach = EMBER_SPREAD + EMBER_DRIFT + 1.5;
         let mut kinds = std::collections::BTreeSet::new();
-        for i in 0..SPARKS {
-            let (_, y0, glyph, color) = spark(i, 0);
-            assert!(SPARK_KINDS.contains(&(glyph, color)));
-            kinds.insert((glyph, color.name()));
-            // A second later it is 9 or 18 rows up, coming back in below.
-            let (_, y1, ..) = spark(i, 1000);
-            let up = (i64::from(y0) - i64::from(y1)).rem_euclid(rows);
-            assert!(up == 9 || up == 18, "spark {i} rose {up}");
-            speeds.insert(up);
-            // Just short of a row's time, a slow one hasn't moved.
-            let (_, y_short, ..) = spark(i, 55);
-            assert_eq!(y_short, y0, "spark {i}");
-            let mut columns = std::collections::BTreeSet::new();
-            for step in 0..64 {
-                let t = step * SWAY_MS / 64;
-                let (x, y, g, col) = spark(i, t);
+        for i in 0..EMBERS {
+            let mut rows = std::collections::BTreeSet::new();
+            let (mut faded, mut whole) = (false, false);
+            for t in (0..10_000).step_by(10) {
+                let Some(e) = ember(i, t, FIRE) else { continue };
+                kinds.insert((e.glyph, e.color.name()));
+                // Near the fire and above it, never higher than its life.
+                #[allow(clippy::cast_precision_loss)] // a cell
+                let (x, y) = (e.x as f32, e.y as f32);
+                assert!((x - sx).abs() <= reach, "ember {i} x {} at {t}", e.x);
                 assert!(
-                    (0..i32::from(ConsoleSpec::PC.cols)).contains(&x),
-                    "spark {i} x {x}"
+                    y <= sy + 0.5 && y >= sy - EMBER_LIFE.1 - 0.5,
+                    "ember {i} y {} at {t}",
+                    e.y
                 );
-                assert!((0..SPARK_ROWS).contains(&y), "spark {i} y {y}");
-                assert_eq!((g, col), (glyph, color));
-                // A sway later it is back in the same column.
-                assert_eq!(spark(i, t + SWAY_MS).0, x);
-                columns.insert(x);
+                assert!(e.brightness > EMBER_GONE && e.brightness <= 1.0);
+                // Bright as it leaves the fire, and near its middle: an
+                // ember drifts aside only as it rises.
+                if y >= sy - 1.5 {
+                    assert!(
+                        (e.brightness - 1.0).abs() < f32::EPSILON,
+                        "ember {i} at {t}"
+                    );
+                    let near = EMBER_SPREAD + 1.5;
+                    assert!((x - sx).abs() <= near, "ember {i} x {} at {t}", e.x);
+                }
+                faded |= e.brightness < 0.9;
+                whole |= (e.brightness - 1.0).abs() < f32::EPSILON;
+                rows.insert(e.y);
             }
-            // It sways: more than one column, never more than two to a side.
-            assert!((2..=5).contains(&columns.len()), "spark {i}: {columns:?}");
+            // It rises several rows, bright and then fading.
+            assert!(rows.len() >= 5, "ember {i}: {rows:?}");
+            assert!(faded && whole, "ember {i}");
         }
-        // However long the title is left open, a spark sways as it did in
-        // its first sway: the time doesn't run out or lose its precision.
-        for i in 0..SPARKS {
+        assert!(kinds.len() >= 4, "{kinds:?}");
+        // However long the title is left open, they are where they would be.
+        for i in 0..EMBERS {
             for late in [u32::MAX, u32::MAX - 1234, 4_000_000_000] {
-                let (x, y, ..) = spark(i, late);
-                assert_eq!(x, spark(i, late % SWAY_MS).0, "spark {i} at {late}");
-                assert!((0..SPARK_ROWS).contains(&y), "spark {i} at {late}");
+                if let Some(e) = ember(i, late, FIRE) {
+                    assert!((0..EMBER_ROWS).contains(&e.y), "ember {i} at {late}");
+                }
             }
         }
-        assert_eq!(speeds.len(), 2, "slow and fast sparks");
-        assert!(kinds.len() >= 5, "{kinds:?}");
+        // Gone above the top row: a fire high up loses its highest embers.
+        let high = (26, 400);
+        assert!((0..3000).all(|t| ember(3, t, high).is_none_or(|e| e.y >= 0)));
     }
 
     #[test]
-    fn every_spark_is_painted_above_the_help_line() {
+    fn every_ember_is_painted_above_the_help_line() {
         let c = ctx();
         let black = c.palette.get(UiColor::Black);
         for millis in [0, 777, 123_456] {
             let buf = logo_painted(&c, None, Some(millis));
-            let sparks: Vec<Spark> = (0..SPARKS).map(|i| spark(i, millis)).collect();
-            for &(x, y, ..) in &sparks {
+            let embers: Vec<Ember> = embers(&c, millis).collect();
+            assert!(embers.len() as u64 >= EMBERS / 2, "{}", embers.len());
+            for e in &embers {
                 // Where two share a cell, the later one shows.
-                let &(_, _, glyph, color) =
-                    sparks.iter().rev().find(|s| (s.0, s.1) == (x, y)).unwrap();
-                let want = Cell::new(glyph, c.palette.get(color), black);
-                assert_eq!(buf.get(x, y), Some(&want), "({x}, {y}) at {millis}");
+                let last = embers
+                    .iter()
+                    .rev()
+                    .find(|o| (o.x, o.y) == (e.x, e.y))
+                    .unwrap();
+                let fg = c.palette.get(last.color).scale(last.brightness);
+                let want = Cell::new(last.glyph, fg, black);
+                assert_eq!(
+                    buf.get(e.x, e.y),
+                    Some(&want),
+                    "({}, {}) at {millis}",
+                    e.x,
+                    e.y
+                );
             }
             // Nothing else is on the screen: every other cell is blank.
             let empty = Cell::new(' ', c.palette.get(UiColor::Text), black);
             for y in 0..i32::from(ConsoleSpec::PC.rows) {
                 for x in 0..i32::from(ConsoleSpec::PC.cols) {
-                    if !sparks.iter().any(|s| (s.0, s.1) == (x, y)) {
+                    if !embers.iter().any(|e| (e.x, e.y) == (x, y)) {
                         assert_eq!(buf.get(x, y), Some(&empty), "({x}, {y})");
                     }
                 }
             }
             assert_eq!(text(&buf, i32::from(ConsoleSpec::PC.rows) - 1).trim(), "");
         }
-        // The view's sparks are the ones painted, and none is none.
+        // The view's embers are the ones painted, and none is none.
         let mut v = view();
         v.menu = None;
         v.help = None;
         let none = painted(&c, &v);
         assert_eq!(none, logo_painted(&c, None, None));
         assert!((0..i32::from(ConsoleSpec::PC.rows)).all(|y| text(&none, y).trim().is_empty()));
-        v.sparks = Some(0);
+        v.embers = Some(0);
         let at_0 = painted(&c, &v);
-        v.sparks = Some(1000);
+        v.embers = Some(1000);
         let later = painted(&c, &v);
         assert_eq!(at_0, logo_painted(&c, None, Some(0)));
         assert_eq!(later, logo_painted(&c, None, Some(1000)));
@@ -705,6 +962,7 @@ mod tests {
         c.game.content.portraits.insert("guide".into(), guide);
         let (image, size) = c.game.content.title.logo.unwrap();
         let logo = logo_sprite(image, size);
+        let fire = fire_sprite(&c.game.content.title.campfire.unwrap(), None);
         let face_opacity = |opacity: u8| {
             let mut v = view();
             v.note = Some(note(true, "Vix", &["a"]));
@@ -713,7 +971,7 @@ mod tests {
             let faces: Vec<u8> = buf
                 .sprites()
                 .iter()
-                .filter(|s| s.dest != logo.dest)
+                .filter(|s| s.dest != logo.dest && s.dest != fire.dest)
                 .map(|s| s.opacity)
                 .collect();
             assert_eq!(faces.len(), 1, "{faces:?}");
@@ -861,7 +1119,7 @@ mod tests {
         v.menu_opacity = 0;
         v.picture = 0;
         v.backdrop = Some(c.game.content.title.backdrops[0]);
-        v.sparks = Some(500);
+        v.embers = Some(500);
         // The pan, half way; then the logo shot.
         for (t_ms, t) in [(3000, 3.0), (1500, 1.5), (17_000, 17.0)] {
             let playing = shot(&c, t_ms, FULL);
@@ -886,7 +1144,7 @@ mod tests {
         v.menu = None;
         v.help = None;
         v.backdrop = Some(image);
-        v.sparks = Some(0);
+        v.embers = Some(0);
         let playing = shot(&c, 3000, 64);
         v.cinematic = Some(playing.clone());
         v.menu_opacity = 191;
@@ -896,37 +1154,43 @@ mod tests {
         let under = drawn(&c, &playing, 3.0, 64.0 / 255.0);
         assert_eq!(buf.backdrop(), under.backdrop());
         assert_ne!(buf.backdrop(), drawn(&c, &playing, 3.0, 1.0).backdrop());
-        // The title's four pictures, three quarters solid, as they are
+        // The title's five pictures, three quarters solid, as they are
         // placed on the title itself.
+        let fire = c.game.content.title.campfire.unwrap();
         let mut want = backdrop_sprites(image).to_vec();
+        want.push(fire_sprite(&fire, Some(0)));
         want.push(logo_sprite(logo, size));
         for sprite in &mut want {
             sprite.opacity = 191;
         }
         assert_eq!(buf.sprites(), want);
-        // The sparks: their glyphs over the map, no cell made solid.
-        let sparks: Vec<Spark> = (0..SPARKS).map(|i| spark(i, 0)).collect();
+        // The embers: their glyphs over the map, no cell made solid.
+        let embers: Vec<Ember> = embers(&c, 0).collect();
+        let part = 191.0 / f32::from(FULL);
         for y in 0..i32::from(ConsoleSpec::PC.rows) {
             for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 let cell = buf.get(x, y).unwrap();
                 assert!(cell.see_through, "({x}, {y})");
-                match sparks.iter().rev().find(|s| (s.0, s.1) == (x, y)) {
-                    Some(&(_, _, glyph, color)) => {
-                        assert_eq!(cell.glyph, glyph, "({x}, {y})");
-                        assert_eq!(cell.fg, at_opacity(c.palette.get(color), 191));
+                match embers.iter().rev().find(|e| (e.x, e.y) == (x, y)) {
+                    Some(e) => {
+                        assert_eq!(cell.glyph, e.glyph, "({x}, {y})");
+                        let fg = c.palette.get(e.color).scale(e.brightness * part);
+                        assert_eq!(cell.fg, fg, "({x}, {y})");
                     }
                     None => assert_eq!(Some(cell), under.get(x, y), "({x}, {y})"),
                 }
             }
         }
-        // No sparks, no backdrop: only the logo is added.
-        v.sparks = None;
+        // No embers, no backdrop: only the fire, still, and the logo.
+        v.embers = None;
         v.backdrop = None;
         let buf = painted(&c, &v);
-        assert_eq!(buf.sprites(), [want[3]]);
+        let mut still = fire_sprite(&fire, None);
+        still.opacity = 191;
+        assert_eq!(buf.sprites(), [still, want[4]]);
         assert_eq!(buf.get(35, 15), under.get(35, 15));
         // Fully bright, nothing of the title is.
-        v.sparks = Some(0);
+        v.embers = Some(0);
         v.backdrop = Some(image);
         v.picture = 0;
         v.cinematic = Some(shot(&c, 3000, FULL));
@@ -950,7 +1214,7 @@ mod tests {
         v.menu = None;
         v.help = None;
         v.backdrop = Some(image);
-        v.sparks = None;
+        v.embers = None;
         v.picture = 128;
         let buf = painted(&c, &v);
         assert_ne!(buf.sprites().len(), 0);
@@ -1072,10 +1336,98 @@ mod tests {
         assert_eq!(band, 3 * (5 + 2 * (5 + 11 + 2)));
     }
 
-    const SPARK_PINS: [Spark; 4] = [
-        (35, 15, '∙', UiColor::PanelBorderFocus),
-        (64, 4, '•', UiColor::TextHighlight),
-        (88, 12, '°', UiColor::Enemy),
-        (27, 19, '°', UiColor::Enemy),
+    const EMBER_PATHS: [&[(i32, i32)]; 3] = [
+        &[
+            (11, 24),
+            (11, 23),
+            (11, 23),
+            (11, 22),
+            (10, 21),
+            (10, 20),
+            (9, 20),
+            (9, 19),
+            (13, 25),
+            (13, 25),
+            (12, 24),
+            (12, 23),
+            (12, 22),
+            (12, 21),
+            (12, 21),
+            (12, 20),
+            (12, 19),
+            (11, 18),
+        ],
+        &[
+            (11, 22),
+            (11, 21),
+            (11, 20),
+            (11, 19),
+            (11, 19),
+            (12, 18),
+            (12, 17),
+            (12, 16),
+            (11, 15),
+            (11, 15),
+            (10, 26),
+            (11, 25),
+            (11, 24),
+            (11, 23),
+            (11, 22),
+            (11, 22),
+            (11, 21),
+            (11, 20),
+        ],
+        &[
+            (11, 22),
+            (11, 21),
+            (11, 20),
+            (10, 19),
+            (10, 18),
+            (12, 25),
+            (12, 24),
+            (12, 24),
+            (13, 23),
+            (12, 22),
+            (12, 21),
+            (12, 20),
+            (13, 20),
+            (13, 19),
+            (13, 18),
+            (10, 25),
+            (10, 25),
+        ],
+    ];
+
+    const FLICKER_PINS: [u8; 5] = [230, 250, 250, 235, 224];
+
+    const EMBER_PINS: [Option<Ember>; 4] = [
+        Some(Ember {
+            x: 11,
+            y: 19,
+            glyph: '•',
+            color: UiColor::TextHighlight,
+            brightness: 0.718_502_16,
+        }),
+        Some(Ember {
+            x: 13,
+            y: 26,
+            glyph: '*',
+            color: UiColor::Enemy,
+            brightness: 1.0,
+        }),
+        Some(Ember {
+            x: 11,
+            y: 26,
+            glyph: '*',
+            color: UiColor::Enemy,
+            brightness: 1.0,
+        }),
+        Some(Ember {
+            x: 14,
+            y: 19,
+            glyph: '•',
+            color: UiColor::TextHighlight,
+            brightness: 0.981_680_9,
+        }),
     ];
 }

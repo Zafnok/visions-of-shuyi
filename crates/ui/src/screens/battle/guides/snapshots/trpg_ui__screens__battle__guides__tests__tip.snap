@@ -1,16 +1,15 @@
 ---
 source: crates/ui/src/screens/battle/guides/tests.rs
-expression: "render(&s, &c).to_snapshot(&c.palette)"
+expression: "snap(&render(&s, &c), &c, ABOVE_HELP_ROW)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
-║ Played on the keys              │  Exporting a profile                                           ║
-║ Finding your units              │                                                                ║
-║ Selecting a unit                │  A profile can go out to a file of its own, with all its       ║
-║ Attacking                       │  saves, options and keys: handy for a new computer.            ║
-║ Ending the turn                 │                                                                ║
-║ Rewind                          │  Export the profile under the cursor: e                        ║
-║ Threat arrows                   │                                                                ║
+║ Finding your units              │  Exporting a profile                                           ║
+║ Selecting a unit                │                                                                ║
+║ Attacking                       │  A profile can go out to a file of its own, with all its       ║
+║ Ending the turn                 │  saves, options and keys: handy for a new computer.            ║
+║ Rewind                          │                                                                ║
+║ Threat arrows                   │  Export the profile under the cursor: e                        ║
 ║ Combat Arts                     │                                                                ║
 ║ Spells that change tiles        │                                                                ║
 ║ Moving the cursor               │                                                                ║
@@ -28,12 +27,12 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Terrain                         │                                                                ║
 ║ Wading                          │                                                                ║
 ║ Weapon kinds                    │                                                                ║
+║ Swapping weapons                │                                                                ║
 ║ Exporting a save                │                                                                ║
 ║ Exporting a profile             │                                                                ║
 ║                                 │                                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
                                                                                                     
- arrows choose · d close                                                                   F2 debug 
 --- colours ---
 aabbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
@@ -66,11 +65,9 @@ addddddddddddddddddddddddddddddddcaccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-efffffffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeffffffffe
 --- legend ---
 a = fg:panel_border bg:panel_bg
 b = fg:text_highlight bg:panel_bg
 c = fg:text bg:panel_bg
 d = fg:panel_bg bg:panel_border_focus
 e = fg:text bg:black
-f = fg:text_dim bg:black

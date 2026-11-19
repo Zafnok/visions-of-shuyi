@@ -12,28 +12,29 @@ Releases are cut by pushing a tag ([ADR-0009](adr/0009-distribution.md)):
    (Windows, Linux, macOS universal and web; the Playdate is check-only), on
    the plan's runner and, for Linux, in its image, with the bought art and the
    game's content, checks each final package
-   (`scripts/check-release-package.sh`), and makes a
-   [GitHub Release](https://github.com/Zafnok/visions-of-shuyi/releases) for the
-   tag with auto-generated notes, each package's reports and `SHA256SUMS`. The
-   packages themselves are not attached (below).
+   (`scripts/check-release-package.sh`), and attests `SHA256SUMS`. It makes
+   no GitHub Release (ticket 0920, ADR-0127): each package's reports and
+   `SHA256SUMS` stay as the run's artifacts, and the packages themselves
+   leave nothing behind (below).
 
 ## Where each build goes
 
 The game's content and story are private (ADR-0117, ticket 0158), and so is
 the bought art's source (ADR-0040). Anything public on GitHub, a Pages site,
 a release or a workflow's artifacts, can be downloaded by anyone, so a build
-with the content goes straight from its job to a restricted itch.io page:
+with the content goes straight from its job to a restricted itch.io page.
+There is no public build at all: GitHub Pages is off and no GitHub Release is
+made (ticket 0920, ADR-0127).
 
 | Build | Where | Who can open it | Workflow |
 | ----- | ----- | --------------- | -------- |
-| Public web build, debug tools, **no content** (the public files and the test game) | [GitHub Pages](https://zafnok.github.io/visions-of-shuyi/) | anyone | `pages.yml`, each push to `main` |
 | Full web build: content, bought art, debug tools | the playtest page, itch.io `ITCH_PLAYTEST_PROJECT`, channel `web` | Nick, with the page's password | `playtest-itch.yml`, each push to `main` and by hand |
 | The Chapter 1 demo (web and Windows) | the demo's two itch.io pages (below) | the writers applying | `demo.yml`, by hand |
 | The writer's script preview on the web: bought art, **no scripts** | the preview's itch.io page, `ITCH_PREVIEW_PROJECT`, channel `web` (below) | the writers trying out, with the page's password | `story-kit.yml`, nightly when it changed and by hand |
 | A release's packages | nowhere yet: built and checked, then left in their job; the store's itch.io page (ticket 0901) will take them | — | `release.yml`, on a tag |
 | A release's debug files (Windows, Linux) | a release `debug-v<version>` of the private assets repository (below) | whoever can read that repository | `release.yml`, on a tag |
 
-The demo and the script preview never go to Pages.
+Nothing goes to GitHub Pages or a GitHub Release.
 
 ### The playtest page
 
@@ -72,7 +73,7 @@ new track or voice clip needs its two lines there, as on macOS it has another
 path. The check finds what is written plainly: it guards against mistakes, not
 against a player digging.
 
-The GitHub Release carries, never in a package:
+The release run keeps as its artifacts, never in a package:
 
 - `<package>.export-report.json` and `<package>.exposure-report.json`: the
   version, the sizes, the signing, and every file of the package with its hash.
@@ -81,7 +82,7 @@ The GitHub Release carries, never in a package:
 - `SHA256SUMS`: one line per package, `<sha256>  <file>`, the file as the
   package job left it (`visions-of-shuyi-<version>-windows.zip`, `-linux.tar.gz`,
   `-web.zip`, and `-macos.zip`, the `.app`'s folder zipped by `ditto`). The
-  release attests these digests (`actions/attest`): where and from which
+  run's `attest` job attests these digests (`actions/attest`): where and from which
   commit each package was built, though no package is published.
 
 **Check a package** against it, in the folder that holds both:
@@ -206,6 +207,73 @@ SHA-256 lines as workflow artifacts, `kept-<target>`; the `sums` job shows
 **fake_tag** checks a tag of your choosing with the plan: `v0.0.0` must fail at
 `check-version`.
 
+## A press or playtest copy
+
+A closed build handed to one person before release (press, a publisher, a
+playtester outside the team) is a copy marked for them (ticket 1272, the
+engine's ADR-0118, the `shuyi-ship` skill's step 10). Who gets one is
+Nick's call.
+
+**What a mark can and can't show.** A mark is a deterrent and
+circumstantial evidence, **never proof**. Each copy holds the recipient's
+8-character code three times: in the program, in the pack's layout and in
+the low bits of one picture of the pack (`shuyi.ron`'s `export:
+(overlay_picture: "portraits/lead_m/sad.png")`, the lead's placeholder
+portrait, changed by at most 3 per color channel; the bought art is inside
+the program, not the pack, so it can't carry this mark). Any one mark left names the copy. But two recipients
+who compare their copies can find and remove all three; repacking the pack
+loses its mark, saving the picture again at a lower quality loses that one,
+and overwriting the program's field loses the third. A match says *whose
+copy this was*, not who leaked it. Pair each copy with a store key of the
+recipient's own (Steam or itch.io): the key names the account that played,
+which no mark in a file can.
+
+**Before the first copy, once:**
+
+- The reveal kit must exist and verify (ticket 1268): the ledger of copies
+  is kept beside the kit's folder, `recipients.ron` next to `reveal/`.
+- A signing key of its own: `ssh-keygen -t ed25519 -f
+  ~/.ssh/shuyi-recipients` (a passphrase needs `ssh-agent`). It signs the
+  ledger and draws each recipient's code, so only its holder can make a
+  copy that names someone. Keep it in `~/.ssh/` on the machine that makes
+  copies, with a backup offline, and never in a repository, this one or the
+  private one: CI's build key reads the private repository. Set
+  `SHUYI_SIGNING_KEY` to its path, or pass `--signing-key`.
+
+**Make a copy** (a release build, with the bought art as always):
+
+```bash
+cargo about generate -m crates/app/Cargo.toml about.hbs -o dist/licenses/THIRD_PARTY_LICENSES.html
+cargo shuyi export windows --release --recipient press-jane --label "Jane, Example Magazine"
+```
+
+The id is 1 to 64 letters, digits, `.`, `_` and `-`; the label is who it is
+for, in words. The package is built as for a release and passes its gates,
+then copied into `dist/recipients/<id>/windows/` and marked, and the copy
+is held to the `disclosure` part again. `linux`, `macos` and `web` work the
+same; the Playdate has no copies. Making the same recipient's copy again
+from the same build gives the same copy.
+
+**The ledger**, `recipients.ron` and its signature `recipients.ron.sig`
+beside the kit, gets an entry for each copy: the id and label, the day, the
+code, the target and version, the base package's and the copy's SHA-256,
+and the kit's digest. It lives with the kit in the private repository's
+checkout (`assets-private/`), outside `content/`, which the build embeds,
+and never in this repository: commit and push both files there after each
+copy, so the record is kept and dated. A ledger signed by another key, or
+changed by hand, is refused.
+
+**Check a file that turned up** (a zip, a folder, the program, the pack or
+a PNG):
+
+```bash
+cargo shuyi export --detect-recipient leaked/visions-of-shuyi-windows.zip
+```
+
+It lists each mark it read, the code it holds and whom the signed ledger
+gave it; on the public build it says "no mark found". Report a match with
+the limit above, every time.
+
 ## The Chapter 1 demo
 
 The demo (ticket 0914, [ADR-0119](adr/0119-the-chapter-1-demo-is-an-edition-built-from-a-cut-bundle.md))
@@ -275,9 +343,12 @@ upload key is the secret `BUTLER_API_KEY`.
 
 ### The script preview's itch.io page
 
-The writer's script preview (tickets 0764, 0767) has a web build: the same
-program, with none of the scripts in it, that starts on no scenes and plays
-the `.dlg` files a writer drops on the page. It holds the bought art, so it
+The writer's script preview (tickets 0764, 0767) has a web build for the
+applicants on trial: the same program, with none of the scripts in it, that
+starts on no scenes and plays the `.dlg` files a writer drops on the page.
+It is the `story-trial` edition (ticket 0771, ADR-0126), Chapter 1 as the
+demo cuts it, so its page of names and faces names only Chapter 1's cast;
+the hired writer's Windows kit keeps every name. It holds the bought art, so it
 goes to a Restricted itch.io project of its own, never Pages, and never the
 private mirror's GitHub Pages (a private repository's Pages site is public).
 `ITCH_PREVIEW_PROJECT` is a repository variable naming `<user>/<project>`
@@ -286,7 +357,7 @@ view page** (a password of its own, not the demo's).
 
 - **Push it:** `story-kit.yml`'s `story-preview (web)` job, on each run that
   builds the kit (nightly when it changed, or **Actions → Story kit → Run
-  workflow**), exports `--edition story-preview` for the web, checks the
+  workflow**), exports `--edition story-trial` for the web, checks the
   Wasm and its pack hold none of three script lines, and runs `butler push
   <package> <user>/<project>:web`. Without `BUTLER_API_KEY` or the variable
   it builds and checks, says it didn't publish, and stays green.

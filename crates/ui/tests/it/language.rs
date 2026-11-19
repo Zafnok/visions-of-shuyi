@@ -11,6 +11,7 @@ use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::BattleScreen;
+use trpg_ui::screens::battle::layout::MAP_VIEW;
 use trpg_ui::screens::battle::map_menu::MapEntry;
 use trpg_ui::screens::battle::mode::{MenuEntry, Mode, list_entry};
 
@@ -27,7 +28,7 @@ fn title() -> Harness {
 /// In Quick Battle in the test language, its banner closed.
 fn quick_battle() -> Harness {
     let mut h = title();
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
@@ -226,8 +227,8 @@ fn a_generic_unit_and_terrain_are_named_by_the_pack() {
 #[test]
 fn a_tip_in_the_test_language() {
     let mut h = title();
-    h.with_tips().keys("Down f Left f f");
-    assert_snapshot!(h.snapshot());
+    h.with_tips().keys("Down f Left f f f");
+    assert_snapshot!(h.snapshot_of(MAP_VIEW));
     assert!(shows(&h, "YOUR MOVE"));
     assert!(shows(&h, "OVER TO YOU. STEER THE CURSOR ONTO"));
     // The tip's instructions too (0475). Key names are still the player's;
@@ -261,7 +262,7 @@ fn a_weapon_list_is_painted_in_the_test_language() {
         h
     };
     let mut english = Harness::with_layout(RIGHT_HANDED);
-    english.keys("Down f Left f f");
+    english.keys("Down f Left f f f");
     let english = equip_list(english);
     let test = equip_list(quick_battle());
     assert!(shows(&english, "* Iron Sword "));
@@ -305,7 +306,9 @@ fn a_fight_names_everything_in_the_test_language() {
     assert!(shows(&h, "Test Lord     BRIGAND"));
     assert!(shows(&h, "IRON SWORD"));
     h.keys("Right");
-    assert!(shows(&h, "Steel Sword"));
+    // Too long for its uses: its short name, in the pack (0498).
+    assert!(shows(&h, "STL SWORD 25"));
+    assert!(!shows(&h, "Steel Swo…"));
     h.keys("Left");
     assert!(shows(&h, "IRON SWORD"));
     assert!(!shows(&h, "Iron Sword"));

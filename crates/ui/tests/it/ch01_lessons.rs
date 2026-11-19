@@ -45,6 +45,11 @@ fn downs(level: TutorialLevel) -> &'static str {
 /// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
 fn skip_scenes(h: &mut Harness) {
     for _ in 0..8 {
+        // A chapter's title card first (0812): Confirm closes it.
+        if h.top_screen() == "chapter_card" {
+            h.keys("f");
+            continue;
+        }
         if h.top_screen() != "dialogue" {
             return;
         }
@@ -55,7 +60,7 @@ fn skip_scenes(h: &mut Harness) {
 
 /// Chapter 1 from New Game in Classic at tutorial `level`, with the lessons
 /// on (as the game has them) but those of `without`, so a test reaches the
-/// one it is about: turn 1, its scenes skipped and its banner closed, the
+/// one it is about: turn 1, its scenes skipped and its banners closed, the
 /// cursor on the lead.
 fn chapter_1(level: TutorialLevel, without: &[&str]) -> Harness {
     let h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
@@ -75,7 +80,8 @@ fn start_chapter_1(mut h: Harness, level: TutorialLevel, without: &[&str]) -> Ha
     lessons.retain(|l| !without.contains(&l.id.as_str()));
     h.keys("f f").keys(downs(level)).keys("f Up f");
     skip_scenes(&mut h);
-    h.keys("f");
+    // The objective's banner, then `PLAYER PHASE`.
+    h.keys("f f");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.wait(0.1);
@@ -374,29 +380,85 @@ fn the_threat_arrows_lesson_opens_when_they_show_and_closes_on_both_kinds_of_til
     assert!(done(&h).contains(&"threat_arrows".to_owned()));
 }
 
-/// Lesson 9, `Short`: the first time a unit's menu has Arts it can use
-/// (the Sergeant, aimed at the Brigand, back from the forecast to his
-/// menu); opening them does it.
+/// The Sergeant, aimed at the Brigand and back from the forecast to his
+/// menu: the first menu with Arts he can use.
+fn sergeant_menu_on_brigand(h: &mut Harness) {
+    go(h, SERGEANT);
+    h.keys("f");
+    go(h, BRIGAND);
+    h.keys("f").wait(1.5);
+    assert!(matches!(battle(h).mode(), Mode::Targeting(_)));
+    h.keys("d");
+    assert!(matches!(battle(h).mode(), Mode::ActionMenu { .. }));
+}
+
+/// Lesson 9, `Short`: the first time a unit's menu has Arts it can use;
+/// opening them ticks the first item and keeps it open (ticket 0490),
+/// attacking with the focused art ticks the second and closes it.
 #[test]
-fn the_combat_arts_lesson_opens_with_usable_arts_and_closes_when_they_open() {
+fn the_combat_arts_lesson_opens_with_usable_arts_and_closes_on_an_art_attack() {
     if skip_without_the_game() {
         return;
     }
     let mut h = chapter_1(TutorialLevel::Short, &["keys", "threat_arrows"]);
-    go(&mut h, SERGEANT);
-    h.keys("f");
-    go(&mut h, BRIGAND);
-    h.keys("f").wait(1.5);
-    assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
-    h.keys("d");
-    assert!(matches!(battle(&h).mode(), Mode::ActionMenu { .. }));
+    sergeant_menu_on_brigand(&mut h);
     assert_eq!(shown(&h), Some("combat_arts"));
     pick(&mut h, MenuEntry::Arts);
     assert!(matches!(
         battle(&h).mode(),
         Mode::List { menu, .. } if list_entry(menu) == MenuEntry::Arts
     ));
+    assert_eq!(battle(&h).lesson_ticks(), [true, false]);
+    assert_eq!(shown(&h), Some("combat_arts"));
+    assert!(!done(&h).contains(&"combat_arts".to_owned()));
+    // The lesson's box over the Arts menu, its note an attack: the box
+    // alone, without Chapter 1's map (1290).
+    insta::assert_snapshot!(lesson_box(&h));
+    // The focused art, at the Brigand.
+    h.keys("f").wait(1.0);
+    assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
+    h.keys("f").hold("f", 4.0);
     assert!(done(&h).contains(&"combat_arts".to_owned()));
+    assert_eq!(shown(&h), None);
+}
+
+/// Ticket 0490, `Short`: Arts opened, the lesson stays open and the turn
+/// can't end. A plain attack ticks nothing; with nobody left who could
+/// use an art, the lesson is put away, not done, and the turn may end.
+#[test]
+fn a_plain_attack_doesnt_finish_the_combat_arts_lesson() {
+    if skip_without_the_game() {
+        return;
+    }
+    let mut h = chapter_1(TutorialLevel::Short, &["keys", "threat_arrows"]);
+    sergeant_menu_on_brigand(&mut h);
+    pick(&mut h, MenuEntry::Arts);
+    assert_eq!(battle(&h).lesson_ticks(), [true, false]);
+    back_to_map(&mut h);
+    assert!(battle(&h).lesson_open());
+    assert!(end_turn_refused(&mut h));
+    sergeant_menu_on_brigand(&mut h);
+    pick(&mut h, MenuEntry::Attack);
+    h.wait(1.0);
+    assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
+    h.keys("f").hold("f", 4.0);
+    assert_eq!(battle(&h).state().phase(), Phase::Player);
+    assert!(!battle(&h).ready_units().is_empty(), "units left to act");
+    assert_eq!(shown(&h), None);
+    assert!(!battle(&h).lesson_open());
+    assert!(!done(&h).contains(&"combat_arts".to_owned()));
+    assert!(!end_turn_refused(&mut h));
+}
+
+/// Backs out of whatever a selected unit has open to the map.
+fn back_to_map(h: &mut Harness) {
+    for _ in 0..6 {
+        if matches!(battle(h).mode(), Mode::Idle { .. }) {
+            return;
+        }
+        h.keys("d").wait(0.1);
+    }
+    panic!("not back on the map: {:?}", battle(h).mode());
 }
 
 /// Whether End turn is refused: pressed on the map, the prompt doesn't
@@ -652,6 +714,15 @@ fn the_tutorial_set_to_short_drops_the_full_only_lessons_and_tips() {
     assert!(basics.is_empty(), "{basics:?}");
 }
 
+/// The lesson's box on screen, or the box at the end of the lessons, as a
+/// snapshot of those cells alone (1290).
+fn lesson_box(h: &Harness) -> String {
+    let ctx = h.game().ctx();
+    let view = battle(h).view(ctx);
+    let area = trpg_ui::screens::battle::glyph::lesson_box(ctx, &view);
+    h.snapshot_of(area.unwrap_or_else(|| panic!("no lesson box")))
+}
+
 /// Whether the guide's box at the end of the lessons is up (0465).
 fn end_box(h: &Harness) -> bool {
     battle(h).lessons_end_shown(h.game().ctx())
@@ -679,14 +750,12 @@ fn finish_short(h: &mut Harness) {
     go(h, SERGEANT);
     assert_eq!(shown(h), Some("threat_arrows"));
     h.keys("f Left Left Down d").wait(0.1);
-    go(h, SERGEANT);
-    h.keys("f");
-    go(h, BRIGAND);
-    h.keys("f").wait(1.5);
-    h.keys("d");
+    sergeant_menu_on_brigand(h);
     assert_eq!(shown(h), Some("combat_arts"));
     pick(h, MenuEntry::Arts);
-    back_and_wait(h);
+    // The focused art, at the Brigand (0490).
+    h.keys("f").wait(1.0);
+    h.keys("f").hold("f", 4.0);
     go(h, HERETIC);
     h.keys("f");
     go(h, p(3, 10));
@@ -738,22 +807,18 @@ fn back_on_turn_1(h: &mut Harness) {
 /// while it is up; "Keep going" closes it for good and the battle goes on.
 #[test]
 fn the_box_comes_after_the_last_lesson_and_keep_going_closes_it() {
-    // The box is drawn over Chapter 1's map: its picture is the private
-    // repository's (ADR-0118 §3).
-    let Some(dir) = trpg_content::bundle::content_tests() else {
+    if skip_without_the_game() {
         return;
-    };
+    }
     let mut h = chapter_1(TutorialLevel::Short, &[]);
     finish_short(&mut h);
     assert!(end_box(&h), "{}", h.snapshot());
-    // The cursor's pulse as the stored picture has it: the press the box
-    // waits for since 0495 moved its phase.
-    h.wait(32.0 / 60.0);
-    assert_private_snapshot!(dir, h.snapshot());
+    // The box alone, without Chapter 1's map (1290).
+    insta::assert_snapshot!(lesson_box(&h));
     let view = battle(&h).view(h.game().ctx()).lessons_end.unwrap();
     assert_eq!(view.focus, 0);
     assert_eq!(
-        view.lines[1],
+        view.lines[1].plain(),
         "Need a reminder? Guides, in the map menu (d)."
     );
     // It holds the keys: the map doesn't move, Cancel and End turn do nothing.

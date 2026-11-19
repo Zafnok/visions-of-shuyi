@@ -69,7 +69,7 @@ impl SaveError {
             Self::Incompatible => ctx.text("save.error.incompatible").to_owned(),
             Self::Corrupt => ctx.text("save.error.corrupt").to_owned(),
             Self::Missing => ctx.text("save.error.missing").to_owned(),
-            Self::Storage(e) => ctx.text_with("save.error.storage", &[("error", e)]),
+            Self::Storage(e) => ctx.text_with("save.error.storage", &[("error", &e.to_string())]),
         }
     }
 }

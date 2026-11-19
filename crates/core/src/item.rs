@@ -94,6 +94,9 @@ pub const WEAPON_SLOTS: usize = 3;
 pub struct WeaponDef {
     /// Display name.
     pub name: String,
+    /// The name shown where [`WeaponDef::name`] is too wide for its line
+    /// (`Stl Sword`, the attack forecast's columns), if it has one.
+    pub short_name: Option<String>,
     /// Weapon kind; its trait comes from [`ItemTable::traits`].
     pub kind: WeaponKind,
     /// Lowest rank that can wield it.
@@ -1006,8 +1009,8 @@ impl Unit {
     ) -> Vec<ItemId> {
         let slots = usize::from(class.weapon_slots).min(WEAPON_SLOTS);
         let mut stowed = Vec::new();
-        for slot in slots..WEAPON_SLOTS {
-            if let Some(copy) = self.loadout.weapons[slot].take() {
+        for weapon in self.loadout.weapons.iter_mut().skip(slots) {
+            if let Some(copy) = weapon.take() {
                 stowed.push(copy.def.clone());
                 stock.weapons.push(copy);
             }

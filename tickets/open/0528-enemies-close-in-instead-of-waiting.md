@@ -6,7 +6,7 @@ milestone: M4 Enemy AI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: []
+blocked_by: ["0527", "0531"]
 nick_input: none
 completed:
 ---
@@ -58,6 +58,11 @@ playtest (1064).
 own units. If 0084 is done, keep what it set and apply this ticket's
 rule only to units it left alone; if not, apply the rule as written and
 0084's answer (built by 0868) sets Chapter 3's units afterwards.
+
+**After 0527 and 0531:** this ticket re-records the winning playthroughs
+and retunes every battle, so it needs 0527's per-unit numbers before and
+after, and 0531's stable armies (without them a later re-record throws
+the retune away). ROADMAP Lane I puts it first among the balance tickets.
 
 ## Nick input
 

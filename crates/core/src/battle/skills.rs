@@ -9,7 +9,7 @@ use alloc::collections::{BTreeMap, VecDeque};
 use super::arts::{ArtUse, check_arts_allowed};
 use super::{BattleState, CommandError, Event, PendingMove, Step};
 use crate::art::ArtId;
-use crate::combat::{CombatMods, CombatantInput};
+use crate::combat::{CombatMods, CombatantInput, OneSided};
 use crate::geom::Pos;
 use crate::item::Equipped;
 use crate::movement::{TileSet, area_tiles};
@@ -17,10 +17,23 @@ use crate::skill::{
     ActiveEffect, Area, Bonuses, CostError, CostSource, EffectSource, SkillContext, SkillCost,
     SkillDef, SkillId, SkillKind, Stance, TimedEffect, TimedMods, auras, check_cost,
     effect_bonuses, heal_bonus, passive_bonuses, pay_cost, post_move_tiles,
+    standing_passive_bonuses,
 };
-use crate::stats::StatValue;
+use crate::stats::{StatValue, Stats};
 use crate::terrain::MovementTypeId;
 use crate::unit::{Unit, UnitId};
+
+/// A unit's numbers as the side panel and unit info show them (ticket
+/// 0484, `look-and-feel.md` *Side panel*).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct StatCard {
+    /// The stats a fight uses (Mov: the move points).
+    pub stats: Stats,
+    /// The same without the timed effects: a stat that differs is marked.
+    pub without_effects: Stats,
+    /// Its side of any fight.
+    pub numbers: OneSided,
+}
 
 /// An attack or attack-spell cast to validate.
 pub(super) struct AttackPlan<'a> {
@@ -206,7 +219,7 @@ impl BattleState {
             moved: 0,
         };
         let a_usable = attacker.usable_skills(&self.tables.classes, &self.tables.skills);
-        let mut a_bonus = self.bonuses(attacker, fight.dest, &a_usable, &a_ctx);
+        let mut a_bonus = self.bonuses(attacker, fight.dest, passive_bonuses(&a_usable, &a_ctx));
         if let Some(active) = fight.active {
             a_bonus.combat.add(&active.mods);
             // A stance rider counts in its own combat if it says so, once.
@@ -244,7 +257,7 @@ impl BattleState {
         let d_usable = defender.usable_skills(&self.tables.classes, &self.tables.skills);
         apply(
             &mut d,
-            &self.bonuses(defender, defender.pos, &d_usable, &d_ctx),
+            &self.bonuses(defender, defender.pos, passive_bonuses(&d_usable, &d_ctx)),
         );
         // Spear Wall: an attacked unit's stance widens its weapon's reach
         // and aims its counters.
@@ -260,11 +273,43 @@ impl BattleState {
         Ok((a, d, post_move))
     }
 
+    /// `unit`'s numbers standing where it stands, with its equipped attack
+    /// (ticket 0484): gear, timed effects, the support bonus and the skill
+    /// bonuses that hold in any fight. `None` if its class or tile is
+    /// unknown.
+    pub fn stat_card(&self, unit: &Unit) -> Option<StatCard> {
+        let mut input = self.combatant(unit, unit.pos, None).ok()?;
+        if unit.is_disarmed() && input.weapon.as_ref().is_some_and(|w| w.kind.is_some()) {
+            input.weapon = None;
+        }
+        let ctx = SkillContext {
+            weapon: input.weapon.as_ref().and_then(|w| w.kind),
+            spell: input.weapon.is_some() && unit.loadout.equipped_spell().is_some(),
+            hp: unit.hp,
+            max_hp: unit.stats.hp,
+            ..SkillContext::default()
+        };
+        let usable = unit.usable_skills(&self.tables.classes, &self.tables.skills);
+        let passives = standing_passive_bonuses(&usable, &ctx);
+        let mut without_effects = passives.apply(input.stats);
+        apply(&mut input, &self.bonuses(unit, unit.pos, passives));
+        input.mods.add(&self.support_mods(unit, unit.pos));
+        let mut stats = input.stats;
+        // Mov: what the unit moves with.
+        stats.mov = unit.move_points();
+        without_effects.mov = unit.stats.mov;
+        Some(StatCard {
+            stats,
+            without_effects,
+            numbers: input.one_sided(&self.tables.items.combat_rules()),
+        })
+    }
+
     /// Every skill bonus of `unit` standing on `pos` in a combat: its
-    /// passives (`usable`, judged in `ctx`), its timed effects and the ally
-    /// auras reaching it (each aura skill once).
-    fn bonuses(&self, unit: &Unit, pos: Pos, usable: &[&SkillDef], ctx: &SkillContext) -> Bonuses {
-        let mut out = passive_bonuses(usable, ctx);
+    /// `passives`, its timed effects and the ally auras reaching it (each
+    /// aura skill once).
+    fn bonuses(&self, unit: &Unit, pos: Pos, passives: Bonuses) -> Bonuses {
+        let mut out = passives;
         out.add(&effect_bonuses(&unit.effects));
         let mut reaching: BTreeMap<&SkillId, &CombatMods> = BTreeMap::new();
         for other in &self.units {
@@ -340,8 +385,7 @@ impl BattleState {
             return Vec::new();
         };
         self.unit(pending.unit)
-            .map(|u| self.move_after_paths(u, pending.tiles))
-            .unwrap_or_default()
+            .map_or_default(|u| self.move_after_paths(u, pending.tiles))
             .iter()
             .filter_map(|path| path.last().copied())
             .collect()
@@ -377,8 +421,7 @@ impl BattleState {
             return Ok(None);
         };
         self.unit(id)
-            .map(|u| self.move_after_paths(u, pending.tiles))
-            .unwrap_or_default()
+            .map_or_default(|u| self.move_after_paths(u, pending.tiles))
             .into_iter()
             .find(|path| path.last() == Some(&to))
             .map(Some)

@@ -1,0 +1,257 @@
+---
+source: crates/ui/tests/it/key_caps.rs
+expression: h.snapshot_of(MAP_VIEW)
+---
+                                                                      
+   ╔═ Vix ═══════════════════════════════════════════════════════╗    
+   ║                                                             ║    
+   ║ Your move                                                   ║    
+   ║ Over to you. Steer the cursor onto one of your units and    ║    
+   ║ pick it up. You can jump straight to whoever can still act, ║    
+   ║ and look anyone over to see what you're working with.       ║    
+   ║                                                             ║    
+   ║ Move the cursor: W  A  S  D . Pick up a unit: J             ║    
+   ║ Next unit to act: L . A unit's details: I                   ║    
+   ║                                                             ║    
+   ║ J  close                                                    ║    
+   ╚═════════════════════════════════════════════════════════════╝    
+                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                      
+                    ..≈≈≈≈..··..............╦╦..                      
+                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                      
+                    ..♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      
+                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      
+                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+                                                                      
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdcccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabdddeeeeeeddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaa
+aaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaa
+aaaaaaaaaaaaaaaaaaaaffgggghhhhiiiiiijjkkllllkkkkaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaakkggggkkiikkkkkkkkkkkkkkmmkkaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaakkkknniiiikkkkjjkkooooooookkaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaakklliippkkmmkkkkkkooqqmmookkaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaalllliippppkkkkkkkkooqqqqookkaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaallrriikkkkkkkkkkjjoooossookkaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border bg:panel_bg
+c = fg:text_highlight bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:text_dim bg:panel_bg
+f = fg:water bg:sea
+g = fg:water bg:water_bg
+h = fg:wood bg:water_bg
+i = fg:road bg:road_bg
+j = fg:enemy bg:grass_bg
+k = fg:grass bg:grass_bg
+l = fg:forest bg:forest_bg
+m = fg:fort bg:fort_bg
+n = fg:player bg:road_bg
+o = fg:stone bg:stone_bg
+p = fg:player bg:grass_bg
+q = fg:floor bg:floor_bg
+r = fg:thicket bg:thicket_bg
+s = fg:wood bg:stone_bg
+--- overlays ---
+over  209,270 14x2  hp_high
+over  225,286 14x2  hp_high
+over  193,254 14x2  hp_high
+over  289,222 14x2  hp_high
+over  273,254 14x2  hp_high
+over  289,302 14x2  hp_high
+over  209,286 14x2  hp_high
+over  207,256 3x1  cursor
+over  207,256 1x3  cursor
+over  221,256 3x1  cursor
+over  223,256 1x3  cursor
+over  207,269 3x1  cursor
+over  207,267 1x3  cursor
+over  221,269 3x1  cursor
+over  223,267 1x3  cursor
+over  268,243 4x4  black
+over  267,242 3x4  black
+over  265,242 5x4  black
+over  264,242 4x4  black
+over  263,241 3x4  black
+over  262,241 4x4  black
+over  260,241 5x4  black
+over  258,241 5x4  black
+over  256,241 5x4  black
+over  254,241 5x4  black
+over  252,241 5x4  black
+over  250,241 5x4  black
+over  249,241 4x4  black
+over  248,242 3x4  black
+over  246,242 5x4  black
+over  245,242 4x4  black
+over  244,243 3x4  black
+over  242,243 5x4  black
+over  241,243 4x4  black
+over  240,244 3x4  black
+over  239,244 4x4  black
+over  238,245 3x4  black
+over  237,245 4x4  black
+over  236,246 3x4  black
+over  235,246 4x4  black
+over  234,247 3x4  black
+over  233,247 4x4  black
+over  232,248 3x4  black
+over  232,248 3x4  black
+over  231,249 3x4  black
+over  231,249 3x4  black
+over  230,250 3x4  black
+over  229,251 3x4  black
+over  228,251 4x4  black
+over  227,252 3x4  black
+over  227,252 3x4  black
+over  226,253 3x4  black
+over  225,254 3x4  black
+over  224,254 4x4  black
+over  223,255 3x4  black
+over  223,255 3x4  black
+over  222,256 3x4  black
+over  221,257 3x4  black
+over  221,257 3x4  black
+over  220,258 3x4  black
+over  219,259 3x4  black
+over  219,255 3x3  black
+over  219,256 4x3  black
+over  219,257 5x3  black
+over  218,258 7x3  black
+over  218,259 8x3  black
+over  217,260 3x3  black
+over  269,244 2x2  enemy
+over  268,243 1x2  enemy
+over  266,243 3x2  enemy
+over  265,243 2x2  enemy
+over  264,242 1x2  enemy
+over  263,242 2x2  enemy
+over  261,242 3x2  enemy
+over  259,242 3x2  enemy
+over  257,242 3x2  enemy
+over  255,242 3x2  enemy
+over  253,242 3x2  enemy
+over  251,242 3x2  enemy
+over  250,242 2x2  enemy
+over  249,243 1x2  enemy
+over  247,243 3x2  enemy
+over  246,243 2x2  enemy
+over  245,244 1x2  enemy
+over  243,244 3x2  enemy
+over  242,244 2x2  enemy
+over  241,245 1x2  enemy
+over  240,245 2x2  enemy
+over  239,246 1x2  enemy
+over  238,246 2x2  enemy
+over  237,247 1x2  enemy
+over  236,247 2x2  enemy
+over  235,248 1x2  enemy
+over  234,248 2x2  enemy
+over  233,249 1x2  enemy
+over  233,249 1x2  enemy
+over  232,250 1x2  enemy
+over  232,250 1x2  enemy
+over  231,251 1x2  enemy
+over  230,252 1x2  enemy
+over  229,252 2x2  enemy
+over  228,253 1x2  enemy
+over  228,253 1x2  enemy
+over  227,254 1x2  enemy
+over  226,255 1x2  enemy
+over  225,255 2x2  enemy
+over  224,256 1x2  enemy
+over  224,256 1x2  enemy
+over  223,257 1x2  enemy
+over  222,258 1x2  enemy
+over  222,258 1x2  enemy
+over  221,259 1x2  enemy
+over  220,260 1x2  enemy
+over  220,256 1x1  enemy
+over  220,257 2x1  enemy
+over  220,258 3x1  enemy
+over  219,259 5x1  enemy
+over  219,260 6x1  enemy
+over  218,261 1x1  enemy
+over  277,227 5x11  black
+over  278,228 3x6  text_highlight
+over  278,235 3x2  text_highlight
+under 177,129 13x14  key_bg
+under 177,128 13x1  key_edge
+under 177,143 13x1  key_edge
+under 176,129 1x14  key_edge
+under 190,129 1x14  key_edge
+under 201,129 13x14  key_bg
+under 201,128 13x1  key_edge
+under 201,143 13x1  key_edge
+under 200,129 1x14  key_edge
+under 214,129 1x14  key_edge
+under 225,129 13x14  key_bg
+under 225,128 13x1  key_edge
+under 225,143 13x1  key_edge
+under 224,129 1x14  key_edge
+under 238,129 1x14  key_edge
+under 249,129 13x14  key_bg
+under 249,128 13x1  key_edge
+under 249,143 13x1  key_edge
+under 248,129 1x14  key_edge
+under 262,129 1x14  key_edge
+under 409,129 13x14  key_bg
+under 409,128 13x1  key_edge
+under 409,143 13x1  key_edge
+under 408,129 1x14  key_edge
+under 422,129 1x14  key_edge
+under 185,145 13x14  key_bg
+under 185,144 13x1  key_edge
+under 185,159 13x1  key_edge
+under 184,145 1x14  key_edge
+under 198,145 1x14  key_edge
+under 361,145 13x14  key_bg
+under 361,144 13x1  key_edge
+under 361,159 13x1  key_edge
+under 360,145 1x14  key_edge
+under 374,145 1x14  key_edge
+under 41,177 13x14  key_bg
+under 41,176 13x1  key_edge
+under 41,191 13x1  key_edge
+under 40,177 1x14  key_edge
+under 54,177 1x14  key_edge
+--- glyph styles ---
+22,8  +3,+0 bold
+25,8  +3,+0 bold
+28,8  +3,+0 bold
+31,8  +3,+0 bold
+51,8  +3,+0 bold
+23,9  +3,+0 bold
+45,9  +3,+0 bold
+5,11  +3,+0 bold

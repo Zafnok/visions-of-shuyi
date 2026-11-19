@@ -72,10 +72,7 @@ fn voices(c: &mut Ctx) -> Vec<AudioRequest> {
 }
 
 fn play(line: &LineId) -> AudioRequest {
-    AudioRequest::PlayVoice {
-        line: line.clone(),
-        variant: Variant::None,
-    }
+    AudioRequest::play_voice(line.clone(), Variant::None)
 }
 
 /// The lines asked for in `requests`, in order.

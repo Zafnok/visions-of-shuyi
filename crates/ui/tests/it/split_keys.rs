@@ -18,7 +18,7 @@ fn quick_battle_with(action: Action, key: &str) -> Harness {
     if let Err(e) = h.ctx_mut().set_layout_bindings(RIGHT_HANDED, b) {
         panic!("saving key bindings: {e}");
     }
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
@@ -26,11 +26,10 @@ fn quick_battle_with(action: Action, key: &str) -> Harness {
 /// The key-help line, left of the right-aligned debug hint.
 fn help(h: &Harness) -> String {
     let buf = h.game().buffer();
-    (0..90)
+    let row = (0..90)
         .map(|x| buf.get(x, 31).map_or(' ', |c| c.glyph))
-        .collect::<String>()
-        .trim()
-        .to_owned()
+        .collect::<String>();
+    crate::unpadded(&row)
 }
 
 /// Whether some row of the screen contains `text`.
@@ -139,7 +138,7 @@ fn confirm_still_accepts_the_prompt_with_confirm_end_turn_bound() {
 #[test]
 fn without_split_keys_end_turn_again_accepts_the_prompt() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
-    h.keys("Down f Left f f");
+    h.keys("Down f Left f f f");
     one_wait(&mut h);
     h.keys("Space");
     assert_eq!(help(&h), "Space yes · f yes · d no");

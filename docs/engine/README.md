@@ -62,8 +62,9 @@ code now: the game depends on the engine's crates by a git revision.
   - The checkout is a workspace of its own (the game's `Cargo.toml`
     excludes it): `cargo test --workspace` inside it runs the engine's
     tests, and the engine's `run-gates` skill is its gates.
-- **`cargo shuyi`** is `cargo xtask shuyi`: the engine's tools
-  (`shuyi-cli`) with this game's `frame-png`, `lang-status` and session.
+- **`cargo shuyi`** is `cargo run -p trpg-tools -- shuyi`: the engine's
+  tools (`shuyi-cli`) with this game's `frame-png`, `lang-status` and
+  session, in the game's tool program (ADR-0129).
 - **The MCP server** (`cargo shuyi mcp`, ticket 1181) is registered in
   `.mcp.json`: its tools are `cargo shuyi`'s operations and a session that
   keeps the game running between calls (`start`, `step`, `scene`,

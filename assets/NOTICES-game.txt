@@ -9,6 +9,12 @@ Terminus Font
   Version: 4.49.1, as a picture of its glyphs, with glyphs of our own added
   License: OFL-1.1
 
+Cinzel
+  Author: Natanael Gama, and the Cinzel Project Authors
+  Source: https://github.com/NDISCOVER/Cinzel
+  Version: Google Fonts' Cinzel[wght].ttf, at weights 700 and 500, as pictures of its glyphs
+  License: OFL-1.1
+
 New Sunrise
   Author: nene
   Source: https://opengameart.org/content/new-sunrise
@@ -289,4 +295,16 @@ Maxheadroom's Galloping Horse
   Author: Podsburgh
   Source: https://freesound.org/s/274898/
   Version: HQ preview; one hoof-beat pair cut from 0.895-1.035 s
+  License: CC0-1.0
+
+Campfire 02
+  Author: HECKFRICKER
+  Source: https://freesound.org/s/729396/
+  Version: HQ preview; 40 s from 1:00, compressed and looped
+  License: CC0-1.0
+
+Idylwild's Chromatic Campfires
+  Author: Idylwild
+  Source: https://opengameart.org/content/idylwilds-chromatic-campfires
+  Version: the orange campfire with smoke, four frames
   License: CC0-1.0

@@ -27,6 +27,7 @@ pub mod song;
 pub mod view;
 
 use crate::prelude::*;
+use shuyi_ui::text::StyledText;
 pub use view::{CinematicView, NoteView, TitleView};
 
 use alloc::rc::Rc;
@@ -37,10 +38,10 @@ use song::SongTime;
 use view::FULL;
 
 use super::{CreditsScreen, Skins, debug_hint, profile};
-use crate::audio::MenuSound;
 use crate::audio::splitmix64;
+use crate::audio::{MenuSound, SoundId};
 use crate::cinematic::{CinematicPlayer, millis};
-use crate::flow::FlowScreen;
+use crate::flow::{self, FlowScreen, KeptVoices, Start};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::profiles::{self, SetUp};
@@ -63,6 +64,15 @@ pub const TITLE_CINEMATIC: &str = "title";
 /// Nick picks one (ticket 0041).
 pub const TITLE_SKIP_SOUND: &str = "hit_sword";
 
+/// The campfire's crackle, looped under the title song while the title's
+/// picture shows (ticket 0922; its loudness under the song is its cue's
+/// volume in `audio.ron`).
+pub const FIRE_SOUND: &str = "title_campfire";
+
+/// Milliseconds the crackle fades out over: as long as the title's
+/// picture takes to go to black (Nick: "with the picture").
+pub const FIRE_FADE_MS: u32 = 200;
+
 /// The title's skins (ADR-0083): the PC's glyph look and the Playdate's
 /// one-bit one.
 pub const SKINS: Skins<TitleView> = Skins {
@@ -71,17 +81,17 @@ pub const SKINS: Skins<TitleView> = Skins {
 };
 
 /// Paints the title's picture alone over the whole of `buf` in `ctx`'s
-/// skin set: `backdrop` (if any), the logo, and on the PC the `sparks` (if
+/// skin set: `backdrop` (if any), the logo, and on the PC the `embers` (if
 /// any) as they are that many milliseconds after the title appeared. The
 /// cinematic's logo shot (ticket 0817).
 pub fn paint_logo(
     ctx: &Ctx,
     backdrop: Option<ImageId>,
-    sparks: Option<u32>,
+    embers: Option<u32>,
     buf: &mut GlyphBuffer,
 ) {
     match ctx.game.skin_set {
-        SkinSet::Glyph => glyph::paint_logo(ctx, backdrop, sparks, buf),
+        SkinSet::Glyph => glyph::paint_logo(ctx, backdrop, embers, buf),
         SkinSet::Playdate => playdate::paint_logo(ctx, backdrop, None, buf),
     }
 }
@@ -255,7 +265,7 @@ pub struct TitleScreen {
     /// The backdrop still to be stored as the one shown last (the first
     /// update does: making the screen can't write).
     unstored: Option<ImageId>,
-    /// Seconds this screen has been updated for: it places the sparks.
+    /// Seconds this screen has been updated for: it places the embers.
     time: f32,
     /// The cinematic, made each time the title is shown
     /// ([`refresh`](Self::refresh)): it is painted with the colours, map
@@ -270,6 +280,11 @@ pub struct TitleScreen {
     /// last shown ([`refresh`](Self::refresh)): until it was, the guide's
     /// note shows beside the menu.
     set_up: SetUp,
+    /// New Game's first lines, kept loaded while the title is on top
+    /// (ticket 1293).
+    voices: KeptVoices,
+    /// The campfire's crackle while it sounds ([`FIRE_SOUND`]).
+    crackle: Option<SoundId>,
 }
 
 impl TitleScreen {
@@ -299,6 +314,8 @@ impl TitleScreen {
             song: SongTime::default(),
             phase: Phase::MENU,
             set_up: SetUp::No,
+            voices: KeptVoices::default(),
+            crackle: None,
         };
         title.refresh(ctx);
         title
@@ -381,9 +398,30 @@ impl TitleScreen {
 
     /// Opens the game flow over the title; the music changes under it, so
     /// the title asks for its own again when it is back.
-    fn open(&mut self, screen: Box<dyn Screen<Shuyi>>) -> Transition {
+    fn open(&mut self, ctx: &mut Ctx, screen: Box<dyn Screen<Shuyi>>) -> Transition {
         self.music_on = false;
+        self.hush(ctx);
         Transition::Push(screen)
+    }
+
+    /// Starts the campfire's crackle while the title's picture shows with
+    /// its song, if the title has a fire; fades it out as the picture goes
+    /// to black (or as the game flow opens over it).
+    fn crackle(&mut self, ctx: &mut Ctx) {
+        let fire = ctx.game.content.title.campfire.is_some();
+        let picture = self.music_on && matches!(self.phase, Phase::Menu { .. });
+        if !(fire && picture) {
+            self.hush(ctx);
+        } else if self.crackle.is_none() {
+            self.crackle = Some(ctx.audio.start_sound(FIRE_SOUND));
+        }
+    }
+
+    /// Fades the crackle out, if it sounds.
+    fn hush(&mut self, ctx: &mut Ctx) {
+        if let Some(id) = self.crackle.take() {
+            ctx.audio.stop_sound(id, FIRE_FADE_MS);
+        }
     }
 
     /// Whether the title is still showing "press any key or button"
@@ -393,13 +431,13 @@ impl TitleScreen {
     }
 
     /// The screen as it is now, as plain data for a skin to paint
-    /// ([`glyph::paint`]): the backdrop and the sparks (the logo is always
+    /// ([`glyph::paint`]): the backdrop and the embers (the logo is always
     /// shown), then either the "press any key" prompt or the menu with
     /// its notice and help line, and the debug hint.
     pub fn view(&self, ctx: &Ctx) -> TitleView {
         let waiting = self.waiting(ctx);
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // clamped
-        let sparks_ms = (f64::from(self.time) * 1000.0).clamp(0.0, f64::from(u32::MAX)) as u32;
+        let embers_ms = (f64::from(self.time) * 1000.0).clamp(0.0, f64::from(u32::MAX)) as u32;
         let cinematic = |brightness: u8| {
             let player = Rc::clone(self.player.as_ref()?);
             let t_ms = player.timeline().wrapped_ms(millis(self.song.t()));
@@ -423,7 +461,7 @@ impl TitleScreen {
             picture,
             menu_opacity,
             backdrop: self.backdrop,
-            sparks: (ctx.idle_motion == IdleMotion::On).then_some(sparks_ms),
+            embers: (ctx.idle_motion == IdleMotion::On).then_some(embers_ms),
             prompt: waiting.then(|| ctx.text(Self::prompt_key(ctx)).to_owned()),
             menu: menu.then(|| self.menu.view()),
             notice: self.notice.clone().filter(|_| menu),
@@ -572,7 +610,7 @@ impl TitleScreen {
             Phase::Cinematic => {
                 Self::play_sounds(ctx, &player, before, self.song.t());
                 if on_logo {
-                    // The sparks go on from where the cinematic's were.
+                    // The embers go on from where the cinematic's were.
                     self.time = self.song.t();
                     self.phase = Phase::Menu {
                         idle: 0.0,
@@ -615,9 +653,10 @@ impl TitleScreen {
     }
 
     /// The bottom help line: the cursor keys `move`, the Confirm key
-    /// `select`, the Cancel key `back`, named from the active keymap.
-    pub fn help(ctx: &Ctx) -> String {
-        ctx.text_with("title.help", &[])
+    /// `select`, the Cancel key `back`, named from the active keymap, each
+    /// key in a key span.
+    pub fn help(ctx: &Ctx) -> StyledText {
+        ctx.text_styled("title.help", &[])
     }
 }
 
@@ -647,6 +686,10 @@ impl Screen<Shuyi> for TitleScreen {
         if input.dt().is_finite() {
             self.time += input.dt().max(0.0);
         }
+        if self.voices.due(ctx) {
+            let lines = flow::opening_lines(ctx, Start::NewGame);
+            self.voices.keep(lines, ctx);
+        }
         if self.waiting(ctx) {
             // The key or button that ends the wait does nothing else (a
             // key with no layout chosen yet opens the layout picker over
@@ -660,7 +703,9 @@ impl Screen<Shuyi> for TitleScreen {
         if !self.music_on {
             self.start_song(ctx);
         }
-        if !self.play(ctx, input) {
+        let menu_input = self.play(ctx, input);
+        self.crackle(ctx);
+        if !menu_input {
             return Transition::None;
         }
         for &action in &input.actions {
@@ -677,20 +722,26 @@ impl Screen<Shuyi> for TitleScreen {
             };
             match chosen {
                 Some(Item::Continue) => match FlowScreen::resume(ctx) {
-                    Ok(flow) => return self.open(Box::new(flow)),
+                    Ok(flow) => return self.open(ctx, Box::new(flow)),
                     // The save stays; the title says why it can't go on.
                     Err(e) => {
                         self.notice = Some(e.text(ctx));
                         ctx.audio.menu(MenuSound::Denied);
                     }
                 },
-                Some(Item::NewGame) => return self.open(Box::new(FlowScreen::new_game(ctx))),
-                Some(Item::LoadGame) => return self.open(Box::new(FlowScreen::load_game(ctx))),
+                Some(Item::NewGame) => {
+                    let flow = FlowScreen::new_game(ctx);
+                    return self.open(ctx, Box::new(flow));
+                }
+                Some(Item::LoadGame) => {
+                    let flow = FlowScreen::load_game(ctx);
+                    return self.open(ctx, Box::new(flow));
+                }
                 // The test data always builds (tested); should it ever
                 // not, the item does nothing.
                 Some(Item::QuickBattle) => {
                     if let Some(flow) = FlowScreen::quick_battle(ctx) {
-                        return self.open(Box::new(flow));
+                        return self.open(ctx, Box::new(flow));
                     }
                 }
                 // Not `open`: the options, the profile and the credits
@@ -724,9 +775,11 @@ impl Screen<Shuyi> for TitleScreen {
     /// Back on top: the screen that was over the title may have changed
     /// the saves (a game played, a profile picked), the options (the
     /// colours the cinematic is in) or the lead the cinematic shows, so it
-    /// is built again ([`refresh`](Self::refresh)).
+    /// is built again ([`refresh`](Self::refresh)). New Game's first
+    /// lines are kept again: that screen may have replaced them.
     fn uncovered(&mut self, ctx: &mut Ctx, _result: Option<ScreenResult>) -> Transition {
         self.refresh(ctx);
+        self.voices.covered();
         Transition::None
     }
 }

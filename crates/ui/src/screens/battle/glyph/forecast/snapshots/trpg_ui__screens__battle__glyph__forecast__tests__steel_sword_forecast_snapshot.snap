@@ -1,0 +1,16 @@
+---
+source: crates/ui/src/screens/battle/glyph/forecast/tests.rs
+expression: "rows.join(\"\n\")"
+---
+═════════ Forecast ═════════
+
+Test Lord     Brigand
+Stl Sword 25  Iron Axe 20
+HP 19 → 11    HP 20 → 3
+███████▒▒▒▒▒  ██▒▒▒▒▒▒▒▒▒▒
+Hit  96       Hit  65
+Crit 3        Crit 0
+
+──────────────────────────
+8 dmg   →  1
+2 ←  8 dmg

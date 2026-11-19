@@ -19,6 +19,7 @@
 //! it (ADR-0054).
 
 use crate::prelude::*;
+use shuyi_ui::text::ToArg;
 
 use trpg_core::{
     Campaign, Gold, ItemDef, ItemId, Shop, StockItem, TownTrade, WEAPON_SLOTS, WeaponDef,
@@ -360,7 +361,7 @@ impl TownScreen {
                 enabled: false,
             };
         }
-        let stats = def.map(|def| stat_line(words, def)).unwrap_or_default();
+        let stats = def.map_or_default(|def| stat_line(words, def));
         let detail = match (&d.trade, d.durability) {
             (TownTrade::RepairStock(_) | TownTrade::RepairHeld { .. }, Some((left, max))) => {
                 let whose = d.holder.and_then(|i| self.campaign.roster.get(i));
@@ -400,7 +401,7 @@ impl TownScreen {
         let d = deals.get(*line)?;
         let item = ctx.words().item(&d.item, &ctx.game.content.items);
         let gold = gold_text(d.gold);
-        let args: [(&str, &dyn core::fmt::Display); 2] = [("item", &item), ("gold", &gold)];
+        let args: [(&str, &dyn ToArg); 2] = [("item", &item), ("gold", &gold)];
         Some(ask.view_with_keys(ctx, ctx.help_keys(), &args))
     }
 
@@ -429,7 +430,7 @@ impl TownScreen {
             empty: ctx.text("battle.shop.empty").to_owned(),
             selling: self.sell_view(ctx, &deals),
             special: self.special_view(ctx, &deals),
-            help: ctx.text_with(help, &[]),
+            help: ctx.text_styled(help, &[]),
             debug_hint: crate::screens::debug_hint(ctx),
         }
     }

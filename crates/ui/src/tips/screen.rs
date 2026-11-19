@@ -187,10 +187,7 @@ mod tests {
         );
         let frame = |a: &[Action]| FrameInput::new(a.to_vec(), 0.0, vec![]);
         assert!(matches!(tip.update(&mut c, &frame(&[])), Transition::None));
-        let play = R::PlayVoice {
-            line,
-            variant: Variant::None,
-        };
+        let play = R::play_voice(line, Variant::None);
         assert_eq!(voice_requests(&mut c), [play]);
         assert!(matches!(tip.update(&mut c, &frame(&[])), Transition::None));
         assert_eq!(voice_requests(&mut c), [], "asked for once");

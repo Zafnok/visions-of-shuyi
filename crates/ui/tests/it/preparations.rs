@@ -107,9 +107,9 @@ fn restart_battle_goes_back_to_preparations_as_they_were_left() {
     h.keys(SET_UP);
     h.keys("Right Right Right f");
     let start = battle(&h);
-    // The `PLAYER PHASE` banner closes; the lord waits where he stands, then the map menu's Restart Battle
+    // The objective's and `PLAYER PHASE` banners close; the lord waits where he stands, then the map menu's Restart Battle
     // (after Units, Objective, Guides, Options and Suspend) and its confirm.
-    h.keys("f f f f d Down Down Down Down Down f");
+    h.keys("f f f f f d Down Down Down Down Down f");
     assert!(
         shows(&h, "Restart the battle from turn 1?"),
         "{}",
@@ -153,14 +153,14 @@ fn rebound_keys_and_a_controller_work() {
     h.keys("s j");
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     assert!(
-        shows(&h, "wasd choose · j open · k leave"),
+        shows(&h, "w a s d choose · j open · k leave"),
         "{}",
         h.snapshot()
     );
     h.pad("DpadRight South South DpadRight East");
     // After a button press the help names the controller's buttons.
     assert!(shows(&h, "D-pad/L-stick choose · "), "{}", h.snapshot());
-    assert!(!shows(&h, "wasd choose"));
+    assert!(!shows(&h, "w a s d choose"));
     let prep = h.screen::<trpg_ui::screens::PreparationsScreen>();
     let prep = prep.unwrap_or_else(|| panic!("no preparations"));
     assert_eq!(prep.packed(), [(ItemId::new("elixir"), 1)]);
@@ -206,9 +206,9 @@ fn the_benched_scouts_bow_goes_to_the_archer() {
     };
     assert_eq!(scout(&h).name, "Test Scout");
     assert_eq!(scout(&h).loadout.weapon_count(), 0);
-    // Past the banner, Restart Battle: Preparations again, the trade as it
-    // was left.
-    h.keys("f f f f d Down Down Down Down Down f f");
+    // Past the banners, Restart Battle: Preparations again, the trade as
+    // it was left.
+    h.keys("f f f f f d Down Down Down Down Down f f");
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     let prep = h.screen::<trpg_ui::screens::PreparationsScreen>();
     let prep = prep.unwrap_or_else(|| panic!("no preparations")).prep();
@@ -223,8 +223,8 @@ fn the_benched_scouts_bow_goes_to_the_archer() {
 fn a_continued_battle_keeps_its_preparations() {
     let mut h = preparations();
     h.keys(SET_UP);
-    // Fight!, the banner, then the map menu's Suspend and its confirm.
-    h.keys("Right Right Right f f");
+    // Fight!, the banners, then the map menu's Suspend and its confirm.
+    h.keys("Right Right Right f f f");
     let start = battle(&h);
     h.keys("d Down Down Down Down f f");
     assert_eq!(h.screens(), ["title"]);
@@ -290,7 +290,7 @@ fn help_and_unit(h: &Harness) -> (String, String) {
         PrepBody::Loadouts(l) => l.gear.as_ref().map(|g| g.slots.title.clone()),
         _ => None,
     };
-    (view.help, unit.unwrap_or_default())
+    (view.help.plain(), unit.unwrap_or_default())
 }
 
 /// Ticket 0487: in a unit's slots, Next unit (`s`, right-handed) changes

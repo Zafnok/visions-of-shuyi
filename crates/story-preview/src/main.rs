@@ -22,11 +22,11 @@ mod app_info;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::{Path, PathBuf};
 
-use macroquad::window::Conf;
 use shuyi::assets::bundle::Layer;
 use shuyi_app::storage::DesktopFolder;
 use shuyi_app::{AppConfig, Window};
 use trpg_content::{bundle, font};
+use trpg_ui::console::{ConsoleSizes, ConsoleSpec};
 
 use crate::app_info::APP;
 
@@ -38,8 +38,8 @@ const _: () = assert!(
      alone, with `-p trpg-story-preview` (ADR-0057)"
 );
 
-/// The game's window.
-const WINDOW: Window = Window::new(APP.name, 1640, 1064).with_icon(APP.window_icon);
+/// The game's window: its console at 2x plus a margin (ticket 1283).
+const WINDOW: Window = Window::console(APP.name, ConsoleSpec::PC, 2, 40).with_icon(APP.window_icon);
 
 /// The folder of scripts a writer's clone of the mirror has at its root.
 const DIALOGUE: &str = "dialogue";
@@ -117,10 +117,6 @@ fn config() -> AppConfig {
     config
 }
 
-fn window_conf() -> Conf {
-    shuyi_app::window_conf(&WINDOW)
-}
-
 /// The folder, once a packed build has its files: the pack beside the
 /// program, laid in the bundle before anything reads a file, as the game's
 /// (`crates/app/src/main.rs`, ADR-0120). A pack that is missing or broken is the start's
@@ -135,10 +131,9 @@ fn startup() -> Result<Layer, String> {
     folder()
 }
 
-#[macroquad::main(window_conf)]
-async fn main() {
+fn main() {
     let start = trpg_ui::story_preview::start(WINDOW.title, startup());
-    shuyi_app::run(config(), start).await;
+    shuyi_app::run_app(config(), start);
 }
 
 #[cfg(test)]

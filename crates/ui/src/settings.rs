@@ -199,6 +199,101 @@ impl MapZoom {
     }
 }
 
+/// How a selected unit's move and attack ranges show (ticket 0923,
+/// `docs/design/look-and-feel.md`, *Range tiles*): Nick's pick, the
+/// slab, by default, the three others he wanted as options, and today's
+/// still tints.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum RangeStyle {
+    /// Spreading out from the unit, one outline, a glint band, the whole
+    /// range a raised slab (the default).
+    #[default]
+    Slab,
+    /// Spreading, one outline, a slow shimmer.
+    Shimmer,
+    /// Spreading, one outline, a glint band.
+    Glint,
+    /// Spreading, one outline, a glint band, each tile raised.
+    RaisedTiles,
+    /// Still tints, as before ticket 0923.
+    Still,
+}
+
+impl RangeStyle {
+    /// Every look, the default first.
+    pub const ALL: [Self; 5] = [
+        Self::Slab,
+        Self::Shimmer,
+        Self::Glint,
+        Self::RaisedTiles,
+        Self::Still,
+    ];
+
+    /// The key of the name the Options screen shows
+    /// ([`Ctx::text`](shuyi_ui::Ctx::text)).
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::Slab => "options.range_style.slab",
+            Self::Shimmer => "options.range_style.shimmer",
+            Self::Glint => "options.range_style.glint",
+            Self::RaisedTiles => "options.range_style.raised_tiles",
+            Self::Still => "options.range_style.still",
+        }
+    }
+
+    /// How the map skins show the ranges.
+    pub const fn show(self) -> shuyi_ui::grid::ranges::RangeShow {
+        use shuyi_ui::grid::ranges::{RangeShow, Relief, Wave};
+        let moving = RangeShow::TINT.spreading().outlined();
+        match self {
+            Self::Slab => moving.with_wave(Wave::Glint).with_relief(Relief::Slab),
+            Self::Shimmer => moving.with_wave(Wave::Shimmer),
+            Self::Glint => moving.with_wave(Wave::Glint),
+            Self::RaisedTiles => moving.with_wave(Wave::Glint).with_relief(Relief::Tiles),
+            Self::Still => RangeShow::TINT,
+        }
+    }
+}
+
+/// How the threat arrows are drawn (ticket 0908, `docs/design/look-and-feel.md`,
+/// *Threat arrows*): Nick's pick, arcs, by default, and the two others
+/// he wanted as options.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ThreatArrows {
+    /// Arcs bowing up over what lies between (the default).
+    #[default]
+    Arcs,
+    /// Arcs, and a frame on the threatened tile.
+    ArcsAndTile,
+    /// Straight arrows, as before ticket 0908.
+    Straight,
+}
+
+impl ThreatArrows {
+    /// Every look, the default first.
+    pub const ALL: [Self; 3] = [Self::Arcs, Self::ArcsAndTile, Self::Straight];
+
+    /// The key of the name the Options screen shows
+    /// ([`Ctx::text`](shuyi_ui::Ctx::text)).
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::Arcs => "options.threat_arrows.arcs",
+            Self::ArcsAndTile => "options.threat_arrows.arcs_and_tile",
+            Self::Straight => "options.threat_arrows.straight",
+        }
+    }
+
+    /// How the map skins draw them.
+    pub const fn shape(self) -> shuyi_ui::grid::threat::Shape {
+        use shuyi_ui::grid::threat::Shape;
+        match self {
+            Self::Arcs => Shape::Arc,
+            Self::ArcsAndTile => Shape::ArcAndFrame,
+            Self::Straight => Shape::Straight,
+        }
+    }
+}
+
 /// How the Playdate draws the portraits (ticket 1042,
 /// `docs/design/playdate.md`, *One-bit pictures*): one of the four styles
 /// each portrait is converted in, in the converter's order
@@ -259,6 +354,10 @@ pub struct ShuyiSettings {
     /// How big the battle map's pictures are drawn. The Zoom map key in
     /// battle flips it too.
     pub map_zoom: MapZoom,
+    /// How the threat arrows are drawn (ticket 0908).
+    pub threat_arrows: ThreatArrows,
+    /// How a selected unit's ranges show (ticket 0923).
+    pub range_style: RangeStyle,
     /// Whether the title plays its intro cinematic when left alone (ticket
     /// 0844); off, it stays on the logo and menu.
     pub intro: bool,
@@ -319,6 +418,8 @@ impl Default for ShuyiSettings {
             cursor_style: CursorStyle::default(),
             map_look: MapLook::default(),
             map_zoom: MapZoom::default(),
+            threat_arrows: ThreatArrows::default(),
+            range_style: RangeStyle::default(),
             intro: true,
             towns: TownsOpen::OnArrival,
             log_voice: LogVoice::OnHover,
@@ -402,6 +503,14 @@ struct SettingsFile {
     /// out, as `intro` (ticket 1042).
     #[serde(skip_serializing_if = "Option::is_none")]
     portrait_style: Option<PortraitStyle>,
+    /// The threat arrows' look when not the default, otherwise left out,
+    /// as `intro` (ticket 0908).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    threat_arrows: Option<ThreatArrows>,
+    /// The ranges' look when not the default, otherwise left out, as
+    /// `intro` (ticket 0923).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    range_style: Option<RangeStyle>,
 }
 
 impl Default for SettingsFile {
@@ -437,6 +546,9 @@ fn file(s: &Settings) -> SettingsFile {
         auto_advance: (game.auto_advance == AutoAdvance::On).then_some(true),
         portrait_style: (game.portrait_style != PortraitStyle::default())
             .then_some(game.portrait_style),
+        threat_arrows: (game.threat_arrows != ThreatArrows::default())
+            .then_some(game.threat_arrows),
+        range_style: (game.range_style != RangeStyle::default()).then_some(game.range_style),
     }
 }
 
@@ -503,6 +615,8 @@ impl GameSettings for ShuyiSettings {
                 AutoAdvance::Off
             },
             portrait_style: file.portrait_style.unwrap_or_default(),
+            threat_arrows: file.threat_arrows.unwrap_or_default(),
+            range_style: file.range_style.unwrap_or_default(),
         };
         Ok(match file.layout.as_deref().and_then(Layout::from_name) {
             Some(layout) => s.with_layout(layout),
@@ -544,6 +658,10 @@ mod tests {
             auto_advance: AutoAdvance::Off,
             // The default, as before ticket 1042.
             portrait_style: PortraitStyle::Dots,
+            // The default: a save from before ticket 0908 has none.
+            threat_arrows: ThreatArrows::Arcs,
+            // The default: a save from before ticket 0923 has none.
+            range_style: RangeStyle::Slab,
         };
         s
     }
@@ -691,6 +809,69 @@ mod tests {
     /// volumes on the loudness curve (engine #318): now that form, with
     /// the volumes the player set in place of the three linear ones
     /// (voices and the log's, on, are left out).
+    /// Ticket 0908: the threat arrows are arcs by default, left out of a
+    /// save then, and saved by name otherwise.
+    #[test]
+    fn the_threat_arrows_default_to_arcs_and_round_trip() {
+        use shuyi_ui::grid::threat::Shape::{Arc, ArcAndFrame, Straight};
+        let s = Settings::default();
+        assert_eq!(s.game.threat_arrows, ThreatArrows::Arcs);
+        assert!(!s.to_ron().contains("threat_arrows"));
+        for arrows in ThreatArrows::ALL {
+            let mut set = Settings::default();
+            set.game.threat_arrows = arrows;
+            let back = Settings::from_ron(&set.to_ron()).unwrap();
+            assert_eq!(back.game.threat_arrows, arrows);
+        }
+        let mut straight = Settings::default();
+        straight.game.threat_arrows = ThreatArrows::Straight;
+        assert!(straight.to_ron().contains("threat_arrows: Some(Straight)"));
+        let keys = ThreatArrows::ALL.map(ThreatArrows::key);
+        assert_eq!(keys[0], "options.threat_arrows.arcs");
+        let shapes = ThreatArrows::ALL.map(ThreatArrows::shape);
+        assert_eq!(shapes, [Arc, ArcAndFrame, Straight]);
+    }
+
+    /// Ticket 0923: the ranges are the slab by default, left out of a save
+    /// then, and saved by name otherwise; Still is today's tint.
+    #[test]
+    fn the_range_style_defaults_to_the_slab_and_round_trips() {
+        use shuyi_ui::grid::ranges::{RangeShow, Relief, Wave};
+        let s = Settings::default();
+        assert_eq!(s.game.range_style, RangeStyle::Slab);
+        assert!(!s.to_ron().contains("range_style"));
+        for style in RangeStyle::ALL {
+            let mut set = Settings::default();
+            set.game.range_style = style;
+            let back = Settings::from_ron(&set.to_ron()).unwrap();
+            assert_eq!(back.game.range_style, style);
+        }
+        let mut still = Settings::default();
+        still.game.range_style = RangeStyle::Still;
+        assert!(still.to_ron().contains("range_style: Some(Still)"));
+        assert_eq!(
+            RangeStyle::ALL.map(RangeStyle::key)[0],
+            "options.range_style.slab"
+        );
+        let show = RangeStyle::ALL.map(RangeStyle::show);
+        assert_eq!(show[4], RangeShow::TINT);
+        assert!(show[..4].iter().all(|s| s.spread && s.outline));
+        let waves = show.map(|s| s.wave);
+        assert_eq!(
+            waves,
+            [
+                Wave::Glint,
+                Wave::Shimmer,
+                Wave::Glint,
+                Wave::Glint,
+                Wave::None
+            ]
+        );
+        let reliefs = show.map(|s| s.relief);
+        let flat = Relief::Flat;
+        assert_eq!(reliefs, [Relief::Slab, flat, flat, Relief::Tiles, flat]);
+    }
+
     #[test]
     fn settings_saved_before_the_split_load_unchanged() {
         // The form written now: version 3, with `volumes` last.

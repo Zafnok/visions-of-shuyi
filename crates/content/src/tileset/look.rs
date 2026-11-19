@@ -65,7 +65,7 @@ pub(super) struct SidesAt {
 /// What a named look is called in a problem: nothing for the tileset's
 /// own.
 fn prefix(name: Option<&str>) -> String {
-    name.map(|n| format!("look \"{n}\": ")).unwrap_or_default()
+    name.map_or_default(|n| format!("look \"{n}\": "))
 }
 
 /// What is wrong with calling a look `name` in `looks`, if anything: only

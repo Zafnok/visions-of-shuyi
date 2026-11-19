@@ -44,7 +44,7 @@ it):
 ## Scope
 
 **In:**
-- Port 0031's recipes to `crates/xtask/src/sfx.rs` (as 0213 did), run
+- Port 0031's recipes to `crates/tools/src/sfx.rs` (as 0213 did), run
   `cargo xtask sfx`, add the cues to `assets/audio/audio.ron` with
   `credit: Own`.
 - `MenuSound::Denied` → the new cue.

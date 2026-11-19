@@ -45,6 +45,27 @@ pub const HELP_BAR: Rect = Rect::new(0, 30, 100, 2);
 /// messages).
 pub const HELP_ROW: i32 = HELP_BAR.y + 1;
 
+/// The help bar's first row, for a message over the key help.
+pub const MESSAGE_ROW: Rect = Rect::new(HELP_BAR.x, HELP_BAR.y, HELP_BAR.w, 1);
+
+/// Everything over the help bar: a battle snapshot's frame without it
+/// (1290).
+#[cfg(test)]
+pub const ABOVE_HELP_BAR: Rect = Rect::new(0, 0, HELP_BAR.w, HELP_BAR.y);
+
+/// Everything over the bottom row, where a screen over the battle (a
+/// shop, the guides, a class change) puts its help line (1290).
+#[cfg(test)]
+pub const ABOVE_HELP_ROW: Rect = Rect::new(0, 0, HELP_BAR.w, HELP_ROW);
+
+/// The cells `area` of `buf` covers, as a snapshot
+/// ([`snapshot_of`](crate::harness::snapshot_of)): a battle test's
+/// snapshot shows the part of the screen it is about (1290).
+#[cfg(test)]
+pub fn snap(buf: &crate::glyph_buffer::GlyphBuffer, ctx: &Ctx, area: Rect) -> String {
+    crate::harness::snapshot_of(buf, area, &ctx.palette)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

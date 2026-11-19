@@ -77,7 +77,7 @@ pub(crate) fn painted(ctx: &Ctx, scene: &MapScene) -> GlyphBuffer {
 /// The game's one-bit font.
 pub(crate) fn font() -> Font<'static> {
     let atlas = Box::leak(Box::new(trpg_content::font::load().unwrap()));
-    let bits = trpg_content::bundle::bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
+    let bits = trpg_content::bundle::lent_bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
     Font::new(atlas, bits).unwrap()
 }
 
@@ -440,7 +440,9 @@ fn threat_arrows_are_black_edged_in_white_over_everything() {
     let colors = with_looks(&ctx, |looks| {
         ONE_BIT.style.threat_colors(looks, &ONE_BIT.colors)
     });
-    let expect = threat::threat_overlays(&threat, &grid, threat::Start::Edge, colors);
+    // Arcs, as on the PC (ticket 0908).
+    let shape = threat::Shape::Arc;
+    let expect = threat::threat_overlays_shaped(&threat, &grid, threat::Start::Edge, shape, colors);
     assert_eq!(&after[before.len()..], expect);
     assert_ne!(expect, [] as [shuyi_ui::frame::Overlay; 0]);
     let colors: Vec<Rgb> = expect.iter().map(|o| o.color).collect();

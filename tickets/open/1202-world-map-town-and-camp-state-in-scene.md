@@ -17,7 +17,7 @@ completed:
 
 Game PRs #483 and #495 shipped the world map and random training groups;
 #477 expanded camp. The 2026-11-01 audit found that the game's CLI/MCP
-scene adapter (`crates/xtask/src/game_tools.rs`, `scene`) still requires a
+scene adapter (`crates/tools/src/game_tools.rs`, `scene`) still requires a
 `BattleScreen`, so those screens answer "no battle on screen".
 Ticket 1181 intentionally covered battles only; this expands that adapter
 as gameplay has expanded, without claiming an unmet 1181 criterion.
@@ -26,6 +26,8 @@ The engine's existing `Headless::with_scene` and `Scene::data` already
 accept arbitrary plain data. Screen `campaign()`/`view()` methods hold
 this game's meaning. This needs no new engine operation or game concepts
 in the engine (ADR-0063, ADR-0054).
+
+**The hook chain** (2026-11-16, either order): if 1275 (the forge) lands first, the town-shop scene data includes the Forge tab's rows and its `note`. If 1281 lands first, the world-map scene includes the delve mark, and after 1279 the hunt's and the rival column's marks.
 
 ## Nick input
 

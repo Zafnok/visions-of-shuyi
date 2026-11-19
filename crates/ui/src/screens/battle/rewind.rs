@@ -8,7 +8,8 @@
 //! skin paints it (ADR-0054).
 
 use crate::prelude::*;
-use core::fmt::Display;
+use shuyi_ui::text::StyledText;
+use shuyi_ui::text::ToArg;
 
 use trpg_content::MapLook;
 use trpg_core::{
@@ -188,14 +189,9 @@ impl RewindScreen {
     pub fn list_view(&self, words: Words<'_>) -> RewindView {
         let spent = self.charges_left == 0;
         let charges = charges_text(words, self.charges_left, self.charges);
-        let prompt = self.confirming.then(|| {
-            let key = if self.charges_left == 1 {
-                "battle.rewind.use.one"
-            } else {
-                "battle.rewind.use.many"
-            };
-            words.text_with(key, &[("left", &self.charges_left)])
-        });
+        let prompt = self
+            .confirming
+            .then(|| words.text_with("battle.rewind.use", &[("left", &self.charges_left)]));
         RewindView {
             title: words.text("battle.rewind.title").to_owned(),
             charges,
@@ -229,7 +225,7 @@ impl RewindScreen {
     }
 
     /// The help line: what the keys do on the list or at the prompt.
-    pub fn help(&self, ctx: &Ctx) -> String {
+    pub fn help(&self, ctx: &Ctx) -> StyledText {
         let key = if self.confirming {
             "battle.rewind.help.confirm"
         } else if self.can_rewind() {
@@ -239,7 +235,7 @@ impl RewindScreen {
         } else {
             "battle.rewind.help.browse"
         };
-        ctx.text_with(key, &[])
+        ctx.text_styled(key, &[])
     }
 
     /// The whole screen (ADR-0054): the map, the list, the lesson, the
@@ -295,13 +291,8 @@ pub fn charges_text(words: Words<'_>, left: u8, charges: u8) -> String {
     if left == 0 {
         return words.text("battle.rewind.no_charges").to_owned();
     }
-    let key = if charges == 1 {
-        "battle.rewind.charges.one"
-    } else {
-        "battle.rewind.charges.many"
-    };
-    let counts = [("left", &left as &dyn Display), ("charges", &charges)];
-    words.text_with(key, &counts)
+    let counts = [("left", &left as &dyn ToArg), ("charges", &charges)];
+    words.text_with("battle.rewind.charges", &counts)
 }
 
 /// A unit's name in `state`, or `?` (never shown: a command only names
@@ -323,11 +314,8 @@ fn combat_summary(words: Words<'_>, events: &[Event]) -> Option<String> {
         .filter(|s| s.by == Side::Attacker && s.hit && !s.healed)
         .collect();
     let dmg: i32 = hits.iter().map(|s| s.damage).sum();
-    let text = match hits.len() {
-        0 => words.text("battle.rewind.missed").to_owned(),
-        1 => words.text_with("battle.rewind.hit", &[("dmg", &dmg)]),
-        n => words.text_with("battle.rewind.hits", &[("n", &n), ("dmg", &dmg)]),
-    };
+    let counts = [("n", &hits.len() as &dyn ToArg), ("dmg", &dmg)];
+    let text = words.text_with("battle.rewind.hits", &counts);
     Some(if defender_hp == 0 {
         words.text_with("battle.rewind.defeated", &[("result", &text)])
     } else {

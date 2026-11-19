@@ -19,12 +19,12 @@ path = "src/main.rs"
 
 [features]
 # Debug tools (Quick Battle, glyph sampler) in a release build: turned on only
-# by the Pages build, `cargo shuyi web --release --debug-tools` (ADR-0023).
-# Never by release.yml, itch.io or Steam builds.
+# by the playtest page's build, `cargo shuyi web --release --debug-tools`
+# (ADR-0023; playtest-itch.yml). Never by release.yml, itch.io or Steam builds.
 debug-tools = ["trpg-ui/debug-tools"]
 # The bought art, embedded over `assets/` (ADR-0040): needs
 # `assets-private/game/` (`cargo shuyi private-assets`). Turned on by the
-# Pages build and release.yml when they have the key, never by a gate.
+# playtest page's build and release.yml when they have the key, never by a gate.
 private-assets = ["trpg-content/private-assets"]
 # Reads the game's files from `trpg-app.pack` beside the program in place of
 # embedding them (ADR-0120, engine ADR-0110): `cargo shuyi export <target>
@@ -41,7 +41,8 @@ trpg-ui = { path = "../ui" }
 shuyi.workspace = true
 # The window, input devices, audio, storage and the run loop (ticket 1110).
 shuyi-app.workspace = true
-# The entry point: `#[macroquad::main]` has to be in the binary.
+# The log line of a folder `--watch` can't read (`src/main.rs`), as the
+# engine logs, and the test that the window's icon pictures decode.
 macroquad.workspace = true
 
 # The exe's icon and version info (ticket 0902), on a Windows host only.

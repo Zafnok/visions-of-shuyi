@@ -21,6 +21,7 @@
 
 use crate::prelude::*;
 use core::cell::Cell as Count;
+use shuyi_ui::text::StyledText;
 
 use shuyi_assets::bundle::Layer;
 use shuyi_assets::dialogue::{DialogueFile, scripts_from_parsed};
@@ -202,8 +203,8 @@ pub struct ReferenceView {
     pub rows: Vec<ReferenceRow>,
     /// The first row shown.
     pub first: usize,
-    /// The help line.
-    pub help: String,
+    /// The help line, each key in a key span.
+    pub help: StyledText,
 }
 
 /// A row of the page of names and faces.
@@ -307,7 +308,7 @@ fn reference(ctx: &Ctx, first: usize) -> ReferenceView {
         title: ctx.text(REFERENCE_KEY).to_owned(),
         rows: reference_rows(ctx),
         first,
-        help: ctx.text_with(REFERENCE_HELP_KEY, &[]),
+        help: ctx.text_styled(REFERENCE_HELP_KEY, &[]),
     }
 }
 
@@ -398,7 +399,12 @@ fn paint_reference(ctx: &Ctx, view: &ReferenceView, buf: &mut GlyphBuffer) {
             }
         }
     }
-    buf.print(1, bottom, &view.help, dim, black);
+    buf.print_styled(
+        1,
+        bottom,
+        &view.help,
+        ctx.palette.text_colors_on(dim, black),
+    );
 }
 
 impl Screen<Shuyi> for StoryPreview {
@@ -454,7 +460,7 @@ impl Screen<Shuyi> for StoryPreview {
 ///
 /// The content's problems, or the palette's.
 pub fn ctx() -> Result<Ctx, String> {
-    let loaded = trpg_content::load_with_some_scripts::<&str>(&[]);
+    let loaded = trpg_content::load_with_some_scripts::<&str, &str>(&[]);
     let content = loaded.content.map_err(|e| e.to_string())?;
     let keys = crate::lang_keys::check_ui_text_keys(trpg_content::bundle::install());
     keys.map_err(|e| ContentErrors(e).to_string())?;
@@ -492,7 +498,7 @@ fn look(game: &Shuyi) -> Look<'_> {
 /// web, which has no folders, `folder` is empty and the writer drops their
 /// scenes on the page (ticket 0767).
 pub fn start(title: &'static str, folder: Result<Layer, String>) -> Start<Shuyi> {
-    let start = Start::new(Card::text(title), look, move |setup: Setup| {
+    let start = crate::start::when_files_arrived(Card::text(title), look, move |setup: Setup| {
         let folder = folder?;
         let ctx = setup.ctx(ctx()?);
         game(ctx, folder)

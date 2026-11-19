@@ -9,6 +9,7 @@ use insta::assert_snapshot;
 use trpg_core::{BattleState, Command, Objective, Phase, Pos, SkillId, UnitAction, UnitId};
 
 use super::BattleScreen;
+use super::layout::{ABOVE_HELP_BAR, MAP_VIEW, snap};
 use super::mode::{MenuEntry, Mode};
 use super::testing::{battle_with, quick_units};
 use crate::FrameInput;
@@ -335,7 +336,8 @@ fn the_info_screen_lists_skills_with_markers_costs_and_timed_effects() {
         effects.iter().any(|r| r == "until Player phase"),
         "{effects:?}"
     );
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    // The info screen covers the screen: all of it but the help bar (1290).
+    assert_snapshot!(snap(&buf, &c, ABOVE_HELP_BAR));
 }
 
 #[test]
@@ -359,7 +361,7 @@ fn skill_menu_snapshot() {
     let mut s = knight_menu(&mut c, 20);
     focus_entry(&mut s, &mut c, MenuEntry::Skill);
     step(&mut s, &mut c, &[Action::Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 /// The `Skill` menu in the left-handed layout (0208): the same list and
@@ -371,7 +373,7 @@ fn skill_menu_left_handed_snapshot() {
     let mut s = knight_menu(&mut c, 20);
     focus_entry(&mut s, &mut c, MenuEntry::Skill);
     step(&mut s, &mut c, &[Action::Confirm]);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 /// What the focused line of the `Skill` menu says it does (ticket 0429).
@@ -473,7 +475,7 @@ fn a_skill_with_no_uses_left_is_dimmed_with_the_reason() {
 fn skill_menu_with_no_uses_left_snapshot() {
     let mut c = ctx();
     let s = spent_brace_menu(&mut c);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(snap(&render(&s, &c), &c, MAP_VIEW));
 }
 
 #[test]
@@ -795,4 +797,90 @@ fn every_ally_in_the_shown_reach_gets_the_buff() {
         .collect();
     inspired.sort();
     assert_eq!(inspired, reached);
+}
+
+/// The menu window painted over the map view of `buf`: from its top-left
+/// corner (`┌` with a border right of it and below it) to its bottom-right.
+fn window(buf: &GlyphBuffer) -> crate::glyph_buffer::Rect {
+    let view = super::layout::MAP_VIEW;
+    let at = |x, y| buf.get(x, y).map_or(' ', |c| c.glyph);
+    let (x, y) = (view.y..view.y + view.h)
+        .flat_map(|y| (view.x..view.x + view.w).map(move |x| (x, y)))
+        .find(|&(x, y)| at(x, y) == '┌' && at(x + 1, y) == '─' && at(x, y + 1) == '│')
+        .expect("a window over the map");
+    let right = (x..view.x + view.w).find(|&x| at(x, y) == '┐');
+    let bottom = (y..view.y + view.h).find(|&y| at(x, y) == '└');
+    let (right, bottom) = (right.unwrap(), bottom.unwrap());
+    crate::glyph_buffer::Rect::new(x, y, right - x + 1, bottom - y + 1)
+}
+
+/// With Inspire focused, the Skill list goes beside its reach, not over it
+/// (ticket 0492): no tile of the scene's heal range is under the window.
+#[test]
+fn the_skill_list_keeps_clear_of_the_focused_reach() {
+    let mut c = ctx();
+    let s = lord_skill_focused(&mut c, p(3, 5), "inspire", |_| {});
+    let buf = render(&s, &c);
+    let list = window(&buf);
+    let scene = s.scene(&c);
+    let reach = heal_range(&s, &c);
+    assert_eq!(reach.len(), 12);
+    for tile in reach {
+        let cells = c
+            .game
+            .map_skin
+            .tile_cells(&scene, super::layout::MAP_VIEW, tile)
+            .expect("the reach is in view");
+        assert_eq!(list.intersect(&cells), None, "{tile:?} under {list:?}");
+    }
+    // Just past the reach: one cell right of its right edge, 2 tiles
+    // right of the lord's path end at (4, 5).
+    let end = c
+        .game
+        .map_skin
+        .tile_cells(&scene, super::layout::MAP_VIEW, p(6, 5));
+    assert_eq!(list.x, end.unwrap().x + 2 + 1);
+}
+
+/// A skill with no area leaves the list where every menu goes: one cell
+/// right of the unit's tile.
+#[test]
+fn a_skill_with_no_area_leaves_the_list_beside_the_unit() {
+    let mut c = ctx();
+    let s = lord_skill_focused(&mut c, p(3, 5), "brace", |_| {});
+    let list = window(&render(&s, &c));
+    let scene = s.scene(&c);
+    let unit = c
+        .game
+        .map_skin
+        .tile_cells(&scene, super::layout::MAP_VIEW, p(4, 5));
+    let unit = unit.unwrap();
+    assert_eq!(list.x, unit.x + unit.w + 1);
+}
+
+#[test]
+fn a_skill_aimed_at_a_unit_tops_the_side_panel_with_its_preview() {
+    let mut c = ctx();
+    let state = battle(&c, |units| {
+        units[0].pos = p(6, 2);
+        learn(&c, &mut units[0], "shove");
+    });
+    let mut s = lord_menu(&mut c, state);
+    focus_entry(&mut s, &mut c, MenuEntry::Skill);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    let Mode::List { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    let i = menu.skills().iter().position(|c| c.skill.0 == "shove");
+    focus_line(&mut s, &mut c, i.expect("Shove"));
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::SkillTarget(_)), "{:?}", s.mode());
+    let panel = s.view(&c).panel.expect("the side panel");
+    // Shove, then the line over the help bar too (1286); the raider's
+    // HP line is as ever.
+    let preview = panel.preview.expect("the preview");
+    assert_eq!(preview.title, "Shove");
+    assert!(preview.text.starts_with("Shove on Raider (8 → 7 uses)"));
+    let raider = panel.unit.expect("the raider");
+    assert_eq!(raider.hp_then, None);
 }

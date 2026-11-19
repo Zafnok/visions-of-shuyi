@@ -135,7 +135,7 @@ mod tests {
                 .keys()
                 .all(|id| table.get(id).is_some())
         );
-        let scene = table.get(GUIDE_SCENE).map(Scene::lines).unwrap_or_default();
+        let scene = table.get(GUIDE_SCENE).map_or_default(Scene::lines);
         let expected = guide_scene(&content.lessons, &content.tips);
         assert_eq!(scene, expected.lines());
     }

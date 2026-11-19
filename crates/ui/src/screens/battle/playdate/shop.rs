@@ -87,7 +87,12 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
         let detail = cut(&line.detail, to_usize(inner));
         buf.print(2, DETAIL, &detail, ink.text, ink.inside);
     }
-    pd::centred(ctx, buf, bottom, &cut(&view.help, usize::from(buf.width())));
+    pd::centred(
+        ctx,
+        buf,
+        bottom,
+        &cut(&view.help.plain(), usize::from(buf.width())),
+    );
     if let Some(sell) = &view.selling {
         paint_sell(ctx, sell, buf);
     }

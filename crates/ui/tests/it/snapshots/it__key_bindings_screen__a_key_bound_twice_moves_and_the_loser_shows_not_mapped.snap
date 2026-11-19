@@ -33,7 +33,6 @@ expression: h.snapshot()
   │ On the world map                                                                             ▼  
   └──────────────────────────────────────────────────────────────────────────────────────────────┘  
                                                                                                     
-                            arrows move · f bind · Delete clear · d back                            
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aabbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
@@ -66,7 +65,6 @@ aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 aabdffffffffffffffffdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -76,4 +74,3 @@ e = fg:text_dim bg:panel_bg
 f = fg:panel_border_focus bg:panel_bg
 g = fg:panel_bg bg:panel_border_focus
 h = fg:white bg:panel_bg
-i = fg:text_dim bg:black

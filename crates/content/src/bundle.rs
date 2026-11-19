@@ -46,6 +46,7 @@
 //! chapters.
 use crate::prelude::*;
 
+use alloc::borrow::Cow;
 use alloc::collections::BTreeMap;
 pub use shuyi_assets::bundle::LoadFile;
 
@@ -218,7 +219,7 @@ impl Folder {
         );
         for path in changed.iter().filter(|path| embeds(self.read.name, path)) {
             if let Some(bytes) = watched.bytes(path)
-                && read.bytes(path) != Some(bytes)
+                && read.bytes(path).as_deref() != Some(&*bytes)
             {
                 // Always taken: the game's view is a layer made at run time.
                 let _ = self.read.replace(path, bytes.to_vec());
@@ -460,7 +461,10 @@ pub fn left_out(path: &str) -> bool {
 
 /// Returns the UTF-8 contents of the embedded file at `path` (relative to
 /// `assets/`, `/`-separated), or `None` if it is missing or not valid UTF-8.
-pub fn file(path: &str) -> Option<&'static str> {
+/// Borrowed from a layer that lends its files, owned from one that reads a
+/// file each time it is asked (engine ticket 2262): a loader that keeps
+/// text past its parse copies what it keeps.
+pub fn file(path: &str) -> Option<Cow<'static, str>> {
     install().file(path)
 }
 
@@ -468,14 +472,36 @@ pub fn file(path: &str) -> Option<&'static str> {
 /// the story has a file there too: the entries a data table gains in a
 /// build with the test files (ADR-0057). [`file()`] reads the story's.
 /// `None` without test files, and for a path only one of the two has.
-pub fn test_part(path: &str) -> Option<(String, &'static str)> {
+pub fn test_part(path: &str) -> Option<(String, Cow<'static, str>)> {
     install().test_part(path)
+}
+
+/// Whether every file of the game's bundle can be read now (engine
+/// ADR-0128 §3): always in a build that embeds its files or reads its pack
+/// whole; on the web, once the page has streamed the whole pack in (engine
+/// #509), or its fetch broke. The start waits on it before its load reads
+/// a file (`trpg_ui::start`).
+#[must_use]
+pub fn arrived() -> bool {
+    install().arrived("")
 }
 
 /// Returns the raw bytes of the embedded file at `path` (relative to
 /// `assets/`, `/`-separated), e.g. an image, or `None` if it is missing.
-pub fn bytes(path: &str) -> Option<&'static [u8]> {
+/// Borrowed or owned as [`file()`]'s text is.
+pub fn bytes(path: &str) -> Option<Cow<'static, [u8]>> {
     install().bytes(path)
+}
+
+/// The bytes of the file at `path` where its layer lends them for the
+/// whole run (`Cow::Borrowed`), as the Playdate's one-bit font and pictures
+/// keep them (ADR-0128 §3); `None` for a file missing, or one a layer reads
+/// each time it is asked: nothing is copied or leaked.
+pub fn lent_bytes(path: &str) -> Option<&'static [u8]> {
+    match bytes(path)? {
+        Cow::Borrowed(bytes) => Some(bytes),
+        Cow::Owned(_) => None,
+    }
 }
 
 /// Lists the paths (relative to `assets/`, `/`-separated, sorted) of every
@@ -719,14 +745,84 @@ mod tests {
         assert_eq!(file("data/does_not_exist.ron"), None);
     }
 
+    /// Ticket 1284: `lent_bytes` is a file's bytes where its layer lends
+    /// them, and `None` for a missing file or one a layer reads each time
+    /// it is asked (a pack read file by file), which it never copies.
+    #[test]
+    fn lent_bytes_are_what_a_layer_lends_and_never_a_file_read_on_demand() {
+        use shuyi_assets::pack::{self, Content, InMemory, Index, PackInfo};
+        let atlas = "fonts/atlas.png";
+        let lent = lent_bytes(atlas).unwrap_or_default();
+        assert!(lent.starts_with(b"\x89PNG"));
+        assert_eq!(Some(lent), bytes(atlas).as_deref());
+        assert_eq!(lent_bytes("fonts/nope.png"), None);
+        let info = PackInfo::new("t", None, shuyi_core::ContentHash::default());
+        let files = BTreeMap::from([("a.txt".to_owned(), Content::Raw(b"a".to_vec()))]);
+        let packed: &'static [u8] = pack::write(&info, &files).leak();
+        let index = Index::read(packed, "t").unwrap();
+        let source: &'static InMemory = Box::leak(Box::new(InMemory::new(packed)));
+        let on_demand = leaked(vec![index.into_layer(DISPLAY_ROOT, source)]);
+        reading(on_demand, || {
+            assert_eq!(bytes("a.txt").as_deref(), Some(&b"a"[..]));
+            assert_eq!(lent_bytes("a.txt"), None);
+        });
+    }
+
+    /// Engine #509: on the web the page streams the pack in after the game
+    /// starts. `arrived` is false until its last byte is in, which the
+    /// start waits on before its load reads a file; embedded files have
+    /// arrived at once.
+    #[test]
+    fn arrived_waits_for_the_last_byte_of_a_streamed_pack() {
+        use core::sync::atomic::{AtomicUsize, Ordering};
+        use shuyi_assets::pack::{self, Content, Index, PackInfo, Source, SourceError};
+        /// A pack whose first `got` bytes have arrived.
+        struct Streaming {
+            bytes: &'static [u8],
+            got: AtomicUsize,
+        }
+        impl Source for Streaming {
+            fn read(&self, at: u64, into: &mut [u8]) -> Result<(), SourceError> {
+                let at = usize::try_from(at).unwrap_or(usize::MAX);
+                let end = at.saturating_add(into.len());
+                if end > self.got.load(Ordering::SeqCst) {
+                    return Err(SourceError::NotYet);
+                }
+                into.copy_from_slice(&self.bytes[at..end]);
+                Ok(())
+            }
+            fn arrived(&self, at: u64, len: u64) -> bool {
+                let got = u64::try_from(self.got.load(Ordering::SeqCst)).unwrap_or(u64::MAX);
+                at.saturating_add(len) <= got
+            }
+        }
+        assert!(arrived(), "embedded files are all here");
+        let info = PackInfo::new("t", None, shuyi_core::ContentHash::default());
+        let files = BTreeMap::from([("a.txt".to_owned(), Content::Raw(b"a".to_vec()))]);
+        let packed: &'static [u8] = pack::write(&info, &files).leak();
+        let index = Index::read(packed, "t").unwrap();
+        let source: &'static Streaming = Box::leak(Box::new(Streaming {
+            bytes: packed,
+            got: AtomicUsize::new(packed.len() - 1),
+        }));
+        let streamed = leaked(vec![index.into_layer(DISPLAY_ROOT, source)]);
+        reading(streamed, || {
+            assert!(!arrived());
+            assert_eq!(bytes("a.txt"), None, "missing for now");
+            source.got.store(packed.len(), Ordering::SeqCst);
+            assert!(arrived());
+            assert_eq!(bytes("a.txt").as_deref(), Some(&b"a"[..]));
+        });
+    }
+
     #[test]
     fn reads_binary_file() {
         let png = bytes("fonts/atlas.png").unwrap_or_default();
         assert!(png.starts_with(b"\x89PNG"));
         assert_eq!(bytes("fonts/nope.png"), None);
         assert_eq!(
-            bytes("data/palette.ron").map(<[u8]>::len),
-            file("data/palette.ron").map(str::len)
+            bytes("data/palette.ron").map(|bytes| bytes.len()),
+            file("data/palette.ron").map(|text| text.len())
         );
     }
 
@@ -901,9 +997,9 @@ mod tests {
                 continue;
             }
             if crate::playdate_images::kind_of(path).is_some() {
-                let png = all.bytes(path).and_then(crate::image::png_size);
+                let png = all.bytes(path).and_then(|png| crate::image::png_size(&png));
                 let bits = playdate.bytes(path).unwrap_or_default();
-                let source = shuyi_assets::bitmap::bitmap_sizes(bits).map(|(_, source)| source);
+                let source = shuyi_assets::bitmap::bitmap_sizes(&bits).map(|(_, source)| source);
                 let source = source.map(|(w, h)| (u32::from(w), u32::from(h)));
                 assert_eq!(source, png, "{path}");
             } else {
@@ -930,7 +1026,7 @@ mod tests {
         // rim round its 52 × 31 blocks, 3 pixels each.
         let bitmap = |path| {
             let bytes = playdate.bytes(path).unwrap_or_default();
-            let bitmap = shuyi_assets::bitmap::Bitmap::parse(bytes).ok();
+            let bitmap = shuyi_assets::bitmap::Bitmap::parse(&bytes).ok();
             bitmap.map(|b| (b.width(), b.height(), b.styles(), b.mask().is_some()))
         };
         assert_eq!(
@@ -1026,11 +1122,11 @@ mod tests {
         ];
         assert_eq!(marks, expected);
         let bundle = Bundle::new(read);
-        assert_eq!(bundle.file("data/b.ron"), Some("assets"));
-        assert_eq!(bundle.file("data/c.ron"), Some("disk"));
+        assert_eq!(bundle.file("data/b.ron").as_deref(), Some("assets"));
+        assert_eq!(bundle.file("data/c.ron").as_deref(), Some("disk"));
         assert_eq!(bundle.display_path("data/c.ron"), "assets-test/data/c.ron");
         assert!(folder.replace("data/c.ron", b"saved".to_vec()));
-        assert_eq!(bundle.file("data/c.ron"), Some("saved"));
+        assert_eq!(bundle.file("data/c.ron").as_deref(), Some("saved"));
     }
 
     /// The game reads a folder from disk as a build embeds it, without its
@@ -1058,9 +1154,9 @@ mod tests {
         let changed: Vec<String> = changed.iter().map(|&p| p.to_owned()).collect();
         assets.take(&changed);
         let read = Bundle::new(vec![assets.read]);
-        assert_eq!(read.file("data/a.ron"), Some("new"));
-        assert_eq!(read.file("data/new.ron"), Some("new"));
-        assert_eq!(read.file("README.md"), None);
+        assert_eq!(read.file("data/a.ron").as_deref(), Some("new"));
+        assert_eq!(read.file("data/new.ron").as_deref(), Some("new"));
+        assert_eq!(read.file("README.md").as_deref(), None);
     }
 
     /// The process's folders (the app reads them once, at the start) are
@@ -1078,7 +1174,7 @@ mod tests {
         assert!(watched.replace("data/a.ron", b"new".to_vec()));
         take_changes(&["data/a.ron".to_owned()]);
         let read = Bundle::new(vec![folders[0].read]);
-        assert_eq!(read.file("data/a.ron"), Some("new"));
+        assert_eq!(read.file("data/a.ron").as_deref(), Some("new"));
     }
 
     /// A file of the content replaces `assets/`'s at its path and is shown
@@ -1088,7 +1184,10 @@ mod tests {
         static CONTENT: &[(&str, &[u8])] = &[("data/palette.ron", b"the content's")];
         let content = Layer::table(CONTENT_DISPLAY_ROOT, CONTENT);
         let bundle = Bundle::new(layers_with(Some(content)));
-        assert_eq!(bundle.file("data/palette.ron"), Some("the content's"));
+        assert_eq!(
+            bundle.file("data/palette.ron").as_deref(),
+            Some("the content's")
+        );
         let shown = bundle.display_path("data/palette.ron");
         assert_eq!(shown, "assets-private/content/data/palette.ron");
         assert!(bundle.is_private(&shown));
@@ -1235,7 +1334,7 @@ mod tests {
         use_pack(Layer::table(DISPLAY_ROOT, OTHER));
         let read = Bundle::new(vec![packed_layer()]);
         assert_eq!(read.files_under(""), ["data/x.ron"]);
-        assert_eq!(read.bytes("data/x.ron"), Some(&b"(a: 1)"[..]));
+        assert_eq!(read.bytes("data/x.ron").as_deref(), Some(&b"(a: 1)"[..]));
         assert_eq!(read.display_path("data/x.ron"), "assets/data/x.ron");
     }
 }

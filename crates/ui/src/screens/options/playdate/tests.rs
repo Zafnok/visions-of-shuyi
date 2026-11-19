@@ -52,7 +52,7 @@ fn the_rows_fill_a_window_the_focused_name_a_bar_its_value_between_arrows() {
     // rows are two more than its window holds: the last are below,
     // marked.
     assert!(!shown[0].contains(MORE_ABOVE) && shown[13].contains(MORE_BELOW));
-    assert_eq!(shown[14], screen().view(&c).help);
+    assert_eq!(shown[14], screen().view(&c).help.plain());
     // Scrolled to the end: a blank row before Reset tips.
     let end = drawn(&screen().focused_on(Row::RestoreDefaults.key()), &c);
     let shown = rows(&end);
@@ -92,7 +92,14 @@ fn a_question_and_the_leaving_question_open_in_a_window() {
     let shown = rows(&buf);
     let at = shown
         .iter()
-        .position(|r| r.contains(question.keys.as_deref().unwrap_or_default()))
+        .position(|r| {
+            r.contains(
+                &question
+                    .keys
+                    .as_ref()
+                    .map_or_default(shuyi_ui::text::StyledText::plain),
+            )
+        })
         .unwrap();
     assert!(shown[at + 1].starts_with('╚') || shown[at + 1].contains('╚'));
     assert!(shown[..at].iter().any(|r| r.contains("Restore")));

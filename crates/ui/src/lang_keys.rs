@@ -33,9 +33,9 @@ pub fn check_ui_text_keys(bundle: &Bundle) -> Result<(), Vec<ContentError>> {
         };
         let code = path.split('/').nth(1);
         let text: Option<BTreeMap<String, String>> = if code == Some(english.as_str()) {
-            english_from_source(path, source).ok()
+            english_from_source(path, &source).ok()
         } else {
-            ron::from_str::<Vec<Entry>>(source)
+            ron::from_str::<Vec<Entry>>(&source)
                 .ok()
                 .map(|entries| entries.into_iter().map(|e| (e.key, e.text)).collect())
         };

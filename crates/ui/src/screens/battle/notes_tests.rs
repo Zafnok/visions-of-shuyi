@@ -91,6 +91,17 @@ fn a_battle_decided_at_its_start_skips_the_notes() {
 }
 
 /// Whether the banner on screen is turn 1's `PLAYER PHASE`.
+/// Whether the objective banner (0481) is on screen.
+fn objective_banner(s: &BattleScreen) -> bool {
+    s.banner().map(|b| b.kind) == Some(BannerKind::Objective)
+}
+
+/// Closes the objective banner (0481), which is on screen.
+fn past_objective(s: &mut BattleScreen, c: &mut Ctx) {
+    assert!(objective_banner(s), "{:?}", s.banner());
+    frame(s, c, &[Action::Confirm], 0.0);
+}
+
 fn turn_one_banner(s: &BattleScreen) -> bool {
     s.banner().map(|b| b.kind)
         == Some(BannerKind::Phase {
@@ -111,6 +122,9 @@ fn the_player_phase_banner_follows_the_notes() {
     assert!(s.notes_open());
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
     assert!(!s.notes_open());
+    // Then the objective's banner (0481), until Confirm closes it.
+    frame(&mut s, &mut c, &[], PHASE_BANNER_S * 5.0);
+    past_objective(&mut s, &mut c);
     assert!(turn_one_banner(&s));
     assert!(shows(&s, &c, "PLAYER PHASE"));
     assert!(shows(&s, &c, "Turn 1/3"));
@@ -144,14 +158,15 @@ fn only_confirm_closes_the_notes() {
     }
     assert_eq!(s.cursor().pos, cursor);
     assert!(s.danger().is_none() && !s.auto_end());
-    // Confirm closes the box and does nothing else: the `PLAYER PHASE`
-    // banner is next, and a second Confirm closes that (the cursor is on
-    // the lead: a third selects it).
+    // Confirm closes the box and does nothing else: the objective's banner
+    // is next, then `PLAYER PHASE`, each closed by a Confirm (the cursor
+    // is on the lead: a fourth selects it).
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
     assert!(!s.notes_open());
     assert_eq!(s.mode(), &Mode::default());
     assert!(!shows(&s, &c, c.text(NOTES_TITLE)));
     assert_ne!(s.help(&c), "f close");
+    past_objective(&mut s, &mut c);
     assert!(turn_one_banner(&s));
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
     assert_eq!(s.banner(), None);
@@ -174,9 +189,11 @@ fn a_turn_one_scene_plays_after_the_notes_and_the_banner() {
     assert_eq!(s.queued_scene(), None);
     assert_eq!(frame(&mut s, &mut c, &[], 1.0), "None");
     assert!(s.notes_open());
-    // Closing the notes shows the banner; closing that starts the scene.
+    // Closing the notes shows the banners; closing them starts the scene.
     assert_eq!(frame(&mut s, &mut c, &[Action::Confirm], 0.0), "None");
     assert!(!s.notes_open());
+    assert_eq!(s.queued_scene(), None);
+    past_objective(&mut s, &mut c);
     assert!(turn_one_banner(&s));
     assert_eq!(s.queued_scene(), None);
     let pushed = frame(&mut s, &mut c, &[Action::Confirm], 0.0);
@@ -196,6 +213,8 @@ fn the_start_tip_waits_for_the_notes() {
     // the tip.
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
     assert!(!s.notes_open());
+    assert_eq!(s.shown_tip(), None);
+    past_objective(&mut s, &mut c);
     assert!(turn_one_banner(&s));
     assert_eq!(s.shown_tip(), None);
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
@@ -206,6 +225,7 @@ fn the_start_tip_waits_for_the_notes() {
 #[test]
 fn the_noted_unit_blinks_while_the_notes_are_up() {
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     let mut s = started(&c);
     let lead = UnitId(1);
     assert!(picked_out(&s, &c, BRIGAND));
@@ -222,8 +242,9 @@ fn the_noted_unit_blinks_while_the_notes_are_up() {
     frame(&mut s, &mut c, &[], BLINK_S);
     assert!(!picked_out(&s, &c, BRIGAND));
     assert!(!picked_out(&s, &c, lead));
-    // Closed (and the banner after them): plain, whatever the time.
+    // Closed (and the banners after them): plain, whatever the time.
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
+    past_objective(&mut s, &mut c);
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
     assert_eq!(s.banner(), None);
     assert!(!picked_out(&s, &c, BRIGAND));
@@ -255,8 +276,10 @@ fn a_command_behind_the_notes_waits_for_them() {
     assert!(s.notes_open());
     assert!(s.banner().is_none());
     assert!(s.ai_phase(), "the AI waits too");
-    // Turn 1's banners follow in order: the player's, then the enemy's.
+    // The objective's banner, then turn 1's banners in order: the
+    // player's, then the enemy's.
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
+    past_objective(&mut s, &mut c);
     assert!(turn_one_banner(&s));
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
     let enemy = BannerKind::Phase {
@@ -271,6 +294,7 @@ fn a_command_behind_the_notes_waits_for_them() {
 #[test]
 fn the_scene_highlights_the_noted_unit_as_it_blinks() {
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     let mut s = started(&c);
     assert!(s.notes_open());
     let highlighted = |s: &BattleScreen, c: &Ctx| -> Vec<UnitId> {

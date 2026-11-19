@@ -1,17 +1,17 @@
 ---
 id: "1250"
-title: The bench job becomes a required check
+title: The bench fails on every number over budget again
 type: infra
 milestone: Later
 model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
-blocked_by: ["1247", "1248", "1249", "1251", "1259", "1261"]
+blocked_by: ["0185", "1248", "1285"]
 nick_input: none
 completed:
 ---
 
-# 1250 — The bench job becomes a required check
+# 1250 — The bench fails on every number over budget again
 
 ## Context
 
@@ -22,7 +22,10 @@ budgets: the unit menu's frame (1247), the Playdate's one-bit drawing
 job would fail on every pull request until those land. Meanwhile it
 reports those five as warnings (`KNOWN_OVER` in the job, read by
 `scripts/bench-known-over.sh`) and fails only on a new one or an error,
-and it is left out of `ci-result`, the one required check.
+and it is left out of `ci-result`, the one required check. 0185 makes
+`bench` required and moves that list to `bench/known-over.txt`, read
+by `cargo xtask bench-gate`; this ticket deletes the list once it is
+empty.
 
 ## Nick input
 
@@ -31,11 +34,10 @@ None.
 ## Scope
 
 **In:**
-- Once 1247, 1248, 1249, 1251, 1259 and 1261 (the unit menu's frame) are done and the `bench` job has no warnings
-  on `main`: delete `scripts/bench-known-over.sh` and `KNOWN_OVER`, so
-  the Bench step is `cargo shuyi bench --out dist/bench` again; add
-  `bench` to `ci-result`'s `needs` in `.github/workflows/ci.yml`; and
-  remove the comments that say why it isn't.
+- Once 1248 and 1285 have emptied `bench/known-over.txt` and the
+  `bench` job has no warnings on `main`: delete the file and its
+  known-over handling in `crates/xtask/src/bench_gate.rs`, and the
+  comments about it.
 - Update `docs/targets.md`'s *Over budget* section.
 
 **Out (do not do):**
@@ -44,13 +46,12 @@ None.
 ## Implementation steps
 
 1. Check the latest `bench` run on `main` passes.
-2. Delete the script and `KNOWN_OVER`; add `bench` to `ci-result`'s
-   `needs`; update the comments and the doc.
+2. Delete the list and its handling; update the comments and the doc.
 
 ## Acceptance criteria
 
-- [ ] `ci-result` needs `bench`, and a pull request whose scenario goes
-      over a budget fails `ci-result`.
+- [ ] A pull request whose scenario goes over any budget fails
+      `ci-result`.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

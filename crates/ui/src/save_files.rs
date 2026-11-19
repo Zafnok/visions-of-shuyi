@@ -193,8 +193,7 @@ pub fn export(ctx: &mut Ctx, id: ProfileId, what: Export) -> Result<String, Stor
         .iter()
         .find(|p| p.id == id)
         // check-text: not a data name (the player's own)
-        .map(|p| p.name.clone())
-        .unwrap_or_default();
+        .map_or_default(|p| p.name.clone());
     let file = export_name(&name, id, what);
     offer(ctx, &file, entries);
     Ok(file)

@@ -7,6 +7,8 @@ use super::Tab;
 use crate::prelude::*;
 use crate::screens::battle::view::ShopScreenView;
 use crate::widgets::AskView;
+use shuyi_ui::text::StyledText;
+use trpg_core::CharacterId;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -26,7 +28,7 @@ pub struct PreparationsView {
     /// in the message's place, its keys on the help line.
     pub leave_question: Option<AskView<bool>>,
     /// The help line: what the keys do here.
-    pub help: String,
+    pub help: StyledText,
 }
 
 /// One tab.
@@ -139,6 +141,21 @@ pub struct ItemRowView {
     pub detail: String,
     /// Whether the unit can use it.
     pub usable: bool,
+    /// Who holds it, on a row of another unit's item; `None` on the
+    /// stock's rows.
+    pub holder: Option<HolderView>,
+}
+
+/// The unit holding the item of a swap row.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HolderView {
+    /// Its character; `None` for a generic unit.
+    pub character: Option<CharacterId>,
+    /// Its portrait's id (the lead's by the gender picked); `None` when
+    /// the game has no portrait of it.
+    pub portrait: Option<String>,
+    /// Its letters on the battle map, e.g. `Sc`.
+    pub label: String,
 }
 
 /// The Pack tab.

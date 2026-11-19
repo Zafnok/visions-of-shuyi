@@ -16,11 +16,24 @@ use crate::bundle;
 use crate::enums::RawArmourWeight;
 use crate::error::ContentError;
 use crate::formats::{self, DataTable};
+use crate::lang::text_width;
 use crate::ron_loader::parse_ron;
 use crate::terrain::line_of;
 
 /// Path of the item file inside the asset bundle.
 pub const ITEMS_PATH: &str = "data/items.ron";
+
+/// Cells of a line of the attack forecast's weapon (the PC's column,
+/// `COLUMN_W` of the UI's `battle/glyph/forecast.rs`): a weapon's short
+/// name and its uses after it (`Stl Sword 25`) fit in it.
+pub const WEAPON_LINE_CELLS: usize = 13;
+
+/// The most cells the short name of a weapon of `durability` may take:
+/// its line less a space and its uses at most (the durability's digits).
+pub fn short_name_room(durability: u32) -> usize {
+    let digits = durability.to_string().len();
+    WEAPON_LINE_CELLS.saturating_sub(digits + 1)
+}
 
 const ALL_KINDS: [WeaponKind; 5] = [
     WeaponKind::Sword,
@@ -71,6 +84,9 @@ struct RawKind {
 struct RawWeapon {
     id: String,
     name: String,
+    /// The name shown where `name` doesn't fit (ticket 0498).
+    #[serde(default)]
+    short_name: Option<String>,
     kind: WeaponKind,
     rank: WeaponRank,
     might: StatValue,
@@ -331,6 +347,19 @@ impl Validator<'_> {
                 ),
             );
         }
+        if let Some(short) = &w.short_name {
+            let room = short_name_room(w.durability);
+            if short.trim().is_empty() || text_width(short) > room {
+                self.err_at_item(
+                    &w.id,
+                    format!(
+                        "weapon \"{}\": short_name {short:?} must be 1 to {room} cells \
+                         (the forecast's line, less its uses)",
+                        w.id
+                    ),
+                );
+            }
+        }
         if !w.special && (w.wielder.is_some() || w.passive.is_some()) {
             self.err_at_item(
                 &w.id,
@@ -348,6 +377,7 @@ impl Validator<'_> {
             }),
         });
         let def = WeaponDef {
+            short_name: w.short_name,
             name: w.name,
             kind: w.kind,
             rank: w.rank,

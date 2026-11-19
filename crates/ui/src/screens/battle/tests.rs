@@ -15,6 +15,15 @@ use crate::harness::Harness;
 use crate::map_view::CursorStyle;
 use crate::screen::tests::ctx;
 
+/// `help` with the spaces that line its end-turn hint up (0445) read as
+/// the separator they stand for, so a test can name the hints in order.
+pub(super) fn unpadded(help: &str) -> String {
+    match help.split_once("   ") {
+        Some((start, end)) => format!("{start} · {}", end.trim_start()),
+        None => help.to_owned(),
+    }
+}
+
 pub(super) fn quick() -> BattleScreen {
     BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
 }
@@ -148,41 +157,41 @@ fn help_depends_on_what_is_hovered() {
     let mut s = BattleScreen::new(state);
     // On the lord, ready to act.
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "f select · e info · s next unit · r rewind · d menu · Space end turn"
     );
     // On the archer, who has acted, and on an enemy.
     s.cursor.jump(Pos::new(2, 4));
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "arrows move · e info · s next unit · r rewind · d menu · Space end turn"
     );
     s.cursor.jump(Pos::new(8, 2));
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "arrows move · f range · e info · s next unit · r rewind · d menu · Space end turn"
     );
     // An enemy's range shown: Cancel hides it.
     step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "arrows move · f range · e info · s next unit · r rewind · d hide range · Space end turn"
     );
     step(&mut s, &mut c, &[Action::Cancel]);
     // On an empty tile.
     s.cursor.jump(Pos::new(0, 0));
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "arrows move · f menu · s next unit · r rewind · d menu · Space end turn"
     );
     c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(
-        s.help(&c),
-        "wasd move · j menu · l next unit · u rewind · k menu · Space end turn"
+        unpadded(&s.help(&c)),
+        "w\u{a0}a\u{a0}s\u{a0}d move · j menu · l next unit · u rewind · k menu · Space end turn"
     );
     s.cursor.jump(Pos::new(3, 5));
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "j select · i info · l next unit · u rewind · k menu · Space end turn"
     );
 }
@@ -196,7 +205,7 @@ fn help_shows_not_mapped_for_an_action_with_no_key() {
     c.set_layout_bindings(crate::input::RIGHT_HANDED, keys)
         .unwrap();
     assert_eq!(
-        s.help(&c),
+        unpadded(&s.help(&c)),
         "f select · !\u{a0}not\u{a0}mapped info · s next unit · r rewind · d menu · Space end turn"
     );
 }
@@ -257,6 +266,7 @@ fn cursor_moves_one_tile_per_step_and_stays_on_the_map() {
 #[test]
 fn cursor_pulses_with_frame_time() {
     let mut c = ctx();
+    c.idle_motion = crate::screen::IdleMotion::On;
     let mut s = quick();
     s.update(&mut c, &FrameInput::new(vec![], 0.5, vec![]));
     assert!((s.cursor().brightness() - cursor::BLINK_MIN).abs() < 1e-6);
@@ -439,19 +449,27 @@ fn panel_shows_the_terrain_and_unit_under_the_cursor() {
             heals: None,
         })
     );
+    let unit = shown.unit.unwrap();
     assert_eq!(
-        shown.unit,
-        Some(PanelUnitView {
-            name: "Test Knight".to_owned(),
-            faction: Faction::Player,
-            class_level: "Guard  Lv 1".to_owned(),
-            hp_name: "HP".to_owned(),
-            hp: knight.hp,
-            max: knight.stats.hp,
-            faction_name: "Player".to_owned(),
-        })
+        (
+            unit.name.as_str(),
+            unit.faction,
+            unit.class_level.as_str(),
+            unit.hp_name.as_str(),
+            unit.faction_name.as_str(),
+        ),
+        (
+            "Test Knight",
+            Faction::Player,
+            "Guard  Lv 1",
+            "HP",
+            "Player"
+        )
     );
+    assert_eq!((unit.hp, unit.max), (knight.hp, knight.stats.hp));
     assert_eq!((knight.hp, knight.stats.hp), (9, 20));
+    // Nothing is aimed: no preview, no HP change (1286).
+    assert_eq!((shown.preview, unit.hp_then), (None, None));
     // An enemy: its faction.
     let mut s = s;
     s.cursor.jump(Pos::new(8, 2));
@@ -459,6 +477,99 @@ fn panel_shows_the_terrain_and_unit_under_the_cursor() {
     assert_eq!(
         (enemy.faction, enemy.faction_name.as_str()),
         (Faction::Enemy, "Enemy")
+    );
+}
+
+/// The knight of [`knight_in_forest`] in a Leather Vest (Def +2, Res +2),
+/// with `equipped` in hand.
+fn knight_in_a_vest(equipped: bool) -> BattleScreen {
+    let c = ctx();
+    let state = quick_battle(&c.game.content).unwrap();
+    let mut units = state.units().to_vec();
+    units[1].pos = Pos::new(1, 5);
+    units[1].loadout.armour = Some(trpg_core::ItemId::new("leather_vest"));
+    if !equipped {
+        units[1].loadout.weapons = Default::default();
+        units[1].loadout.equipped = None;
+    }
+    let mut s = BattleScreen::new(battle(&c, state.map().clone(), units));
+    s.cursor.jump(Pos::new(1, 5));
+    s
+}
+
+/// The panel's stats of the unit under the cursor, by name, as numbers.
+fn panel_stats(unit: &PanelUnitView) -> Vec<(String, StatValue)> {
+    unit.stats
+        .iter()
+        .map(|cell| (cell.name.clone(), cell.value.parse().unwrap()))
+        .collect()
+}
+
+#[test]
+fn the_panel_shows_the_stats_unit_info_shows_with_gear() {
+    let c = ctx();
+    for pos in [Pos::new(1, 5), Pos::new(8, 2)] {
+        let mut s = knight_in_a_vest(true);
+        s.cursor.jump(pos);
+        let hovered = s.hovered().unwrap().clone();
+        let shown = panel(&s, &c).unit.unwrap();
+        let info = info::view((&s.state, Words::ENGLISH), &hovered);
+        let mut expected: Vec<_> = info
+            .stats
+            .iter()
+            .map(|st| (st.name.clone(), st.value))
+            .collect();
+        expected.push(("Mov".to_owned(), info.mov));
+        assert_eq!(panel_stats(&shown), expected, "at {pos:?}");
+        // The combat numbers are the stat card's.
+        let n = s.state.stat_card(&hovered).unwrap().numbers;
+        let combat: Vec<_> = shown
+            .combat
+            .iter()
+            .map(|c| (c.name.as_str(), c.value.clone()))
+            .collect();
+        let num = |v: Option<StatValue>| v.unwrap().to_string();
+        assert_eq!(
+            combat,
+            [
+                ("Atk", num(n.atk)),
+                ("Hit", num(n.hit)),
+                ("Crit", num(n.crit)),
+                ("Avo", n.avoid.to_string()),
+                ("AS", n.attack_speed.to_string()),
+            ],
+            "at {pos:?}"
+        );
+        assert!(shown.weapon.is_some(), "at {pos:?}");
+    }
+    // The vest counts: Def and Res +2, on the panel and on unit info.
+    let s = knight_in_a_vest(true);
+    let knight = s.hovered().unwrap().clone();
+    let shown = panel_stats(&panel(&s, &c).unit.unwrap());
+    assert!(
+        shown.contains(&("Def".to_owned(), knight.stats.def + 2)),
+        "{shown:?}"
+    );
+    assert!(
+        shown.contains(&("Res".to_owned(), knight.stats.res + 2)),
+        "{shown:?}"
+    );
+    let info = info::view((&s.state, Words::ENGLISH), &knight);
+    let def = info.stats.iter().find(|st| st.name == "Def").unwrap();
+    assert_eq!((def.value, def.changed), (knight.stats.def + 2, false));
+}
+
+#[test]
+fn a_unit_with_nothing_in_hand_shows_dashes_for_its_attack() {
+    let c = ctx();
+    let shown = panel(&knight_in_a_vest(false), &c).unit.unwrap();
+    assert_eq!(shown.weapon, None);
+    assert_eq!(shown.no_weapon, "--");
+    let values: Vec<_> = shown.combat.iter().map(|c| c.value.as_str()).collect();
+    assert_eq!(&values[..3], ["--", "--", "--"]);
+    assert!(
+        values[3..].iter().all(|v| v.parse::<StatValue>().is_ok()),
+        "{values:?}"
     );
 }
 
@@ -487,7 +598,11 @@ fn panel_shows_healing_terrain_and_whole_names() {
 #[test]
 fn hover_unit_on_forest_snapshot() {
     let c = ctx();
-    assert_snapshot!(render(&knight_in_forest(), &c).to_snapshot(&c.palette));
+    assert_snapshot!(layout::snap(
+        &render(&knight_in_forest(), &c),
+        &c,
+        layout::SIDE_PANEL
+    ));
 }
 
 /// Hovering an empty plain: terrain only.
@@ -499,7 +614,7 @@ fn hover_empty_plain_snapshot() {
     let shown = panel(&s, &c);
     assert_eq!(shown.terrain.map(|t| t.name).as_deref(), Some("Plain"));
     assert_eq!(shown.unit, None);
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(layout::snap(&render(&s, &c), &c, layout::SIDE_PANEL));
 }
 
 #[test]
@@ -565,7 +680,7 @@ fn large_map_scrolled_to_bottom_right_snapshot() {
     assert_eq!(scene.size, (35, 30));
     assert_eq!(scene.offset(corner), Some((34, 29)));
     assert_eq!(scene.unit_at(corner).map(|u| u.id), Some(cornered));
-    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+    assert_snapshot!(layout::snap(&render(&s, &c), &c, layout::MAP_VIEW));
 }
 
 /// One frame of `dt` seconds with `actions`, Confirm held if `held`.
@@ -793,7 +908,10 @@ fn help_follows_the_mode() {
     frame(&mut s, &mut c, &[], 1.0, false);
     assert_eq!(s.help(&c), "arrows choose · f confirm · d back");
     c.use_layout(crate::input::LEFT_HANDED);
-    assert_eq!(s.help(&c), "wasd choose · j confirm · k back");
+    assert_eq!(
+        s.help(&c),
+        "w\u{a0}a\u{a0}s\u{a0}d choose · j confirm · k back"
+    );
 }
 
 #[test]
