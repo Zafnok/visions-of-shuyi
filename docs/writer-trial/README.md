@@ -50,13 +50,14 @@ every `@choice`, `@if` and `@scene` needs its closing line. 0768 puts the
 editor colors and indenting in the packet; until its folder
 (`tools/vscode-dlg/`) is there, `trial-packet` refuses to make a packet.
 
-**Two more before the first packet** (from the test audit, 2026-11-19):
+**Two more before the first packet** (from the test audit, 2026-11-19; each
+under a day, no decision needed). `dist/trial/before-sending.md` is the short
+list to play through once both are in:
 
-- **0775**: the demo and the web preview are pushed together, by hand, from one
-  commit. Until it lands, Story kit republishes the preview by itself every
-  night while the demo moves only when you run the Demo workflow, so
-  applicants would get a new preview mid-trial, built from a different
-  commit than the demo.
+- **0778**: the web preview is pushed to itch.io only by hand. Until it
+  lands, Story kit republishes the preview by itself every night, so
+  applicants would get a new preview mid-trial. After it, push both pages
+  the same day: Actions → Demo, then Actions → Story kit, both by hand.
 - **1303**: unnamed enemies show the soldier face in unit info. Until it
   lands, every Red Company enemy but Harl shows a `portrait` placeholder box.
 
