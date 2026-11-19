@@ -498,7 +498,7 @@ fn look(game: &Shuyi) -> Look<'_> {
 /// web, which has no folders, `folder` is empty and the writer drops their
 /// scenes on the page (ticket 0767).
 pub fn start(title: &'static str, folder: Result<Layer, String>) -> Start<Shuyi> {
-    let start = Start::new(Card::text(title), look, move |setup: Setup| {
+    let start = crate::start::when_files_arrived(Card::text(title), look, move |setup: Setup| {
         let folder = folder?;
         let ctx = setup.ctx(ctx()?);
         game(ctx, folder)

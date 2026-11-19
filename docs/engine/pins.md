@@ -468,3 +468,12 @@ Nothing for the game: 13 PRs (#401, #403, #414, #480, #483, #484, #488, #489, #4
 | #507 | 0923 | The Options panel may rise to the screen's top row (`api: none`, in `shuyi-ui`'s Options skin) | fixed: nothing to change (the game's Options rows fit below row 1 today, so its panel and snapshots are unchanged; 0923's new row is what needs the room); adopt → 0923 |
 
 Nothing for the game: 0 PRs.
+
+## 2026-11-19: c0da2ec7 → d10d1950 (3 engine PRs), #770
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #509 | 3318 | The web page fetches the `.wasm` beside the pack and streams the pack into the game in the order it was baked; `pack_beside_program` returns `OpenedPack`; `Bundle::arrived` and `Bake::first` answer for a file too | fixed: `OpenedPack::into_layer` compiles unchanged in `crates/app` and `crates/story-preview`; keeps the game's rule that its load reads every file at once: the game's start and the story preview's wait behind the card until the whole pack has arrived (`trpg_ui::start::when_files_arrived` over `Start::in_steps`, `Progress::Wait` until `trpg_content::bundle::arrived()`), as the page used to before it started the game; the rest (pack plugin version 2, the `.wasm` preloaded, `Index::read`'s span check) is the engine's web page and reader, which the game takes (`scripts/check-release-package.sh` names `pack-file.js`, still shipped); adopt → 1298 (lays the title's folders first and waits only for them; its pin step struck, `engine#3318` out of its `blocked_by`) |
+| #510 | 3225 | The options glyph skin's rows scroll when they don't fit above the message (`api: none`, in `shuyi-ui`'s Options skin) | fixed: nothing to change (the game's public build's Options rows fit, so its panel and snapshots are unchanged); unblocks 1301 (its engine step and pin step struck: the picture build's two more rows now scroll) |
+
+Nothing for the game: 1 PR (#508, the engine's book and its playground Codespace, which the game doesn't build).

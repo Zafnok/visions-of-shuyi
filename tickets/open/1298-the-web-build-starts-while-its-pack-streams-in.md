@@ -6,7 +6,7 @@ milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["engine#3318"]
+blocked_by: []
 nick_input: none
 completed:
 ---
@@ -45,8 +45,12 @@ None.
 ## Scope
 
 **In:**
-- Move the pin past engine 3318 (first step), or wait for the open
-  `engine-pin` PR that does.
+- ~~Move the pin past engine 3318 (first step), or wait for the open
+  `engine-pin` PR that does.~~ Done by the pin move of 2026-11-19
+  (engine #509), which also made the start wait for the whole pack
+  before its load reads a file (`trpg_ui::start::when_files_arrived`,
+  `trpg_content::bundle::arrived`): the behavior of a whole pack, kept.
+  This ticket narrows that wait to the folders the title reads.
 - Measure first, on the release web build (`cargo shuyi web --release`
   is CI's: use the `export` job's package): time to the loading card and
   to the title, with the pack whole and streamed, at the engine's
@@ -69,14 +73,15 @@ start's wait), 80 of tests.
 
 ## Implementation steps
 
-1. Move the pin past engine 3318 (`engine-pin` skill) if no open pin PR
-   has.
+1. ~~Move the pin past engine 3318 (`engine-pin` skill) if no open pin PR
+   has.~~ Done by the pin move of 2026-11-19.
 2. Measure the release web build as it is (whole pack).
 3. List the folders the start and the title read (`crates/content`'s
    loaders at start, `crates/ui`'s title); name them with `Bake::first`
    in `pack_bake`, the order the start reads them.
 4. In the packed start, wait on `Bundle::arrived` for those folders with
-   `Progress::Wait`; check a later folder (a chapter's) before its first
+   `Progress::Wait` (in place of `when_files_arrived`'s wait on the whole
+   bundle, `arrived("")`); check a later folder (a chapter's) before its first
    read.
 5. Measure again; record both in the completion notes and
    `docs/targets.md`.

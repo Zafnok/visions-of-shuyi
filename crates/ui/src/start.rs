@@ -8,7 +8,7 @@
 //! after a crash says so on the title (ticket 1245).
 
 use crate::prelude::*;
-use shuyi_platform::{Card, Look, Setup, Start};
+use shuyi_platform::{Card, Look, Progress, Setup, Start};
 use trpg_core::LeadGender;
 
 use crate::console::{ConsoleSizes, ConsoleSpec};
@@ -36,7 +36,7 @@ pub enum Startup {
 /// load, on the scene `startup` asks for (the command line's; an error is
 /// the load's).
 pub fn start(title: &'static str, startup: Result<Startup, String>) -> Start<Shuyi> {
-    Start::new(Card::text(title), look, move |setup| load(setup, startup))
+    when_files_arrived(Card::text(title), look, move |setup| load(setup, startup))
         .state_hash(Game::state_hash)
         .crash_record(crash_record)
         .on_system(crate::save_files::hear)
@@ -74,4 +74,31 @@ fn load(setup: Setup, startup: Result<Startup, String>) -> Result<Game, String> 
     };
     // Its palettes and scenes reload as their files change (ticket 1209).
     HotContent::install(game)
+}
+
+/// A start that shows `card` and runs `load` once every file of the game's
+/// bundle can be read ([`trpg_content::bundle::arrived`]): at once in a
+/// build that embeds its files or reads its pack whole; on the web, a frame
+/// at a time behind the card while the page streams the pack in (engine
+/// #509), so the load reads every file as it did when the page fetched the
+/// whole pack before the game started. Laying the title's files first and
+/// starting on them is ticket 1298.
+pub(crate) fn when_files_arrived(
+    card: Card,
+    look: fn(&Shuyi) -> Look<'_>,
+    load: impl FnOnce(Setup) -> Result<Game, String> + 'static,
+) -> Start<Shuyi> {
+    Start::in_steps(card, look, move |setup| {
+        let mut load = Some((load, setup));
+        move || {
+            if !trpg_content::bundle::arrived() {
+                return Progress::Wait;
+            }
+            // The platform calls no step after `Done`, so it's taken once.
+            let Some((load, setup)) = load.take() else {
+                return Progress::Wait;
+            };
+            Progress::done(load(setup))
+        }
+    })
 }
