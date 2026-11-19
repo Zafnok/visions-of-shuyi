@@ -203,11 +203,8 @@ pub fn ember(i: u64, millis: u32, frame: (u32, u32)) -> Option<Ember> {
     let start = sx + (unit(rise, 0) * 2.0 - 1.0) * EMBER_SPREAD;
     let drift = (unit(rise, 16) * 2.0 - 1.0) * EMBER_DRIFT * age;
     let sway = 0.8 * ((age * 2.0 + unit(rise, 32)) * TAU).sin() * age;
-    let brightness = if age < EMBER_GLOW {
-        1.0
-    } else {
-        1.0 - (age - EMBER_GLOW) * 1.8
-    };
+    // Whole until EMBER_GLOW of the rise, then fading.
+    let brightness = 1.0 - (age - EMBER_GLOW).max(0.0) * 1.8;
     #[allow(clippy::cast_possible_truncation)] // a cell on the console
     let (x, y) = (
         (start + drift + sway).round() as i32,
@@ -670,6 +667,21 @@ mod tests {
             ember(25, 3_600_000, FIRE),
         ];
         assert_eq!(now, EMBER_PINS);
+    }
+
+    /// Three embers' paths through two seconds, a tenth of a second
+    /// apart, as (column, row), pinned from the first run: their sway is
+    /// less than a cell, so only whole paths show it.
+    #[test]
+    fn embers_sway_on_their_way_up() {
+        let paths: Vec<Vec<(i32, i32)>> = [2, 9, 17]
+            .map(|i| {
+                (0..20)
+                    .filter_map(|k| ember(i, k * 100, FIRE).map(|e| (e.x, e.y)))
+                    .collect()
+            })
+            .to_vec();
+        assert_eq!(paths, EMBER_PATHS);
     }
 
     #[test]
@@ -1294,6 +1306,68 @@ mod tests {
         }
         assert_eq!(band, 3 * (5 + 2 * (5 + 11 + 2)));
     }
+
+    const EMBER_PATHS: [&[(i32, i32)]; 3] = [
+        &[
+            (11, 24),
+            (11, 23),
+            (11, 23),
+            (11, 22),
+            (10, 21),
+            (10, 20),
+            (9, 20),
+            (9, 19),
+            (13, 25),
+            (13, 25),
+            (12, 24),
+            (12, 23),
+            (12, 22),
+            (12, 21),
+            (12, 21),
+            (12, 20),
+            (12, 19),
+            (11, 18),
+        ],
+        &[
+            (11, 22),
+            (11, 21),
+            (11, 20),
+            (11, 19),
+            (11, 19),
+            (12, 18),
+            (12, 17),
+            (12, 16),
+            (11, 15),
+            (11, 15),
+            (10, 26),
+            (11, 25),
+            (11, 24),
+            (11, 23),
+            (11, 22),
+            (11, 22),
+            (11, 21),
+            (11, 20),
+        ],
+        &[
+            (11, 22),
+            (11, 21),
+            (11, 20),
+            (10, 19),
+            (10, 18),
+            (12, 25),
+            (12, 24),
+            (12, 24),
+            (13, 23),
+            (12, 22),
+            (12, 21),
+            (12, 20),
+            (13, 20),
+            (13, 19),
+            (13, 18),
+            (10, 25),
+            (10, 25),
+        ],
+    ];
 
     const FLICKER_PINS: [u8; 5] = [230, 250, 250, 235, 224];
 
