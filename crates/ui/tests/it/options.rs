@@ -965,3 +965,88 @@ fn only_kept_changes_are_there_after_a_restart() {
     let h = relaunch(h);
     assert_eq!(settings(&h).text_speed, TextSpeed::Fast);
 }
+
+/// Options from the Quick Battle's map menu in a build with the
+/// pictures: every row the PC shows (Map look and Map zoom, Game mode and
+/// Tutorial).
+fn options_in_battle_with_pictures() -> Harness {
+    let mut h = launch_with_pictures(None);
+    h.keys("Down f Left f f f d Down Down Down f");
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
+    h
+}
+
+/// The screen's text rows above the help line (row 31), and the help line.
+fn screen_lines(h: &Harness) -> (Vec<String>, String) {
+    let mut lines: Vec<String> = h.snapshot_whole().lines().map(str::to_owned).collect();
+    let help = lines.get(31).cloned().unwrap_or_default();
+    lines.truncate(31);
+    (lines, help)
+}
+
+/// Ticket 1301: with the pictures' rows the list outgrows the screen; it
+/// scrolls, and the focused row is always on it, all the way down and
+/// round again.
+#[test]
+fn with_pictures_the_focused_row_is_always_on_screen() {
+    let mut h = options_in_battle_with_pictures();
+    let view = h
+        .game()
+        .screen::<OptionsScreen>()
+        .unwrap()
+        .view(h.game().ctx());
+    assert!(view.row(Row::MapLook).is_some() && view.row(Row::MapZoom).is_some());
+    assert!(view.row(Row::GameMode).is_some() && view.row(Row::Tutorial).is_some());
+    let count = view.rows.len();
+    let mut scrolled = false;
+    for _ in 0..=count {
+        let view = h
+            .game()
+            .screen::<OptionsScreen>()
+            .unwrap()
+            .view(h.game().ctx());
+        // The start of its label: a focused value's arrow may cover the
+        // last letter of a long one.
+        let label: String = view
+            .focused()
+            .map_or_default(|r| r.label.chars().take(20).collect());
+        let (lines, help) = screen_lines(&h);
+        assert!(
+            lines.iter().any(|l| l.contains(&label)),
+            "{label} not shown:
+{}",
+            lines.join(
+                "
+"
+            )
+        );
+        assert!(help.contains("back"), "{help}");
+        scrolled |= lines.iter().any(|l| l.contains('▲'));
+        h.keys("Down");
+    }
+    assert!(scrolled, "the list never scrolled");
+}
+
+/// Ticket 1301: with the pictures' rows, a message still shows under the
+/// panel, and the help line is clear: the game mode's in a battle, and
+/// Reset tips'.
+#[test]
+fn with_pictures_the_messages_show_above_the_help_line() {
+    let mut h = options_in_battle_with_pictures();
+    // Game mode is four rows up from the first.
+    h.keys("Up Up Up Up f");
+    let (lines, help) = screen_lines(&h);
+    let message = "The game mode can be changed at Preparations, before a battle";
+    assert!(lines.iter().any(|l| l.contains(message)), "{lines:#?}");
+    assert!(help.contains("back"), "{help}");
+    assert!(lines.iter().any(|l| l.contains("Game mode")));
+
+    // Reset tips is two rows up from the first.
+    h.keys("Down Down f f");
+    let (lines, help) = screen_lines(&h);
+    assert!(
+        lines.iter().any(|l| l.contains("Tips will show again")),
+        "{lines:#?}"
+    );
+    assert!(help.contains("back"), "{help}");
+}
