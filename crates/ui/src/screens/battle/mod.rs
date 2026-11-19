@@ -2598,11 +2598,7 @@ impl BattleScreen {
             }
             _ => None,
         };
-        self.ranges_shown = match (from, self.ranges_shown) {
-            (Some(from), Some(kept)) if kept.from == from => Some(kept),
-            (Some(from), _) => Some(RangesShown::new(from, clock_ms(ctx))),
-            (None, _) => None,
-        };
+        self.ranges_shown = ranges_opened(from, self.ranges_shown, clock_ms(ctx));
     }
 
     /// Lays an escape map's exit area on `scene` (always), the danger zone
@@ -3078,6 +3074,18 @@ fn clock_ms(ctx: &Ctx) -> u64 {
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     let ms = (loop_clock_s(ctx).max(0.0) * 1000.0) as u64;
     ms
+}
+
+/// Where and when the ranges opened, now that they would spread `from`
+/// (a selected unit's tile; `None` with none) at `now_ms`: what was
+/// `kept` while they still spread from the same tile, opened now from a
+/// new one, none without (ticket 0923).
+fn ranges_opened(from: Option<Pos>, kept: Option<RangesShown>, now_ms: u64) -> Option<RangesShown> {
+    match (from, kept) {
+        (Some(from), Some(kept)) if kept.from == from => Some(kept),
+        (Some(from), _) => Some(RangesShown::new(from, now_ms)),
+        (None, _) => None,
+    }
 }
 
 /// A view of `size` tiles from `origin` showing `state`'s terrain (and
@@ -3759,3 +3767,23 @@ mod zoom_tests;
 mod tests;
 #[cfg(test)]
 mod view_tests;
+
+#[cfg(test)]
+mod ranges_opened_tests {
+    use trpg_core::Pos;
+
+    use super::{RangesShown, ranges_opened};
+
+    /// Ticket 0923: the ranges open when a unit is selected, stay opened
+    /// while it is, open again from another unit's tile, and close.
+    #[test]
+    fn the_ranges_open_on_each_new_tile_and_close_with_none() {
+        let (a, b) = (Pos::new(3, 5), Pos::new(4, 5));
+        let opened = ranges_opened(Some(a), None, 100);
+        assert_eq!(opened, Some(RangesShown::new(a, 100)));
+        assert_eq!(ranges_opened(Some(a), opened, 900), opened);
+        let other = ranges_opened(Some(b), opened, 900);
+        assert_eq!(other, Some(RangesShown::new(b, 900)));
+        assert_eq!(ranges_opened(None, other, 950), None);
+    }
+}
