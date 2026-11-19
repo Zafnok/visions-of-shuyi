@@ -175,3 +175,71 @@ fn a_fired_scene_is_kept_until_it_plays() {
     assert!(pushed);
     assert!(line.iter().all(|l| last.contains(l)), "{last:?}");
 }
+
+/// The set is built when due, while the battle stays on top or as it
+/// pushes a scene; never as another screen goes over it, and never when
+/// not due.
+#[test]
+fn the_set_is_built_when_due_on_top_or_pushing_a_scene() {
+    for stays in [false, true] {
+        for scene in [false, true] {
+            for due in [false, true] {
+                let want = due && (stays || scene);
+                let got = BattleScreen::set_due(stays, scene, due);
+                assert_eq!(got, want, "stays {stays}, scene {scene}, due {due}");
+            }
+        }
+    }
+}
+
+/// A scene the battle pushes on its first frame is in the first set,
+/// sent that frame.
+#[test]
+fn a_scene_pushed_on_the_first_frame_is_in_its_first_set() {
+    let mut c = voiced();
+    let (map, units) = quick_units(&c);
+    let (state, events) = BattleState::new(BattleSetup {
+        triggers: vec![Trigger {
+            when: TriggerWhen::TurnStart {
+                turn: 1,
+                phase: Phase::Player,
+            },
+            scene: "test_turn_3".into(),
+            once: true,
+        }],
+        ..setup(&c, map, units, Objective::Rout { turn_limit: None })
+    });
+    let mut s = BattleScreen::start(state, &events);
+    s.queue.retain(|q| matches!(q, Queued::Scene(_)));
+    assert_eq!(frame(&mut s, &mut c), "Push(dialogue)");
+    let sets = kept(&mut c);
+    let [set] = sets.as_slice() else {
+        panic!("{sets:?}");
+    };
+    for line in lines_of(&c, "test_turn_3") {
+        assert!(set.contains(&line), "{line} not in {set:?}");
+    }
+}
+
+/// A turn-start scene still to come this turn (turn 1's enemy phase, at
+/// the battle's start) is kept.
+#[test]
+fn a_scene_later_this_turn_is_kept() {
+    let c = voiced();
+    let (map, units) = quick_units(&c);
+    let state = BattleState::new(BattleSetup {
+        triggers: vec![Trigger {
+            when: TriggerWhen::TurnStart {
+                turn: 1,
+                phase: Phase::Enemy,
+            },
+            scene: "test_turn_3".into(),
+            once: true,
+        }],
+        ..setup(&c, map, units, Objective::Rout { turn_limit: None })
+    })
+    .0;
+    assert!(!state.has_fired(0));
+    let lines = BattleScreen::new(state).coming_scene_lines(&c);
+    assert_eq!(lines, lines_of(&c, "test_turn_3"));
+}

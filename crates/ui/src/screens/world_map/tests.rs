@@ -1376,3 +1376,21 @@ fn without_clips_the_map_looks_for_no_lines() {
     press(&mut s, &mut ctx, &[]);
     assert_eq!(s.voices_at, None);
 }
+
+/// Ticket 1296: with clips, the map looks for the battles' lines from
+/// where the army stands, and again once it has moved.
+#[test]
+fn the_map_looks_again_once_the_army_moves() {
+    let (mut ctx, _) = crate::screens::battle::guide_voice::tests::voiced();
+    let mut s = screen(&ctx);
+    press(&mut s, &mut ctx, &[]);
+    assert_eq!(s.voices_at.as_deref(), Some("home"));
+    press(
+        &mut s,
+        &mut ctx,
+        &[Action::CursorRight, Action::CursorRight],
+    );
+    press(&mut s, &mut ctx, &[Action::Confirm]);
+    press(&mut s, &mut ctx, &[]);
+    assert_eq!(s.voices_at.as_deref(), Some("ford"));
+}

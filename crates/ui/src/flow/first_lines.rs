@@ -121,10 +121,8 @@ pub fn world_battle_lines(ctx: &Ctx, campaign: &Campaign) -> Vec<LineId> {
     };
     let map = &def.map;
     let mut ends: Vec<&str> = vec![world.at.as_str()];
+    // A place not open, or the army's own, has no route of its own.
     for node in &map.nodes {
-        if node.id == world.at || !map.is_open(&node.id, campaign) {
-            continue;
-        }
         if let Some(end) = map
             .route(&world.at, &node.id, campaign)
             .and_then(|r| r.last().cloned())

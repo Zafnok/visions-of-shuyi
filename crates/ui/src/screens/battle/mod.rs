@@ -1177,6 +1177,15 @@ impl BattleScreen {
         lines
     }
 
+    /// Whether this frame builds the set of lines kept loaded: when `due`
+    /// ([`GuideVoice::keep_due`]) and the battle `stays` on top, or the
+    /// screen going over it is a scene it plays (`pushing_scene`), whose
+    /// lines must stay in the set (1296). Any other screen over it leaves
+    /// the set as it was until the battle is back on top.
+    fn set_due(stays: bool, pushing_scene: bool, due: bool) -> bool {
+        (stays || pushing_scene) && due
+    }
+
     /// The lines kept loaded for what the battle may still say, each once:
     /// `pushed` (the scene it plays now), the coming scenes' first lines
     /// and the guide's (1296).
@@ -3291,9 +3300,9 @@ impl Screen<Shuyi> for BattleScreen {
         // a scene it plays now, whose lines stay in it (1296); the set is
         // sent anew once back on top.
         let pushed = core::mem::take(&mut self.pushed_lines);
-        let coming = ((stays || !pushed.is_empty())
-            && self.guide_voice.keep_due(line.as_ref(), ctx))
-        .then(|| self.coming_voice_lines(pushed, ctx));
+        let due = self.guide_voice.keep_due(line.as_ref(), ctx);
+        let coming = Self::set_due(stays, !pushed.is_empty(), due)
+            .then(|| self.coming_voice_lines(pushed, ctx));
         self.guide_voice.show(line, coming, ctx);
         self.leaving(transition, ctx)
     }
