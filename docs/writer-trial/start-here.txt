@@ -12,16 +12,18 @@ Questions while you work: on Discord, where you applied.
 2. Play Chapter 1 as a player does, in your browser:
    {demo}
    password: {demo-password}
-   It's played with the keyboard only. Click the game, press any key and
-   pick a layout (right- or left-handed); the line at the bottom of the
-   screen then names the keys.
+   Use a computer: it's played with the keyboard only. Click the game,
+   press any key and pick a layout (right- or left-handed); the line at
+   the bottom of the screen then names the keys. The Fullscreen button
+   under the game makes the text bigger. To keep a battle when you stop,
+   Suspend it from the map menu first: a reload loses it.
 3. See your script in the game's own text box, in your browser:
    {preview}
    password: {preview-password}
    Drag dialogue/ch01.dlg from this folder onto the game itself. Edit
    the file, save, and drag it onto the game again to see the change.
-   Keep the name ch01.dlg: a file with another name plays beside the
-   first instead of replacing it. brief.md says which editor to use
+   Keep the name ch01.dlg: a file with another name (ch01 (1).dlg, from a
+   download) plays beside the first instead of replacing it. brief.md says which editor to use
    (VS Code, with the vscode-dlg folder, is the easiest).
    The page keeps nothing: a reload or an update to the page (it can
    change any night) clears it. Your file on your computer is the only

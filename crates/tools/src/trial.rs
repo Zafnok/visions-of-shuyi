@@ -297,14 +297,45 @@ pub fn problems(script: &str) -> Vec<String> {
 /// The files of one packet, by their path in it.
 pub type Files = BTreeMap<String, Vec<u8>>;
 
-/// Writes `zip_path`: `files`, under the folder `root`.
+/// The calendar date and time (UTC) `secs` seconds after 1970, as a zip
+/// entry's date: without one, every file in a packet shows 1 January 1980.
+pub fn zip_time(secs: u64) -> zip::DateTime {
+    let days = i64::try_from(secs / 86_400).unwrap_or(0);
+    let rest = secs % 86_400;
+    // Howard Hinnant's days-to-civil.
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let day = doy - (153 * mp + 2) / 5 + 1;
+    let month = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = yoe + era * 400 + i64::from(month <= 2);
+    let part = |n: i64| u8::try_from(n).unwrap_or(1);
+    let clock = |n: u64| u8::try_from(n).unwrap_or(0);
+    zip::DateTime::from_date_and_time(
+        u16::try_from(year).unwrap_or(1980),
+        part(month),
+        part(day),
+        clock(rest / 3_600),
+        clock(rest / 60 % 60),
+        clock(rest % 60),
+    )
+    .unwrap_or_default()
+}
+
+/// Writes `zip_path`: `files`, under the folder `root`, each dated today.
 pub fn write_packet(files: &Files, root: &str, zip_path: &Path) -> Result<(), String> {
     if let Some(parent) = zip_path.parent() {
         fs::create_dir_all(parent).map_err(|e| format!("{}: {e}", parent.display()))?;
     }
     let out = fs::File::create(zip_path).map_err(|e| format!("{}: {e}", zip_path.display()))?;
     let mut zip = zip::ZipWriter::new(out);
-    let options = SimpleFileOptions::default();
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs());
+    let options = SimpleFileOptions::default().last_modified_time(zip_time(now));
     let err = |e: &dyn std::fmt::Display| format!("{}: {e}", zip_path.display());
     for (name, bytes) in files {
         zip.start_file(format!("{root}/{name}"), options)
@@ -1118,6 +1149,19 @@ mod tests {
             zip_text(&out, "trial-test/START-HERE.txt"),
             "Packet for test. Preview: https://preview\n"
         );
+        let mut zip = zip::ZipArchive::new(fs::File::open(&out).unwrap()).unwrap();
+        let dated = zip.by_index(0).unwrap().last_modified().unwrap();
+        assert!(dated.year() >= 2026, "dated today, not 1980");
+    }
+
+    #[test]
+    fn a_zip_date_is_the_calendar_date() {
+        // 2026-11-19 14:05:09 UTC.
+        let t = zip_time(1_795_097_109);
+        assert_eq!((t.year(), t.month(), t.day()), (2026, 11, 19));
+        assert_eq!((t.hour(), t.minute(), t.second() / 2 * 2), (14, 5, 8));
+        let leap = zip_time(1_709_164_800); // 2024-02-29
+        assert_eq!((leap.year(), leap.month(), leap.day()), (2024, 2, 29));
     }
 
     /// The real script, when the private checkout is here (CI's jobs that

@@ -65,10 +65,17 @@ two scenes that sing beat five that are merely fine.
 
 ## How to see it
 
-The demo and the preview run in your browser: nothing to install. They
-are played with the **keyboard** only. The first key you press
-asks you to pick a layout (right- or left-handed); after that, the line
-at the bottom of the screen names the keys.
+The demo and the preview run in your browser: nothing to install. Use a
+computer, not a phone or tablet: they are played with the **keyboard**
+only. Click the game first, then press any key: the first key asks you to
+pick a layout (right- or left-handed), and after that the line at the
+bottom of the screen names the keys. The **Fullscreen** button under the
+game makes the text bigger.
+
+In the demo, a battle in progress is kept only if you **Suspend** it
+(from the map menu) before you leave. Reloading the page, closing
+the tab, or the browser putting a background tab to sleep loses an
+unsuspended battle.
 
 1. Open the script preview's page (the link and password are in
    `START-HERE.txt`) and drag `dialogue/ch01.dlg` onto the game itself.
@@ -76,8 +83,11 @@ at the bottom of the screen names the keys.
    the music.
 2. Edit `dialogue/ch01.dlg` in a plain-text editor, save, and drag it
    onto the game again. **Keep the name `ch01.dlg`**: a file with another
-   name (`ch01 v2.dlg`) plays beside the first one instead of replacing
-   it, and one that ends in `.txt` isn't read at all. The **Problems** tab
+   name (`ch01 v2.dlg`, or `ch01 (1).dlg` from a browser download) plays
+   beside the first one instead of replacing it, and one that ends in
+   `.txt` is skipped without a message. Save over the same file each time,
+   and rename a copy back to `ch01.dlg` before you drop it. To start
+   clean, reload the page and drop the file again. The **Problems** tab
    lists anything the game couldn't read, with its line. If your change
    doesn't show, look there: a file with a mistake keeps playing its last
    good version.
@@ -86,8 +96,8 @@ at the bottom of the screen names the keys.
 
 **VS Code is the one I recommend.** It's free, for Windows, Mac and Linux
 ([code.visualstudio.com](https://code.visualstudio.com/)). With the
-packet's `vscode-dlg` folder it colors the script (who speaks, narration,
-replies, names) and keeps a reply's reaction lines indented for you: press
+packet's `vscode-dlg` folder it colors the script (who speaks, the
+narration and reply marks, stage lines, names) and keeps a reply's reaction lines indented for you: press
 Enter after a reply line such as `* earnest: We go now.` and the next
 line starts two spaces in; press Enter on one of those indented lines and
 the next one stays two spaces in. That indenting is the easiest thing to
