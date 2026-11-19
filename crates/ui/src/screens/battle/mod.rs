@@ -55,6 +55,7 @@ pub mod playback;
 pub mod playdate;
 pub mod progress;
 pub mod rewind;
+mod scene_voices;
 pub mod shop;
 pub mod skills;
 mod sounds;
@@ -428,8 +429,12 @@ pub struct BattleScreen {
     after_lesson: AfterLesson,
     /// Checklist lessons waiting or open (0456).
     lessons: LessonState,
-    /// The guide's voice for the box on screen (0476).
+    /// The guide's voice for the box on screen (0476), and the lines kept
+    /// loaded with hers: the coming scenes' (1296).
     guide_voice: GuideVoice,
+    /// The first lines of the scene this frame pushes, if it does: still
+    /// kept should her set change as it goes (1296).
+    pushed_lines: Vec<trpg_content::LineId>,
     /// The answer the box at the end of the lessons is on (0465).
     end_focus: usize,
     /// What the units left to act could do, for the lessons (0464): worked
@@ -594,6 +599,7 @@ impl BattleScreen {
             after_lesson: AfterLesson::default(),
             lessons: LessonState::default(),
             guide_voice: GuideVoice::default(),
+            pushed_lines: Vec::new(),
             end_focus: 0,
             doable: Doable::default(),
             noticed: Vec::new(),
@@ -1171,6 +1177,27 @@ impl BattleScreen {
         lines
     }
 
+    /// The lines kept loaded for what the battle may still say, each once:
+    /// `pushed` (the scene it plays now), the coming scenes' first lines
+    /// and the guide's (1296).
+    fn coming_voice_lines(
+        &self,
+        pushed: Vec<trpg_content::LineId>,
+        ctx: &Ctx,
+    ) -> Vec<trpg_content::LineId> {
+        let mut lines = pushed;
+        for line in self
+            .coming_scene_lines(ctx)
+            .into_iter()
+            .chain(self.coming_guide_lines(ctx))
+        {
+            if !lines.contains(&line) {
+                lines.push(line);
+            }
+        }
+        lines
+    }
+
     /// The box of the tip on screen ([`Self::shown_tip`]), if any.
     pub fn tip_view(&self, ctx: &Ctx) -> Option<TipView> {
         if !TipState::shown_in(ctx) {
@@ -1524,7 +1551,11 @@ impl BattleScreen {
         let scene = ctx.game.content.dialogue.get(&cue.id)?;
         let present = Present::Only(cue.present);
         let screen = DialogueScreen::told_overlay(ctx, scene, ctx.game.lead.clone(), &present);
-        screen.has_text().then(|| screen.with_battle(self.place()))
+        if !screen.has_text() {
+            return None;
+        }
+        self.pushed_lines = screen.first_lines();
+        Some(screen.with_battle(self.place()))
     }
 
     /// The battle as it stands, for a scene played over it to show
@@ -3256,10 +3287,13 @@ impl Screen<Shuyi> for BattleScreen {
         self.tips
             .show(stays.then(|| self.shown_tip()).flatten(), ctx);
         let line = stays.then(|| self.guide_line(ctx)).flatten();
-        let coming = self
-            .guide_voice
-            .keep_due(line.as_ref(), ctx)
-            .then(|| self.coming_guide_lines(ctx));
+        // A screen going over the battle keeps the set as it was, but for
+        // a scene it plays now, whose lines stay in it (1296); the set is
+        // sent anew once back on top.
+        let pushed = core::mem::take(&mut self.pushed_lines);
+        let coming = ((stays || !pushed.is_empty())
+            && self.guide_voice.keep_due(line.as_ref(), ctx))
+        .then(|| self.coming_voice_lines(pushed, ctx));
         self.guide_voice.show(line, coming, ctx);
         self.leaving(transition, ctx)
     }
@@ -3695,6 +3729,8 @@ mod rewind_tests;
 
 #[cfg(test)]
 mod scene_tests;
+#[cfg(test)]
+mod scene_voice_tests;
 #[cfg(test)]
 mod settings_tests;
 

@@ -329,12 +329,22 @@ knows it comes next (ticket 1293, `crates/ui/src/flow/first_lines.rs`):
   path's lines, and a scene's lines stay kept until its own screen has
   asked for them. Before a battle it keeps nothing; the battle keeps
   its own set.
+- The battle keeps, beside the guide's lines, the first lines of every
+  scene it may still play over itself (ticket 1296,
+  `screens/battle/scene_voices.rs`): those its triggers fired that wait
+  their turn, and those its triggers may yet fire. A `once` trigger
+  that fired, a turn's that has passed, one for the other mode (a
+  Classic death quote in Casual) and one about a character neither on
+  the map nor among the reinforcements to come drop out the next time
+  the set changes. A scene the battle pushes keeps its lines in the set
+  until it is on screen.
+- The world map keeps the first lines of the intro scene of every
+  battle the army's next move may start (`world_battle_lines`): at its
+  own place, or where one Travel would end as the rules route it. It
+  sends the set on its first frame on top and again once the army moves.
 
-Not covered: a scene with no screen before it whose lines the flow
-couldn't see coming (one a world-map battle opens with: the map doesn't
-know where the army goes; a scene the battle plays over itself; a
-victory scene when a battle has no results to show); ticket 1296 takes
-the battle's scenes and the world map's. A line whose
+Not covered: a victory scene when a battle has no results to show (no
+screen before it). A line whose
 words change with the lead's gender is kept in the clip of the lead
 the title knows (the last one played) until the lead is picked.
 

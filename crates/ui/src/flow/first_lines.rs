@@ -106,6 +106,49 @@ pub fn opening_lines(ctx: &Ctx, start: Start<'_>) -> Vec<LineId> {
     opening_scene(ctx, start).map_or_else(Vec::new, |s| s.first_lines())
 }
 
+/// The first lines of the intro scene of every battle the army of
+/// `campaign`, on a world map, may start with its next move (1296): at its
+/// own place (Enter), or where one Travel ends, as the rules route it
+/// (`WorldMap::route`). `FlowScreen::arrived` plays it the frame the map
+/// pops, so the map keeps them while it is on top.
+pub fn world_battle_lines(ctx: &Ctx, campaign: &Campaign) -> Vec<LineId> {
+    let content = &ctx.game.content;
+    let Some(world) = &campaign.world else {
+        return Vec::new();
+    };
+    let Some(def) = content.worldmaps.get(&world.map) else {
+        return Vec::new();
+    };
+    let map = &def.map;
+    let mut ends: Vec<&str> = vec![world.at.as_str()];
+    for node in &map.nodes {
+        if node.id == world.at || !map.is_open(&node.id, campaign) {
+            continue;
+        }
+        if let Some(end) = map
+            .route(&world.at, &node.id, campaign)
+            .and_then(|r| r.last().cloned())
+            && let Some(node) = map.node(&end)
+            && !ends.contains(&node.id.as_str())
+        {
+            ends.push(node.id.as_str());
+        }
+    }
+    let mut lines = Vec::new();
+    for end in ends {
+        let mut there = campaign.clone();
+        if let Some(w) = &mut there.world {
+            end.clone_into(&mut w.at);
+        }
+        if let Some((_, chapter)) = super::world_fight(ctx, &there)
+            && let Some(scene) = first_told(ctx, Some(&there), &chapter.intro_scenes)
+        {
+            lines.extend(scene.first_lines());
+        }
+    }
+    lines
+}
+
 /// The scene chapter `id` starts with for `campaign`'s army, as
 /// `FlowScreen::start_chapter` plays it: the first of its intro scenes
 /// with anything to say, or of its opening scenes on a world map.

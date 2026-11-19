@@ -54,6 +54,7 @@ pub use view::{ListView, PanelView, PlaceMark, PlaceView, WorldMapView};
 
 use super::camp::music::{CampMusic, FADE_OUT_MS, ask};
 use crate::audio::MenuSound;
+use crate::flow::{self, KeptVoices};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{
@@ -234,6 +235,10 @@ pub struct WorldMapScreen {
     place_cue: Option<String>,
     /// [`Ctx::clock_s`] when the campaign began, for a save's playtime.
     started_at: f64,
+    /// The first lines of the intro scenes of the battles the army's next
+    /// move may start (1296), and the place it stood when they were found.
+    voices: KeptVoices,
+    voices_at: Option<String>,
 }
 
 impl WorldMapScreen {
@@ -254,6 +259,8 @@ impl WorldMapScreen {
             music: None,
             place_cue: None,
             started_at,
+            voices: KeptVoices::default(),
+            voices_at: None,
         }
     }
 
@@ -276,6 +283,18 @@ impl WorldMapScreen {
     fn def<'a>(&self, ctx: &'a Ctx) -> Option<&'a WorldMapDef> {
         let id = &self.campaign.world.as_ref()?.map;
         ctx.game.content.worldmaps.get(id)
+    }
+
+    /// Keeps the intro lines of the battles the army's next move may start
+    /// loaded (1296): on the first frame on top, and once it has moved
+    /// (the rules move it as it sets off).
+    fn keep_voices(&mut self, ctx: &mut Ctx) {
+        let at = self.campaign.world.as_ref().map(|w| &w.at);
+        if self.voices.due(ctx) || (KeptVoices::wanted(ctx) && self.voices_at.as_ref() != at) {
+            self.voices_at = at.cloned();
+            let lines = flow::world_battle_lines(ctx, &self.campaign);
+            self.voices.keep(lines, ctx);
+        }
     }
 
     /// The place the army is at (or passing, on its way).
@@ -976,6 +995,7 @@ impl Screen<Shuyi> for WorldMapScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         self.tick_music(ctx);
+        self.keep_voices(ctx);
         if let Some(t) = self.walk_on(ctx, input) {
             return t;
         }
@@ -1007,6 +1027,7 @@ impl Screen<Shuyi> for WorldMapScreen {
         if let Some(campaign) = result.and_then(ScreenResult::take::<Campaign>) {
             self.campaign = campaign;
         }
+        self.voices.covered();
         self.open = Open::Nothing;
         self.last_step = None;
         self.music = None;

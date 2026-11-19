@@ -251,3 +251,109 @@ fn the_slot_picker_keeps_lines_only_when_it_loads() {
     loading.update(&mut c, &frame());
     assert_eq!(kept(&mut c), [keep(&one[..3])]);
 }
+
+/// The test context with the test world map's battle intro
+/// (`test_wm_intro`, Stone Mill's) one plain line with a clip; its id.
+fn voiced_world() -> (Ctx, LineId) {
+    let mut c = ctx();
+    let lines = plain_scene(&mut c, "test_wm_intro", &["The road east."]);
+    let (line, text) = lines[0].clone();
+    c.set_voice_manifest(&format!(
+        "(clips: [(line: \"{line}\", spoken: \"{text}\", voice: \"v\", made_by: Recorded(actor: \"a\"))])"
+    ));
+    assert_eq!(c.take_warnings(), [] as [String; 0]);
+    assert!(c.has_voice(&line));
+    c.audio.take();
+    (c, line)
+}
+
+/// The test battle's army on the test world map, in Millbrook (`home`),
+/// two roads from Stone Mill (`ford`), its next battle.
+fn on_the_world_map(c: &Ctx) -> Campaign {
+    let content = &c.game.content;
+    let mut campaign = trpg_content::battle_campaign(
+        content,
+        &content.battles["test"],
+        GameMode::Classic,
+        c.game.lead.clone(),
+    );
+    campaign.chapter = "test_wm1".into();
+    campaign.enter_world(&content.worldmaps["test_world"].map);
+    campaign
+}
+
+/// Acceptance (1296): the world map keeps the intro lines of the battles
+/// one move may start (Stone Mill's, two roads away, through open
+/// places); from the battle's own place, its own; with none to start,
+/// none.
+#[test]
+fn the_world_map_keeps_a_reachable_battles_intro_lines() {
+    let (c, line) = voiced_world();
+    let mut campaign = on_the_world_map(&c);
+    assert_eq!(
+        world_battle_lines(&c, &campaign),
+        core::slice::from_ref(&line)
+    );
+    if let Some(w) = &mut campaign.world {
+        w.at = "ford".into();
+    }
+    assert_eq!(world_battle_lines(&c, &campaign), [line]);
+    campaign.world = None;
+    assert_eq!(world_battle_lines(&c, &campaign), [] as [LineId; 0]);
+}
+
+/// Acceptance (1296): from the world map to the battle's intro, through
+/// the game flow: the map keeps the intro's first line, sent again as the
+/// army sets off, and it is in the last set kept before its box asks for
+/// its clip.
+#[test]
+fn a_world_map_battles_intro_line_is_kept_before_its_box_asks_for_it() {
+    use super::super::FlowScreen;
+    use crate::input::Action;
+    use crate::screen::ScreenStack;
+    let (mut c, line) = voiced_world();
+    let mut flow = FlowScreen::empty();
+    let campaign = on_the_world_map(&c);
+    flow.adopt(&mut c, campaign);
+    flow.world_map();
+    let mut stack = ScreenStack::new(Box::new(flow));
+    let frame = |c: &mut Ctx, stack: &mut ScreenStack, actions: &[Action]| {
+        c.clock_s += 0.1;
+        stack.update(c, &FrameInput::new(actions.to_vec(), 0.1, vec![]));
+    };
+    // The flow pushes the map, which keeps its set at once, and once.
+    frame(&mut c, &mut stack, &[]);
+    frame(&mut c, &mut stack, &[]);
+    assert_eq!(stack.top_name(), Some("world_map"));
+    assert_eq!(kept(&mut c), [keep(core::slice::from_ref(&line))]);
+    frame(
+        &mut c,
+        &mut stack,
+        &[Action::CursorRight, Action::CursorRight],
+    );
+    frame(&mut c, &mut stack, &[Action::Confirm]);
+    let mut requests = Vec::new();
+    for _ in 0..100 {
+        if stack.top_name() == Some("dialogue") {
+            break;
+        }
+        frame(&mut c, &mut stack, &[]);
+        requests.extend(c.audio.take());
+    }
+    assert_eq!(stack.top_name(), Some("dialogue"));
+    frame(&mut c, &mut stack, &[]);
+    requests.extend(c.audio.take());
+    let played = requests
+        .iter()
+        .position(|r| matches!(r, AudioRequest::PlayVoice { line: l, .. } if *l == line));
+    let played = played.unwrap_or_else(|| panic!("{line} never asked for: {requests:?}"));
+    let last_kept = requests[..played].iter().rev().find_map(|r| match r {
+        AudioRequest::KeepVoices { lines } => Some(lines),
+        _ => None,
+    });
+    let last_kept = last_kept.unwrap_or_else(|| panic!("nothing kept: {requests:?}"));
+    assert!(
+        last_kept.iter().any(|(l, _)| *l == line),
+        "{line} not in {last_kept:?}"
+    );
+}
