@@ -478,7 +478,7 @@ Nothing for the game: 0 PRs.
 
 Nothing for the game: 1 PR (#508, the engine's book and its playground Codespace, which the game doesn't build).
 
-## 2026-11-19: d10d1950 → 7a7d7b0c (1 engine PR), #PR
+## 2026-11-19: d10d1950 → 7a7d7b0c (1 engine PR), #773
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
