@@ -5,10 +5,10 @@ type: bug
 milestone: M8 Release
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0923"]
 nick_input: none
-completed:
+completed: 2026-11-19
 ---
 
 # 1301 — The PC's Options list scrolls when its rows outgrow the screen
@@ -58,10 +58,10 @@ question for Nick); the Playdate's skin.
 
 ## Acceptance criteria
 
-- [ ] With every PC row shown (pictures on), the message shows under the
+- [x] With every PC row shown (pictures on), the message shows under the
       panel and the help line is clear.
-- [ ] The focused row is always on screen as the cursor moves.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The focused row is always on screen as the cursor moves.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -71,4 +71,22 @@ question for Nick); the Playdate's skin.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- The engine's half (the glyph skin scrolls its rows above the message,
+  with ▲ and ▼ marks, and its unit tests) landed as engine #510 (engine
+  ticket 3225), and the game's pin already passes it (#770). This PR adds
+  only the game's integration tests, in `crates/ui/tests/it/options.rs`,
+  on a launch with the pictures (Map look and Map zoom) in a battle
+  (Game mode and Tutorial too): `with_pictures_the_focused_row_is_always_on_screen`
+  walks every row and round again, the focused row always on screen,
+  the help line whole, and the list scrolls at least once;
+  `with_pictures_the_messages_show_above_the_help_line` shows the game
+  mode's message and Reset tips' with the help line clear.
+- Found: a focused value's `◄` covers the last letter of the longest
+  label ("Voice on hover in the lo◄ On ►"), with or without pictures.
+  Filed as 1302; the walk matches each label's first 20 letters until
+  then.
+- Gates: run locally were fmt, clippy, the workspace's tests, ticket-lint,
+  check-mentions, check-leaks, pr-size and typos; the target builds,
+  check-keys/check-text, doc, deny and machete can't see a test-only
+  change and are left to CI.
+- No gameplay rules decided.
