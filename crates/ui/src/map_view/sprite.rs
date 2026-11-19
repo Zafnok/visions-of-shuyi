@@ -851,11 +851,23 @@ pub(crate) mod tests {
         let scene_fields = [
             "origin", // where the tiles are: every feature moves with it
             "size",   // how many tiles: likewise
-            "more", "tiles", "ranges",
+            "more",
+            "tiles",
+            "ranges",
             // Painted only by a tileset with layers, and one with other
             // looks: `the_ring_and_the_look_are_painted_by_a_tileset_
             // that_has_layers_and_looks`.
-            "rim", "look", "units", "cursor", "path", "threat", "clock_ms",
+            "rim",
+            "look",
+            "units",
+            "cursor",
+            "path",
+            "threat",
+            "clock_ms",
+            // When the ranges opened, for the engine's spreading look
+            // (engine#3224): the game sets none yet and its skins draw the
+            // tint, which shows no spread; 0923 gives it a feature.
+            "ranges_shown",
         ];
         assert_eq!(fields(&format!("{scene:#?}")), scene_fields);
         let TileView {
