@@ -1,0 +1,50 @@
+// The tests' tips (ticket 1304): the five tips the game had before Vix's
+// lessons took their topics over (the start tip, zooming, moving a unit, an
+// enemy in reach, swapping weapons). The tests of the tips' mechanism (when
+// a tip shows, waits, closes, names its keys) use them, as the Harness and
+// the unit tests' context add them to the game's tips; a test of the
+// game's own tips (`with_shipped_story`) doesn't have them. Never in the
+// game.
+(
+    tips: [
+        (
+            id: "battle_start",
+            trigger: FirstBattleStart,
+            title: "Your move",
+            text: "Over to you. Steer the cursor onto one of your units and\npick it up. You can jump straight to whoever can still act,\nand look anyone over to see what you're working with.",
+            how: "Move the cursor: {Cursor}. Pick up a unit: {Select}\nNext unit to act: {NextUnit}. A unit's details: {Info}",
+            face: "neutral",
+        ),
+        (
+            id: "zoom",
+            trigger: ZoomAvailable,
+            title: "Zooming the map",
+            text: "Can't see it all? The view scrolls with your cursor, and\nthe map zooms in or out. Zoom again to switch back.",
+            how: "Zoom the map in or out: {ZoomMap}",
+            face: "sly",
+        ),
+        (
+            id: "unit_selected",
+            trigger: FirstUnitSelected,
+            title: "Moving a unit",
+            text: "Blue is where it can go, red is where it can attack.\nSteer to a blue tile and send it there. Changed your\nmind? You can back out.",
+            how: "Send it to a blue tile: {Select}. Back out: {Cancel}",
+            face: "neutral",
+        ),
+        (
+            id: "enemy_in_range",
+            trigger: FirstEnemyInRange,
+            title: "Enemy in reach",
+            text: "That enemy on a red tile? This unit can reach it this\nturn. Move into range, then pick Attack from the menu.",
+            face: "sly",
+        ),
+        (
+            id: "weapon_swap",
+            trigger: FirstWeaponSwap,
+            title: "Swapping weapons",
+            text: "This unit carries more than one weapon, and you can try\neach of them right here in the forecast. The numbers\nchange to match before you commit to the attack.",
+            how: "Swap weapon: {CursorLeft} {CursorRight}",
+            face: "neutral",
+        ),
+    ],
+)

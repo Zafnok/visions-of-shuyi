@@ -135,13 +135,78 @@ New Game asks the player how familiar they are, with three answers:
   tiles and Combat Arts wait for their first chance, it can come on a
   later turn or in a later battle.
 
-**Basic controls** (Full only):
+**Basic controls** (Full only), in the order turn 1 shows them:
 
-- Moving the cursor: up, down, left, right.
-- Choosing a unit, moving it, and its action menu.
-- Attacking: the forecast, then confirming.
+- Moving the cursor: up, down, left, right. It is the first box of the
+  battle: no tip comes before it (1304, below).
 - The next unit and a unit's details.
-- Ending the turn.
+- Moving a unit: choosing it, sending it to a blue tile, and its action
+  menu. Its line also says what the red tiles are, so an enemy in reach is
+  taught here, before Attacking (1304).
+- Attacking: the forecast, then attacking **or backing out**: either ticks
+  the same item (1304).
+- Swapping weapons: the first forecast that can swap, ticked by swapping.
+- Zooming the map: zoom out and zoom in, each ticked.
+- Ending the turn: on turn 1, once the first unit has acted.
+
+**Turn 1 at Full, after Nick played the demo (1304).** Nick, 2026-11-20,
+playing Chapter 1 as a writer applicant would (his words):
+
+> 1. "I don't know why Vix's tutorials were collapsed they were better
+>    before at least the earlier ones like when it asks to press one key
+>    in each direction and tracks which have and have not been completed
+>    (or I guess this is just a complaint for the very first Vix tip bc
+>    she goes into it right after I think its wholly redundant)"
+> 2. "Vix's attack tutorial doesn't track backing out as credit same as
+>    attack, only attack counts as credit"
+> 3. "Vix's zoom tutorial should force a zoom out and a zoom in"
+> 4. "Vix when describing acronyms like DEF and AVO and EXP should say the
+>    whole word not the shorted"
+> 5. "Vix's moving tutorial should come before the attacking tutorial and
+>    track movement as a checkmark"
+> 6. "enemy in reach tutorial should play probably at same time as
+>    movement tutorial or before attacking or before moving"
+> 7. "swapping weapon vix tutorial should track progress"
+> 8. "Vix's end turn tutorial should play earlier than exhausting all
+>    units since the player might wanna be tactical and not use all units
+>    every turn. Or it shouldn't play at all past turn 1 basically bc you
+>    know player already knows the info."
+
+So:
+
+1. The *Your move* tip that opened the battle is gone: the cursor lesson
+   is the first box.
+2. The Attacking lesson's second item ticks when the forecast closes,
+   whether the player attacks or backs out.
+3. Zooming the map is a lesson (it was a tip): zoom out and zoom in.
+4. What Vix **says** spells stats out (Defense, Avoid, Experience,
+   Movement); the screen's short labels (DEF, AVO, EXP, Mov) stay.
+5. and 6. The *Moving a unit* and *Enemy in reach* tips are folded into
+   the Moving a unit lesson, which comes before Attacking: it ticks
+   selecting, moving (sending it to a blue tile) and the menu, and its
+   line says red tiles are what the unit can hit, an enemy on one in reach.
+   Before, both tips missed their moment under the lessons and only came
+   after Attacking.
+7. Swapping weapons is a lesson (it was a tip), ticked by a swap.
+8. Ending the turn opens on turn 1 back on the map once the first unit
+   has acted, and never after turn 1. Ending the turn early still ticks
+   it.
+
+*Claude's starting rules* (1304), for the Act 1 playtest (1064):
+
+- Point 2 is read as "backing out gets the same credit as attacking": one
+  item, either ticks it (the ticket's draft had two items, both needed).
+- The ending-the-turn lesson steps aside for any other lesson that comes
+  up while it is open (Attacking, Swapping weapons, Zooming), and comes
+  back once that one is done, so it never holds the rest of turn 1's
+  lessons until the turn ends. Not done by the end of turn 1 (it can't
+  be: ending the turn does it), it is put away for good.
+- The zoom lesson opens the first time the player is back on the map
+  with no lesson in play but ending the turn; with glyphs, which don't
+  zoom, it waits until pictures are on, and is put away if the look
+  changes to glyphs while it is open.
+- Swapping weapons opens only if a unit still to act could attack an
+  enemy with two weapons or spells from one tile.
 
 **Different here** (Full and Short; Nick agreed to Claude's list):
 
@@ -182,9 +247,7 @@ for Nick to veto.
   topic with a lesson doesn't also get a tip. *Claude's starting rule.*
 - **Zooming the map** (0466; Nick, playtest round 3: "ensure the guide has a
   tip for zoom on first turn"), at Full, when the map is drawn with pictures.
-  It shows the first time the player is back on the map with no lesson in
-  play: normally turn 1, after the turn-1 lessons. With glyphs it waits until
-  pictures are on. *Claude's starting rule.*
+  A lesson since 1304 (above). *Claude's starting rule.*
 - **Wading** (0483; a friend's Act 1 playtest, passed on by Nick
   2026-11-07: wading is "a bit unintuitive"), at Full, the first time a
   selected unit's move range reaches a river (`water`): a foot or flying
@@ -203,7 +266,7 @@ for Nick to veto.
 - **Swapping weapons** (0463; Nick, playtest round 3: "swapping weapons on
   forecast menu feels quite hidden as a feature [...] the guide should
   probably mention it"; he picked a tip over a line in the Attacking
-  lesson), at Full, the first time a forecast opens where left / right
+  lesson; a lesson of its own since 1304, Nick: "should track progress"), at Full, the first time a forecast opens where left / right
   swap the weapon (the unit has more than one weapon, or a weapon and a
   spell, to attack with there). She says the unit carries more than one
   weapon and each can be tried right in the forecast, the numbers changing
@@ -334,3 +397,4 @@ How the split works (0475):
 - **0466** the zoom tip.
 - **0495** how a tip box is put away, and one at a time.
 - **1292** a tip that misses its moment waits for the next one.
+- **1304** turn 1's lessons in Nick's order, ticking what the player does.

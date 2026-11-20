@@ -131,11 +131,15 @@ impl Harness {
 
     /// Makes New Game start the story as the game ships it
     /// (`data/new_game.ron`), not the test chapter (see [`Harness`]'s
-    /// docs).
+    /// docs), with the game's own tips, not the tests' ([`with_test_tips`]).
     #[must_use]
     pub fn with_shipped_story(mut self) -> Self {
         match trpg_content::load_embedded() {
-            Ok(content) => self.ctx_mut().game.content.new_game = content.new_game,
+            Ok(content) => {
+                let game = &mut self.ctx_mut().game.content;
+                game.new_game = content.new_game;
+                game.tips = content.tips;
+            }
             Err(e) => panic!("embedded content failed to load: {e}"),
         }
         self
@@ -489,9 +493,40 @@ fn embedded_ctx() -> Ctx {
             ctx.game.key_caps = false;
             // New Game plays the small test chapter, not the story.
             ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
+            with_test_tips(&mut ctx.game.content.tips);
             ctx
         }
         Err(e) => panic!("embedded content failed to load: {e}"),
+    }
+}
+
+/// Adds the tests' tips (`harness_tips.ron`, ticket 1304) to `tips`, where
+/// the game had them: the start tip, zooming, moving a unit and an enemy in
+/// reach first, swapping weapons after weapon kinds. The tests of the
+/// tips' mechanism show them; one the game's tips have already is left.
+pub fn with_test_tips(tips: &mut trpg_content::TipTable) {
+    let file = "crates/ui/src/harness_tips.ron";
+    let extra = trpg_content::tip::from_source(file, include_str!("harness_tips.ron"), None);
+    let extra = extra.unwrap_or_else(|e| panic!("{file}: {e:?}")).tips;
+    let mut front = 0;
+    for tip in extra {
+        if tips
+            .tips
+            .iter()
+            .any(|t| t.id == tip.id || t.trigger == tip.trigger)
+        {
+            continue;
+        }
+        let after_kinds = tips.tips.iter().position(|t| t.id == "weapon_kinds");
+        let at = match (tip.id.as_str(), after_kinds) {
+            ("weapon_swap", Some(i)) => i + 1,
+            ("weapon_swap", None) => tips.tips.len(),
+            _ => {
+                front += 1;
+                front - 1
+            }
+        };
+        tips.tips.insert(at, tip);
     }
 }
 

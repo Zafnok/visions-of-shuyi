@@ -8,6 +8,7 @@ use trpg_content::DoneWhen;
 use trpg_core::{BattleState, CastTarget, Faction, Phase, TerrainId, Unit};
 
 use super::art_list::{art_lines, can_attack_with_art, can_use_art};
+use super::attack::aimed_options;
 use super::magic::{knows_spells, spell_choices};
 use super::mode::Selection;
 
@@ -27,6 +28,9 @@ pub struct Doable {
     art_attack: Option<bool>,
     /// Some unit left could aim a spell at a tile from a tile it can reach.
     tile_spell: Option<bool>,
+    /// Some unit left could attack an enemy with more than one weapon or
+    /// spell from one tile, so the forecast swaps them.
+    swap: Option<bool>,
 }
 
 impl Doable {
@@ -34,7 +38,7 @@ impl Doable {
     /// What takes no unit ([`DoneWhen::needs_unit`]) can always be done.
     pub fn can(&mut self, state: &BattleState, done: DoneWhen) -> bool {
         match done {
-            DoneWhen::ForecastOpened | DoneWhen::Attacked => *self
+            DoneWhen::ForecastOpened | DoneWhen::Attacked | DoneWhen::ForecastClosed => *self
                 .attack
                 .get_or_insert_with(|| any_left(state, reaches_enemy)),
             DoneWhen::ArtsOpened => *self.art.get_or_insert_with(|| any_left(state, has_art)),
@@ -44,6 +48,7 @@ impl Doable {
             DoneWhen::TileAimed => *self
                 .tile_spell
                 .get_or_insert_with(|| any_left(state, aims_tile)),
+            DoneWhen::WeaponSwapped => *self.swap.get_or_insert_with(|| any_left(state, swaps)),
             d if d.needs_unit() => *self
                 .unit
                 .get_or_insert_with(|| any_left(state, |_, _| true)),
@@ -103,6 +108,20 @@ fn attacks_with_art(state: &BattleState, sel: &Selection) -> bool {
             .stoppable()
             .iter()
             .any(|dest| can_attack_with_art(state, &art_lines(state, sel.unit, dest)))
+}
+
+/// Whether `sel` could attack an enemy with more than one weapon or spell
+/// from some tile it can stop on: the forecast lets it swap them (1304).
+fn swaps(state: &BattleState, sel: &Selection) -> bool {
+    let enemy = |u: &&Unit| u.faction != Faction::Player && u.hp > 0;
+    reaches_enemy(state, sel)
+        && sel.reach.stoppable().iter().any(|dest| {
+            state
+                .units()
+                .iter()
+                .filter(enemy)
+                .any(|e| aimed_options(state, sel.unit, dest, e.id).len() > 1)
+        })
 }
 
 /// Whether `sel` has a spell it could aim at a tile from some tile it can

@@ -111,12 +111,14 @@ impl LessonState {
     /// Whether the campaign has finished every lesson its tutorial level
     /// shows in battle `battle` (at least one), and hasn't answered the box
     /// at the end of them yet (0465). A battle with no campaign has no such
-    /// box.
+    /// box. Zooming counts only under a look that can zoom (1304).
     pub fn end_due(ctx: &Ctx, battle: Option<&str>) -> bool {
         let done = &ctx.game.campaign_lessons;
         if ctx.game.campaign_tutorial.is_none() || done.contains(END_ANSWERED) {
             return false;
         }
+        let can_zoom = ctx.game.map_skin.zoom().is_some();
+        let zooms = |l: &&Lesson| l.has(DoneWhen::ZoomedIn) || l.has(DoneWhen::ZoomedOut);
         let mut shown = ctx
             .game
             .content
@@ -124,6 +126,7 @@ impl LessonState {
             .lessons
             .iter()
             .filter(|l| Self::shows(ctx, l.level) && l.starts_in(battle))
+            .filter(|l| can_zoom || !zooms(l))
             .peekable();
         shown.peek().is_some() && shown.all(|l| done.contains(&l.id))
     }
@@ -216,29 +219,47 @@ impl LessonState {
         !self.queue.is_empty()
     }
 
+    /// Whether a lesson is in play that a new one would wait behind: any
+    /// but one that lets the turn end, which steps aside (1304).
+    pub fn busy(&self) -> bool {
+        self.queue
+            .front()
+            .is_some_and(|w| !w.items.contains(&DoneWhen::TurnEnded))
+    }
+
     /// Takes the lesson in front out of play, unfinished, while it has an
     /// item left that no unit left to act in turn `turn` can do (`can`
     /// says what can be done, [`Doable`](super::doable::Doable), 0464), so
     /// a lesson never holds a turn it can't be finished in. One open is put
     /// away: it comes back from an empty list the next time its trigger
     /// fires in a later turn. One not open yet doesn't open: it waits for
-    /// its trigger to fire again, this turn or a later one. Returns whether
-    /// one was taken out.
+    /// its trigger to fire again, this turn or a later one. Then a lesson
+    /// in front that lets the turn end (ending the turn) steps behind the
+    /// ones waiting that can be done, so it never keeps them waiting for
+    /// the turn to end (1304); those that can't are dropped, not open yet.
+    /// Returns whether one was taken out or stepped aside.
     pub fn settle(&mut self, turn: u32, mut can: impl FnMut(DoneWhen) -> bool) -> bool {
         let mut any = false;
+        let mut stuck = |w: &Waiting| w.items.iter().zip(&w.ticked).any(|(&d, &t)| !t && !can(d));
         while let Some(front) = self.queue.front() {
-            let stuck = front
-                .items
-                .iter()
-                .zip(&front.ticked)
-                .any(|(&d, &t)| !t && !can(d));
-            if !stuck {
+            if !stuck(front) {
                 break;
             }
             if self.open {
                 self.away.push((front.id.clone(), turn));
             }
             self.queue.pop_front();
+            self.open = false;
+            any = true;
+        }
+        let yields = self
+            .queue
+            .front()
+            .is_some_and(|w| w.items.contains(&DoneWhen::TurnEnded));
+        if yields && self.queue.iter().skip(1).any(|w| !stuck(w)) {
+            let rest: Vec<Waiting> = self.queue.drain(1..).filter(|w| !stuck(w)).collect();
+            self.queue.extend(rest);
+            self.queue.rotate_left(1);
             self.open = false;
             any = true;
         }
@@ -621,6 +642,41 @@ mod tests {
             assert!(!s.settle(2, not_it));
             assert!(s.is_open());
         }
+    }
+
+    /// Ticket 1304: the open ending-the-turn lesson steps behind a lesson
+    /// that comes up after it and can be done, and comes back once that
+    /// one is done; behind one that can't be done yet, it stays open.
+    #[test]
+    fn ending_the_turn_steps_aside_for_a_lesson_that_can_be_done() {
+        let first = TipTrigger::FirstBattleStart;
+        let low = TipTrigger::FirstLowHp;
+        let mut c = with(vec![
+            lesson("end", LessonLevel::Full, first, &[DoneWhen::TurnEnded]),
+            lesson("attack", LessonLevel::Full, low, &[DoneWhen::Attacked]),
+        ]);
+        let all = |_: DoneWhen| true;
+        let mut s = start(&c);
+        s.mark_open();
+        assert!(!s.busy(), "it lets a new one in");
+        // Nobody can attack yet: "end" stays open in front.
+        s.fire(low);
+        s.absorb(&c, None, 1);
+        assert!(!s.settle(1, |d| d != DoneWhen::Attacked));
+        assert_eq!(s.waiting().collect::<Vec<_>>(), ["end", "attack"]);
+        assert!(s.is_open());
+        // Somebody can: it goes first, "end" waits behind.
+        assert!(s.settle(1, all));
+        assert_eq!(s.waiting().collect::<Vec<_>>(), ["attack", "end"]);
+        assert!(!s.is_open() && s.busy());
+        s.mark_open();
+        assert!(!s.tick(&mut c, DoneWhen::TurnEnded));
+        assert!(s.tick(&mut c, DoneWhen::Attacked));
+        assert_eq!(s.current(), Some("end"));
+        assert!(!s.settle(1, all));
+        s.mark_open();
+        assert!(s.tick(&mut c, DoneWhen::TurnEnded));
+        assert!(!s.in_play());
     }
 
     /// A lesson whose items take no unit never leaves for what the units
