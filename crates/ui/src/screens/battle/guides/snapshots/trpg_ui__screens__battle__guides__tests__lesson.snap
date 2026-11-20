@@ -9,10 +9,10 @@ expression: "snap(&render(&s, &c), &c, ABOVE_HELP_ROW)"
 ║ Finding your units              │  That's your cursor. It picks tiles and units.                 ║
 ║ Moving a unit                   │  One tile each way, so you know the feel.                      ║
 ║ Attacking                       │                                                                ║
-║ Swapping weapons                │  Move it up: Up                                                ║
-║ Zooming the map                 │  Move it down: Down                                            ║
-║ Ending the turn                 │  Move it left: Left                                            ║
-║ Rewind                          │  Move it right: Right                                          ║
+║ Swapping weapons                │  Move it up: ↑                                                 ║
+║ Zooming the map                 │  Move it down: ↓                                               ║
+║ Ending the turn                 │  Move it left: ←                                               ║
+║ Rewind                          │  Move it right: →                                              ║
 ║ Threat arrows                   │                                                                ║
 ║ Combat Arts                     │                                                                ║
 ║ Spells that change tiles        │                                                                ║

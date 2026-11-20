@@ -62,7 +62,7 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
         "Guides",
         "Moving the cursor",
         "That's your cursor. It picks tiles and units.",
-        "Move it up: Up",
+        "Move it up: ↑",
         "Danger zone",
         "Terrain",
         "arrows choose · d close",

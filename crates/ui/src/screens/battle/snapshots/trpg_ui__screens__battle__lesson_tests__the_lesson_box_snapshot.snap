@@ -8,10 +8,10 @@ expression: h.snapshot_of(MAP_VIEW)
             ║ Move the cursor one tile each way.         ║            
             ║ The turn can't end until the list is done. ║            
             ║                                            ║            
-            ║ [x] Move it up: Up                         ║            
-            ║ [ ] Move it down: Down                     ║            
-            ║ [x] Move it left: Left                     ║            
-            ║ [ ] Move it right: Right                   ║            
+            ║ [x] Move it up: ↑                          ║            
+            ║ [ ] Move it down: ↓                        ║            
+            ║ [x] Move it left: ←                        ║            
+            ║ [ ] Move it right: →                       ║            
             ║                                            ║            
             ║ 2 of 4 done                                ║            
             ╚════════════════════════════════════════════╝            
@@ -39,10 +39,10 @@ aaaaaaaaaaaabdcccccccccccccccccddddddddddddddddddddddddddbaaaaaaaaaaaa
 aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
 aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
 aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
-aaaaaaaaaaaabdeeedffffffffffffggdddddddddddddddddddddddddbaaaaaaaaaaaa
-aaaaaaaaaaaabdddddddddddddddddddggggdddddddddddddddddddddbaaaaaaaaaaaa
-aaaaaaaaaaaabdeeedffffffffffffffggggdddddddddddddddddddddbaaaaaaaaaaaa
-aaaaaaaaaaaabddddddddddddddddddddgggggdddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabdeeedffffffffffffgddddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabdddddddddddddddddddgddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabdeeedffffffffffffffgddddddddddddddddddddddddbaaaaaaaaaaaa
+aaaaaaaaaaaabddddddddddddddddddddgdddddddddddddddddddddddbaaaaaaaaaaaa
 aaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
 aaaaaaaaaaaabdfffffffffffddddddddddddddddddddddddddddddddbaaaaaaaaaaaa
 aaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaa

@@ -242,8 +242,9 @@ fn the_cursor_lesson_opens_on_turn_one_and_closes_on_the_four_directions() {
     assert_eq!(shown(&h), Some("keys"));
 }
 
-/// Lesson 6, `Short` (so the first at Short): Options first, then the
-/// cursor; the keys in its text are the player's.
+/// Lesson 6, `Short` (so the first at Short): Options closes it; the keys
+/// in its text are the player's. It asks for nothing the cursor lesson
+/// before it at Full did (1306, Nick: moving the cursor again "is dumb").
 #[test]
 fn the_keys_lesson_opens_first_at_short_and_closes_after_options() {
     if skip_without_the_game() {
@@ -254,9 +255,9 @@ fn the_keys_lesson_opens_first_at_short_and_closes_after_options() {
     let snap = h.snapshot();
     assert!(snap.contains("Played on the keys"), "{snap}");
     assert!(snap.contains("Open Options from the map menu: d"), "{snap}");
+    assert!(!snap.contains("Move the cursor"), "{snap}");
+    assert_eq!(battle(&h).lesson_ticks(), [false]);
     visit_options(&mut h);
-    assert_eq!(battle(&h).lesson_ticks(), [false, true]);
-    h.keys("Up");
     assert_eq!(done(&h), ["keys"]);
 }
 

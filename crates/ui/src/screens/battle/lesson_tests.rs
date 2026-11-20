@@ -106,10 +106,10 @@ fn the_test_lesson_opens_on_the_first_turn_and_the_four_directions_close_it() {
     assert_eq!(
         labels,
         [
-            "Move it up: Up",
-            "Move it down: Down",
-            "Move it left: Left",
-            "Move it right: Right"
+            "Move it up: \u{2191}",
+            "Move it down: \u{2193}",
+            "Move it left: \u{2190}",
+            "Move it right: \u{2192}"
         ]
     );
     assert_eq!(view.progress, "0 of 4 done");
@@ -891,32 +891,98 @@ fn zooming_out_and_in_tick_each_and_glyphs_never_open_it() {
     assert!(h.game().ctx().game.campaign_lessons.contains("zoom"));
 }
 
-/// Ticket 1304 (Nick: swapping weapons "should track progress"): the
-/// lord's forecast with his two swords; left or right swapping ticks it.
-#[test]
-fn swapping_the_forecasts_weapon_ticks() {
-    let mut c = lessoned();
+/// The lord moved beside the raider, with his two swords: the screen at
+/// turn 1 with `lessons` the only ones.
+fn two_swords(c: &mut Ctx, lessons: Vec<Lesson>) -> BattleScreen {
     let quick = quick_battle(&c.game.content).unwrap();
     let mut units = quick.units().to_vec();
     units[0].pos = trpg_core::Pos::new(6, 2);
     units[2].pos = trpg_core::Pos::new(8, 4);
     let rout = trpg_core::Objective::Rout { turn_limit: None };
-    let state = super::testing::battle_with(&c, quick.map().clone(), units, rout);
-    let items = [DoneWhen::ForecastOpened, DoneWhen::WeaponSwapped];
-    let mut s = only(&mut c, state, &items);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    press(&mut s, &mut c, &[Action::CursorRight, Action::Confirm]);
-    s.update(&mut c, &FrameInput::new(vec![], 1.0, vec![]));
-    press(&mut s, &mut c, &[Action::Confirm]);
+    let state = super::testing::battle_with(c, quick.map().clone(), units, rout);
+    c.game.content.lessons.lessons = lessons;
+    BattleScreen::new(state)
+}
+
+/// Selects the lord, moves him one tile right and opens his forecast on
+/// the raider.
+fn to_swap_forecast(s: &mut BattleScreen, c: &mut Ctx) {
+    press(s, c, &[Action::Confirm]);
+    press(s, c, &[Action::CursorRight, Action::Confirm]);
+    s.update(c, &FrameInput::new(vec![], 1.0, vec![]));
+    press(s, c, &[Action::Confirm]);
     let swaps = matches!(s.mode(), Mode::Targeting(t) if t.can_swap());
     assert!(swaps, "{:?}", s.mode());
-    assert_eq!(s.lesson_ticks(), [true, false]);
+}
+
+/// A lesson `id` the first forecast that swaps starts, done by `items`.
+fn at_swap(id: &str, items: &[DoneWhen]) -> Lesson {
+    let mut l = lesson(id, LessonLevel::Full, items);
+    l.trigger = TipTrigger::FirstWeaponSwap;
+    l
+}
+
+/// Tickets 1304 and 1306: the lord's forecast with his two swords opens the
+/// swap lesson; left or right swapping ticks it, another key doesn't.
+#[test]
+fn swapping_the_forecasts_weapon_ticks() {
+    let mut c = lessoned();
+    let swap = at_swap("swap", &[DoneWhen::WeaponSwapped]);
+    let mut s = two_swords(&mut c, vec![swap]);
+    to_swap_forecast(&mut s, &mut c);
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_lesson(), Some("swap"));
     // Down picks another target, or none: no swap.
     press(&mut s, &mut c, &[Action::CursorDown]);
     assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
-    assert_eq!(s.lesson_ticks(), [true, false]);
+    assert_eq!(s.lesson_ticks(), [false]);
+    // Backed out to his menu: open, it stays while he could still swap.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[]);
+    assert!(
+        matches!(s.mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        s.mode()
+    );
+    assert!(s.lesson_open());
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
     press(&mut s, &mut c, &[Action::CursorLeft]);
-    assert!(c.game.campaign_lessons.contains("only"));
+    assert!(c.game.campaign_lessons.contains("swap"));
+}
+
+/// Ticket 1306 (Nick: it "can trigger right after the battle tutorial so
+/// the voiceline and tip are no longer true about that specific unit"):
+/// waiting behind another lesson of the same forecast, the swap lesson
+/// doesn't open once that forecast is gone; it opens the next time a
+/// forecast that swaps does.
+#[test]
+fn the_swap_lesson_opens_only_in_a_forecast_that_swaps() {
+    let mut c = lessoned();
+    let first = at_swap("first", &[DoneWhen::ForecastClosed]);
+    let swap = at_swap("swap", &[DoneWhen::WeaponSwapped]);
+    let mut s = two_swords(&mut c, vec![first, swap]);
+    to_swap_forecast(&mut s, &mut c);
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_lesson(), Some("first"));
+    // Back out: "first" is done, and the forecast is gone.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[]);
+    assert!(c.game.campaign_lessons.contains("first"));
+    assert!(
+        matches!(s.mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        s.mode()
+    );
+    assert_eq!(s.shown_lesson(), None);
+    assert!(!s.lesson_open());
+    // `Attack` again: the forecast that swaps, and the lesson with it.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    press(&mut s, &mut c, &[]);
+    assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
+    assert_eq!(s.shown_lesson(), Some("swap"));
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    assert!(c.game.campaign_lessons.contains("swap"));
 }
 
 /// Ticket 1304: `FirstUnitActed` fires on turn 1 back on the map once a

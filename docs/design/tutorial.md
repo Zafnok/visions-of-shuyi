@@ -180,7 +180,8 @@ So:
    whether the player attacks or backs out.
 3. Zooming the map is a lesson (it was a tip): zoom out and zoom in.
 4. What Vix **says** spells stats out (Defense, Avoid, Experience,
-   Movement); the screen's short labels (DEF, AVO, EXP, Mov) stay.
+   Movement); her box shows the short names (DEF, AVO, EXP, Mov), as the
+   screen's labels do. Corrected in round 2 (below).
 5. and 6. The *Moving a unit* and *Enemy in reach* tips are folded into
    the Moving a unit lesson, which comes before Attacking: it ticks
    selecting, moving (sending it to a blue tile) and the menu, and its
@@ -207,6 +208,37 @@ So:
   changes to glyphs while it is open.
 - Swapping weapons opens only if a unit still to act could attack an
   enemy with two weapons or spells from one tile.
+
+**Round 2 (1306).** Nick played the demo again on 2026-11-20 (his words):
+
+> 1. "the arrows tutorial shouldnt say Up Down Left Right but use some
+>    kind of symbol denoting arrow direction"
+> 2. "the tutorial that pops up after 'played with the keys' also asks to
+>    move the cursor even tho it just happened in the prev tutorial which
+>    is dumb."
+> 3. "'this unit has more than one weapon, try changing them' tutorial can
+>    trigger right after the battle tutorial so the voiceline and tip are
+>    no longer true about that specific unit, make it so it triggers next
+>    time conditions met on non exhausted unit"
+> 4. "when I said Vix should say DEF and AVO as full words I meant her
+>    voiceline, the text can still display as DEF and AVO. So we should
+>    have script separate from spoken replacements probably."
+
+So:
+
+1. A key named for one cursor direction shows as its arrow (↑ ↓ ← →)
+   while the four directions are on the arrow keys, as the arrows of the
+   whole cursor already show as their picture. Rebound to other keys, the
+   key's own name.
+2. The keys lesson (*Played on the keys*) asks only to open Options; it
+   no longer asks to move the cursor.
+3. Swapping weapons opens only in a forecast that can swap, so what Vix
+   says is about the unit on screen. If its moment passes while another
+   lesson is up (Attacking, in the same forecast), it opens the next time
+   a forecast of a unit still to act can swap.
+4. Her box shows DEF, AVO, EXP and Mov; her voice says Defense, Avoid,
+   Experience and Movement. The voice tool's respellings (`say.ron`,
+   `docs/voice.md`) hold the spoken words, so the script stays as shown.
 
 **Different here** (Full and Short; Nick agreed to Claude's list):
 
@@ -398,3 +430,5 @@ How the split works (0475):
 - **0495** how a tip box is put away, and one at a time.
 - **1292** a tip that misses its moment waits for the next one.
 - **1304** turn 1's lessons in Nick's order, ticking what the player does.
+- **1306** round 2: arrow symbols, the keys lesson, swapping in its
+  moment, short names shown and full words spoken.
