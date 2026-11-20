@@ -83,7 +83,7 @@ None. Verified in a real browser (below) and by the engine's tests.
 - [x] After the parent page fullscreens the frame, keys still work without
       clicking.
 - [x] Same in Edge and Firefox (recorded in the Completion notes).
-- [ ] All gates in the `run-gates` skill pass (after the pin moves).
+- [x] All gates in the `run-gates` skill pass (on the new pin).
 
 ## Tests required
 
@@ -99,7 +99,7 @@ None. Verified in a real browser (below) and by the engine's tests.
   no box to take focus with, and focus stays on the site's Run button),
   and after the site's Fullscreen button, which fullscreens the frame from
   outside (focus stays on the button).
-- **Fix** in the engine, engine#3505 (Zafnok/shuyi-engine#512): the
+- **Fix** in the engine, engine#3505 (Zafnok/shuyi-engine#512, merged; this PR moves the pin to it, `50472bbc`): the
   page takes focus at load, on the first resize before it ever had focus
   (the frame shown late), and on a resize that fills the screen without
   focus (the site's fullscreen); the canvas follows the window's focus.
