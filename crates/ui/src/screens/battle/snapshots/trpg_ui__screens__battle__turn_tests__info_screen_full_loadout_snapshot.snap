@@ -3,24 +3,24 @@ source: crates/ui/src/screens/battle/turn_tests.rs
 expression: "snap(&render(&s, &c), &c, ABOVE_HELP_BAR)"
 ---
 ╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
-║ ┌──────────────────────┐   Test Knight                Weapons                                    ║
-║ │                      │   Guard  Lv 1                E Iron Spear                        broken ║
-║ │                      │   EXP 0                        Mt 7  Hit 80  Crit 0  Rng 1  Wt 4        ║
-║ │                      │   HP 6/20    ███░░░░░░░        --                                       ║
-║ │                      │                                                                         ║
-║ │                      │   Stats                        --                                       ║
-║ │                      │   Str   9                                                               ║
-║ │                      │   Mag   0                                                               ║
-║ │                      │   Dex   4                    Armor                                      ║
-║ │                      │   Spd   2                      Chain Mail                               ║
-║ │                      │   Def  13                      Def +4  Res +1                           ║
-║ └──────────────────────┘   Res   1                                                               ║
-║                                                       Accessory                                  ║
-║  Mov 4  armored                                         Power Ring                               ║
-║  Armored                   Skills                       Str +2                                   ║
-║                            A Brace               3/3                                             ║
-║  Weapon ranks                self: Def +5 Res +5      Spells                                     ║
-║  Spear    D ×2 vs Mounted                               Fire                               10/10 ║
+║ ┌────────────────┐         Test Knight                Weapons                                    ║
+║ │                │         Guard  Lv 1                E Iron Spear                        broken ║
+║ │                │         EXP 0                        Mt 7  Hit 80  Crit 0  Rng 1  Wt 4        ║
+║ │                │         HP 6/20    ███░░░░░░░        --                                       ║
+║ │                │                                                                               ║
+║ │                │         Stats                        --                                       ║
+║ │                │         Str   9                                                               ║
+║ │                │         Mag   0                                                               ║
+║ │                │         Dex   4                    Armor                                      ║
+║ └────────────────┘         Spd   2                      Chain Mail                               ║
+║                            Def  13                      Def +4  Res +1                           ║
+║  Mov 4  armored            Res   1                                                               ║
+║  Armored                                              Accessory                                  ║
+║                                                         Power Ring                               ║
+║  Weapon ranks              Skills                       Str +2                                   ║
+║  Spear    D ×2 vs Mounted  A Brace               3/3                                             ║
+║                              self: Def +5 Res +5      Spells                                     ║
+║                                                         Fire                               10/10 ║
 ║                                                                                                  ║
 ║                                                                                                  ║
 ║                                                                                                  ║
@@ -34,24 +34,24 @@ expression: "snap(&render(&s, &c), &c, ABOVE_HELP_BAR)"
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-abccccccccccccccccccccccccbbbdddddddddddbbbbbbbbbbbbbbbbeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeffffffffffbbbbbbbbbbbbbbbbbbbbbbbbffffffba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbccccbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbcccbbbbbbbbfffcccccccbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abccccccccccccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abccccccccccccccccccbbbbbbbbbdddddddddddbbbbbbbbbbbbbbbbeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeffffffffffbbbbbbbbbbbbbbbbbbbbbbbbffffffba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbccccbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbcccbbbbbbbbfffcccccccbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abccccccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeeebbbbbbbbbbbbbbbbbbbbbbbccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbbbbbbbbbbbbbbbbbbbbbbbbbbbebbbbbbbbbbbbbbbbbbbbbcccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbeeeeeeeeeeeebbbbbbbbbbbbbbbbcccccccccccccccccccbbbbbbeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbbbbbbbbbbbbcccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbeeeeeeeeeeeebbbbbbbbbbbbbbeeeeeebbbbbbbbbbbbbbbbbbbbbbbccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbcccccccccccccbbebbbbbbbbbbbbbbbbbbbbbcccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccbbbbbbeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
@@ -71,4 +71,4 @@ d = fg:player bg:panel_bg
 e = fg:text_highlight bg:panel_bg
 f = fg:hp_low bg:panel_bg
 --- overlays ---
-under sprite 32,32 160x160  portraits/test_knight/neutral.png 0,0 32x32
+under sprite 24,32 128x128  portraits/test_knight/neutral.png 0,0 32x32

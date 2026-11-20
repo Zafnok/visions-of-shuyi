@@ -2792,7 +2792,7 @@ impl BattleScreen {
         };
         let faces = (&ctx.game.content.portraits, &ctx.game.lead);
         let info = match self.mode {
-            Mode::Info { unit } => self.state.unit(unit).map(|u| InfoView {
+            Mode::Info { unit, .. } => self.state.unit(unit).map(|u| InfoView {
                 page: self.info_page,
                 face: info::face(faces, u),
                 supports: info::supports(told, &ctx.game.content.names, u),

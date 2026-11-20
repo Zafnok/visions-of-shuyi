@@ -520,6 +520,26 @@ fn select_move_and_wait_dims_the_unit_and_keeps_its_label_case() {
     );
 }
 
+/// Info with the lord selected opens its info (ticket 1305); Cancel goes
+/// back to the selection as it was: the ranges, the path, the help bar.
+#[test]
+fn info_with_a_unit_selected_opens_its_info_and_cancel_returns() {
+    let mut h = lord_path();
+    let selected = h.snapshot_of(MAP_VIEW);
+    h.keys("e");
+    assert!(shows(&h, "Weapon ranks"));
+    assert!(shows(&h, "Test Lord"));
+    h.keys("d");
+    assert!(!shows(&h, "Weapon ranks"));
+    assert_eq!(help(&h), "arrows move · f move here · d cancel");
+    assert_eq!(h.snapshot_of(MAP_VIEW), selected);
+    // In the action menu too, back to the menu.
+    h.keys("f").wait(0.5).keys("e");
+    assert!(shows(&h, "Weapon ranks"));
+    h.keys("d");
+    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+}
+
 #[test]
 fn cancelling_the_menu_then_the_selection_restores_the_unit() {
     let mut h = quick_battle();

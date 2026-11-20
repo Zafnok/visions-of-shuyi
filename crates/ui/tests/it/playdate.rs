@@ -667,7 +667,7 @@ fn the_playdates_map_menu_lists_the_shortcuts_with_no_button() {
     let units = battle(&h).state().units();
     let lead_id = units.iter().find(|u| Some(u.pos) == lead).map(|u| u.id);
     assert!(lead_id.is_some());
-    assert!(matches!(battle(&h).mode(), Mode::Info { unit } if Some(*unit) == lead_id));
+    assert!(matches!(battle(&h).mode(), Mode::Info { unit, .. } if Some(*unit) == lead_id));
     h.pad("West");
     assert_eq!(h.cursor_tile(), lead);
     // On an empty tile (above the lead) it is dimmed.
