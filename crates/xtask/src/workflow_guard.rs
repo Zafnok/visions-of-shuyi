@@ -232,6 +232,37 @@ pub fn check(file: &str, text: &str) -> Vec<String> {
     problems
 }
 
+/// The workflows whose itch.io pushes run only by hand (ticket 0778): the
+/// writer trial's preview page changes only when Nick runs Story kit.
+pub const PUSH_BY_HAND_ONLY: &[&str] = &["story-kit.yml"];
+
+/// The steps of the workflow `file` with text `text` that install butler or
+/// run `butler push` without an `if:` requiring `workflow_dispatch`: one line
+/// per step, naming the workflow, the job and the step.
+pub fn pushes_not_by_hand(file: &str, text: &str) -> Vec<String> {
+    let mut problems = Vec::new();
+    for (job, lines) in jobs(text) {
+        for step in steps(&lines) {
+            let installs = step.uses() == Some("./.github/actions/butler");
+            let pushes = step.values("run").iter().any(|line| {
+                let line = line.to_lowercase();
+                line.contains("butler") && line.contains(" push ")
+            });
+            // `value` takes the closing quote off a condition ending in one.
+            let by_hand = step
+                .value("if")
+                .is_some_and(|c| c.contains("github.event_name == 'workflow_dispatch"));
+            if (installs || pushes) && !by_hand {
+                problems.push(format!(
+                    "{file}: job `{job}`: step `{}`: pushes to itch.io without                      `github.event_name == 'workflow_dispatch'` in its `if:` (ticket 0778)",
+                    step.label
+                ));
+            }
+        }
+    }
+    problems
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -319,5 +350,37 @@ mod tests {
         let in_playtest = check("playtest.yml", &allowed);
         assert_eq!(in_playtest.len(), 2, "{in_playtest:#?}");
         assert_eq!(check("other.yml", &allowed).len(), 3);
+    }
+
+    #[test]
+    fn an_itch_push_outside_a_run_by_hand_fails() {
+        let push = |cond: &str| {
+            format!(
+                "{HEAD}  web:
+    runs-on: ubuntu-latest
+    steps:
+                       - id: butler
+        if: {cond}
+        uses: ./.github/actions/butler
+                       - name: Push
+        if: {cond}
+        run: |
+                           set -e
+          \"$BUTLER\" push dist/web \"$PROJECT:web\"
+                       - name: Status
+        run: echo pushed
+"
+            )
+        };
+        let by_hand =
+            "steps.itch.outputs.ready == 'true' && github.event_name == 'workflow_dispatch'";
+        assert_eq!(
+            pushes_not_by_hand("x.yml", &push(by_hand)),
+            Vec::<String>::new()
+        );
+        let problems = pushes_not_by_hand("x.yml", &push("steps.itch.outputs.ready == 'true'"));
+        assert_eq!(problems.len(), 2, "{problems:#?}");
+        assert!(problems[0].starts_with("x.yml: job `web`: step `./.github/actions/butler`"));
+        assert!(problems[1].starts_with("x.yml: job `web`: step `Push`: pushes to itch.io"));
     }
 }
