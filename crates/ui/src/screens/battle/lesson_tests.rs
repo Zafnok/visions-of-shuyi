@@ -939,6 +939,9 @@ fn a_unit_acted_fires_on_turn_one_only() {
     };
     state.apply(&wait).unwrap();
     assert!(fires(&state));
+    // Units are left to act: not everyone has.
+    let s = BattleScreen::new(state.clone());
+    assert!(!s.lesson_triggers_now().contains(&TipTrigger::NoUnitLeft));
     while state.turn() < 2 || state.phase() != Phase::Player {
         state.apply(&Command::EndPhase).unwrap();
     }

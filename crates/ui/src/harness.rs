@@ -580,6 +580,20 @@ mod tests {
             "low_hp",
         ];
         assert_eq!(ids(&game), want);
+        // No weapon kinds: swapping goes last, after the game's own.
+        let mut game = TipTable {
+            tips: vec![tip("low_hp", TipTrigger::FirstLowHp)],
+        };
+        with_test_tips(&mut game);
+        let want = [
+            "battle_start",
+            "zoom",
+            "unit_selected",
+            "enemy_in_range",
+            "low_hp",
+            "weapon_swap",
+        ];
+        assert_eq!(ids(&game), want);
     }
 
     #[test]
