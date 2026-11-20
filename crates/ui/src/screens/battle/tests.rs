@@ -914,6 +914,37 @@ fn the_info_hint_names_the_unit_or_says_unit_info() {
     assert_eq!(named(70), format!("{line}unit info"));
 }
 
+/// 1307: the name is shown exactly while the line fits the help row (from
+/// cell 1, the row's last cell kept clear), less the debug hint and the
+/// cell before it when debug tools are on.
+#[test]
+fn the_info_hint_keeps_the_name_up_to_the_help_rows_room() {
+    for debug in [false, true] {
+        let mut c = ctx();
+        c.debug_tools = debug;
+        let hint = crate::screens::debug_hint(&c).map_or(0, |h| h.chars().count() + 1);
+        assert_eq!(hint > 0, debug);
+        let room = usize::try_from(layout::HELP_BAR.w - 1).unwrap() - hint;
+        let help = |len: usize| {
+            let mut c = ctx();
+            c.debug_tools = debug;
+            let quick = quick();
+            let mut units = quick.state().units().to_vec();
+            let lord = units.iter_mut().find(|u| u.id == UnitId(1)).unwrap();
+            lord.name = "B".repeat(len);
+            let at = lord.pos;
+            let mut s = BattleScreen::new(battle(&c, quick.state().map().clone(), units));
+            s.cursor.jump(at);
+            step(&mut s, &mut c, &[Action::Confirm]);
+            let width = s.help_styled(&c).width(&frame_widths(&c));
+            (s.help(&c).ends_with("'s info"), width)
+        };
+        let longest = (1..room).take_while(|&len| help(len).0).last().unwrap();
+        assert_eq!(help(longest), (true, room), "debug tools {debug}");
+        assert!(!help(longest + 1).0, "debug tools {debug}");
+    }
+}
+
 #[test]
 fn help_follows_the_mode() {
     let mut c = ctx();
