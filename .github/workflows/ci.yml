@@ -230,12 +230,43 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           cache-targets: false
+      # The ARM compiler's packages come from the Actions cache (ticket
+      # 0192): the Ubuntu mirror a runner draws sometimes trickles, and
+      # the 67 MB compiler then outlasts the install's limit. Only
+      # Ubuntu's public .deb files go in it, never a build. Keyed on the
+      # runner's Ubuntu release; bump v1 to download them afresh.
+      - name: Name the runner's Ubuntu release
+        id: ubuntu
+        run: echo "codename=$(lsb_release -cs)" >> "$GITHUB_OUTPUT"
+      - name: Cache the ARM compiler's packages
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/arm-debs
+          key: arm-none-eabi-debs-${{ steps.ubuntu.outputs.codename }}-v1
       - name: Install the ARM compiler
         timeout-minutes: 8
         # No Recommends: they pull in the C++ standard library
         # (libstdc++-arm-none-eabi-newlib, 487 MB), and the device build
         # links only C (the shim, the SDK's C files) and newlib.
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+        run: |
+          set -euo pipefail
+          debs="$HOME/arm-debs"
+          if ! compgen -G "$debs/*.deb" > /dev/null; then
+            mkdir -p "$debs/partial"
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends --download-only \
+              -o Acquire::Retries=3 -o Dir::Cache::archives="$debs" \
+              gcc-arm-none-eabi libnewlib-arm-none-eabi
+            sudo rm -rf "$debs/partial" "$debs/lock"
+            sudo chown -R "$(id -u):$(id -g)" "$debs"
+          fi
+          ls -l "$debs"
+          # A newer runner image may lack a dependency: let apt finish.
+          if ! sudo dpkg -i "$debs"/*.deb; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends -f
+          fi
+          arm-none-eabi-gcc --version
       - name: Point at the Playdate SDK
         run: echo "PLAYDATE_SDK_PATH=$HOME/playdate-sdk" >> "$GITHUB_ENV"
       - name: Cache the Playdate SDK
