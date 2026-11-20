@@ -13,11 +13,17 @@ indented for you: press Enter after a reply line such as
 Enter on one of those indented lines and the next one stays two spaces
 in. Tab puts in two spaces.
 
-It only colors and indents. It doesn't check your script: the preview's
+It only colors and indents, and doesn't reformat: if VS Code says there
+is no formatter for 'dlg' files, that's expected. It doesn't check your script: the preview's
 **Problems** tab does that. Nothing to run: the folder is four text
 files.
 
 ## Add it
+
+If you have `vscode-dlg.vsix` (a writer trial's packet has it): in VS
+Code open the Extensions panel (Ctrl+Shift+X, Cmd+Shift+X on a Mac),
+click **…** at its top, choose **Install from VSIX…** and pick the file.
+Otherwise, copy this folder in by hand:
 
 1. If you have never opened VS Code, open it once (that makes its
    extensions folder). Then close VS Code completely.

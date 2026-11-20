@@ -47,6 +47,11 @@ const START_HERE: &str = "docs/writer-trial/start-here.txt";
 const READING_GUIDE: &str = "docs/writer-trial/reading-guide.md";
 /// The writer's VS Code folder (ticket 0768), which every packet waits for.
 const EDITOR: &str = "tools/vscode-dlg/package.json";
+/// The VS Code extension's folder, packed into the packet's [`VSIX`].
+const EDITOR_DIR: &str = "tools/vscode-dlg";
+/// The packet's VS Code extension: one file a writer installs with
+/// VS Code's **Install from VSIX…** (Nick, 2026-11-20).
+pub const VSIX: &str = "vscode-dlg.vsix";
 /// The story documents' folder in the private checkout. Paths in it are
 /// built from it, so no literal names one of its Markdown files (the
 /// repository test of the Markdown the code reads would take one for a
@@ -344,6 +349,101 @@ pub fn write_packet(files: &Files, root: &str, zip_path: &Path) -> Result<(), St
     }
     zip.finish().map_err(|e| err(&e))?;
     Ok(())
+}
+
+/// Every file under `dir`, by its path in it with `/`.
+fn files_under(dir: &Path) -> Result<Files, String> {
+    let mut out = Files::new();
+    let mut todo = vec![dir.to_path_buf()];
+    while let Some(at) = todo.pop() {
+        let entries = fs::read_dir(&at).map_err(|e| format!("{}: {e}", at.display()))?;
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                todo.push(path);
+            } else if let Ok(rel) = path.strip_prefix(dir) {
+                let bytes = fs::read(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+                out.insert(rel.to_string_lossy().replace('\\', "/"), bytes);
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// `text` with XML's five special characters escaped.
+fn xml(text: &str) -> String {
+    text.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
+}
+
+/// The VS Code extension made of `files` (its folder, by path) as a
+/// `.vsix`, the zip `vsce package` makes: `[Content_Types].xml`, the
+/// `extension.vsixmanifest` naming it as its `package.json` does, and the
+/// folder under `extension/`. No code runs: the folder has none.
+pub fn vsix(files: &Files) -> Result<Vec<u8>, String> {
+    let package: serde_json::Value = files
+        .get("package.json")
+        .ok_or("the extension has no package.json")
+        .and_then(|b| serde_json::from_slice(b).map_err(|_| "package.json isn't JSON"))?;
+    let field = |name: &str| -> Result<String, String> {
+        package[name]
+            .as_str()
+            .map(xml)
+            .ok_or_else(|| format!("package.json has no {name}"))
+    };
+    let engine = package["engines"]["vscode"]
+        .as_str()
+        .ok_or("package.json has no engines.vscode")?;
+    let manifest = format!(
+        r#"<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Language="en-US" Id="{id}" Version="{version}" Publisher="{publisher}" />
+    <DisplayName>{display}</DisplayName>
+    <Description xml:space="preserve">{description}</Description>
+    <Categories>Programming Languages</Categories>
+    <GalleryFlags>Public</GalleryFlags>
+    <Properties>
+      <Property Id="Microsoft.VisualStudio.Code.Engine" Value="{engine}" />
+    </Properties>
+  </Metadata>
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Code" />
+  </Installation>
+  <Dependencies />
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.Code.Manifest" Path="extension/package.json" Addressable="true" />
+    <Asset Type="Microsoft.VisualStudio.Services.Content.Details" Path="extension/README.md" Addressable="true" />
+  </Assets>
+</PackageManifest>
+"#,
+        id = field("name")?,
+        version = field("version")?,
+        publisher = field("publisher")?,
+        display = field("displayName")?,
+        description = field("description")?,
+        engine = xml(engine),
+    );
+    let types = r#"<?xml version="1.0" encoding="utf-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension=".json" ContentType="application/json" /><Default Extension=".md" ContentType="text/markdown" /><Default Extension=".vsixmanifest" ContentType="text/xml" /></Types>
+"#;
+    let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+    let options = SimpleFileOptions::default();
+    let err = |e: &dyn std::fmt::Display| format!("{VSIX}: {e}");
+    let mut put = |name: &str, bytes: &[u8]| -> Result<(), String> {
+        zip.start_file(name, options).map_err(|e| err(&e))?;
+        zip.write_all(bytes).map_err(|e| err(&e))
+    };
+    put("[Content_Types].xml", types.as_bytes())?;
+    put("extension.vsixmanifest", manifest.as_bytes())?;
+    for (name, bytes) in files {
+        put(&format!("extension/{name}"), bytes)?;
+    }
+    let out = zip.finish().map_err(|e| err(&e))?;
+    Ok(out.into_inner())
 }
 
 /// What `trial-packet` reads, gathered so a test can give its own.
@@ -659,6 +759,7 @@ fn build_packet(root: &Path, args: &[String]) -> Result<PathBuf, String> {
         values,
     };
     let mut files = packet_files(&inputs, &problems)?;
+    files.insert(VSIX.into(), vsix(&files_under(&root.join(EDITOR_DIR))?)?);
     for (name, bytes) in extras(&root.join(OUT).join("extra"))? {
         files.insert(name, bytes);
     }
@@ -1329,67 +1430,70 @@ mod tests {
         );
     }
 
-    /// The VS Code folder for `.dlg` scripts (ticket 0768): its JSON
-    /// parses, `package.json` names files that are there, and the packet
-    /// list copies every file of it whole, under `vscode-dlg/`.
+    /// The VS Code extension for `.dlg` scripts (ticket 0768): its JSON
+    /// parses, `package.json` names files that are there and no code, and
+    /// the packet carries it as one `.vsix` (Nick, 2026-11-20: easier to
+    /// install than a folder) holding every file of it under `extension/`
+    /// and a manifest naming it as `package.json` does; `packet.txt` copies
+    /// none of the folder.
     #[test]
-    fn the_vscode_folder_parses_and_the_packet_copies_all_of_it() {
-        const DIR: &str = "tools/vscode-dlg";
+    fn the_vscode_extension_parses_and_the_packet_carries_it_as_a_vsix() {
         let root = crate::repo_root();
-        let mut files = Vec::new();
-        let mut todo = vec![root.join(DIR)];
-        while let Some(dir) = todo.pop() {
-            for entry in fs::read_dir(&dir).unwrap().flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    todo.push(path);
-                } else {
-                    let rel = path.strip_prefix(root.join(DIR)).unwrap();
-                    files.push(rel.to_string_lossy().replace('\\', "/"));
-                }
-            }
-        }
-        files.sort();
+        let files = files_under(&root.join(EDITOR_DIR)).unwrap();
         let json = |rel: &str| -> serde_json::Value {
-            serde_json::from_str(&fs::read_to_string(root.join(DIR).join(rel)).unwrap())
-                .unwrap_or_else(|e| panic!("{DIR}/{rel}: {e}"))
+            serde_json::from_slice(&files[rel])
+                .unwrap_or_else(|e| panic!("{EDITOR_DIR}/{rel}: {e}"))
         };
         let is_json = |f: &&String| {
             Path::new(f.as_str())
                 .extension()
-                .is_some_and(|e| e == "json")
+                .is_some_and(|e| e.eq_ignore_ascii_case("json"))
         };
-        for rel in files.iter().filter(is_json) {
+        for rel in files.keys().filter(is_json) {
             json(rel);
         }
         let package = json("package.json");
         let contributes = &package["contributes"];
-        let named = [
+        let paths = [
             &contributes["languages"][0]["configuration"],
             &contributes["grammars"][0]["path"],
         ];
-        for path in named {
+        for path in paths {
             let path = path.as_str().expect("a path").trim_start_matches("./");
-            assert!(files.iter().any(|f| f == path), "package.json names {path}");
+            assert!(files.contains_key(path), "package.json names {path}");
         }
         assert!(package.get("main").is_none(), "no code");
 
+        let bytes = vsix(&files).unwrap();
+        let mut zip = zip::ZipArchive::new(std::io::Cursor::new(bytes)).unwrap();
+        let mut entries: Vec<String> = zip.file_names().map(|n| n.unwrap().into_owned()).collect();
+        entries.sort();
+        let mut want: Vec<String> = files.keys().map(|f| format!("extension/{f}")).collect();
+        want.extend([
+            "[Content_Types].xml".into(),
+            "extension.vsixmanifest".into(),
+        ]);
+        want.sort();
+        assert_eq!(entries, want);
+        let mut manifest = String::new();
+        std::io::Read::read_to_string(
+            &mut zip.by_name("extension.vsixmanifest").unwrap(),
+            &mut manifest,
+        )
+        .unwrap();
+        let identity = format!(
+            r#"<Identity Language="en-US" Id="{}" Version="{}" Publisher="{}" />"#,
+            package["name"].as_str().unwrap(),
+            package["version"].as_str().unwrap(),
+            package["publisher"].as_str().unwrap(),
+        );
+        assert!(manifest.contains(&identity), "{manifest}");
+        assert_eq!(xml(r#"a<b>&"c'"#), "a&lt;b&gt;&amp;&quot;c&apos;");
+
         let list = read_packet_list(&fs::read_to_string(root.join(PACKET_LIST)).unwrap()).unwrap();
-        let mut listed: Vec<String> = list
-            .iter()
-            .filter_map(|page| {
-                let rel = page.to.strip_prefix("vscode-dlg/")?;
-                assert_eq!(
-                    page.from,
-                    format!("{DIR}/{rel}"),
-                    "{} copied as itself",
-                    page.to
-                );
-                assert!(page.sections.is_empty(), "{} copied whole", page.to);
-                Some(rel.to_string())
-            })
-            .collect();
-        listed.sort();
-        assert_eq!(listed, files, "packet.txt lists exactly the folder's files");
+        assert!(
+            list.iter().all(|page| !page.from.starts_with(EDITOR_DIR)),
+            "packet.txt copies none of the folder: the .vsix carries it"
+        );
     }
 }

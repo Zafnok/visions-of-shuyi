@@ -21,11 +21,8 @@ brief.md                 docs/writer-trial/brief.md
 terms.md                 docs/writer-trial/terms.md
 cheat-sheet.md           assets-private/story/trial/cheat-sheet.md
 
-# Colors and indenting for VS Code users (ticket 0768): copied whole.
-vscode-dlg/README.md                         tools/vscode-dlg/README.md
-vscode-dlg/package.json                      tools/vscode-dlg/package.json
-vscode-dlg/language-configuration.json       tools/vscode-dlg/language-configuration.json
-vscode-dlg/syntaxes/dlg.tmLanguage.json      tools/vscode-dlg/syntaxes/dlg.tmLanguage.json
+# Colors and indenting for VS Code users (ticket 0768): not listed here.
+# `trial-packet` packs tools/vscode-dlg/ into vscode-dlg.vsix itself.
 
 # The story pages are copies made for applicants (2026-11-15, Nick: "we
 # should probably be sending in pruned / prettified versions"): cut from

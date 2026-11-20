@@ -97,12 +97,12 @@ one: a private window may not keep your settings or a suspended battle.
 
 **VS Code is the one I recommend.** It's free, for Windows, Mac and Linux
 ([code.visualstudio.com](https://code.visualstudio.com/)). With the
-packet's `vscode-dlg` folder it colors the script (who speaks, the
+packet's `vscode-dlg.vsix` it colors the script (who speaks, the
 narration and reply marks, stage lines, names) and keeps a reply's reaction lines indented for you: press
 Enter after a reply line such as `* earnest: We go now.` and the next
 line starts two spaces in; press Enter on one of those indented lines and
 the next one stays two spaces in. That indenting is the easiest thing to
-get wrong by hand. The folder is four text files: nothing to run.
+get wrong by hand. It's colors and settings only: no code runs.
 
 If you'd rather not install it, a plain-text editor works too, with the
 preview's **Problems** tab to catch mistakes:
@@ -118,28 +118,27 @@ different kind of file.
 
 ### Adding the colors to VS Code
 
-To add it:
+The packet's `vscode-dlg.vsix` is the extension, in one file. To add it:
 
-1. If you have never opened VS Code, open it once (that makes its
-   extensions folder). Then close VS Code completely.
-2. Open the extensions folder:
-   - **Windows:** open File Explorer, click its address bar (the bar at
-     the top showing the folder's path), paste
-     `%USERPROFILE%\.vscode\extensions` and press Enter.
-   - **Mac:** open Finder, choose **Go > Go to Folder…** in the menu bar,
-     paste `~/.vscode/extensions` and press Return.
-3. Copy the packet's whole `vscode-dlg` folder into it (drag it in, or
-   copy and paste it). The result is a folder `vscode-dlg` inside
-   `extensions`, with `package.json` directly in it.
-4. Open VS Code again and open `dialogue/ch01.dlg`.
+1. Open VS Code.
+2. Open the Extensions panel: **Ctrl+Shift+X** on Windows,
+   **Cmd+Shift+X** on a Mac (or click the four-squares icon on the left
+   edge).
+3. At the top of that panel, click **…** (More Actions) and choose
+   **Install from VSIX…**.
+4. Pick `vscode-dlg.vsix` from the packet folder. If VS Code asks whether
+   to trust or install it, say yes.
+5. Open `dialogue/ch01.dlg` (**File > Open File…**).
 
 **How to tell it worked:** the script is in colors, not all one color,
-and the bottom-right corner of the window reads **Dialogue script**. If
-it doesn't, close VS Code and check step 3: `vscode-dlg` must sit
-directly in `extensions`, not inside another folder.
+and the bottom-right corner of the window reads **Dialogue script**.
 
-To remove it: close VS Code and delete the `vscode-dlg` folder from the
-extensions folder.
+The extension colors and indents; it doesn't reformat. If VS Code ever
+says there is **no formatter for 'dlg' files**, that's expected: ignore
+it, nothing is wrong with your file.
+
+To remove it: in the Extensions panel, find **Visions of Shuyi scripts
+(.dlg)**, click it and choose **Uninstall**.
 
 **Your file is the only copy: the page keeps nothing.** The preview only
 shows the file you drop on it. You can't edit there, and it saves nothing.

@@ -364,6 +364,14 @@ Then a session builds each packet (`cargo xtask trial-packet --for <handle>
 with the compensation PDF. Not blocking, filed: 0090-0093, 0774-0777,
 0879, 0926-0932.
 
+From Nick's play of the preview, 2026-11-20: the packet carries the VS
+Code extension as one `vscode-dlg.vsix` (installed with **Install from
+VSIX…**, checked in a throwaway VS Code profile) in place of a folder
+copied by hand, and its settings turn off format-on-save, -paste and
+-type for `.dlg`, the brief saying a "no formatter" message is expected
+(this branch). The preview's music playing on after a scene ends is 1308,
+its own PR so the Story kit can push it before the first packet.
+
 Friction: estimate 270 (the ticket's), measured 706 (2.6×), accepted
 (`docs/engine/friction.md`).
 

@@ -47,8 +47,9 @@ workflow** pushes it).
 shouldn't be expected to be technical). The format is easy to break by
 hand: a reply's reaction lines must be indented by exactly two spaces, and
 every `@choice`, `@if` and `@scene` needs its closing line. 0768 puts the
-editor colors and indenting in the packet; until its folder
-(`tools/vscode-dlg/`) is there, `trial-packet` refuses to make a packet.
+editor colors and indenting in the packet, packed from `tools/vscode-dlg/`
+into `vscode-dlg.vsix` (Nick, 2026-11-20: one file to install); until that
+folder is there, `trial-packet` refuses to make a packet.
 
 **Two more before the first packet** (from the test audit, 2026-11-19; each
 under a day, no decision needed). `dist/trial/before-sending.md` is the short
