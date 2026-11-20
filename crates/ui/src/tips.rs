@@ -243,22 +243,11 @@ mod tests {
             .collect::<Vec<_>>();
         split.push((Chord::parse("g").unwrap(), Action::Select));
         let split = Keymap::new(split, RepeatDef::default());
-        for (id, phrase) in [
-            ("battle_start", "Pick up a unit: {}"),
-            ("unit_selected", "Send it to a blue tile: {}."),
-            ("danger_zone", "One enemy's range: {} on it"),
-        ] {
-            let text = tip(id);
-            let with = |key| phrase.replace("{}", key);
-            assert!(
-                fill_placeholders(&text, HelpKeys::keyboard(&default)).contains(&with("f")),
-                "{id}"
-            );
-            assert!(
-                fill_placeholders(&text, HelpKeys::keyboard(&split)).contains(&with("g")),
-                "{id}"
-            );
-        }
+        // The danger zone's (the start and moving tips are lessons now, 1304).
+        let text = tip("danger_zone");
+        let with = |key| "One enemy's range: {} on it".replace("{}", key);
+        assert!(fill_placeholders(&text, HelpKeys::keyboard(&default)).contains(&with("f")));
+        assert!(fill_placeholders(&text, HelpKeys::keyboard(&split)).contains(&with("g")));
         // Menu and forecast wording stays on Confirm.
         let forecast = fill_placeholders(&tip("forecast"), HelpKeys::keyboard(&split));
         assert!(forecast.contains("Attack: f"), "{forecast}");

@@ -4,9 +4,9 @@ expression: "snap(&render(&s, &c), &c, ABOVE_HELP_ROW)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
-║ Finding your units              │  Exporting a profile                                           ║
-║ Selecting a unit                │                                                                ║
-║ Attacking                       │  A profile can go out to a file of its own, with all its       ║
+║ Attacking                       │  Exporting a profile                                           ║
+║ Swapping weapons                │                                                                ║
+║ Zooming the map                 │  A profile can go out to a file of its own, with all its       ║
 ║ Ending the turn                 │  saves, options and keys: handy for a new computer.            ║
 ║ Rewind                          │                                                                ║
 ║ Threat arrows                   │  Export the profile under the cursor: e                        ║

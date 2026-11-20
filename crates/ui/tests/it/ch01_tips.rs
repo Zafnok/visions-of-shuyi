@@ -42,8 +42,8 @@ fn skip_scenes(h: &mut Harness) {
 
 /// Chapter 1 from New Game in Classic at `Full` on a fresh profile, with
 /// the tips and lessons on: turn 1, its scenes skipped and its banners
-/// closed, the start tip closed, the cursor on the lead and the cursor
-/// lesson open.
+/// closed, the cursor on the lead and the cursor lesson open, with no tip
+/// before it (1304).
 fn chapter_1() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     h.with_lessons().with_tips();
@@ -59,7 +59,7 @@ fn chapter_1() -> Harness {
         .and_then(|f| f.campaign_now(h.game().ctx()))
         .map(|c| c.tutorial);
     assert_eq!(campaign, Some(TutorialLevel::Full));
-    assert_eq!(close_tips(&mut h), [TipTrigger::FirstBattleStart]);
+    assert_eq!(close_tips(&mut h), []);
     assert_eq!(h.cursor_tile(), Some(LEAD));
     assert_eq!(battle(&h).shown_lesson(), Some("cursor"));
     h
@@ -141,11 +141,12 @@ fn finish_turn_1_lessons(h: &mut Harness) -> Vec<TipTrigger> {
     back_to_map(h)
 }
 
-/// Ticket 0466: on a map that can zoom, the zoom tip stays away through
-/// the turn-1 lessons (cursor, keys, next unit, selecting) and the action
-/// menu the last one ends in, and shows back on the map.
+/// Tickets 0466 and 1304: on a map that can zoom, the zoom lesson stays
+/// away through the turn-1 lessons (cursor, keys, next unit, moving) and
+/// the action menu the last one ends in, opens back on the map, and zooming
+/// out and in does it.
 #[test]
-fn the_zoom_tip_shows_on_turn_one_after_the_lessons() {
+fn the_zoom_lesson_opens_on_turn_one_after_the_lessons() {
     if skip_without_the_game() {
         return;
     }
@@ -177,8 +178,15 @@ fn the_zoom_tip_shows_on_turn_one_after_the_lessons() {
     // Back out of the menu and the move, to the map (closing the tips of
     // the unit picked up, in their moment on the way, 1292).
     let back = back_to_map(&mut h);
+    assert!(!back.contains(&TipTrigger::ZoomAvailable), "a lesson now");
+    h.wait(0.1);
+    close_tips(&mut h);
     assert_eq!(battle(&h).state().turn(), 1);
-    assert!(back.contains(&TipTrigger::ZoomAvailable), "{back:?}");
+    assert_eq!(battle(&h).shown_lesson(), Some("zoom"));
+    h.keys("q");
+    assert_eq!(battle(&h).lesson_ticks(), [true, false]);
+    h.keys("q").wait(0.1);
+    assert_ne!(battle(&h).shown_lesson(), Some("zoom"));
 }
 
 /// (a) The mage's action menu opens while a lesson is open: no Magic tip
@@ -237,12 +245,12 @@ fn the_terrain_tip_waits_for_the_forest_after_the_lessons() {
 }
 
 /// Tickets 0495 (Nick: "D both closes options and her tutorial") and 1292:
-/// on turn 1 at Full, a tip that fires during the keys lesson (picking a
-/// unit up and putting it back) missed its moment. It doesn't come up over
-/// the map menu back from Options, nor on the map after it; the D that
-/// closes the menu closes the menu. The next time a unit is picked up with
-/// no lesson up, *Moving a unit* comes up, and stays until a press made
-/// while it is up.
+/// on turn 1 at Full, a tip that fires during the keys lesson (the cursor
+/// resting on a forest) missed its moment. It doesn't come up over the map
+/// menu back from Options, nor on the map after it; the D that closes the
+/// menu closes the menu. The next time the cursor rests on the forest with
+/// no lesson up, *Terrain* comes up, and stays until a press made while it
+/// is up.
 #[test]
 fn leaving_options_never_closes_a_tip_unread() {
     if skip_without_the_game() {
@@ -251,11 +259,12 @@ fn leaving_options_never_closes_a_tip_unread() {
     let mut h = chapter_1();
     finish_cursor_lesson(&mut h);
     assert_eq!(battle(&h).shown_lesson(), Some("keys"));
-    // A unit picked up and put back: its tip doesn't show under the lesson.
-    h.keys("f").wait(0.3);
-    h.keys("d").wait(0.3);
+    // The cursor on the forest and back: its tip doesn't show under the
+    // lesson.
+    go(&mut h, FOREST);
+    h.wait(0.3);
     assert_eq!(battle(&h).shown_tip(), None);
-    h.keys("Right Left");
+    go(&mut h, LEAD);
     // Options from the map menu, and back out of it.
     h.keys("d Down Down Down f");
     assert_eq!(h.top_screen(), "options");
@@ -277,15 +286,16 @@ fn leaving_options_never_closes_a_tip_unread() {
     h.keys("f Up f").wait(1.0);
     assert!(matches!(battle(&h).mode(), Mode::ActionMenu { .. }));
     assert_eq!(battle(&h).shown_lesson(), None);
-    // Back out of the menu to the unit still picked up, with no lesson up:
-    // *Moving a unit* comes up, and stays.
-    h.keys("d").wait(0.3);
-    assert!(matches!(battle(&h).mode(), Mode::Selected(_)));
-    assert_eq!(battle(&h).shown_tip(), Some(TipTrigger::FirstUnitSelected));
+    // Back to the map, and the cursor on the forest with no lesson up:
+    // *Terrain* comes up, and stays.
+    back_to_map(&mut h);
+    go(&mut h, FOREST);
+    h.wait(0.3);
+    assert_eq!(battle(&h).shown_tip(), Some(TipTrigger::FirstTerrain));
     h.wait(1.0);
-    assert_eq!(battle(&h).shown_tip(), Some(TipTrigger::FirstUnitSelected));
-    // A press closes it; the next tip of the moment, if any, comes up.
+    assert_eq!(battle(&h).shown_tip(), Some(TipTrigger::FirstTerrain));
+    // A press closes it; the map is back.
     h.keys("f").wait(0.3);
-    assert_ne!(battle(&h).shown_tip(), Some(TipTrigger::FirstUnitSelected));
-    assert!(matches!(battle(&h).mode(), Mode::Selected(_)));
+    assert_ne!(battle(&h).shown_tip(), Some(TipTrigger::FirstTerrain));
+    assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
 }

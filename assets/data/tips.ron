@@ -50,37 +50,6 @@
 (
     tips: [
         (
-            id: "battle_start",
-            trigger: FirstBattleStart,
-            title: "Your move",
-            text: "Over to you. Steer the cursor onto one of your units and\npick it up. You can jump straight to whoever can still act,\nand look anyone over to see what you're working with.",
-            how: "Move the cursor: {Cursor}. Pick up a unit: {Select}\nNext unit to act: {NextUnit}. A unit's details: {Info}",
-            face: "neutral",
-        ),
-        (
-            id: "zoom",
-            trigger: ZoomAvailable,
-            title: "Zooming the map",
-            text: "Can't see it all? The view scrolls with your cursor, and\nthe map zooms in or out. Zoom again to switch back.",
-            how: "Zoom the map in or out: {ZoomMap}",
-            face: "sly",
-        ),
-        (
-            id: "unit_selected",
-            trigger: FirstUnitSelected,
-            title: "Moving a unit",
-            text: "Blue is where it can go, red is where it can attack.\nSteer to a blue tile and send it there. Changed your\nmind? You can back out.",
-            how: "Send it to a blue tile: {Select}. Back out: {Cancel}",
-            face: "neutral",
-        ),
-        (
-            id: "enemy_in_range",
-            trigger: FirstEnemyInRange,
-            title: "Enemy in reach",
-            text: "That enemy on a red tile? This unit can reach it this\nturn. Move into range, then pick Attack from the menu.",
-            face: "sly",
-        ),
-        (
             id: "forecast",
             trigger: FirstForecast,
             title: "Attack forecast",
@@ -100,7 +69,7 @@
             id: "level_up",
             trigger: FirstLevelUp,
             title: "Level up!",
-            text: "Nice. Fighting earns EXP, and at 100 a unit gains a level\nand its stats can grow. Look it over to see what changed.",
+            text: "Nice. Fighting earns Experience; at 100 a unit gains a\nlevel and its stats can grow. Look it over to see what\nchanged.",
             how: "A unit's details: {Info}",
             face: "smile",
         ),
@@ -140,14 +109,14 @@
             id: "terrain",
             trigger: FirstTerrain,
             title: "Terrain",
-            text: "Mind the ground. The side panel shows the DEF and AVO a\nunit gets standing here. Some tiles cost more movement\nto cross, and some can't be crossed at all.",
+            text: "Mind the ground. The side panel shows the Defense and\nAvoid a unit gets standing here. Some tiles cost more\nmovement to cross, and some can't be crossed at all.",
             face: "thinking",
         ),
         (
             id: "wading",
             trigger: FirstWadeInReach,
             title: "Wading",
-            text: "Foot units can wade a river, but each tile of water costs\n5 Mov, most of a turn. Riders and armor can't go in.\nIn the water, a unit gets +10 AVO and no DEF bonus.",
+            text: "Foot units can wade a river, but each tile of water costs\n5 Movement, most of a turn. Riders and armor can't go in.\nIn the water, a unit gets +10 Avoid and no Defense bonus.",
             face: "thinking",
         ),
         (
@@ -158,16 +127,6 @@
 triple against fliers, yours and theirs alike. A ! in
 the forecast means it's working; a unit's details say more.",
             face: "sly",
-        ),
-        (
-            id: "weapon_swap",
-            trigger: FirstWeaponSwap,
-            title: "Swapping weapons",
-            text: "This unit carries more than one weapon, and you can try
-each of them right here in the forecast. The numbers
-change to match before you commit to the attack.",
-            how: "Swap weapon: {CursorLeft} {CursorRight}",
-            face: "neutral",
         ),
         (
             id: "export_save",

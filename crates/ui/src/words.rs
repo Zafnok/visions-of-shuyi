@@ -441,8 +441,8 @@ mod tests {
         let forest = terrains.iter().find(|t| t.name == "Forest");
         assert_eq!(forest.map(|t| english.terrain(t)), Some("Forest"));
         let tips = &content.tips.tips;
-        let tip = tips.iter().find(|t| t.id == "battle_start").unwrap();
-        assert_eq!(english.tip_title(tip), "Your move");
+        let tip = tips.iter().find(|t| t.id == "forecast").unwrap();
+        assert_eq!(english.tip_title(tip), "Attack forecast");
         assert_eq!(english.tip_text(tip), tip.text);
         let chapter = &content.chapters["test"];
         assert_eq!(english.chapter_title(chapter), "Test Chapter");
@@ -505,10 +505,10 @@ mod tests {
         assert_eq!(terrain("Forest"), Some("FOREST"));
         assert_eq!(terrain("Plain"), Some("Plain"));
         let tip = |id: &str| content.tips.tips.iter().find(|t| t.id == id).unwrap();
-        assert_eq!(words.tip_title(tip("battle_start")), "YOUR MOVE");
-        let text = words.tip_text(tip("battle_start"));
-        assert!(text.starts_with("OVER TO YOU"), "{text}");
-        assert_eq!(words.tip_title(tip("unit_selected")), "Moving a unit");
+        assert_eq!(words.tip_title(tip("forecast")), "ATTACK FORECAST");
+        let text = words.tip_text(tip("forecast"));
+        assert!(text.starts_with("READ THIS BEFORE YOU SWING"), "{text}");
+        assert_eq!(words.tip_title(tip("low_hp")), "Low HP");
         let chapters = &content.chapters;
         assert_eq!(words.chapter_title(&chapters["test"]), "TEST CHAPTER");
         assert_eq!(words.chapter_title(&chapters["quick"]), "Quick Battle");

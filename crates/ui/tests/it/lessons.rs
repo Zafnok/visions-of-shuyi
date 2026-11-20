@@ -31,6 +31,8 @@ fn launch(storage: Box<dyn Storage>) -> Harness {
         .unwrap_or_else(|e| panic!("{e}"))
         .with_storage(storage);
     ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
+    // The tests' tips: the start tip is one (1304).
+    trpg_ui::harness::with_test_tips(&mut ctx.game.content.tips);
     // The story's lessons start in any battle; theirs are in `ch01_lessons`.
     ctx.game
         .content

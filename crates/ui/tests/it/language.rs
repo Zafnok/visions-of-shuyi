@@ -224,17 +224,36 @@ fn a_generic_unit_and_terrain_are_named_by_the_pack() {
     }
 }
 
+/// Closes the tips on screen but the forecast's.
+fn close_tips_but_the_forecast(h: &mut Harness) {
+    for _ in 0..8 {
+        match h.battle().and_then(BattleScreen::shown_tip) {
+            Some(t) if t != trpg_content::TipTrigger::FirstForecast => {
+                h.keys("f");
+            }
+            _ => return,
+        }
+    }
+}
+
 #[test]
 fn a_tip_in_the_test_language() {
     let mut h = title();
     h.with_tips().keys("Down f Left f f f");
+    // The lord, pointed at the brigand two up and four right of him: the
+    // forecast and its tip (the others on the way closed).
+    for keys in ["f", "Right Right Right Right Up", "f"] {
+        close_tips_but_the_forecast(&mut h);
+        h.keys(keys).wait(1.0);
+    }
+    close_tips_but_the_forecast(&mut h);
     assert_snapshot!(h.snapshot_of(MAP_VIEW));
-    assert!(shows(&h, "YOUR MOVE"));
-    assert!(shows(&h, "OVER TO YOU. STEER THE CURSOR ONTO"));
+    assert!(shows(&h, "ATTACK FORECAST"));
+    assert!(shows(&h, "READ THIS BEFORE YOU SWING"));
     // The tip's instructions too (0475). Key names are still the player's;
     // the word for the arrow keys is the pack's (ticket 0243).
-    assert!(shows(&h, "MOVE THE CURSOR: ARROWS. PICK UP A UNIT: f"));
-    assert!(!shows(&h, "Your move"));
+    assert!(shows(&h, "PICK THE TARGET: ARROWS. ATTACK: f"));
+    assert!(!shows(&h, "Attack forecast"));
 }
 
 /// Whether the action menu is open with `Equip` focused.
