@@ -435,7 +435,14 @@ impl Screen<Shuyi> for StoryPreview {
             self.reference = Some(0);
             return Transition::None;
         }
-        self.preview.update(ctx, input)
+        let was_playing = self.playing().is_some();
+        let next = self.preview.update(ctx, input);
+        // Back on the tabs, the scene's music stops: in the game the next
+        // screen plays its own (ticket 1308).
+        if was_playing && self.playing().is_none() {
+            ctx.audio.stop_music();
+        }
+        next
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
