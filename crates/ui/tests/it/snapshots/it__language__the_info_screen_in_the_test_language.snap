@@ -3,24 +3,24 @@ source: crates/ui/tests/it/language.rs
 expression: h.snapshot()
 ---
 ╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
-║ ┌──────────────────────┐   Test Lord                  WEAPONS                                    ║
-║ │                      │   Exile  LV 1                E IRON SWORD                         20/20 ║
-║ │                      │   EXP 0                        MT 5  HIT 90  CRIT 0  RNG 1  WT 2        ║
-║ │                      │   HP 19/19   ██████████        Steel Sword                        25/25 ║
-║ │                      │                                MT 8  HIT 75  CRIT 0  RNG 1  WT 4        ║
-║ │                      │   STATS                        --                                       ║
-║ │                      │   STR   6                                                               ║
-║ │                      │   MAG   1                                                               ║
-║ │                      │   DEX   7                    ARMOR                                      ║
-║ │                      │   SPD   7                      Leather Vest                             ║
-║ │                      │   DEF   6                      DEF +2  RES +2                           ║
-║ └──────────────────────┘   RES   5                                                               ║
+║ ┌────────────────┐         Test Lord                  WEAPONS                                    ║
+║ │                │         Exile  LV 1                E IRON SWORD                         20/20 ║
+║ │                │         EXP 0                        MT 5  HIT 90  CRIT 0  RNG 1  WT 2        ║
+║ │                │         HP 19/19   ██████████        Steel Sword                        25/25 ║
+║ │                │                                      MT 8  HIT 75  CRIT 0  RNG 1  WT 4        ║
+║ │                │         STATS                        --                                       ║
+║ │                │         STR   6                                                               ║
+║ │                │         MAG   1                                                               ║
+║ │                │         DEX   7                    ARMOR                                      ║
+║ └────────────────┘         SPD   7                      Leather Vest                             ║
+║                            DEF   6                      DEF +2  RES +2                           ║
+║  MOV 5  foot               RES   5                                                               ║
 ║                                                       ACCESSORY                                  ║
-║  MOV 5  foot                                            --                                       ║
-║                            SKILLS                                                                ║
-║                            A Inspire             2/2                                             ║
-║  WEAPON RANKS                ALLY R2: +10 HIT +10 AV  SPELLS                                     ║
-║  SWORD    D FOLLOW-UP ×6/5                              --                                       ║
+║                                                         --                                       ║
+║  WEAPON RANKS              SKILLS                                                                ║
+║  SWORD    D FOLLOW-UP ×6/5 A Inspire             2/2                                             ║
+║                              ALLY R2: +10 HIT +10 AV  SPELLS                                     ║
+║                                                         --                                       ║
 ║                                                                                                  ║
 ║                                                                                                  ║
 ║                                                                                                  ║
@@ -34,24 +34,24 @@ expression: h.snapshot()
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-abccccccccccccccccccccccccbbbdddddddddbbbbbbbbbbbbbbbbbbeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbccccbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbcccbbbbbbbbffffffffffbbbbbbeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abccccccccccccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abccccccccccccccccccbbbbbbbbbdddddddddbbbbbbbbbbbbbbbbbbeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbccccbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbcccbbbbbbbbffffffffffbbbbbbeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abccccccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbbbbbbbbbbbbbbbbbbbbbbbbbbbebbbbbbbbbbbbbbbbbbbbbcccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbeeeeeeeeeeeebbbbbbbbbbbbbbbbcccccccccccccccccccccccbbeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abbbbbbbbbbbbbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbeeeeeeeeeeeebbbbbbbbbbbbbbeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbccccccccccccccbebbbbbbbbbbbbbbbbbbbbbcccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccbbeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
@@ -71,4 +71,4 @@ d = fg:player bg:panel_bg
 e = fg:text_highlight bg:panel_bg
 f = fg:hp_high bg:panel_bg
 --- overlays ---
-under sprite 32,32 160x160  portraits/test_lord/neutral.png 0,0 32x32
+under sprite 24,32 128x128  portraits/test_lord/neutral.png 0,0 32x32

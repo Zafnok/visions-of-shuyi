@@ -221,7 +221,7 @@ fn info_opens_on_any_unit_cycles_its_faction_and_closes_on_the_last_one() {
     let mut c = ctx();
     let mut s = quick();
     let info = |s: &BattleScreen| match s.mode() {
-        Mode::Info { unit } => Some(unit.0),
+        Mode::Info { unit, .. } => Some(unit.0),
         _ => None,
     };
     // On the lord.

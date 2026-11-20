@@ -1,6 +1,6 @@
 //! The glyph look of the unit info screen: a double box over the map and
-//! side panel, a 24 × 12 portrait area on the left (the unit's face drawn
-//! to fit it, as on the level-up page, ticket 1295, an unnamed enemy's
+//! side panel, an 18 × 10 portrait frame on the left (the unit's face
+//! filling it, ticket 1305; drawn as on the level-up page, 1295, an unnamed enemy's
 //! the shared soldier face, 1303; a placeholder box and label for a unit
 //! with no face: a generic unit that isn't an enemy, or a build without
 //! the private portraits), Mov,
@@ -21,8 +21,10 @@ use crate::screens::battle::view::{GearView, InfoView, InfoWeaponView};
 /// The whole screen above the help bar.
 pub const INFO: Rect = Rect::new(0, 0, 100, MAP_VIEW.h);
 
-/// The portrait area.
-pub const PORTRAIT: Rect = Rect::new(2, 1, 24, 12);
+/// The portrait frame: its inside, 16 × 8 cells, is 128 × 128 console
+/// pixels, which the portraits fill with no empty band (ticket 1305): the
+/// bought faces (64 × 64) at 2×, the placeholders (32 × 32) at 4×.
+pub const PORTRAIT: Rect = Rect::new(2, 1, 18, 10);
 
 /// Left column (under the portrait): movement, tags, weapon ranks.
 const LEFT_X: i32 = 3;

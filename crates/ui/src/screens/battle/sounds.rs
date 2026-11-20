@@ -52,7 +52,11 @@ fn depth(mode: &Mode) -> u8 {
         | Mode::Moving { .. }
         | Mode::MapMenu { .. }
         | Mode::EndTurnPrompt { .. }
-        | Mode::Info { .. } => 1,
+        | Mode::Info { back: None, .. } => 1,
+        // Over the selection it was opened from (1305): one deeper.
+        Mode::Info {
+            back: Some(back), ..
+        } => depth(back) + 1,
         Mode::ActionMenu { .. }
         | Mode::UnitList { .. }
         | Mode::Objective
@@ -72,7 +76,10 @@ mod tests {
     use crate::audio::MenuSound::{Cancel, Move, Select};
 
     const IDLE: Mode = Mode::Idle { threat: None };
-    const INFO: Mode = Mode::Info { unit: UnitId(1) };
+    const INFO: Mode = Mode::Info {
+        unit: UnitId(1),
+        back: None,
+    };
     const PROMPT: Mode = Mode::EndTurnPrompt { ready: 2 };
 
     fn sound(action: Action, before: &Mode, after: &Mode, effect: &Effect) -> Option<MenuSound> {
@@ -129,7 +136,10 @@ mod tests {
             sound(Action::Info, &INFO, &IDLE, &Effect::Cursor(Pos::new(1, 1))),
             Some(Cancel)
         );
-        let next = Mode::Info { unit: UnitId(2) };
+        let next = Mode::Info {
+            unit: UnitId(2),
+            back: None,
+        };
         assert_eq!(
             sound(Action::NextUnit, &INFO, &next, &Effect::None),
             Some(Move)
