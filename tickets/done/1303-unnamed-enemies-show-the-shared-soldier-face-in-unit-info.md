@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-19
 ---
 
 # 1303 — Unnamed enemies show the shared soldier face in unit info
@@ -117,21 +117,21 @@ branch in `info::face`), judged by 1295's lookup (`face`, 11 lines).
 
 ## Acceptance criteria
 
-- [ ] With a `soldier` portrait in the content, `info::face` on a
+- [x] With a `soldier` portrait in the content, `info::face` on a
       generic enemy returns `soldier` and its first expression
       (`neutral`).
-- [ ] Without a `soldier` portrait, `info::face` on a generic enemy
+- [x] Without a `soldier` portrait, `info::face` on a generic enemy
       returns `None`, and the info screen shows the `portrait` box and
       label as before.
-- [ ] A generic unit of another side gets `None`; a named character
+- [x] A generic unit of another side gets `None`; a named character
       still gets its own portrait (the existing
       `the_info_screen_is_the_units_and_closes` test still passes).
-- [ ] A look test shows the info screen of a generic enemy drawing the
+- [x] A look test shows the info screen of a generic enemy drawing the
       portrait's picture, not the label.
-- [ ] A `cargo shuyi frame-png` picture of a generic enemy's info screen
+- [x] A `cargo shuyi frame-png` picture of a generic enemy's info screen
       is in the PR, cropped to the screen, test content only (ADR-0118).
-- [ ] `cargo xtask ticket-lint` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo xtask ticket-lint` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -150,5 +150,33 @@ branch in `info::face`), judged by 1295's lookup (`face`, 11 lines).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `info::UNNAMED_ENEMY_PORTRAIT` (`"soldier"`, its doc pointing at 0706
+  and `assets/portraits/README.md`) and one fallback in `info::face`: a
+  unit with no character on the enemy side asks `progress::portrait_of`
+  for `soldier`; any other generic unit still asks for nothing. The
+  lookup, the `FaceView` (first expression, `neutral`) and the skin's
+  draw are 1295's, unchanged. Module docs of `info.rs` and
+  `glyph/info.rs` say so.
+- `progress::portrait_of` still takes `Option<&str>` and returns `None`
+  for `None`, and `lead.portrait_for` leaves `soldier` as it is.
+- Tests: `an_unnamed_enemys_face_is_the_shared_soldier` (view_tests:
+  no `soldier` in the content gives no face; a copy of `test_knight`'s
+  portrait under `soldier` gives `soldier`/`neutral`; the Player, Ally
+  and Neutral sides give none; a named enemy keeps its own) and
+  `an_unnamed_enemys_info_screen_snapshot` (turn_tests: the Quick
+  Battle's brigand's info screen, the sprite overlay line naming the
+  portrait's picture and no `portrait` label). 1295's tests are
+  unchanged and pass; `info.rs`'s own test notes why its generic enemy
+  still has no face (the test content has no `soldier`).
+- Picture: `docs/screenshots/1303-unnamed-enemy-info.png`, the Quick
+  Battle's (test content) brigand, built with the private art, cropped
+  to the info screen. Without the private art the same screen keeps the
+  placeholder box and label, as before.
+- Monsters: the rule covers them as written; no elemental is an enemy
+  in Act 1's content, so none shows it there (test content's
+  `test_frost_elemental` would, with the private art). For 1064's
+  checklist.
+- No starting rules: which units get the face is the ticket's (enemies
+  only, from 0706).
+- For the Act 1 playtest (1064): whether the soldier face reads well in
+  the info box, and on every kind of Red Company enemy.

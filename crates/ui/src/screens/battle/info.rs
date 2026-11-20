@@ -1,6 +1,8 @@
 //! The unit info screen (ticket 0405): everything about one unit, over the
 //! map and side panel. The character's portrait in its first (neutral)
-//! expression (ticket 1295; a placeholder for a unit with none), then the unit's name, level, EXP, HP and stats as plain numbers
+//! expression (ticket 1295), an unnamed enemy's the shared soldier face
+//! (ticket 1303), a placeholder for any other unit; then the unit's name,
+//! level, EXP, HP and stats as plain numbers
 //! (`Str 7`; no class caps, ticket 0423), and its loadout, spells and
 //! skills. Under the weapon ranks, the class's elemental affinities
 //! (`Fire  Weak`, ticket 0410), then its support partners and ranks
@@ -14,8 +16,8 @@ use trpg_content::Portrait;
 use trpg_core::lead::LeadProfile;
 use trpg_core::skill::effect_bonuses;
 use trpg_core::{
-    Affinity, BattleState, EffectSource, Element, StatKind, Stats, TimedEffect, Unit, UnitTags,
-    WEAPON_SLOTS,
+    Affinity, BattleState, EffectSource, Element, Faction, StatKind, Stats, TimedEffect, Unit,
+    UnitTags, WEAPON_SLOTS,
 };
 
 use super::art_list::art_name;
@@ -32,15 +34,27 @@ use crate::tips::view::FaceView;
 use crate::words::Words;
 use trpg_content::Names;
 
+/// The portrait of every unnamed enemy: the one shared soldier face Nick
+/// picked in ticket 0706 ("soldier B"), "the one face of every unnamed
+/// enemy" (`assets/portraits/README.md`). Bought art, in the private
+/// repository only (ticket 1303).
+// check-text: not a data name (a portrait id)
+pub const UNNAMED_ENEMY_PORTRAIT: &str = "soldier";
+
 /// The face the info screen shows of `unit` (ticket 1295): its
-/// character's portrait (the lead's is the picked gender's) in the
-/// portrait's first expression, its neutral one; `None` for a unit with
-/// no portrait.
+/// character's portrait (the lead's is the picked gender's), or for a
+/// generic enemy the shared [`UNNAMED_ENEMY_PORTRAIT`] (ticket 1303), in
+/// the portrait's first expression, its neutral one; `None` for a unit
+/// with no portrait (a generic unit of another side, or a build without
+/// the private portraits).
 pub fn face(
     (portraits, lead): (&BTreeMap<String, Portrait>, &LeadProfile),
     unit: &Unit,
 ) -> Option<FaceView> {
-    let id = unit.character.as_ref().map(|c| c.0.as_str());
+    let id = match &unit.character {
+        Some(c) => Some(c.0.as_str()),
+        None => (unit.faction == Faction::Enemy).then_some(UNNAMED_ENEMY_PORTRAIT),
+    };
     let (id, art) = super::progress::portrait_of(portraits, lead, id)?;
     Some(FaceView {
         portrait: id.to_owned(),
@@ -368,8 +382,8 @@ mod tests {
     fn a_named_characters_face_is_its_portraits_neutral_one() {
         use crate::screen::tests::ctx;
         use crate::screens::battle::quick_battle;
+        use trpg_core::CharacterId;
         use trpg_core::lead::{LEAD_ID, LeadGender};
-        use trpg_core::{CharacterId, Faction};
         let c = ctx();
         let state = quick_battle(&c.game.content).unwrap();
         let portraits = &c.game.content.portraits;
@@ -394,6 +408,7 @@ mod tests {
             .iter()
             .find(|u| u.faction == Faction::Enemy && u.character.is_none())
             .unwrap();
+        // The test content has no soldier portrait (1303): no face.
         assert_eq!(face(LeadGender::Male, generic), None);
         // A character with no portrait: no face, the placeholder.
         lead.character = Some(CharacterId("nobody".into()));

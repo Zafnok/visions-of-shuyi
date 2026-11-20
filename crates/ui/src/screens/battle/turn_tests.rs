@@ -329,6 +329,25 @@ fn info_screen_snapshot() {
     assert_snapshot!(snap(&render(&s, &c), &c, ABOVE_HELP_BAR));
 }
 
+/// 1303: an unnamed enemy's info screen draws the shared soldier face
+/// (here a copy of a test portrait), not the placeholder label.
+#[test]
+fn an_unnamed_enemys_info_screen_snapshot() {
+    let mut c = ctx();
+    let soldier = c.game.content.portraits["test_knight"].clone();
+    let id = info::UNNAMED_ENEMY_PORTRAIT;
+    c.game.content.portraits.insert(id.into(), soldier);
+    let mut s = quick();
+    s.cursor.jump(Pos::new(8, 2));
+    press(&mut s, &mut c, &[Action::Info]);
+    let face = s.view(&c).info.and_then(|i| i.face);
+    assert_eq!(face.map(|f| f.portrait), Some(id.to_owned()));
+    let shot = snap(&render(&s, &c), &c, ABOVE_HELP_BAR);
+    assert!(shot.contains("portraits/test_knight/neutral.png"), "{shot}");
+    assert!(!shot.contains("portrait "), "{shot}");
+    assert_snapshot!(shot);
+}
+
 // Map menu.
 
 #[test]
