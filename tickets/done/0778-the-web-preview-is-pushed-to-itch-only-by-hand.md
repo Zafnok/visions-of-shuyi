@@ -5,10 +5,10 @@ type: infra
 milestone: M6 Story & dialogue
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-19
 ---
 
 # 0778 — The web preview is pushed to itch.io only by hand
@@ -70,10 +70,10 @@ None. Verified by the test below and by the next scheduled Story kit run
 
 ## Acceptance criteria
 
-- [ ] `story-kit.yml`'s itch.io push steps run only on `workflow_dispatch`.
-- [ ] The test from step 3 passes, and fails if the condition is removed.
-- [ ] `docs/releasing.md` says the preview is pushed only by hand.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `story-kit.yml`'s itch.io push steps run only on `workflow_dispatch`.
+- [x] The test from step 3 passes, and fails if the condition is removed.
+- [x] `docs/releasing.md` says the preview is pushed only by hand.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -81,5 +81,27 @@ None. Verified by the test below and by the next scheduled Story kit run
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `story-kit.yml`: the butler install and *Push the web preview to itch.io*
+  steps now need `github.event_name == 'workflow_dispatch'` as well as
+  `steps.itch.outputs.ready`. The nightly run still builds and checks the
+  web preview (its *Can the web preview publish?* step still runs) and
+  skips both push steps.
+- `crates/xtask/src/workflow_guard.rs`: `pushes_not_by_hand` flags any step
+  of a workflow in `PUSH_BY_HAND_ONLY` (today `story-kit.yml`) that uses the
+  butler action or runs `butler push` without that condition. A unit test on
+  a made-up workflow, and `story_kit_pushes_to_itch_only_by_hand` in
+  `main.rs`, which reads the real `story-kit.yml`, checks it passes, then
+  strips the condition and checks both steps are flagged.
+- `docs/releasing.md`: the table row and the *Push it* bullet say the
+  preview is pushed only by **Actions → Story kit → Run workflow**, that the
+  page stays still between Nick's runs, and to run it the same day as Demo.
+- Deviations: 0775's Context already says 0778 made the push by hand only and
+  0775 moves it into demo.yml, so it was left as is. The trial's
+  `docs/writer-trial/README.md` is on 0766's branch (PR #696), not `main`,
+  and already says to run Demo, then Story kit, both by hand the same day;
+  no change needed. `demo.yml` is not in `PUSH_BY_HAND_ONLY`: it gates its
+  *Can the demo publish?* step instead of the push steps, which the check's
+  per-step rule doesn't read.
+- Follow-up: none. Verified after merge by the next scheduled Story kit run,
+  whose log shows both push steps skipped.
+- No gameplay rules decided.
