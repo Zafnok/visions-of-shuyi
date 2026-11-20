@@ -45,7 +45,7 @@ the game's tool program, trpg-tools, runs these (they build the game; cargo xtas
 still runs each, and `cargo run -p trpg-tools -- --help` lists them):\n  \
 skill-pack, sfx, test-tileset, lettering, title-art,\n  \
 map-sprite-import, battler-import, tileset-import, playtest, skirmish, portrait-import,\n  \
-lines, check-script, story-import, voice, voice-test-clips, icon, playdate, playdate-images,\n  \
+lines, check-script, story-import, trial-packet, trial-compare, voice, voice-test-clips, icon, playdate, playdate-images,\n  \
 readme-pictures, and Shuyi's tools: shuyi (`cargo shuyi`), check-keys, check-text,\n  \
 lang-status, font-atlas, frame-png, web, private-assets (ADR-0129)";
 

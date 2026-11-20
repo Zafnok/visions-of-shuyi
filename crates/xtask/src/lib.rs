@@ -34,6 +34,9 @@ pub const FORWARDED: &[&str] = &[
     "tileset-import",
     "portrait-import",
     "story-import",
+    // The writer trial (ticket 0766).
+    "trial-packet",
+    "trial-compare",
     // The bots, the scripts and the voice.
     "playtest",
     "skirmish",

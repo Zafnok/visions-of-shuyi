@@ -5,7 +5,7 @@ type: content
 milestone: M6 Story & dialogue
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: in-progress
 blocked_by: ["0152", "0168", "0159", "0160", "0764", "0765", "0915", "0494", "0495", "1295", "1292", "1293"]
 nick_input: setup
 completed:
@@ -268,3 +268,116 @@ question at a time, options plus "describe your own"):
 
 *(Filled in by the session that completes the ticket: what was done, deviations,
 follow-up tickets created, notes for Nick.)*
+
+**Part 1, 2026-11-14 (draft PR; the ticket stays open until the pick).**
+
+Nick's answers (the question pop-up, 2026-11-14):
+
+1. Scenes: "all 3, and I thought we're also including the post-battle
+   scene in the demo, so why not include that too." Checked: Chapter 1's
+   `victory_scenes` are `ch01_victory` and `ch01_tbc`, and the demo plays
+   them. The trial is five scenes: `ch01_intro`, `ch01_prebattle`,
+   `ch01_first_turn`, `ch01_victory`, `ch01_tbc` (about 200 script lines,
+   so the brief says five or six hours, not three).
+2. Pay: "This is in the Hobby / RevShare category on INAT. Trial will thus
+   be unpaid, and no pay is guaranteed til game launches. It'll be after
+   Steam cut revshare, and probably performance based (i.e. 5-10% net rev
+   depending on review score)". Then: "the 5-10% will actually be based
+   on game sales rather than review score".
+3. Terms: an NDA, drafted in another session. `terms.md` is a plain
+   summary that defers to the signed agreement.
+4. Time box: "I can work it out individually": `--due` per packet.
+5. Delivery: Nick's choice per applicant; entries come back as a reply
+   with the `.dlg` attached (the brief).
+6. Story: "ch1, arc, act 1 outline, and probably some brief character
+   sheet snippets maybe not the whole char sheet for each but just enough
+   to paint a picture".
+
+Done:
+
+- `docs/writer-trial/`: `README.md` (Nick's steps), `ad.md` (a record:
+  Nick posted the ad himself before this session, so no draft and no
+  pictures were made), `brief.md`, `terms.md`, `start-here.txt`,
+  `packet.txt` (the story pages, cut by `##` section from the private
+  story documents at build time: the bible's world sections, the
+  outline's shape and three acts, Chapter 1's beat sheet, and each sheet's
+  *At a glance* and *Voice card*, the lead's situation, reply tones and
+  voice notes, Harl's *At a glance* only), `reading-guide.md`.
+- `cargo xtask trial-packet --for <handle> --due <date>`:
+  `dist/trial/<handle>.zip`, text files only: `dialogue/ch01.dlg` (the
+  mark, then the five scenes cut at `@scene` and `@end`), the pages,
+  `story/names.md` (every id the scenes use and its name) and
+  `START-HERE.txt` (the mark, the due date, the web demo's and the web
+  script preview's links and passwords). It refuses to make a packet with a missing link or
+  date or with a script problem (the preview's check, which allows the
+  scenes the packet leaves out). Files in `dist/trial/extra/` go in too.
+- `cargo xtask trial-compare`: `dist/trial/compare.html` and
+  `compare-key.txt`, as the ticket says; comment lines are hidden (they
+  can carry a name) and name tokens are written out.
+- The mirror's `files.txt` copies `LICENSE`.
+- 1073, 1083 and 1084 already said their words wait for the writer 0766
+  finds: no change needed.
+- Checked: a packet for `test` built and unzipped; the preview on its
+  `dialogue/` listed the five scenes, no problems, and played
+  `ch01_victory` over its battle map.
+  `trial-compare` on two made-up entries wrote the page with Entry A and
+  B and no handle.
+
+Deviation: **no program in the packet.** The ticket put the preview
+program (0764's `.exe`) in it; Nick, 2026-11-14: "I think writers might be
+sussed out by us asking to run an .exe ... an .exe I wanna avoid". The
+applicant uses the web script preview (0767) and the web demo instead, and
+the Windows demo's per-applicant download key is left out too (also an
+`.exe`). The web preview's itch.io project didn't exist yet
+(`ITCH_PREVIEW_PROJECT` unset: the Story kit built and checked it, and
+published nothing); Nick makes it, then runs the Story kit.
+
+**0768 comes before the first packet.** Nick, 2026-11-15: "I think 0768
+should block sending the packet if .dlg is a fragile format. Writers
+should not be expected to be technical". It is (reaction lines indented
+by exactly two spaces; every block closed), so no packet goes out until
+0768's folder is in it (`docs/writer-trial/README.md` says so).
+
+**0778 and 1303 come before the first packet** (the test audit of
+2026-11-19, which filed 18 tickets for what it found; Nick, the same day:
+"only pick the absolute TOP blockers that we can knock out in <1 day"):
+the preview republishes itself nightly while the demo moves by hand (0778
+makes its push by hand only; 0775, both pages from one Demo run, follows
+without blocking), and unnamed enemies show a placeholder box in unit info
+(1303). The rest is in 0090-0093, 0774-0777, 0879 and 0926-0932, none of it
+blocking, and in `dist/trial/before-sending.md` (the 3-hour pass Nick plays
+before sending) and `test-checklist.md` (all 167 checks). If 0774 lands,
+the demo's storage gets a name of its own, which resets each applicant's
+demo settings once.
+
+**Where it stands, 2026-11-20.** Every blocker is merged: 0768 (VS Code
+colors), 0769-0771 (the preview: no voices, back to Scenes, Chapter 1's
+cast only), 0778 (preview pushed by hand), 1303 (enemy faces), and from
+Nick's play of the demo: 0933 (keys without a click, engine#512), 1304 and
+1306 (Vix's lessons: order, ticks, arrows, spoken full words), 1305 and
+1307 (unit info from a selected unit, its portrait and hint). Nick re-ran
+Demo and Story kit from `main` the same day. Left before the first packet:
+Nick replays what changed, does `before-sending.md` sections 2 and 3 (the
+preview and the packet), and has each applicant sign the two agreements.
+Then a session builds each packet (`cargo xtask trial-packet --for <handle>
+--due "<date>"`, the links in `dist/trial/links.txt`) and Nick emails it
+with the compensation PDF. Not blocking, filed: 0090-0093, 0774-0777,
+0879, 0926-0932.
+
+From Nick's play of the preview, 2026-11-20: the packet carries the VS
+Code extension as one `vscode-dlg.vsix` (installed with **Install from
+VSIX…**, checked in a throwaway VS Code profile) in place of a folder
+copied by hand, with a formatter (Nick: "I want it to also act as a
+formatter"), run on save: `extension.js` fixes only what the game refuses
+(curly quotes, the ellipsis, dashes, tabs, a reaction's two spaces, `@`
+lines' column), tested on every script of the game and on broken copies of
+each (`the_dlg_formatter_fixes_only_what_the_game_refuses`, with `node` or
+VS Code's own program as `DLG_NODE`) (this branch). The preview's music playing on after a scene ends is 1308,
+its own PR so the Story kit can push it before the first packet.
+
+Friction: estimate 270 (the ticket's), measured 706 (2.6×), accepted
+(`docs/engine/friction.md`).
+
+Left for part 2 (a later session on this branch): the entries, the
+comparison page, Nick's pick, the design note's dated line, what happens
+to the pause and to 0757, 0719, 0726, 0755 and 0756.

@@ -60,7 +60,7 @@ jobs:
               THIRD_PARTY_ASSETS.md|assets/dialogue/README.md|assets/maps/README.md|docs/design/audio.md) echo "read by trpg-content: $path"; doc_crates="$doc_crates trpg-content" ;;
               docs/engine/pins.md) echo "read by trpg-engine-watch: $path"; doc_crates="$doc_crates trpg-engine-watch" ;;
               tickets/README.md) echo "read by xtask: $path"; doc_crates="$doc_crates xtask" ;;
-              tools/story-mirror/README.md) echo "read by trpg-tools: $path"; doc_crates="$doc_crates trpg-tools" ;;
+              tools/story-mirror/README.md|docs/writer-trial/brief.md|docs/writer-trial/reading-guide.md) echo "read by trpg-tools: $path"; doc_crates="$doc_crates trpg-tools" ;;
               *.md|docs/*|tickets/*|.claude/*) echo "docs: $path" ;;
               *) echo "code: $path"; code=true ;;
             esac

@@ -335,8 +335,9 @@ upload key is the secret `BUTLER_API_KEY`.
   keys → Generate**, one key, the applicant's handle (the packet's mark) as
   its label, the options as they come (*can be claimed* on, *require key to
   be claimed* and *grant external key* off: requiring a claim would make
-  every applicant make an itch.io account); copy the key's link into their
-  packet. **Turn one off:** the same
+  every applicant make an itch.io account); send its link yourself. The
+  writer trial (0766) uses none: its packet is text only and links only the
+  web demo and the web preview. **Turn one off:** the same
   list, the key's **Revoke**. A leaked link names its key, and the key's
   note names the applicant.
 
@@ -367,7 +368,7 @@ view page** (a password of its own, not the demo's).
 - **Once, after the first push:** on the project's **Edit game** page, tick
   **This file will be played in the browser** for the `web` upload, set the
   embed size to 1280×720 and tick **Fullscreen button**, **Save**. Put the
-  page's link and password in the trial packet (0766) next to the Windows
-  zip.
+  page's link and password in `dist/trial/links.txt` (`preview` and
+  `preview-password`), which the trial packet reads (0766).
 - The password and the `html-classic.itch.zone` address behave as the web
   demo's (above).
