@@ -106,10 +106,10 @@ fn the_test_lesson_opens_on_the_first_turn_and_the_four_directions_close_it() {
     assert_eq!(
         labels,
         [
-            "Move it up: Up",
-            "Move it down: Down",
-            "Move it left: Left",
-            "Move it right: Right"
+            "Move it up: \u{2191}",
+            "Move it down: \u{2193}",
+            "Move it left: \u{2190}",
+            "Move it right: \u{2192}"
         ]
     );
     assert_eq!(view.progress, "0 of 4 done");
@@ -738,7 +738,7 @@ fn the_enemy_phase_keeps_a_lesson_waiting_for_a_unit() {
     assert_eq!(s.state().phase(), Phase::Enemy);
     s.lessons.fire(TipTrigger::FirstBattleStart);
     s.lessons.absorb(&c, None, s.state().turn());
-    s.settle_lessons();
+    s.settle_lessons(false);
     assert_eq!(s.lessons.current(), Some("unit"));
 }
 
@@ -848,4 +848,194 @@ fn the_end_box_waits_for_a_press_after_the_last_lesson() {
     // A press on the map that changes nothing (Zoom, with glyphs).
     press(&mut s, &mut c, &[Action::ZoomMap]);
     assert!(s.lessons_end_shown(&c));
+}
+
+/// Ticket 1304 (Nick: backing out should count "same as attack"): the
+/// forecast closing ticks one item, backed out of or attacked from.
+#[test]
+fn backing_out_of_the_forecast_ticks_as_attacking_does() {
+    for (keys, secs) in [("d", 0.1), ("f", 6.0)] {
+        let items = [DoneWhen::ForecastOpened, DoneWhen::ForecastClosed];
+        let mut h = harness_only(skirmish_charged(&ctx(), 30, 2), &items);
+        // The lord moved one step right, `Attack`: the forecast.
+        h.keys("f Right f").wait(0.5).keys("f");
+        let mode = h.battle().map(|b| b.mode().clone());
+        assert!(matches!(mode, Some(Mode::Targeting(_))), "{mode:?}");
+        assert_eq!(harness_ticks(&h), [true, false]);
+        h.keys(keys).wait(secs);
+        let done = &h.game().ctx().game.campaign_lessons;
+        assert!(done.contains("only"), "{keys}: {:?}", harness_ticks(&h));
+    }
+}
+
+/// Ticket 1304 (Nick: "should force a zoom out and a zoom in"): each way
+/// ticks its own item. A look that can't zoom never opens the lesson.
+#[test]
+fn zooming_out_and_in_tick_each_and_glyphs_never_open_it() {
+    let items = [DoneWhen::ZoomedOut, DoneWhen::ZoomedIn];
+    let mut h = Harness::with_screen(Box::new(quick()));
+    h.with_lessons();
+    h.ctx_mut().game.content.lessons.lessons = vec![lesson("zoom", LessonLevel::Full, &items)];
+    h.wait(0.1);
+    assert!(!h.battle().is_some_and(BattleScreen::lesson_open), "glyphs");
+    let mut h = Harness::with_screen(Box::new(quick()));
+    h.with_lessons();
+    h.with_map_skin("sprite");
+    h.ctx_mut().game.content.lessons.lessons = vec![lesson("zoom", LessonLevel::Full, &items)];
+    h.wait(0.1);
+    assert!(h.battle().is_some_and(BattleScreen::lesson_open));
+    // A new player starts at 2×: out first.
+    h.keys("q");
+    assert_eq!(harness_ticks(&h), [true, false]);
+    h.keys("q");
+    assert!(h.game().ctx().game.campaign_lessons.contains("zoom"));
+}
+
+/// The lord moved beside the raider, with his two swords: the screen at
+/// turn 1 with `lessons` the only ones.
+fn two_swords(c: &mut Ctx, lessons: Vec<Lesson>) -> BattleScreen {
+    let quick = quick_battle(&c.game.content).unwrap();
+    let mut units = quick.units().to_vec();
+    units[0].pos = trpg_core::Pos::new(6, 2);
+    units[2].pos = trpg_core::Pos::new(8, 4);
+    let rout = trpg_core::Objective::Rout { turn_limit: None };
+    let state = super::testing::battle_with(c, quick.map().clone(), units, rout);
+    c.game.content.lessons.lessons = lessons;
+    BattleScreen::new(state)
+}
+
+/// Selects the lord, moves him one tile right and opens his forecast on
+/// the raider.
+fn to_swap_forecast(s: &mut BattleScreen, c: &mut Ctx) {
+    press(s, c, &[Action::Confirm]);
+    press(s, c, &[Action::CursorRight, Action::Confirm]);
+    s.update(c, &FrameInput::new(vec![], 1.0, vec![]));
+    press(s, c, &[Action::Confirm]);
+    let swaps = matches!(s.mode(), Mode::Targeting(t) if t.can_swap());
+    assert!(swaps, "{:?}", s.mode());
+}
+
+/// A lesson `id` the first forecast that swaps starts, done by `items`.
+fn at_swap(id: &str, items: &[DoneWhen]) -> Lesson {
+    let mut l = lesson(id, LessonLevel::Full, items);
+    l.trigger = TipTrigger::FirstWeaponSwap;
+    l
+}
+
+/// Tickets 1304 and 1306: the lord's forecast with his two swords opens the
+/// swap lesson; left or right swapping ticks it, another key doesn't.
+#[test]
+fn swapping_the_forecasts_weapon_ticks() {
+    let mut c = lessoned();
+    let swap = at_swap("swap", &[DoneWhen::WeaponSwapped]);
+    let mut s = two_swords(&mut c, vec![swap]);
+    to_swap_forecast(&mut s, &mut c);
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_lesson(), Some("swap"));
+    // Down picks another target, or none: no swap.
+    press(&mut s, &mut c, &[Action::CursorDown]);
+    assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
+    assert_eq!(s.lesson_ticks(), [false]);
+    // Backed out to his menu: open, it stays while he could still swap.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[]);
+    assert!(
+        matches!(s.mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        s.mode()
+    );
+    assert!(s.lesson_open());
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    assert!(c.game.campaign_lessons.contains("swap"));
+}
+
+/// Ticket 1306 (Nick: it "can trigger right after the battle tutorial so
+/// the voiceline and tip are no longer true about that specific unit"):
+/// waiting behind another lesson of the same forecast, the swap lesson
+/// doesn't open once that forecast is gone; it opens the next time a
+/// forecast that swaps does.
+#[test]
+fn the_swap_lesson_opens_only_in_a_forecast_that_swaps() {
+    let mut c = lessoned();
+    let first = at_swap("first", &[DoneWhen::ForecastClosed]);
+    let swap = at_swap("swap", &[DoneWhen::WeaponSwapped]);
+    let mut s = two_swords(&mut c, vec![first, swap]);
+    to_swap_forecast(&mut s, &mut c);
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_lesson(), Some("first"));
+    // Back out: "first" is done, and the forecast is gone.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[]);
+    assert!(c.game.campaign_lessons.contains("first"));
+    assert!(
+        matches!(s.mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        s.mode()
+    );
+    assert_eq!(s.shown_lesson(), None);
+    assert!(!s.lesson_open());
+    // `Attack` again: the forecast that swaps, and the lesson with it.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    press(&mut s, &mut c, &[]);
+    assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
+    assert_eq!(s.shown_lesson(), Some("swap"));
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    assert!(c.game.campaign_lessons.contains("swap"));
+}
+
+/// Ticket 1304: `FirstUnitActed` fires on turn 1 back on the map once a
+/// unit of the player's has acted, not before, and never on turn 2.
+#[test]
+fn a_unit_acted_fires_on_turn_one_only() {
+    let c = ctx();
+    let fires = |state: &BattleState| {
+        let s = BattleScreen::new(state.clone());
+        s.lesson_triggers_now()
+            .contains(&TipTrigger::FirstUnitActed)
+    };
+    let mut state = quick_battle(&c.game.content).unwrap();
+    assert!(!fires(&state), "nobody has acted");
+    let lord = state.units()[0].clone();
+    let wait = Command::Act {
+        unit: lord.id,
+        dest: lord.pos,
+        action: UnitAction::Wait,
+    };
+    state.apply(&wait).unwrap();
+    assert!(fires(&state));
+    // Units are left to act: not everyone has.
+    let s = BattleScreen::new(state.clone());
+    assert!(!s.lesson_triggers_now().contains(&TipTrigger::NoUnitLeft));
+    while state.turn() < 2 || state.phase() != Phase::Player {
+        state.apply(&Command::EndPhase).unwrap();
+    }
+    let lord = state.units()[0].clone();
+    let wait = Command::Act {
+        unit: lord.id,
+        dest: lord.pos,
+        action: UnitAction::Wait,
+    };
+    state.apply(&wait).unwrap();
+    assert!(!fires(&state), "turn 2");
+}
+
+/// Ticket 1304: a lesson the turn's end does is put away after turn 1;
+/// on turn 1 it stays.
+#[test]
+fn ending_the_turn_is_put_away_after_turn_one() {
+    let mut c = lessoned();
+    c.game.content.lessons.lessons = vec![lesson("end", LessonLevel::Full, &[DoneWhen::TurnEnded])];
+    let mut state = quick_battle(&c.game.content).unwrap();
+    for turn in [1, 2] {
+        while state.turn() < turn || state.phase() != Phase::Player {
+            state.apply(&Command::EndPhase).unwrap();
+        }
+        let mut s = BattleScreen::new(state.clone());
+        s.lessons.fire(TipTrigger::FirstBattleStart);
+        s.lessons.absorb(&c, None, turn);
+        s.settle_lessons(false);
+        assert_eq!(s.lessons.current().is_some(), turn == 1, "turn {turn}");
+    }
 }

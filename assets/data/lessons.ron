@@ -30,7 +30,8 @@
 //   level     Full (shows only at Full) or Short (at Full and Short).
 //   trigger   what starts it: a tip trigger (tips.ron), e.g.
 //             FirstBattleStart, or one only lessons use: NoUnitLeft (every
-//             unit has acted), SecondTurn (turn 2's player phase),
+//             unit has acted), FirstUnitActed (turn 1 only: back on the
+//             map after a unit has acted), SecondTurn (turn 2's player phase),
 //             ThreatArrowsShown, ArtsAvailable (an action menu with Arts
 //             that can be used), TileSpellAvailable (a spell list with a
 //             spell that can be cast on a tile from there).
@@ -58,7 +59,12 @@
 // active from the Arts menu), ForecastOpened, Attacked, TileAimed (a spell
 // aimed at a tile), ThreatPointed / SafePointed (a selected unit's path
 // pointed at a tile with / without threat arrows), RewindOpened,
-// RewindClosed, OptionsOpened, TurnEnded.
+// RewindClosed, OptionsOpened, TurnEnded, ForecastClosed (the forecast
+// closed: attacked from or backed out of, either counts), ZoomedIn,
+// ZoomedOut, WeaponSwapped (left or right swapped the forecast's weapon).
+//
+// A lesson whose item is TurnEnded steps aside for any lesson waiting
+// that can be done, and is put away after turn 1 (ticket 1304).
 //
 // The lessons (ticket 0457): basic controls at Full, what is different in
 // this game at Short. The test lesson is in assets-test/data/lessons.ron.
@@ -86,7 +92,6 @@
             text: "No mouse here; it's all keys. And every key\ncan be changed in Options, if you'd rather.",
             face: "sly",
             items: [
-                (label: "Move the cursor: {Cursor}", done_when: CursorMoved),
                 (label: "Open Options from the map menu: {Cancel}", done_when: OptionsOpened),
             ],
         ),
@@ -106,12 +111,12 @@
             id: "moving",
             level: Full,
             trigger: FirstBattleStart,
-            title: "Selecting a unit",
-            text: "Pick up a unit and its reach lights up.\nSend it to a lit tile; its menu follows.",
+            title: "Moving a unit",
+            text: "Pick up a unit: blue is where it can go, red\nwhat it can hit. Enemies on red are in reach.",
             face: "neutral",
             items: [
                 (label: "Select a unit: {Select}", done_when: UnitSelected),
-                (label: "Send it to a lit tile: {Select}", done_when: UnitMoved),
+                (label: "Send it to a blue tile: {Select}", done_when: UnitMoved),
                 (label: "See its menu", done_when: ActionMenuOpened),
             ],
         ),
@@ -124,15 +129,38 @@
             face: "stern",
             items: [
                 (label: "Open the forecast on an enemy", done_when: ForecastOpened),
-                (label: "Attack: {Confirm}. Back out: {Cancel}", done_when: Attacked),
+                (label: "Attack: {Confirm}, or back out: {Cancel}", done_when: ForecastClosed),
+            ],
+        ),
+        (
+            id: "weapon_swap",
+            level: Full,
+            trigger: FirstWeaponSwap,
+            title: "Swapping weapons",
+            text: "This unit has more than one weapon. Try each\nright here; the numbers change to match.",
+            face: "neutral",
+            items: [
+                (label: "Swap weapon: {CursorLeft} {CursorRight}", done_when: WeaponSwapped),
+            ],
+        ),
+        (
+            id: "zoom",
+            level: Full,
+            trigger: ZoomAvailable,
+            title: "Zooming the map",
+            text: "Can't see it all? The view follows your\ncursor, and the map zooms in and out.",
+            face: "sly",
+            items: [
+                (label: "Zoom out: {ZoomMap}", done_when: ZoomedOut),
+                (label: "Zoom in: {ZoomMap}", done_when: ZoomedIn),
             ],
         ),
         (
             id: "ending_turn",
             level: Full,
-            trigger: NoUnitLeft,
+            trigger: FirstUnitActed,
             title: "Ending the turn",
-            text: "That's everyone. End the turn here, or from\nEnd turn in the map menu.",
+            text: "Not everyone has to act. When you're done,\nend the turn, here or from the map menu.",
             face: "neutral",
             items: [
                 (label: "End turn: {EndTurn}, or menu: {Cancel}", done_when: TurnEnded),

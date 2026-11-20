@@ -212,7 +212,9 @@ fn wait_all(h: &mut Harness, units: usize) {
             h.keys("s");
         }
         h.keys("f f");
-        assert_eq!(help(h), "arrows choose · f confirm · d back");
+        // The action menu, its unit's Info hint after (1307).
+        let menu = "arrows choose · f confirm · d back · e ";
+        assert!(help(h).starts_with(menu), "{}", help(h));
         h.keys("f");
     }
 }
@@ -484,7 +486,10 @@ fn lord_path() -> Harness {
 #[test]
 fn selected_unit_with_ranges_and_path_snapshot() {
     let h = lord_path();
-    assert_eq!(help(&h), "arrows move · f move here · d cancel");
+    assert_eq!(
+        help(&h),
+        "arrows move · f move here · d cancel · e Test Lord's info"
+    );
     assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
@@ -493,7 +498,10 @@ fn selected_unit_with_ranges_and_path_snapshot() {
 fn action_menu_snapshot() {
     let mut h = lord_path();
     h.keys("f").wait(0.5);
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    assert_eq!(
+        help(&h),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     assert_snapshot!(h.snapshot_of(MAP_VIEW));
 }
 
@@ -520,6 +528,48 @@ fn select_move_and_wait_dims_the_unit_and_keeps_its_label_case() {
     );
 }
 
+/// Info with the lord selected opens its info (ticket 1305); Cancel goes
+/// back to the selection as it was: the ranges, the path, the help bar.
+#[test]
+fn info_with_a_unit_selected_opens_its_info_and_cancel_returns() {
+    let mut h = lord_path();
+    let selected = h.snapshot_of(MAP_VIEW);
+    h.keys("e");
+    assert!(shows(&h, "Weapon ranks"));
+    assert!(shows(&h, "Test Lord"));
+    h.keys("d");
+    assert!(!shows(&h, "Weapon ranks"));
+    assert_eq!(
+        help(&h),
+        "arrows move · f move here · d cancel · e Test Lord's info"
+    );
+    assert_eq!(h.snapshot_of(MAP_VIEW), selected);
+    // On the brigand at (7, 4): its info, back to the selection (1307).
+    h.keys("Right Right Up");
+    assert_eq!(
+        help(&h),
+        "arrows move · f attack · d cancel · e Brigand's info"
+    );
+    h.keys("e");
+    assert!(shows(&h, "Weapon ranks"));
+    assert!(shows(&h, "Brigand"));
+    assert!(!shows(&h, "Test Lord"));
+    h.keys("d");
+    assert_eq!(
+        help(&h),
+        "arrows move · f attack · d cancel · e Brigand's info"
+    );
+    h.keys("Down Left Left");
+    // In the action menu too, back to the menu.
+    h.keys("f").wait(0.5).keys("e");
+    assert!(shows(&h, "Weapon ranks"));
+    h.keys("d");
+    assert_eq!(
+        help(&h),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
+}
+
 #[test]
 fn cancelling_the_menu_then_the_selection_restores_the_unit() {
     let mut h = quick_battle();
@@ -534,7 +584,10 @@ fn cancelling_the_menu_then_the_selection_restores_the_unit() {
     h.keys("d");
     assert_eq!(unit(&h, 3, 5), Some(shown("Lo", false)));
     assert_eq!(unit(&h, 5, 5), None);
-    assert_eq!(help(&h), "arrows move · f move here · d cancel");
+    assert_eq!(
+        help(&h),
+        "arrows move · f move here · d cancel · e Test Lord's info"
+    );
     // Back to browsing, the cursor on the lord (its pulse restarted, as
     // when the battle opened): the screen exactly as it was.
     h.keys("d");
@@ -640,7 +693,10 @@ fn an_art_from_the_arts_menu_and_a_spell_active_from_the_spell_list() {
     assert!(!shows(&h, "Guard Break"));
     // Cancel: the action menu, on Attack. Arts is the next line.
     h.keys("d");
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    assert_eq!(
+        help(&h),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     assert!(shows(&h, "Arts"));
     h.keys("Down f");
     assert!(shows(&h, "Iron Sword 20/20"));
@@ -679,7 +735,10 @@ fn an_art_from_the_arts_menu_and_a_spell_active_from_the_spell_list() {
     assert_eq!(panel(&h)[1], "Test Mage     Brigand");
     assert!(!shows(&h, "Overcast"));
     h.keys("d");
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    assert_eq!(
+        help(&h),
+        "arrows choose · f confirm · d back · e Test Mage's info"
+    );
     // Magic: the spell list, with a line for Overcast after each attack
     // spell.
     h.keys("f");
@@ -914,7 +973,10 @@ fn battle_menus_sound() {
     // Select the lord, keep it where it stands: the action menu opens.
     h.keys("f f");
     assert_eq!(h.sounds(), ["menu_select", "menu_select"]);
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    assert_eq!(
+        help(&h),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     h.clear_audio().keys("Down d d");
     assert_eq!(h.sounds(), ["menu_move", "menu_cancel", "menu_cancel"]);
     // Browsing: back opens the map menu (opening sounds as select).

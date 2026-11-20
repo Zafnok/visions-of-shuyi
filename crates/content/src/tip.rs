@@ -106,6 +106,9 @@ pub enum TipTrigger {
     // yet.
     /// In the player's phase, every unit of the player's has acted.
     NoUnitLeft,
+    /// In turn 1's player phase, back on the map after a unit of the
+    /// player's has acted (ticket 1304): never in a later turn.
+    FirstUnitActed,
     /// The player's phase of turn 2 begins: there is a turn to undo.
     SecondTurn,
     /// The threat arrows show: an enemy could attack a unit of the
@@ -212,9 +215,6 @@ mod tests {
     fn the_shipped_file_loads_and_covers_every_trigger() {
         let table = load(None).unwrap();
         for trigger in [
-            TipTrigger::FirstBattleStart,
-            TipTrigger::FirstUnitSelected,
-            TipTrigger::FirstEnemyInRange,
             TipTrigger::FirstForecast,
             TipTrigger::FirstLowHp,
             TipTrigger::FirstLevelUp,
@@ -223,10 +223,8 @@ mod tests {
             TipTrigger::FirstSkillUnit,
             TipTrigger::FirstCaster,
             TipTrigger::FirstTerrain,
-            TipTrigger::ZoomAvailable,
             TipTrigger::FirstWadeInReach,
             TipTrigger::FirstEffective,
-            TipTrigger::FirstWeaponSwap,
             TipTrigger::FirstLoadGame,
             TipTrigger::FirstProfileScreen,
         ] {

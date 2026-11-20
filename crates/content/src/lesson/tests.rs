@@ -126,7 +126,7 @@ fn the_lessons_conditions_load_and_say_which_need_a_unit() {
 /// different here at Short, each with the trigger it starts at. A test of
 /// the content (ADR-0118).
 #[test]
-fn the_story_has_the_ten_lessons_of_the_design() {
+fn the_story_has_the_twelve_lessons_of_the_design() {
     use LessonLevel::{Full, Short};
     use TipTrigger as T;
     if bundle::skip_without_the_game() {
@@ -146,7 +146,9 @@ fn the_story_has_the_ten_lessons_of_the_design() {
             ("next_unit", Full, T::FirstBattleStart),
             ("moving", Full, T::FirstBattleStart),
             ("attacking", Full, T::FirstEnemyInRange),
-            ("ending_turn", Full, T::NoUnitLeft),
+            ("weapon_swap", Full, T::FirstWeaponSwap),
+            ("zoom", Full, T::ZoomAvailable),
+            ("ending_turn", Full, T::FirstUnitActed),
             ("rewind", Short, T::SecondTurn),
             ("threat_arrows", Short, T::ThreatArrowsShown),
             ("combat_arts", Short, T::ArtsAvailable),

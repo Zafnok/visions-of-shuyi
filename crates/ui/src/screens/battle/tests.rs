@@ -892,25 +892,84 @@ fn the_menu_opens_beside_the_unit_drawn_at_its_new_tile() {
     assert_eq!(unit.name, "Test Lord");
 }
 
+/// 1307: with the lord selected, the help names the unit Info opens,
+/// `unit info` when its name would not fit the help row.
+#[test]
+fn the_info_hint_names_the_unit_or_says_unit_info() {
+    let c = ctx();
+    let named = |len: usize| {
+        let quick = quick();
+        let mut units = quick.state().units().to_vec();
+        let lord = units.iter_mut().find(|u| u.id == UnitId(1)).unwrap();
+        lord.name = "B".repeat(len);
+        let at = lord.pos;
+        let mut s = BattleScreen::new(battle(&c, quick.state().map().clone(), units));
+        s.cursor.jump(at);
+        let mut c = ctx();
+        step(&mut s, &mut c, &[Action::Confirm]);
+        s.help(&c)
+    };
+    let line = "arrows move · f move here · d cancel · e ";
+    assert_eq!(named(40), format!("{line}{}'s info", "B".repeat(40)));
+    assert_eq!(named(70), format!("{line}unit info"));
+}
+
+/// 1307: the name is shown exactly while the line fits the help row (from
+/// cell 1, the row's last cell kept clear), less the debug hint and the
+/// cell before it when debug tools are on.
+#[test]
+fn the_info_hint_keeps_the_name_up_to_the_help_rows_room() {
+    for debug in [false, true] {
+        let mut c = ctx();
+        c.debug_tools = debug;
+        let hint = crate::screens::debug_hint(&c).map_or(0, |h| h.chars().count() + 1);
+        assert_eq!(hint > 0, debug);
+        let room = usize::try_from(layout::HELP_BAR.w - 1).unwrap() - hint;
+        let help = |len: usize| {
+            let mut c = ctx();
+            c.debug_tools = debug;
+            let quick = quick();
+            let mut units = quick.state().units().to_vec();
+            let lord = units.iter_mut().find(|u| u.id == UnitId(1)).unwrap();
+            lord.name = "B".repeat(len);
+            let at = lord.pos;
+            let mut s = BattleScreen::new(battle(&c, quick.state().map().clone(), units));
+            s.cursor.jump(at);
+            step(&mut s, &mut c, &[Action::Confirm]);
+            let width = s.help_styled(&c).width(&frame_widths(&c));
+            (s.help(&c).ends_with("'s info"), width)
+        };
+        let longest = (1..room).take_while(|&len| help(len).0).last().unwrap();
+        assert_eq!(help(longest), (true, room), "debug tools {debug}");
+        assert!(!help(longest + 1).0, "debug tools {debug}");
+    }
+}
+
 #[test]
 fn help_follows_the_mode() {
     let mut c = ctx();
     let mut s = quick();
     step(&mut s, &mut c, &[Action::Confirm]);
     // On the unit: its own tile is a legal end.
-    assert_eq!(s.help(&c), "arrows move · f move here · d cancel");
+    assert_eq!(
+        s.help(&c),
+        "arrows move · f move here · d cancel · e Test Lord's info"
+    );
     step(&mut s, &mut c, &[Action::CursorRight, Action::CursorDown]);
     // On the knight: can't stop there.
-    assert_eq!(s.help(&c), "arrows move · d cancel");
+    assert_eq!(s.help(&c), "arrows move · d cancel · e Test Knight's info");
     step(&mut s, &mut c, &[Action::CursorUp, Action::CursorRight]);
     step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.help(&c), "f skip");
     frame(&mut s, &mut c, &[], 1.0, false);
-    assert_eq!(s.help(&c), "arrows choose · f confirm · d back");
+    assert_eq!(
+        s.help(&c),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(
         s.help(&c),
-        "w\u{a0}a\u{a0}s\u{a0}d choose · j confirm · k back"
+        "w\u{a0}a\u{a0}s\u{a0}d choose · j confirm · k back · i Test Lord's info"
     );
 }
 

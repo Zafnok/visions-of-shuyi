@@ -485,3 +485,11 @@ Nothing for the game: 1 PR (#508, the engine's book and its playground Codespace
 | #511 | 3226 | The options glyph skin's value column leaves room for the longest label and its arrow (`api: none`, in `shuyi-ui`'s Options skin) | unblocks 1302 (this PR: the title's Options snapshot moves every value one cell right, as "Voice on hover in the log" is 25 cells; `engine#3226` out of its `blocked_by`) |
 
 Nothing for the game: 0 PRs.
+
+## 2026-11-20: 7a7d7b0c → 50472bbc (1 engine PR), #779
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #512 | 3505 | The web page takes the keys inside a site's frame without a click: at load, when the frame is first shown, and when the site fullscreens it (`api: none`, the shell `shuyi web` writes) | fixed: nothing to change (the game ships the engine's page unchanged; searched `crates/`, `assets/` and `scripts/` for `glcanvas`: none, the game has no page of its own); adopt → 0933 (this PR: the demo and the `story-trial` preview get it at their next build) |
+
+Nothing for the game: 0 PRs.

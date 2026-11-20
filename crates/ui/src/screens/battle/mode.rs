@@ -494,6 +494,9 @@ pub enum Mode {
     Info {
         /// The unit shown.
         unit: UnitId,
+        /// Where closing it goes back to: the selected unit or its action
+        /// menu when opened from there (1305), else browsing the map.
+        back: Option<Box<Mode>>,
     },
 }
 
@@ -668,6 +671,32 @@ impl Mode {
             | Mode::RestartPrompt
             | Mode::SuspendPrompt
             | Mode::Info { .. } => None,
+        }
+    }
+
+    /// The unit Info shows over this mode, going back to it: with a unit
+    /// selected, the unit on the cursor's tile (1307), else the selected
+    /// one (1305); in its action menu, the selected one. `None` elsewhere.
+    pub fn info_unit(&self, cursor: Pos, state: &BattleState) -> Option<UnitId> {
+        match self {
+            Mode::Selected(sel) => {
+                let here = state.units().iter().find(|u| u.pos == cursor);
+                Some(here.map_or(sel.unit, |u| u.id))
+            }
+            Mode::ActionMenu { sel, .. } => Some(sel.unit),
+            _ => None,
+        }
+    }
+
+    /// The info screen of [`info_unit`](Self::info_unit), going back to
+    /// this mode when it closes; this mode itself if it has none.
+    fn open_info(self, cursor: Pos, state: &BattleState) -> Mode {
+        match self.info_unit(cursor, state) {
+            Some(unit) => Mode::Info {
+                unit,
+                back: Some(Box::new(self)),
+            },
+            None => self,
         }
     }
 
@@ -965,10 +994,14 @@ pub fn step_with(
                 let origin = sel.origin();
                 (Mode::default(), Effect::Cursor(origin))
             }
+            Action::Info => (Mode::Selected(sel).open_info(cursor, state), Effect::None),
             _ => (Mode::Selected(sel), Effect::None),
         },
         Mode::Moving { sel, .. } if action == Action::Confirm => walk_ended(sel, state, words),
         moving @ Mode::Moving { .. } => (moving, Effect::None),
+        open @ Mode::ActionMenu { .. } if action == Action::Info => {
+            (open.open_info(cursor, state), Effect::None)
+        }
         Mode::ActionMenu {
             sel,
             menu,
@@ -1082,7 +1115,7 @@ fn step_around(mode: Mode, action: Action, at: MenuAt<'_>) -> (Mode, Effect) {
             Action::Cancel => (at.open(MapEntry::Suspend), Effect::None),
             _ => (Mode::SuspendPrompt, Effect::None),
         },
-        Mode::Info { unit } => step_info(unit, action, state),
+        Mode::Info { unit, back } => step_info(unit, back, action, state),
         other => (other, Effect::None),
     }
 }
@@ -1198,23 +1231,32 @@ fn same_faction(state: &BattleState, id: UnitId) -> Vec<UnitId> {
 
 /// [`step`] on the info screen: Down or `NextUnit` shows the next unit of
 /// the same faction, Up or `PrevUnit` the previous one (wrapping); Cancel
-/// or Info closes it with the cursor on the unit last shown.
-fn step_info(unit: UnitId, action: Action, state: &BattleState) -> (Mode, Effect) {
+/// or Info closes it with the cursor on the unit last shown, or back to
+/// `back` (the selection it was opened from) with the cursor where it was.
+fn step_info(
+    unit: UnitId,
+    back: Option<Box<Mode>>,
+    action: Action,
+    state: &BattleState,
+) -> (Mode, Effect) {
     let forward = match action {
         Action::CursorDown | Action::NextUnit => true,
         Action::CursorUp | Action::PrevUnit => false,
         Action::Cancel | Action::Info => {
+            if let Some(back) = back {
+                return (*back, Effect::None);
+            }
             let at = state.unit(unit).map(|u| u.pos);
             return (Mode::default(), at.map_or(Effect::None, Effect::Cursor));
         }
-        _ => return (Mode::Info { unit }, Effect::None),
+        _ => return (Mode::Info { unit, back }, Effect::None),
     };
     let units = same_faction(state, unit);
     let next = units
         .iter()
         .position(|&u| u == unit)
         .map_or(unit, |i| units[wrap_step(i, units.len(), forward)]);
-    (Mode::Info { unit: next }, Effect::None)
+    (Mode::Info { unit: next, back }, Effect::None)
 }
 
 /// `Attack` chosen in the action menu: the forecast with the equipped weapon
@@ -1562,7 +1604,13 @@ fn step_idle(threat: Option<Threat>, action: Action, at: MenuAt<'_>) -> (Mode, E
         Action::Cancel if threat.is_some() => idle(None),
         Action::Cancel | Action::Menu => (at.open(MapEntry::Units), Effect::None),
         Action::Info => match state.units().iter().find(|u| u.pos == cursor) {
-            Some(unit) => (Mode::Info { unit: unit.id }, Effect::None),
+            Some(unit) => {
+                let info = Mode::Info {
+                    unit: unit.id,
+                    back: None,
+                };
+                (info, Effect::None)
+            }
             None => idle(threat),
         },
         Action::EndTurn => end_turn(state),
@@ -1774,8 +1822,87 @@ mod tests {
         );
         // Other keys keep the selection.
         assert_eq!(
-            step(Mode::Selected(sel.clone()), Action::Info, p(5, 5), &s),
+            step(Mode::Selected(sel.clone()), Action::DangerZone, p(5, 5), &s),
             (Mode::Selected(sel), Effect::None)
+        );
+    }
+
+    /// 1307: with a unit selected, Info on another unit's tile shows that
+    /// unit (ours or the enemy's), on an empty tile the selected one; the
+    /// action menu shows the selected one wherever the cursor is.
+    #[test]
+    fn info_while_selected_shows_the_unit_under_the_cursor() {
+        let s = quick();
+        let sel = selected(&s, &[p(4, 5)]);
+        let lord = UnitId(1);
+        let mode = Mode::Selected(sel.clone());
+        let enemy = s.units().iter().find(|u| u.faction != Faction::Player);
+        let ours = s
+            .units()
+            .iter()
+            .find(|u| u.faction == Faction::Player && u.id != lord);
+        for other in [enemy.unwrap(), ours.unwrap()] {
+            assert_eq!(mode.info_unit(other.pos, &s), Some(other.id));
+            let (info, _) = step(mode.clone(), Action::Info, other.pos, &s);
+            let back = Some(Box::new(mode.clone()));
+            assert_eq!(
+                info,
+                Mode::Info {
+                    unit: other.id,
+                    back
+                }
+            );
+            assert_eq!(
+                step(info, Action::Cancel, other.pos, &s),
+                (mode.clone(), Effect::None)
+            );
+        }
+        let empty = p(4, 5);
+        assert!(s.units().iter().all(|u| u.pos != empty));
+        assert_eq!(mode.info_unit(empty, &s), Some(lord));
+        assert_eq!(mode.info_unit(p(3, 5), &s), Some(lord));
+        assert_eq!(Mode::default().info_unit(p(3, 5), &s), None);
+        let menu = open_menu(sel, &s);
+        let far = enemy.unwrap().pos;
+        assert_eq!(menu.info_unit(far, &s), Some(lord));
+    }
+
+    #[test]
+    fn info_while_selected_shows_the_unit_and_cancel_returns_to_the_selection() {
+        let s = quick();
+        let sel = selected(&s, &[p(4, 5), p(5, 5)]);
+        let lord = UnitId(1);
+        let (info, effect) = step(Mode::Selected(sel.clone()), Action::Info, p(5, 5), &s);
+        let back = Some(Box::new(Mode::Selected(sel.clone())));
+        assert_eq!(
+            (&info, effect),
+            (&Mode::Info { unit: lord, back }, Effect::None)
+        );
+        // Paging through the faction keeps the way back.
+        let (next, _) = step(info, Action::NextUnit, p(5, 5), &s);
+        assert!(
+            matches!(&next, Mode::Info { back: Some(_), .. }),
+            "{next:?}"
+        );
+        // Cancel or Info: the same selection, the cursor where it was.
+        for close in [Action::Cancel, Action::Info] {
+            assert_eq!(
+                step(next.clone(), close, p(5, 5), &s),
+                (Mode::Selected(sel.clone()), Effect::None)
+            );
+        }
+        // From the action menu too, back to the menu as it was.
+        let (menu, _) = step(Mode::Selected(sel), Action::Confirm, p(5, 5), &s);
+        let menu = (0..4).fold(menu, |m, _| m.tick(1.0, false, &s, Words::ENGLISH));
+        assert!(matches!(menu, Mode::ActionMenu { .. }), "{menu:?}");
+        let (info, _) = step(menu.clone(), Action::Info, p(5, 5), &s);
+        assert!(
+            matches!(&info, Mode::Info { unit, .. } if *unit == lord),
+            "{info:?}"
+        );
+        assert_eq!(
+            step(info, Action::Cancel, p(5, 5), &s),
+            (menu, Effect::None)
         );
     }
 

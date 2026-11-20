@@ -23,7 +23,15 @@ fn p(x: i32, y: i32) -> Pos {
 }
 
 /// The basic-controls lessons (`Full` only).
-const BASICS: [&str; 5] = ["cursor", "next_unit", "moving", "attacking", "ending_turn"];
+const BASICS: [&str; 7] = [
+    "cursor",
+    "next_unit",
+    "moving",
+    "attacking",
+    "weapon_swap",
+    "zoom",
+    "ending_turn",
+];
 
 // Chapter 1's party where it starts (`assets-private/content/battles/ch01.ron`).
 const LEAD: Pos = Pos::new(4, 12);
@@ -234,8 +242,9 @@ fn the_cursor_lesson_opens_on_turn_one_and_closes_on_the_four_directions() {
     assert_eq!(shown(&h), Some("keys"));
 }
 
-/// Lesson 6, `Short` (so the first at Short): Options first, then the
-/// cursor; the keys in its text are the player's.
+/// Lesson 6, `Short` (so the first at Short): Options closes it; the keys
+/// in its text are the player's. It asks for nothing the cursor lesson
+/// before it at Full did (1306, Nick: moving the cursor again "is dumb").
 #[test]
 fn the_keys_lesson_opens_first_at_short_and_closes_after_options() {
     if skip_without_the_game() {
@@ -246,9 +255,9 @@ fn the_keys_lesson_opens_first_at_short_and_closes_after_options() {
     let snap = h.snapshot();
     assert!(snap.contains("Played on the keys"), "{snap}");
     assert!(snap.contains("Open Options from the map menu: d"), "{snap}");
+    assert!(!snap.contains("Move the cursor"), "{snap}");
+    assert_eq!(battle(&h).lesson_ticks(), [false]);
     visit_options(&mut h);
-    assert_eq!(battle(&h).lesson_ticks(), [false, true]);
-    h.keys("Up");
     assert_eq!(done(&h), ["keys"]);
 }
 
@@ -304,10 +313,11 @@ fn the_attacking_lesson_opens_when_an_enemy_is_in_reach_and_closes_on_an_attack(
     assert!(done(&h).contains(&"attacking".to_owned()));
 }
 
-/// Lesson 5, `Full`: when no unit is left to act on turn 1, before
-/// auto-end (on here) would end the turn: it waits for the player to.
+/// Lesson 5, `Full`: open once the first unit has acted on turn 1 (1304),
+/// it is still there when no unit is left, before auto-end (on here) would
+/// end the turn: it waits for the player to.
 #[test]
-fn the_ending_turn_lesson_opens_when_every_unit_has_acted_and_auto_end_waits() {
+fn the_ending_turn_lesson_is_up_when_every_unit_has_acted_and_auto_end_waits() {
     if skip_without_the_game() {
         return;
     }
@@ -490,6 +500,8 @@ fn the_arts_lesson_doesnt_open_after_the_only_unit_with_arts_attacks() {
             "keys",
             "next_unit",
             "moving",
+            "weapon_swap",
+            "ending_turn",
             "threat_arrows",
             "terrain_magic",
         ],
@@ -530,6 +542,7 @@ fn the_attacking_lesson_is_put_away_when_nobody_left_can_reach_an_enemy() {
             "keys",
             "next_unit",
             "moving",
+            "ending_turn",
             "threat_arrows",
             "combat_arts",
             "terrain_magic",
@@ -641,12 +654,11 @@ fn the_tutorial_set_to_none_stops_the_lessons_and_tips_already_waiting() {
         return;
     }
     let mut h = chapter_1_with_tips(TutorialLevel::Full);
-    // The start tip comes first, then the cursor lesson opens.
-    assert!(tip(&h).is_some());
-    h.keys("f").wait(0.1);
+    // The cursor lesson opens first (1304: no tip before it).
+    assert_eq!(tip(&h), None);
     assert_eq!(shown(&h), Some("cursor"));
     assert!(battle(&h).lesson_open());
-    // Selecting the lead queues its tip behind the open lesson.
+    // Selecting the lead: no tip over the open lesson.
     h.keys("f").wait(0.1);
     assert_eq!(tip(&h), None);
     h.keys("d").wait(0.1);
@@ -691,7 +703,6 @@ fn the_tutorial_set_to_short_drops_the_full_only_lessons_and_tips() {
         return;
     }
     let mut h = chapter_1_with_tips(TutorialLevel::Full);
-    h.keys("f").wait(0.1);
     assert_eq!(shown(&h), Some("cursor"));
     h.keys("f").wait(0.1);
     h.keys("d").wait(0.1);
@@ -888,7 +899,12 @@ fn at_full_the_box_waits_for_the_basic_controls_too() {
     }
     let mut h = chapter_1(
         TutorialLevel::Full,
-        &["threat_arrows", "combat_arts", "terrain_magic"],
+        &[
+            "weapon_swap",
+            "threat_arrows",
+            "combat_arts",
+            "terrain_magic",
+        ],
     );
     openers(&mut h);
     assert_eq!(shown(&h), Some("moving"));
@@ -926,4 +942,94 @@ fn at_none_the_box_never_comes() {
     end_turn(&mut h);
     to_turn(&mut h, 2);
     assert!(!end_box(&h));
+}
+
+/// Ticket 1304 (Nick's points 1, 2, 5, 6 and 8), `Full`, turn 1: the
+/// cursor lesson is the first box, no tip before it; Moving a unit (whose
+/// line says what red is: an enemy in reach) comes before Attacking, which
+/// waits behind it; backing out of the forecast finishes Attacking; Ending
+/// the turn opens once the first unit has acted, with units left, and
+/// ending the turn then does it.
+#[test]
+fn turn_one_at_full_goes_in_nicks_order() {
+    if skip_without_the_game() {
+        return;
+    }
+    let h = chapter_1_with_tips(TutorialLevel::Full);
+    assert_eq!(tip(&h), None, "no tip before the cursor lesson");
+    assert_eq!(shown(&h), Some("cursor"));
+    let mut h = chapter_1(
+        TutorialLevel::Full,
+        &[
+            "weapon_swap",
+            "threat_arrows",
+            "combat_arts",
+            "terrain_magic",
+        ],
+    );
+    openers(&mut h);
+    assert_eq!(shown(&h), Some("moving"));
+    let moving = h.ctx_mut().game.content.lessons.get("moving").cloned();
+    let moving = moving.unwrap_or_else(|| panic!("no moving lesson"));
+    assert!(moving.text.contains("red"), "{}", moving.text);
+    // The Sergeant reaches the Brigand: Attacking waits behind Moving.
+    go(&mut h, SERGEANT);
+    h.keys("f");
+    assert_eq!(shown(&h), Some("moving"));
+    assert_eq!(battle(&h).lesson_ticks(), [true, false, false]);
+    // Pointed at the Brigand: the move, then back out to his menu.
+    go(&mut h, BRIGAND);
+    h.keys("f").wait(1.5);
+    assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
+    h.keys("d");
+    assert!(matches!(battle(&h).mode(), Mode::ActionMenu { .. }));
+    assert!(done(&h).contains(&"moving".to_owned()));
+    assert_eq!(shown(&h), Some("attacking"));
+    // Attack, then back out of the forecast: done.
+    pick(&mut h, MenuEntry::Attack);
+    h.wait(1.0);
+    assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
+    assert_eq!(battle(&h).lesson_ticks(), [true, false]);
+    h.keys("d");
+    assert!(done(&h).contains(&"attacking".to_owned()));
+    // He waits: the first unit to act. Ending the turn, with units left.
+    pick(&mut h, MenuEntry::Wait);
+    h.wait(0.5);
+    assert!(!battle(&h).ready_units().is_empty(), "units left to act");
+    assert_eq!(shown(&h), Some("ending_turn"));
+    end_turn(&mut h);
+    assert_ne!(battle(&h).state().phase(), Phase::Player);
+    assert!(done(&h).contains(&"ending_turn".to_owned()));
+}
+
+/// Ticket 1304 (Nick's point 8): nobody acts on turn 1, so Ending the turn
+/// never opened; on turn 2 it doesn't, a unit acting or not.
+#[test]
+fn the_ending_turn_lesson_never_opens_after_turn_one() {
+    if skip_without_the_game() {
+        return;
+    }
+    let mut h = chapter_1(
+        TutorialLevel::Full,
+        &[
+            "cursor",
+            "keys",
+            "next_unit",
+            "moving",
+            "attacking",
+            "weapon_swap",
+            "zoom",
+            "rewind",
+            "threat_arrows",
+            "combat_arts",
+            "terrain_magic",
+        ],
+    );
+    assert_eq!(shown(&h), None);
+    end_turn(&mut h);
+    to_turn(&mut h, 2);
+    wait_unit(&mut h, LEAD);
+    h.wait(0.5);
+    assert_eq!(shown(&h), None);
+    assert!(!done(&h).contains(&"ending_turn".to_owned()));
 }

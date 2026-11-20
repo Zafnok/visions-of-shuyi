@@ -72,6 +72,37 @@ fn a_unit_with_a_face_shows_its_portrait_in_the_box() {
     assert_eq!(row.trim(), "");
 }
 
+/// The face fills the frame's inside exactly, with no empty band (ticket
+/// 1305): the test faces and the placeholders (32 × 32) at 4×, the bought
+/// faces and the soldier (64 × 64) at 2×.
+#[test]
+fn the_portrait_fills_its_frame() {
+    let c = ctx();
+    let art = &c.game.content.portraits["test_lord"];
+    let buf = painted(|v| {
+        v.face = Some(FaceView {
+            portrait: "test_lord".into(),
+            expression: art.expressions[0].name.clone(),
+        });
+    });
+    let (cw, ch) = buf.spec().cell_px();
+    let inside = shuyi_ui::frame::glyph_buffer::PxRect::new(
+        (PORTRAIT.x + 1) * cw,
+        (PORTRAIT.y + 1) * ch,
+        (PORTRAIT.w - 2) * cw,
+        (PORTRAIT.h - 2) * ch,
+    );
+    let sprites = buf.sprites();
+    let [sprite] = sprites.as_slice() else {
+        panic!("{sprites:?}")
+    };
+    assert_eq!(sprite.dest, inside);
+    for side in [32, 64] {
+        let size = trpg_content::ImageInfo::new(side, side);
+        assert_eq!(crate::portrait::fit_whole_scale(size, inside), Some(inside));
+    }
+}
+
 #[test]
 fn a_unit_without_a_face_keeps_the_placeholder() {
     let label_row = |buf: &GlyphBuffer| {
@@ -139,7 +170,7 @@ fn the_middle_column_reads_name_class_exp_hp_and_stats() {
         PORTRAIT.y + PORTRAIT.h / 2,
         PORTRAIT.w - 2,
     );
-    assert_eq!(label, "       portrait       ");
+    assert_eq!(label, "    portrait    ");
 }
 
 #[test]
@@ -256,7 +287,7 @@ fn the_left_column_lists_the_supports_last() {
     // Ranks to the box's last row: no room for the heading.
     let full = painted(|v| {
         v.affinities.clear();
-        v.ranks = vec![rank("Sword", None); 11];
+        v.ranks = vec![rank("Sword", None); 13];
         v.supports_title = "Supports".into();
         v.supports = vec![("Mira".into(), "B".into())];
     });

@@ -53,6 +53,13 @@ the next battle's first idle moment.
 Nick decided the direction: the box asks only in Chapter 1, at a cutoff.
 Lessons themselves still show in later battles.
 
+**Why it matters before the writer trial (0766).** The trial's demo
+holds only Chapter 1. A Short player who never aims Rue's spell at a
+forest, or whose winning move ticks the last lesson, never sees the
+end-of-lessons box in the demo at all. Turn 3's rule below fixes both.
+Land it before the packets go out if a session is free, then push the
+demo again; it does not block 0766.
+
 ## Nick input
 
 None: Nick set the direction. The exact cutoff is *the agent's starting
@@ -126,6 +133,8 @@ it.
 - [ ] In Chapter 1 at Short, with `terrain_magic` not done, the box shows
       at the first idle moment of turn 3 (Harness test in
       `crates/ui/tests/it/ch01_lessons.rs`).
+- [ ] In the demo edition, a Short run of Chapter 1 that casts no tile
+      spell shows the box on turn 3 (Harness test on the demo edition).
 - [ ] In Chapter 1, finishing every lesson on turns 1–2 still shows the box
       then (the existing acceptance tests keep passing:
       `the_box_comes_after_the_last_lesson_and_keep_going_closes_it`).

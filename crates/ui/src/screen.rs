@@ -682,6 +682,8 @@ pub(crate) mod tests {
         ctx.debug_tools = true;
         // New Game plays the small test chapter, as in the harness.
         ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
+        // The tests' tips too, as in the harness (1304).
+        crate::harness::with_test_tips(&mut ctx.game.content.tips);
         ctx
     }
 

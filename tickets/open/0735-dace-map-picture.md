@@ -18,7 +18,8 @@ completed:
 Ticket 0734 added conversation openings (`assets/openings/`, ADR-0076):
 characters placed on a place and walking there, drawn by the map skins
 with their map picture. `ch01_tbc` opens on Dace (character id `rival`)
-pacing the study at Veyne Hall (`assets/openings/ch01_pacing.ron`).
+pacing the study at Veyne Hall
+(`assets-private/content/openings/ch01_pacing.ron`).
 
 Dace was a **speaker** (`assets/data/characters.ron`, `speakers`) with no
 class when this was written; since 0850 he is a character, an enemy
@@ -32,6 +33,11 @@ his label `Da`, which is fine.
 The bought Tiny Tales bundle (ADR-0040, `assets-private/library/
 tiny-tales/characters/`) has many walking sheets in the same style as the
 units already used (`fighter_male.png`, `church_knight.png`…).
+
+`ch01_tbc` is the last scene of the writer trial's Chapter 1 demo (0914,
+0766), so applicant writers see Dace drawn as the tileset's fallback
+figure. Noted for 0766, not a blocker: this ticket needs Nick's pick
+first.
 
 ## Nick input
 
@@ -47,13 +53,13 @@ drawn by the agent (feedback: no commissions; bought art only).
 - Choosing candidates: walking sheets from `assets-private/library/
   tiny-tales/characters/` with the four facings the sprite skin reads
   (down, left, right, up rows; `walk: true`), for a young noble who took
-  a hall that wasn't his (`docs/story/characters/` for Dace's look; his
-  portrait is `rival`).
+  a hall that wasn't his (`assets-private/story/characters/` for Dace's
+  look; his portrait is `rival`).
 - Copying the picked sheet into `assets-private/game/units/`, naming it
   in `tiny_tales.ron`'s `characters` as `"rival": (image: …, frame: (1,
   0), walk: true)`, adding the file to its credit's `private` list
   (`assets/data/credits.ron`, ADR-0051), pushing the private repository
-  and pinning it (`cargo xtask private-assets --pin`, commit
+  and pinning it (`cargo shuyi private-assets --pin`, commit
   `assets-private.rev`).
 - A frame of `ch01_tbc`'s opening with the picture, looked at (not
   committed unless as a screenshot of the game).
@@ -66,7 +72,7 @@ drawn by the agent (feedback: no commissions; bought art only).
 
 ## Implementation steps
 
-1. `cargo xtask private-assets --library`; list the walking sheets under
+1. `cargo shuyi private-assets --library`; list the walking sheets under
    `assets-private/library/tiny-tales/characters/` that have four facing
    rows like `units/fighter_male.png`.
 2. Render each candidate as Dace: temporarily point `"rival"` at it in
@@ -81,7 +87,7 @@ drawn by the agent (feedback: no commissions; bought art only).
 
 - [ ] `ch01_tbc`'s opening shows Dace with the picture Nick picked, in the
       picture look; the glyph look is unchanged.
-- [ ] `cargo xtask private-assets --pin` accepts the new file (credited).
+- [ ] `cargo shuyi private-assets --pin` accepts the new file (credited).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

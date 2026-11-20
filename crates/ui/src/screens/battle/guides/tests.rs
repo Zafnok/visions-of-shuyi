@@ -58,10 +58,10 @@ fn a_lessons_checklist_shows_as_plain_lines_with_the_keys() {
             "That's your cursor. It picks tiles and units.",
             "One tile each way, so you know the feel.",
             "",
-            "Move it up: Up",
-            "Move it down: Down",
-            "Move it left: Left",
-            "Move it right: Right",
+            "Move it up: \u{2191}",
+            "Move it down: \u{2193}",
+            "Move it left: \u{2190}",
+            "Move it right: \u{2192}",
         ]
     );
 }
@@ -190,7 +190,7 @@ fn the_map_menu_opens_it_at_every_level_and_cancel_goes_back() {
         let guides = s.guides().unwrap().list_view(&c);
         assert_eq!(guides.focus, 1);
         assert_eq!(guides.heading, "Played on the keys");
-        assert!(guides.lines.iter().any(|l| l.contains("arrows")));
+        assert!(guides.lines.iter().any(|l| l.contains("Open Options")));
         // The map's keys don't reach the map.
         let cursor = s.cursor.pos;
         press(&mut s, &mut c, &[Action::CursorRight, Action::NextUnit]);
@@ -216,8 +216,9 @@ fn the_text_names_the_keys_the_player_has_bound() {
     assert_eq!(lines[3], "Move it up: w");
     press(&mut s, &mut c, &[Action::CursorDown]);
     let lines = s.guides().unwrap().list_view(&c).lines;
+    // The cursor lesson before it asked for the cursor already (1306).
     assert!(
-        lines.contains(&"Move the cursor: w\u{a0}a\u{a0}s\u{a0}d".to_owned()),
+        !lines.iter().any(|l| l.contains("Move the cursor")),
         "{lines:?}"
     );
     assert!(

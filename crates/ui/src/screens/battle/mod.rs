@@ -89,7 +89,7 @@ use self::event_sounds::CueQueue;
 use self::flight::Flight;
 use self::guide_voice::GuideVoice;
 use self::guides::GuidesScreen;
-use self::layout::{MAP_VIEW, map_area};
+use self::layout::{HELP_BAR, MAP_VIEW, map_area};
 use self::lessons::{EndAnswer, LessonState};
 use self::mode::{Effect, Line, MenuEntry, Mode, Selection, list_entry};
 use self::playback::{Playback, SceneCue, TIMINGS};
@@ -899,12 +899,18 @@ impl BattleScreen {
     /// next frame fits the cameras to the tiles the skin now shows
     /// ([`refit`](Self::refit)): the cursor's tile stays in view. Never a
     /// `Command`: the zoom isn't game state.
-    fn toggle_zoom(&self, ctx: &mut Ctx) {
+    /// Notes which way it went, for the zoom lesson (1304).
+    fn toggle_zoom(&mut self, ctx: &mut Ctx) {
         if !self.mode.shows_map() || ctx.game.map_skin.zoom().is_none() {
             return;
         }
         // If saving fails it still holds for this session.
         let _ = ctx.change_settings(|s| s.game.map_zoom = s.game.map_zoom.toggled());
+        self.notice(if ctx.settings().game.map_zoom == MapZoom::X1 {
+            DoneWhen::ZoomedOut
+        } else {
+            DoneWhen::ZoomedIn
+        });
     }
 
     /// Flips auto-end, saves it with the other options and says so.
@@ -948,13 +954,14 @@ impl BattleScreen {
     }
 
     /// Fires [`TipTrigger::ZoomAvailable`] while the map, under a skin that
-    /// can zoom, is being browsed with no lesson in play (0466). After the
-    /// lessons have absorbed this frame's triggers, so the first frame of a
-    /// battle sees the ones it starts.
+    /// can zoom, is being browsed with no lesson in play but one that waits
+    /// for the turn to end (0466, 1304). After the lessons have absorbed
+    /// this frame's triggers, so the first frame of a battle sees the ones
+    /// it starts; the zoom lesson it starts is queued with the next frame's.
     fn detect_zoom_tip(&mut self, ctx: &Ctx) {
         let browsing = matches!(self.mode, Mode::Idle { .. });
-        if browsing && !self.lessons.in_play() && ctx.game.map_skin.zoom().is_some() {
-            self.tips.fire(TipTrigger::ZoomAvailable);
+        if browsing && !self.lessons.busy() && ctx.game.map_skin.zoom().is_some() {
+            self.fire(TipTrigger::ZoomAvailable);
         }
     }
 
@@ -1038,16 +1045,21 @@ impl BattleScreen {
     }
 
     /// The triggers only lessons use (0457) that the battle's current
-    /// state shows, besides the menus': every unit has acted, turn 2
-    /// began, the threat arrows show.
+    /// state shows, besides the menus': every unit has acted, a unit has
+    /// acted on turn 1 (1304), turn 2 began, the threat arrows show.
     fn lesson_triggers_now(&self) -> Vec<TipTrigger> {
         let mut fired = Vec::new();
         let state = &self.state;
         if state.phase() != Phase::Player || state.outcome().is_some() {
             return fired;
         }
-        if self.no_unit_left() && matches!(self.mode, Mode::Idle { .. }) {
+        let browsing = matches!(self.mode, Mode::Idle { .. });
+        if self.no_unit_left() && browsing {
             fired.push(TipTrigger::NoUnitLeft);
+        }
+        let acted = |u: &Unit| u.faction == Faction::Player && u.acted;
+        if state.turn() == 1 && browsing && state.units().iter().any(acted) {
+            fired.push(TipTrigger::FirstUnitActed);
         }
         if state.turn() == 2 {
             fired.push(TipTrigger::SecondTurn);
@@ -1328,21 +1340,32 @@ impl BattleScreen {
     fn absorb_lessons(&mut self, ctx: &Ctx) {
         let turn = self.state.turn();
         self.lessons.absorb(ctx, self.battle_id.as_deref(), turn);
-        self.settle_lessons();
+        self.settle_lessons(ctx.game.map_skin.zoom().is_some());
     }
 
     /// In the player's phase of a battle still on, takes out of play the
     /// lesson in front while no unit left to act can do an item it has
     /// left ([`LessonState::settle`], 0464): one open comes back in a
-    /// later turn, one not open yet with its trigger.
-    fn settle_lessons(&mut self) {
+    /// later turn, one not open yet with its trigger. Zooming takes a
+    /// look that can zoom (`can_zoom`); ending the turn is taught on turn 1
+    /// only (1304, Nick: the player "already knows" after it). Swapping
+    /// weapons opens only in a forecast that swaps, so what she says is
+    /// about the unit on screen (1306); once open it stays while a unit
+    /// left could swap.
+    fn settle_lessons(&mut self, can_zoom: bool) {
         if self.state.phase() != Phase::Player || self.state.outcome().is_some() {
             return;
         }
         let state = &self.state;
         let doable = &mut self.doable;
+        let swap_now = matches!(&self.mode, Mode::Targeting(t) if t.can_swap());
         self.lessons
-            .settle(state.turn(), |done| doable.can(state, done));
+            .settle_when(state.turn(), |done, open| match done {
+                DoneWhen::ZoomedIn | DoneWhen::ZoomedOut => can_zoom,
+                DoneWhen::TurnEnded => state.turn() == 1,
+                DoneWhen::WeaponSwapped if !open => swap_now,
+                _ => doable.can(state, done),
+            });
     }
 
     /// Notes that the player did `done`, for the lesson in play
@@ -1371,6 +1394,10 @@ impl BattleScreen {
         );
         if was == Marks::Selected && gone {
             self.notice(DoneWhen::UnitMoved);
+        }
+        // Attacked from or backed out of: either counts (1304).
+        if was == Marks::Forecast && now != Marks::Forecast {
+            self.notice(DoneWhen::ForecastClosed);
         }
         if let Some(done) = now.done().filter(|_| now != was) {
             self.notice(done);
@@ -2083,6 +2110,8 @@ impl BattleScreen {
     /// lessons (0456). Returns the screen to open over the battle, if any.
     fn play_key(&mut self, ctx: &mut Ctx, action: Action) -> Option<Opened> {
         let was = Marks::of(&self.mode);
+        let swaps = matches!(action, Action::CursorLeft | Action::CursorRight)
+            && matches!(&self.mode, Mode::Targeting(t) if t.can_swap());
         let mut opened = None;
         match action {
             // The crank wound back (ticket 1035) opens it on the newest
@@ -2115,6 +2144,9 @@ impl BattleScreen {
                 }
             }
             _ => opened = self.step_mode(ctx, action),
+        }
+        if swaps && matches!(self.mode, Mode::Targeting(_)) {
+            self.notice(DoneWhen::WeaponSwapped);
         }
         self.notice_mode(was);
         self.notice_pressed(action);
@@ -2339,7 +2371,27 @@ impl BattleScreen {
                 }
             }
         };
-        (ctx.text_styled(key, &[]), None)
+        (self.with_info_hint(ctx, ctx.text_styled(key, &[])), None)
+    }
+
+    /// `line`, then the Info key's hint where Info opens a unit over the
+    /// mode (a unit selected or its action menu, 1307): `<name>'s info`,
+    /// or `unit info` when the line with the name would not fit the help
+    /// row beside the debug hint.
+    fn with_info_hint(&self, ctx: &Ctx, line: StyledText) -> StyledText {
+        let info = self.mode.info_unit(self.cursor.pos, &self.state);
+        let Some(unit) = info.and_then(|id| self.state.unit(id)) else {
+            return line;
+        };
+        let name = ctx.words().unit(unit).to_owned();
+        let named = ctx.text_styled("battle.hint.info_of", &[("name", &name)]);
+        let named = join_hints([line.clone(), named]);
+        let debug = super::debug_hint(ctx).map_or(0, |h| h.chars().count() + 1);
+        let room = usize::try_from(HELP_BAR.w - 1).unwrap_or(0);
+        if named.width(&frame_widths(ctx)) <= room.saturating_sub(debug) {
+            return named;
+        }
+        join_hints([line, ctx.text_styled("battle.hint.unit_info", &[])])
     }
 
     /// The help line while picking an attack's target: the cursor keys
@@ -2792,7 +2844,7 @@ impl BattleScreen {
         };
         let faces = (&ctx.game.content.portraits, &ctx.game.lead);
         let info = match self.mode {
-            Mode::Info { unit } => self.state.unit(unit).map(|u| InfoView {
+            Mode::Info { unit, .. } => self.state.unit(unit).map(|u| InfoView {
                 page: self.info_page,
                 face: info::face(faces, u),
                 supports: info::supports(told, &ctx.game.content.names, u),
@@ -3296,7 +3348,7 @@ impl BattleScreen {
         self.tick_lessons(ctx);
         // On screen as this frame ends, if it can still be done: open
         // from now on.
-        self.settle_lessons();
+        self.settle_lessons(ctx.game.map_skin.zoom().is_some());
         if self.shown_lesson().is_some() {
             self.lessons.mark_open();
             self.after_lesson.next_first = false;

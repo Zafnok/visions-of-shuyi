@@ -249,7 +249,9 @@ jobs:
           gh release upload kit "$asset" -R "$MIRROR" --clobber
       # The web preview (ticket 0767): pushed with butler to its Restricted
       # itch.io project, as demo.yml pushes the web demo. Without the secret
-      # or the variable, the job says so and stays green.
+      # or the variable, the job says so and stays green. Only a run by hand
+      # pushes it (ticket 0778): the nightly run builds and checks it, so a
+      # writer's trial page changes only when Nick runs Story kit.
       - name: Can the web preview publish?
         id: itch
         if: matrix.target == 'web'
@@ -264,10 +266,10 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
       - id: butler
-        if: steps.itch.outputs.ready == 'true'
+        if: steps.itch.outputs.ready == 'true' && github.event_name == 'workflow_dispatch'
         uses: ./.github/actions/butler
       - name: Push the web preview to itch.io
-        if: steps.itch.outputs.ready == 'true'
+        if: steps.itch.outputs.ready == 'true' && github.event_name == 'workflow_dispatch'
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
           PROJECT: ${{ vars.ITCH_PREVIEW_PROJECT }}

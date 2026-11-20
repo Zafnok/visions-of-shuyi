@@ -634,6 +634,28 @@ mod tests {
         }
     }
 
+    /// The writer trial's preview goes to itch.io only from a run by hand
+    /// (ticket 0778), and the check sees it if the condition goes.
+    #[test]
+    fn story_kit_pushes_to_itch_only_by_hand() {
+        let dir = repo_root().join(".github/workflows");
+        for file in workflow_guard::PUSH_BY_HAND_ONLY {
+            let text = std::fs::read_to_string(dir.join(file)).unwrap();
+            let problems = workflow_guard::pushes_not_by_hand(file, &text);
+            assert!(
+                problems.is_empty(),
+                "{}",
+                problems.join(
+                    "
+"
+                )
+            );
+            let nightly = text.replace(" && github.event_name == 'workflow_dispatch'", "");
+            let problems = workflow_guard::pushes_not_by_hand(file, &nightly);
+            assert!(problems.len() >= 2, "{file}: {problems:#?}");
+        }
+    }
+
     /// Cargo links every file directly under a crate's `tests/` as its own
     /// program (about 100 MB each), so each crate keeps one: new integration
     /// tests are modules of `tests/it/main.rs` (ticket 0114).

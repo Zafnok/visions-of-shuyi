@@ -30,7 +30,7 @@ made (ticket 0920, ADR-0127).
 | ----- | ----- | --------------- | -------- |
 | Full web build: content, bought art, debug tools | the playtest page, itch.io `ITCH_PLAYTEST_PROJECT`, channel `web` | Nick, with the page's password | `playtest-itch.yml`, each push to `main` and by hand |
 | The Chapter 1 demo (web and Windows) | the demo's two itch.io pages (below) | the writers applying | `demo.yml`, by hand |
-| The writer's script preview on the web: bought art, **no scripts** | the preview's itch.io page, `ITCH_PREVIEW_PROJECT`, channel `web` (below) | the writers trying out, with the page's password | `story-kit.yml`, nightly when it changed and by hand |
+| The writer's script preview on the web: bought art, **no scripts** | the preview's itch.io page, `ITCH_PREVIEW_PROJECT`, channel `web` (below) | the writers trying out, with the page's password | `story-kit.yml`, by hand only (its nightly run builds and checks it) |
 | A release's packages | nowhere yet: built and checked, then left in their job; the store's itch.io page (ticket 0901) will take them | — | `release.yml`, on a tag |
 | A release's debug files (Windows, Linux) | a release `debug-v<version>` of the private assets repository (below) | whoever can read that repository | `release.yml`, on a tag |
 
@@ -355,12 +355,16 @@ private mirror's GitHub Pages (a private repository's Pages site is public).
 of an itch.io HTML project, **Restricted** with **Also allow a password to
 view page** (a password of its own, not the demo's).
 
-- **Push it:** `story-kit.yml`'s `story-preview (web)` job, on each run that
-  builds the kit (nightly when it changed, or **Actions → Story kit → Run
-  workflow**), exports `--edition story-trial` for the web, checks the
-  Wasm and its pack hold none of three script lines, and runs `butler push
-  <package> <user>/<project>:web`. Without `BUTLER_API_KEY` or the variable
-  it builds and checks, says it didn't publish, and stays green.
+- **Push it:** **Actions → Story kit → Run workflow**. `story-kit.yml`'s
+  `story-preview (web)` job exports `--edition story-trial` for the web,
+  checks the Wasm and its pack hold none of three script lines, and runs
+  `butler push <package> <user>/<project>:web`. Only a run by hand pushes
+  (ticket 0778): the nightly run, when the kit changed, builds and checks
+  the preview and skips the push, so during a trial the page stays still
+  between Nick's runs. Run it the same day as the Demo run, before sending
+  packets, so both pages come from about the same `main`. Without
+  `BUTLER_API_KEY` or the variable it builds and checks, says it didn't
+  publish, and stays green.
 - **Once, after the first push:** on the project's **Edit game** page, tick
   **This file will be played in the browser** for the `web` upload, set the
   embed size to 1280×720 and tick **Fullscreen button**, **Save**. Put the

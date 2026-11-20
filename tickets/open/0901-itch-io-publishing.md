@@ -6,7 +6,7 @@ milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: todo
-blocked_by: ["0107", "0821", "0909"]
+blocked_by: ["0107", "0821", "0909", "0929"]
 nick_input: setup
 completed:
 ---
@@ -49,6 +49,15 @@ from the full game's.
 **Added 2026-11-14 (the engine pin move, engine PR #411):** before the
 itch.io page leaves Draft or Restricted, run 1268's reveal kit (`cargo
 shuyi reveal prepare`) on the captures it shows.
+
+**Added 2026-11-19 (the writer trial's test audit):** until 0929 lands,
+a package with the art but no `voice/` folder passes the package check,
+and the README beside the program doesn't name `trpg-app.pack`; so this
+ticket waits for it. 0931's findings (the web game framed on another
+site with third-party storage blocked) and 0932's answer (what the web
+game shows when the browser keeps nothing) apply to the public page
+too, in either order: if they are done, check the page against them;
+if not, they cover it when they land.
 
 ## Nick input
 

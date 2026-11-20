@@ -66,7 +66,9 @@ words in `look-and-feel.md` (*Units on the map*, *Who uses what*) and
 and a purchase ticket if he wants one.
 
 **Out (do not do):** building it; the map sprites (0499); the rules
-(0334).
+(0334); how the two sides' look-alike units are told apart on the map,
+and the rider's spill into neighboring tiles: both are 0091's. If 0091
+is done first, this ticket's mockups use what it picked for Tamsin.
 
 ## Implementation steps
 

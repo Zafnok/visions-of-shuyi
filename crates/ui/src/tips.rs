@@ -38,9 +38,12 @@ pub use shuyi_ui::tips::{TIPS_SEEN_KEY, TipsSeen, reset_tips};
 /// Anything else in braces is left alone.
 ///
 /// [`select_action`]: crate::screens::battle::split_keys::select_action
+///
+/// For a tip's or a lesson's text: one cursor direction on the arrow keys
+/// is its arrow (`guide_key_text`).
 pub fn fill_placeholders(text: &str, keys: HelpKeys<'_>) -> String {
     // No values, so no plural to choose by a language's rules.
-    fill_text(text, SOURCE_LANG, keys, &[])
+    shuyi_ui::text::fill(text, SOURCE_LANG, &[], |name| guide_key_text(name, keys))
 }
 
 /// [`fill_placeholders`], with each `{name}` that `args` names replaced by
@@ -57,7 +60,14 @@ pub fn fill_text(text: &str, lang: &str, keys: HelpKeys<'_>, args: &Args<'_>) ->
 pub fn fill_styled(ctx: &crate::screen::Ctx, text: &str) -> shuyi_ui::text::StyledText {
     use shuyi_ui::GameData;
     let keys = ctx.help_keys();
-    let lookup = |name: &str| ctx.game.key_text_styled(name, keys);
+    let lookup = |name: &str| match arrow_symbol(name, keys) {
+        Some(arrow) => {
+            let mut styled = shuyi_ui::text::StyledText::new();
+            styled.push_key(arrow);
+            Some(crate::widgets::help::for_player(keys, &styled))
+        }
+        None => ctx.game.key_text_styled(name, keys),
+    };
     shuyi_ui::text::fill_styled_with(text, SOURCE_LANG, &[], &[], lookup)
 }
 
@@ -74,6 +84,35 @@ pub fn key_text(name: &str, keys: HelpKeys<'_>) -> Option<String> {
         Some(key_name(keys, help_select_action(keys)))
     } else {
         Action::from_name(name).map(|action| key_name(keys, action))
+    }
+}
+
+/// [`key_text`] for the guide's boxes (tips and lessons): a cursor
+/// direction on the arrow keys is its arrow ([`arrow_symbol`]).
+fn guide_key_text(name: &str, keys: HelpKeys<'_>) -> Option<String> {
+    arrow_symbol(name, keys).map_or_else(|| key_text(name, keys), |a| Some(a.to_owned()))
+}
+
+/// The arrow a cursor direction is named by while the four directions are
+/// on the arrow keys (what the engine names `arrows` together): an arrow
+/// symbol pointing that way, not the key's word (ticket 1306, Nick: "some
+/// kind of symbol denoting arrow direction"). `None` for any other action,
+/// or when the cursor is on other keys or a controller. Only in the
+/// guide's boxes: help bars and menus name the keys as before.
+fn arrow_symbol(name: &str, keys: HelpKeys<'_>) -> Option<&'static str> {
+    let action = Action::from_name(name)?;
+    let cursor = crate::input::help_keys::cursor_keys_styled(keys);
+    let on_arrows = cursor
+        .spans()
+        .iter()
+        .any(|s| s.role == Some(shuyi_ui::text::TextRole::Arrows));
+    match action {
+        _ if !on_arrows => None,
+        Action::CursorUp => Some("\u{2191}"),
+        Action::CursorDown => Some("\u{2193}"),
+        Action::CursorLeft => Some("\u{2190}"),
+        Action::CursorRight => Some("\u{2192}"),
+        _ => None,
     }
 }
 
@@ -140,6 +179,31 @@ mod tests {
             fill_placeholders("{Cursor} {Confirm}", HelpKeys::keyboard(&no_cursor)),
             "!\u{a0}not\u{a0}mapped f"
         );
+    }
+
+    /// Ticket 1306: with the cursor on the arrow keys, each direction is its
+    /// arrow; on other keys, or with one of them elsewhere, its key's name.
+    #[test]
+    fn a_cursor_direction_on_the_arrow_keys_is_its_arrow() {
+        let text = "{CursorUp} {CursorDown} {CursorLeft} {CursorRight} {Confirm}";
+        let arrows = keymap(&[
+            ("f", Action::Confirm),
+            ("Up", Action::CursorUp),
+            ("Left", Action::CursorLeft),
+            ("Down", Action::CursorDown),
+            ("Right", Action::CursorRight),
+        ]);
+        let filled = fill_placeholders(text, HelpKeys::keyboard(&arrows));
+        assert_eq!(filled, "\u{2191} \u{2193} \u{2190} \u{2192} f");
+        let wasd = keymap(&[
+            ("f", Action::Confirm),
+            ("w", Action::CursorUp),
+            ("a", Action::CursorLeft),
+            ("s", Action::CursorDown),
+            ("Right", Action::CursorRight),
+        ]);
+        let filled = fill_placeholders(text, HelpKeys::keyboard(&wasd));
+        assert_eq!(filled, "w s a Right f");
     }
 
     /// Ticket 0233: named values beside key names, each filled once.
@@ -243,22 +307,11 @@ mod tests {
             .collect::<Vec<_>>();
         split.push((Chord::parse("g").unwrap(), Action::Select));
         let split = Keymap::new(split, RepeatDef::default());
-        for (id, phrase) in [
-            ("battle_start", "Pick up a unit: {}"),
-            ("unit_selected", "Send it to a blue tile: {}."),
-            ("danger_zone", "One enemy's range: {} on it"),
-        ] {
-            let text = tip(id);
-            let with = |key| phrase.replace("{}", key);
-            assert!(
-                fill_placeholders(&text, HelpKeys::keyboard(&default)).contains(&with("f")),
-                "{id}"
-            );
-            assert!(
-                fill_placeholders(&text, HelpKeys::keyboard(&split)).contains(&with("g")),
-                "{id}"
-            );
-        }
+        // The danger zone's (the start and moving tips are lessons now, 1304).
+        let text = tip("danger_zone");
+        let with = |key| "One enemy's range: {} on it".replace("{}", key);
+        assert!(fill_placeholders(&text, HelpKeys::keyboard(&default)).contains(&with("f")));
+        assert!(fill_placeholders(&text, HelpKeys::keyboard(&split)).contains(&with("g")));
         // Menu and forecast wording stays on Confirm.
         let forecast = fill_placeholders(&tip("forecast"), HelpKeys::keyboard(&split));
         assert!(forecast.contains("Attack: f"), "{forecast}");

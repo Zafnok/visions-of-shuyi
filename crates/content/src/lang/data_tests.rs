@@ -158,12 +158,12 @@ fn the_games_data_offers_its_text() {
         ("skills.keen_edge.name", "Keen Edge"),
         ("arts.guard_break.name", "Guard Break"),
         ("names.lead", "Ellery"),
-        ("tips.battle_start.title", "Your move"),
+        ("tips.forecast.title", "Attack forecast"),
     ] {
         assert_eq!(source.data.get(key).map(String::as_str), Some(english));
         assert_eq!(content.lang.source_text(key), Some(english), "{key}");
     }
-    assert!(source.data["tips.battle_start.text"].starts_with("Over to you."));
+    assert!(source.data["tips.forecast.text"].starts_with("Read this before you swing"));
     // A story name's text is the names table's.
     let first = content.names.get("retainer.first");
     assert!(first.is_some());
@@ -517,31 +517,29 @@ fn the_test_pack_translates_a_little_of_every_kind() {
         .tips
         .tips
         .iter()
-        .find(|t| t.id == "battle_start")
+        .find(|t| t.id == "forecast")
         .unwrap();
-    assert_eq!(lang.tip_title(&test, tip), "YOUR MOVE");
-    assert_eq!(lang.tip_title(&en, tip), "Your move");
+    assert_eq!(lang.tip_title(&test, tip), "ATTACK FORECAST");
+    assert_eq!(lang.tip_title(&en, tip), "Attack forecast");
     assert!(
         lang.tip_text(&test, tip)
-            .starts_with("OVER TO YOU. STEER THE CURSOR ONTO")
+            .starts_with("READ THIS BEFORE YOU SWING")
     );
     // Its instructions apart from the guide's line (0475).
     assert!(
         lang.tip_how(&test, tip)
-            .starts_with("MOVE THE CURSOR: {Cursor}.")
+            .starts_with("PICK THE TARGET: {Cursor}.")
     );
     assert!(
         lang.tip_how(&en, tip)
-            .starts_with("Move the cursor: {Cursor}.")
+            .starts_with("Pick the target: {Cursor}.")
     );
-    assert!(lang.tip_text(&en, tip).starts_with("Over to you."));
-    let other = content
-        .tips
-        .tips
-        .iter()
-        .find(|t| t.id == "unit_selected")
-        .unwrap();
-    assert_eq!(lang.tip_title(&test, other), "Moving a unit");
+    assert!(
+        lang.tip_text(&en, tip)
+            .starts_with("Read this before you swing")
+    );
+    let other = content.tips.tips.iter().find(|t| t.id == "low_hp").unwrap();
+    assert_eq!(lang.tip_title(&test, other), "Low HP");
     assert_eq!(lang.tip_text(&test, other), other.text);
     let lesson = content.lessons.get("test_cursor").unwrap();
     assert_eq!(lang.lesson_title(&test, lesson), "MOVING THE CURSOR");

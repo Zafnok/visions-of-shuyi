@@ -99,6 +99,15 @@ pub enum DoneWhen {
     RewindClosed,
     /// The Options screen opened from the battle.
     OptionsOpened,
+    /// The attack forecast closed: the player attacked from it, or backed
+    /// out of it (ticket 1304: backing out counts as much as attacking).
+    ForecastClosed,
+    /// The map was zoomed in (to the bigger tiles).
+    ZoomedIn,
+    /// The map was zoomed out (to the smaller tiles).
+    ZoomedOut,
+    /// Left or right swapped the weapon (or spell) in the forecast.
+    WeaponSwapped,
 }
 
 impl DoneWhen {
@@ -117,6 +126,8 @@ impl DoneWhen {
                 | Self::TileAimed
                 | Self::ThreatPointed
                 | Self::SafePointed
+                | Self::ForecastClosed
+                | Self::WeaponSwapped
         )
     }
 }
@@ -140,6 +151,10 @@ enum RawDone {
     SafePointed,
     RewindClosed,
     OptionsOpened,
+    ForecastClosed,
+    ZoomedIn,
+    ZoomedOut,
+    WeaponSwapped,
 }
 
 impl RawDone {
@@ -162,6 +177,10 @@ impl RawDone {
             Self::SafePointed => DoneWhen::SafePointed,
             Self::RewindClosed => DoneWhen::RewindClosed,
             Self::OptionsOpened => DoneWhen::OptionsOpened,
+            Self::ForecastClosed => DoneWhen::ForecastClosed,
+            Self::ZoomedIn => DoneWhen::ZoomedIn,
+            Self::ZoomedOut => DoneWhen::ZoomedOut,
+            Self::WeaponSwapped => DoneWhen::WeaponSwapped,
         })
     }
 }
