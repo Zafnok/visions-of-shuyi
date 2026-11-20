@@ -1348,18 +1348,24 @@ impl BattleScreen {
     /// left ([`LessonState::settle`], 0464): one open comes back in a
     /// later turn, one not open yet with its trigger. Zooming takes a
     /// look that can zoom (`can_zoom`); ending the turn is taught on turn 1
-    /// only (1304, Nick: the player "already knows" after it).
+    /// only (1304, Nick: the player "already knows" after it). Swapping
+    /// weapons opens only in a forecast that swaps, so what she says is
+    /// about the unit on screen (1306); once open it stays while a unit
+    /// left could swap.
     fn settle_lessons(&mut self, can_zoom: bool) {
         if self.state.phase() != Phase::Player || self.state.outcome().is_some() {
             return;
         }
         let state = &self.state;
         let doable = &mut self.doable;
-        self.lessons.settle(state.turn(), |done| match done {
-            DoneWhen::ZoomedIn | DoneWhen::ZoomedOut => can_zoom,
-            DoneWhen::TurnEnded => state.turn() == 1,
-            _ => doable.can(state, done),
-        });
+        let swap_now = matches!(&self.mode, Mode::Targeting(t) if t.can_swap());
+        self.lessons
+            .settle_when(state.turn(), |done, open| match done {
+                DoneWhen::ZoomedIn | DoneWhen::ZoomedOut => can_zoom,
+                DoneWhen::TurnEnded => state.turn() == 1,
+                DoneWhen::WeaponSwapped if !open => swap_now,
+                _ => doable.can(state, done),
+            });
     }
 
     /// Notes that the player did `done`, for the lesson in play

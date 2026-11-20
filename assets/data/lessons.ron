@@ -92,7 +92,6 @@
             text: "No mouse here; it's all keys. And every key\ncan be changed in Options, if you'd rather.",
             face: "sly",
             items: [
-                (label: "Move the cursor: {Cursor}", done_when: CursorMoved),
                 (label: "Open Options from the map menu: {Cancel}", done_when: OptionsOpened),
             ],
         ),

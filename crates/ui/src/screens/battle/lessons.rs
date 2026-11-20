@@ -239,10 +239,23 @@ impl LessonState {
     /// the turn to end (1304); those that can't are dropped, not open yet.
     /// Returns whether one was taken out or stepped aside.
     pub fn settle(&mut self, turn: u32, mut can: impl FnMut(DoneWhen) -> bool) -> bool {
+        self.settle_when(turn, |done, _| can(done))
+    }
+
+    /// [`settle`](Self::settle), `can` also told whether the lesson asked
+    /// about is open: what one not open yet needs to open can be more than
+    /// what keeps one open (1306: swapping weapons opens only in a forecast
+    /// that swaps).
+    pub fn settle_when(&mut self, turn: u32, mut can: impl FnMut(DoneWhen, bool) -> bool) -> bool {
         let mut any = false;
-        let mut stuck = |w: &Waiting| w.items.iter().zip(&w.ticked).any(|(&d, &t)| !t && !can(d));
+        let mut stuck = |w: &Waiting, open: bool| {
+            w.items
+                .iter()
+                .zip(&w.ticked)
+                .any(|(&d, &t)| !t && !can(d, open))
+        };
         while let Some(front) = self.queue.front() {
-            if !stuck(front) {
+            if !stuck(front, self.open) {
                 break;
             }
             if self.open {
@@ -256,8 +269,8 @@ impl LessonState {
             .queue
             .front()
             .is_some_and(|w| w.items.contains(&DoneWhen::TurnEnded));
-        if yields && self.queue.iter().skip(1).any(|w| !stuck(w)) {
-            let rest: Vec<Waiting> = self.queue.drain(1..).filter(|w| !stuck(w)).collect();
+        if yields && self.queue.iter().skip(1).any(|w| !stuck(w, false)) {
+            let rest: Vec<Waiting> = self.queue.drain(1..).filter(|w| !stuck(w, false)).collect();
             self.queue.extend(rest);
             self.queue.rotate_left(1);
             self.open = false;
