@@ -113,14 +113,12 @@ fn attacks_with_art(state: &BattleState, sel: &Selection) -> bool {
 /// Whether `sel` could attack an enemy with more than one weapon or spell
 /// from some tile it can stop on: the forecast lets it swap them (1304).
 fn swaps(state: &BattleState, sel: &Selection) -> bool {
-    let enemy = |u: &&Unit| u.faction != Faction::Player && u.hp > 0;
     reaches_enemy(state, sel)
         && sel.reach.stoppable().iter().any(|dest| {
             state
                 .units()
                 .iter()
-                .filter(enemy)
-                .any(|e| aimed_options(state, sel.unit, dest, e.id).len() > 1)
+                .any(|u| aimed_options(state, sel.unit, dest, u.id).len() > 1)
         })
 }
 
@@ -251,5 +249,33 @@ mod tests {
         assert!(can(&s, DoneWhen::Attacked));
         assert!(!can(&s, DoneWhen::ArtsOpened));
         assert!(!can(&s, DoneWhen::ArtAttacked));
+    }
+
+    /// Ticket 1304: the lord alone with his two swords could swap them in
+    /// a forecast; with one sword, nobody could.
+    #[test]
+    fn swapping_takes_a_unit_with_two_weapons_for_an_enemy() {
+        let c = crate::screen::tests::ctx();
+        let quick = quick();
+        let alone = |swords: usize| {
+            let mut units: Vec<Unit> = quick
+                .units()
+                .iter()
+                .enumerate()
+                .filter(|(i, u)| *i == 0 || u.faction != Faction::Player)
+                .map(|(_, u)| u.clone())
+                .collect();
+            if swords == 1 {
+                units[0].loadout.weapons[1] = None;
+            }
+            let rout = trpg_core::Objective::Rout { turn_limit: None };
+            super::super::testing::battle_with(&c, quick.map().clone(), units, rout)
+        };
+        let two = alone(2);
+        assert!(can(&two, DoneWhen::Attacked));
+        assert!(can(&two, DoneWhen::WeaponSwapped));
+        let one = alone(1);
+        assert!(can(&one, DoneWhen::Attacked));
+        assert!(!can(&one, DoneWhen::WeaponSwapped));
     }
 }

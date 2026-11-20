@@ -502,19 +502,16 @@ fn embedded_ctx() -> Ctx {
 
 /// Adds the tests' tips (`harness_tips.ron`, ticket 1304) to `tips`, where
 /// the game had them: the start tip, zooming, moving a unit and an enemy in
-/// reach first, swapping weapons after weapon kinds. The tests of the
-/// tips' mechanism show them; one the game's tips have already is left.
+/// reach first, swapping weapons after weapon kinds (last, without it).
+/// The tests of the tips' mechanism show them; one whose trigger the game's
+/// tips have already is left out (a trigger has one tip).
 pub fn with_test_tips(tips: &mut trpg_content::TipTable) {
     let file = "crates/ui/src/harness_tips.ron";
     let extra = trpg_content::tip::from_source(file, include_str!("harness_tips.ron"), None);
     let extra = extra.unwrap_or_else(|e| panic!("{file}: {e:?}")).tips;
     let mut front = 0;
     for tip in extra {
-        if tips
-            .tips
-            .iter()
-            .any(|t| t.id == tip.id || t.trigger == tip.trigger)
-        {
+        if tips.tips.iter().any(|t| t.trigger == tip.trigger) {
             continue;
         }
         let after_kinds = tips.tips.iter().position(|t| t.id == "weapon_kinds");
@@ -542,6 +539,48 @@ mod tests {
     use crate::map_view::range;
     use crate::screen::KeyPrompt;
     use std::time::Duration;
+
+    /// Ticket 1304: the tests' tips go where the game had them, after
+    /// weapon kinds or last; a trigger the game's tips have keeps its tip.
+    #[test]
+    fn the_tests_tips_go_where_the_game_had_them_once_per_trigger() {
+        use trpg_content::{TipTable, TipTrigger};
+        let ids = |t: &TipTable| t.tips.iter().map(|t| t.id.clone()).collect::<Vec<_>>();
+        let mut alone = TipTable::default();
+        with_test_tips(&mut alone);
+        let all = [
+            "battle_start",
+            "zoom",
+            "unit_selected",
+            "enemy_in_range",
+            "weapon_swap",
+        ];
+        assert_eq!(ids(&alone), all);
+        let tip = |id: &str, trigger| {
+            let mut t = alone.tips[1].clone();
+            t.id = id.into();
+            t.trigger = trigger;
+            t
+        };
+        let mut game = TipTable {
+            tips: vec![
+                tip("own_start", TipTrigger::FirstBattleStart),
+                tip("weapon_kinds", TipTrigger::FirstEffective),
+                tip("low_hp", TipTrigger::FirstLowHp),
+            ],
+        };
+        with_test_tips(&mut game);
+        let want = [
+            "zoom",
+            "unit_selected",
+            "enemy_in_range",
+            "own_start",
+            "weapon_kinds",
+            "weapon_swap",
+            "low_hp",
+        ];
+        assert_eq!(ids(&game), want);
+    }
 
     #[test]
     fn snapshot_of_crops_cells_and_moves_sprites() {

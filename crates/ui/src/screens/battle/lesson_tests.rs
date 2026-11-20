@@ -911,6 +911,62 @@ fn swapping_the_forecasts_weapon_ticks() {
     let swaps = matches!(s.mode(), Mode::Targeting(t) if t.can_swap());
     assert!(swaps, "{:?}", s.mode());
     assert_eq!(s.lesson_ticks(), [true, false]);
+    // Down picks another target, or none: no swap.
+    press(&mut s, &mut c, &[Action::CursorDown]);
+    assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
+    assert_eq!(s.lesson_ticks(), [true, false]);
     press(&mut s, &mut c, &[Action::CursorLeft]);
     assert!(c.game.campaign_lessons.contains("only"));
+}
+
+/// Ticket 1304: `FirstUnitActed` fires on turn 1 back on the map once a
+/// unit of the player's has acted, not before, and never on turn 2.
+#[test]
+fn a_unit_acted_fires_on_turn_one_only() {
+    let c = ctx();
+    let fires = |state: &BattleState| {
+        let s = BattleScreen::new(state.clone());
+        s.lesson_triggers_now()
+            .contains(&TipTrigger::FirstUnitActed)
+    };
+    let mut state = quick_battle(&c.game.content).unwrap();
+    assert!(!fires(&state), "nobody has acted");
+    let lord = state.units()[0].clone();
+    let wait = Command::Act {
+        unit: lord.id,
+        dest: lord.pos,
+        action: UnitAction::Wait,
+    };
+    state.apply(&wait).unwrap();
+    assert!(fires(&state));
+    while state.turn() < 2 || state.phase() != Phase::Player {
+        state.apply(&Command::EndPhase).unwrap();
+    }
+    let lord = state.units()[0].clone();
+    let wait = Command::Act {
+        unit: lord.id,
+        dest: lord.pos,
+        action: UnitAction::Wait,
+    };
+    state.apply(&wait).unwrap();
+    assert!(!fires(&state), "turn 2");
+}
+
+/// Ticket 1304: a lesson the turn's end does is put away after turn 1;
+/// on turn 1 it stays.
+#[test]
+fn ending_the_turn_is_put_away_after_turn_one() {
+    let mut c = lessoned();
+    c.game.content.lessons.lessons = vec![lesson("end", LessonLevel::Full, &[DoneWhen::TurnEnded])];
+    let mut state = quick_battle(&c.game.content).unwrap();
+    for turn in [1, 2] {
+        while state.turn() < turn || state.phase() != Phase::Player {
+            state.apply(&Command::EndPhase).unwrap();
+        }
+        let mut s = BattleScreen::new(state.clone());
+        s.lessons.fire(TipTrigger::FirstBattleStart);
+        s.lessons.absorb(&c, None, turn);
+        s.settle_lessons(false);
+        assert_eq!(s.lessons.current().is_some(), turn == 1, "turn {turn}");
+    }
 }

@@ -502,6 +502,20 @@ mod tests {
         c.game.campaign_tutorial = Some(TutorialLevel::None);
         assert!(!due(&c), "None shows nothing");
         c.game.campaign_tutorial = Some(TutorialLevel::Full);
+        // Zooming (1304), one way only: it counts only where the look can
+        // zoom.
+        c.game.content.lessons.lessons.push(lesson(
+            "zoom",
+            LessonLevel::Full,
+            first,
+            &[DoneWhen::ZoomedOut],
+        ));
+        assert!(due(&c), "glyphs can't zoom");
+        let sprite = crate::map_view::skin_named(&c.game.content, "sprite").unwrap();
+        c.set_map_skin(sprite);
+        assert!(!due(&c), "pictures can");
+        c.game.campaign_lessons.insert("zoom".into());
+        assert!(due(&c));
         LessonState::end_answered(&mut c);
         assert!(!due(&c), "once per campaign");
     }
