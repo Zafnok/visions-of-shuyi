@@ -1,13 +1,17 @@
 {
   "name": "dlg",
   "displayName": "Visions of Shuyi scripts (.dlg)",
-  "description": "Colors and indenting for the game's .dlg dialogue scripts.",
+  "description": "Colors, indenting and a formatter for the game's .dlg dialogue scripts.",
   "publisher": "visions-of-shuyi",
   "version": "0.1.0",
   "private": true,
   "engines": {
     "vscode": "^1.60.0"
   },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:dlg"
+  ],
   "categories": [
     "Programming Languages"
   ],
@@ -38,7 +42,8 @@
         "editor.insertSpaces": true,
         "editor.detectIndentation": false,
         "editor.wordWrap": "on",
-        "editor.formatOnSave": false,
+        "editor.defaultFormatter": "visions-of-shuyi.dlg",
+        "editor.formatOnSave": true,
         "editor.formatOnPaste": false,
         "editor.formatOnType": false
       }

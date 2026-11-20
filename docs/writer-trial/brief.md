@@ -102,7 +102,7 @@ narration and reply marks, stage lines, names) and keeps a reply's reaction line
 Enter after a reply line such as `* earnest: We go now.` and the next
 line starts two spaces in; press Enter on one of those indented lines and
 the next one stays two spaces in. That indenting is the easiest thing to
-get wrong by hand. It's colors and settings only: no code runs.
+get wrong by hand. Each time you save, it also tidies the file (below).
 
 If you'd rather not install it, a plain-text editor works too, with the
 preview's **Problems** tab to catch mistakes:
@@ -133,9 +133,14 @@ The packet's `vscode-dlg.vsix` is the extension, in one file. To add it:
 **How to tell it worked:** the script is in colors, not all one color,
 and the bottom-right corner of the window reads **Dialogue script**.
 
-The extension colors and indents; it doesn't reformat. If VS Code ever
-says there is **no formatter for 'dlg' files**, that's expected: ignore
-it, nothing is wrong with your file.
+**Tidying when you save.** Each time you save, it fixes what the game
+would refuse and changes nothing else, so your words stay as you wrote
+them: curly quotes and apostrophes become straight ones, `…` becomes
+`...`, long dashes become `--`, a reply's reaction lines get their two
+spaces, and `@` lines move to the start of the line (two spaces in inside
+a reaction). To tidy without saving: right-click in the script and choose
+**Format Document**. It reads only the file you have open, and sends
+nothing anywhere.
 
 To remove it: in the Extensions panel, find **Visions of Shuyi scripts
 (.dlg)**, click it and choose **Uninstall**.

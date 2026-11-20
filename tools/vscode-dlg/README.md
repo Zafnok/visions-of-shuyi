@@ -13,8 +13,11 @@ indented for you: press Enter after a reply line such as
 Enter on one of those indented lines and the next one stays two spaces
 in. Tab puts in two spaces.
 
-It only colors and indents, and doesn't reformat: if VS Code says there
-is no formatter for 'dlg' files, that's expected. It doesn't check your script: the preview's
+When you save (or choose **Format Document**), it tidies the file: it
+fixes only what the game would refuse (curly quotes, `…` and long dashes
+become `'` `"` `...` `--`; a reaction's lines get their two spaces; `@`
+lines move to the start of the line) and leaves your words as they are.
+It doesn't check your script: the preview's
 **Problems** tab does that. Nothing to run: the folder is four text
 files.
 

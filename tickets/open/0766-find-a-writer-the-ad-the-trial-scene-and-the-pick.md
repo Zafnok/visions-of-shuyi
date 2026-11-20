@@ -367,9 +367,12 @@ with the compensation PDF. Not blocking, filed: 0090-0093, 0774-0777,
 From Nick's play of the preview, 2026-11-20: the packet carries the VS
 Code extension as one `vscode-dlg.vsix` (installed with **Install from
 VSIX…**, checked in a throwaway VS Code profile) in place of a folder
-copied by hand, and its settings turn off format-on-save, -paste and
--type for `.dlg`, the brief saying a "no formatter" message is expected
-(this branch). The preview's music playing on after a scene ends is 1308,
+copied by hand, with a formatter (Nick: "I want it to also act as a
+formatter"), run on save: `extension.js` fixes only what the game refuses
+(curly quotes, the ellipsis, dashes, tabs, a reaction's two spaces, `@`
+lines' column), tested on every script of the game and on broken copies of
+each (`the_dlg_formatter_fixes_only_what_the_game_refuses`, with `node` or
+VS Code's own program as `DLG_NODE`) (this branch). The preview's music playing on after a scene ends is 1308,
 its own PR so the Story kit can push it before the first packet.
 
 Friction: estimate 270 (the ticket's), measured 706 (2.6×), accepted

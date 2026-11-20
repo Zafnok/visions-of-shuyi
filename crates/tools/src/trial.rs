@@ -1462,7 +1462,12 @@ mod tests {
             let path = path.as_str().expect("a path").trim_start_matches("./");
             assert!(files.contains_key(path), "package.json names {path}");
         }
-        assert!(package.get("main").is_none(), "no code");
+        // Its only code is the formatter, which needs nothing but VS Code.
+        assert_eq!(package["main"], "./extension.js");
+        let code = String::from_utf8(files["extension.js"].clone()).unwrap();
+        let needs: Vec<&str> = code.split("require(").skip(1).collect();
+        assert_eq!(needs.len(), 1, "one require");
+        assert!(needs[0].starts_with("\"vscode\")"), "it needs only vscode");
 
         let bytes = vsix(&files).unwrap();
         let mut zip = zip::ZipArchive::new(std::io::Cursor::new(bytes)).unwrap();
@@ -1495,5 +1500,138 @@ mod tests {
             list.iter().all(|page| !page.from.starts_with(EDITOR_DIR)),
             "packet.txt copies none of the folder: the .vsix carries it"
         );
+    }
+
+    /// A program that runs JavaScript: `DLG_NODE` (VS Code's own program
+    /// works, run as Node), else `node`. None outside CI when there is
+    /// none; on CI there must be one.
+    fn node() -> Option<String> {
+        let program = std::env::var("DLG_NODE").unwrap_or_else(|_| "node".into());
+        let runs = std::process::Command::new(&program)
+            .env("ELECTRON_RUN_AS_NODE", "1")
+            .arg("--version")
+            .output()
+            .is_ok_and(|o| o.status.success());
+        assert!(
+            runs || std::env::var_os("CI").is_none(),
+            "no {program} to test the .dlg formatter with"
+        );
+        runs.then_some(program)
+    }
+
+    /// `texts` through the extension's `format`, in order.
+    fn formatted(program: &str, texts: &[String]) -> Vec<String> {
+        let root = crate::repo_root();
+        let ext = root.join(EDITOR_DIR).join("extension.js");
+        let input = serde_json::to_string(texts).unwrap();
+        let script = "const { format } = require(process.env.DLG_EXT);\
+            let input = '';\
+            process.stdin.on('data', (d) => (input += d));\
+            process.stdin.on('end', () =>\
+              process.stdout.write(JSON.stringify(JSON.parse(input).map(format))));";
+        let mut child = std::process::Command::new(program)
+            .env("ELECTRON_RUN_AS_NODE", "1")
+            .env("DLG_EXT", &ext)
+            .args(["-e", script])
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        child
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(input.as_bytes())
+            .unwrap();
+        let out = child.wait_with_output().unwrap();
+        assert!(
+            out.status.success(),
+            "{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        serde_json::from_slice(&out.stdout).unwrap()
+    }
+
+    /// `script` as a writer might break it: curly quotes, the ellipsis and
+    /// a long dash, tabs for the reaction's two spaces, `@` lines a space
+    /// in, spaces after every line and empty lines at the end.
+    fn broken(script: &str) -> String {
+        let mut out = String::new();
+        for line in script.lines() {
+            let mut line = line.to_string();
+            if !line.trim_start().starts_with('#') {
+                line = line
+                    .replace('\'', "\u{2019}")
+                    .replace("...", "\u{2026}")
+                    .replace("--", "\u{2014}");
+                if line.starts_with('@') {
+                    line.insert(0, ' ');
+                } else if let Some(rest) = line.strip_prefix("  ")
+                    && !rest.starts_with(' ')
+                {
+                    line = format!("\t{rest}");
+                }
+            }
+            out.push_str(&line);
+            out.push_str("  \n");
+        }
+        out.push_str("\n\n\n");
+        out
+    }
+
+    /// The `.dlg` formatter (Nick, 2026-11-20: "I want it to also act as a
+    /// formatter"): every script of the game is left as it is; each broken
+    /// the ways [`broken`] breaks it comes back as it was; and the
+    /// indenting the game refuses inside a `@choice` is fixed.
+    #[test]
+    fn the_dlg_formatter_fixes_only_what_the_game_refuses() {
+        let Some(program) = node() else {
+            eprintln!("no node (set DLG_NODE): the .dlg formatter isn't tested here");
+            return;
+        };
+        let root = crate::repo_root();
+        let mut scripts = Vec::new();
+        for dir in ["assets", "assets-test", "assets-private/content"] {
+            for (name, bytes) in files_under(&root.join(dir)).unwrap_or_default() {
+                let dlg = Path::new(&name)
+                    .extension()
+                    .is_some_and(|e| e.eq_ignore_ascii_case("dlg"));
+                if dlg {
+                    scripts.push(String::from_utf8(bytes).unwrap().replace("\r\n", "\n"));
+                }
+            }
+        }
+        assert_ne!(scripts.len(), 0, "no scripts found");
+        let mut texts = scripts.clone();
+        texts.extend(scripts.iter().map(|s| broken(s)));
+        let choice = "@scene s\n\
+            > Who goes?\n\
+            @choice\n\
+            \x20* wry: Me.\n\
+            \x20a: Fine.\n\
+            b: Go,\n\
+            \x20   then.\n\
+            \x20 @endchoice\n\
+            > Done\u{a0}\u{2013}\tnow.\n\
+            @end\n";
+        let fixed = "@scene s\n\
+            > Who goes?\n\
+            @choice\n\
+            * wry: Me.\n\
+            \x20 a: Fine.\n\
+            \x20 b: Go,\n\
+            \x20   then.\n\
+            @endchoice\n\
+            > Done - now.\n\
+            @end\n";
+        texts.push(choice.into());
+        let got = formatted(&program, &texts);
+        let (valid, rest) = got.split_at(scripts.len());
+        let (fixed_back, last) = rest.split_at(scripts.len());
+        for (i, script) in scripts.iter().enumerate() {
+            assert_eq!(&valid[i], script, "a game script changed");
+            assert_eq!(&fixed_back[i], script, "a broken script didn't come back");
+        }
+        assert_eq!(last, [fixed.to_string()]);
     }
 }
