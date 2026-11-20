@@ -674,10 +674,24 @@ impl Mode {
         }
     }
 
-    /// The info screen of the selected unit, going back to this mode when
-    /// it closes (1305); this mode itself if no unit is selected.
-    fn info_of_selected(self) -> Mode {
-        match self.selection().map(|s| s.unit) {
+    /// The unit Info shows over this mode, going back to it: with a unit
+    /// selected, the unit on the cursor's tile (1307), else the selected
+    /// one (1305); in its action menu, the selected one. `None` elsewhere.
+    pub fn info_unit(&self, cursor: Pos, state: &BattleState) -> Option<UnitId> {
+        match self {
+            Mode::Selected(sel) => {
+                let here = state.units().iter().find(|u| u.pos == cursor);
+                Some(here.map_or(sel.unit, |u| u.id))
+            }
+            Mode::ActionMenu { sel, .. } => Some(sel.unit),
+            _ => None,
+        }
+    }
+
+    /// The info screen of [`info_unit`](Self::info_unit), going back to
+    /// this mode when it closes; this mode itself if it has none.
+    fn open_info(self, cursor: Pos, state: &BattleState) -> Mode {
+        match self.info_unit(cursor, state) {
             Some(unit) => Mode::Info {
                 unit,
                 back: Some(Box::new(self)),
@@ -980,13 +994,13 @@ pub fn step_with(
                 let origin = sel.origin();
                 (Mode::default(), Effect::Cursor(origin))
             }
-            Action::Info => (Mode::Selected(sel).info_of_selected(), Effect::None),
+            Action::Info => (Mode::Selected(sel).open_info(cursor, state), Effect::None),
             _ => (Mode::Selected(sel), Effect::None),
         },
         Mode::Moving { sel, .. } if action == Action::Confirm => walk_ended(sel, state, words),
         moving @ Mode::Moving { .. } => (moving, Effect::None),
         open @ Mode::ActionMenu { .. } if action == Action::Info => {
-            (open.info_of_selected(), Effect::None)
+            (open.open_info(cursor, state), Effect::None)
         }
         Mode::ActionMenu {
             sel,
@@ -1811,6 +1825,46 @@ mod tests {
             step(Mode::Selected(sel.clone()), Action::DangerZone, p(5, 5), &s),
             (Mode::Selected(sel), Effect::None)
         );
+    }
+
+    /// 1307: with a unit selected, Info on another unit's tile shows that
+    /// unit (ours or the enemy's), on an empty tile the selected one; the
+    /// action menu shows the selected one wherever the cursor is.
+    #[test]
+    fn info_while_selected_shows_the_unit_under_the_cursor() {
+        let s = quick();
+        let sel = selected(&s, &[p(4, 5)]);
+        let lord = UnitId(1);
+        let mode = Mode::Selected(sel.clone());
+        let enemy = s.units().iter().find(|u| u.faction != Faction::Player);
+        let ours = s
+            .units()
+            .iter()
+            .find(|u| u.faction == Faction::Player && u.id != lord);
+        for other in [enemy.unwrap(), ours.unwrap()] {
+            assert_eq!(mode.info_unit(other.pos, &s), Some(other.id));
+            let (info, _) = step(mode.clone(), Action::Info, other.pos, &s);
+            let back = Some(Box::new(mode.clone()));
+            assert_eq!(
+                info,
+                Mode::Info {
+                    unit: other.id,
+                    back
+                }
+            );
+            assert_eq!(
+                step(info, Action::Cancel, other.pos, &s),
+                (mode.clone(), Effect::None)
+            );
+        }
+        let empty = p(4, 5);
+        assert!(s.units().iter().all(|u| u.pos != empty));
+        assert_eq!(mode.info_unit(empty, &s), Some(lord));
+        assert_eq!(mode.info_unit(p(3, 5), &s), Some(lord));
+        assert_eq!(Mode::default().info_unit(p(3, 5), &s), None);
+        let menu = open_menu(sel, &s);
+        let far = enemy.unwrap().pos;
+        assert_eq!(menu.info_unit(far, &s), Some(lord));
     }
 
     #[test]

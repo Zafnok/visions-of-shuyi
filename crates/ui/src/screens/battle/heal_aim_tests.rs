@@ -169,7 +169,10 @@ fn harness_pointing_at_a_hurt_ally_walks_next_to_it_and_heals_it() {
     h.keys("Down f Left Left");
     assert_eq!(h.cursor_tile(), Some(p(1, 6)));
     assert_eq!(h.path(), [p(3, 6), p(2, 6)]);
-    assert_eq!(help(&h), "arrows move · f heal · d cancel");
+    assert_eq!(
+        help(&h),
+        "arrows move · f heal · d cancel · e Test Archer's info"
+    );
     // Confirm: the walk, then the list of the mage's heals (not Fire or
     // Frost).
     h.keys("f").wait(0.5);
@@ -279,7 +282,7 @@ fn harness_an_ally_at_full_hp_is_not_pointed_at() {
     steered.steer(p(2, 6), &state);
     steered.steer(p(1, 6), &state);
     assert_eq!(sel.path, steered.path);
-    assert_eq!(help(&h), "arrows move · d cancel");
+    assert_eq!(help(&h), "arrows move · d cancel · e Test Archer's info");
     // Confirm on it does nothing.
     h.keys("f").wait(0.5);
     assert!(matches!(h.battle().unwrap().mode(), Mode::Selected(_)));
