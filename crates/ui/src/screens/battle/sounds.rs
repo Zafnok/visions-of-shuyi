@@ -156,6 +156,27 @@ mod tests {
         );
     }
 
+    /// Info opened over a selection or a menu (1305) is one deeper than
+    /// it: opening sounds as Select, closing back to it as Cancel.
+    #[test]
+    fn info_over_another_screen_is_one_deeper() {
+        let over = |back: Mode| Mode::Info {
+            unit: UnitId(1),
+            back: Some(Box::new(back)),
+        };
+        assert_eq!(depth(&over(PROMPT)), 2);
+        assert_eq!(depth(&over(Mode::Objective)), 3);
+        let info = over(Mode::Objective);
+        assert_eq!(
+            sound(Action::Info, &Mode::Objective, &info, &Effect::None),
+            Some(Select)
+        );
+        assert_eq!(
+            sound(Action::Cancel, &info, &Mode::Objective, &Effect::None),
+            Some(Cancel)
+        );
+    }
+
     #[test]
     fn depths_order_the_screens() {
         assert!(depth(&IDLE) < depth(&INFO));
