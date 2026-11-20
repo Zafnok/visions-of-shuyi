@@ -575,6 +575,11 @@
     "battle.hint.range": "{Select} range",
     "battle.hint.open_menu": "{Select} menu",
     "battle.hint.info": "{Info} info",
+    // With a unit selected or in its action menu: the unit Info opens
+    // (1307). `{name}` is the unit's name; `unit_info` when the name is too
+    // long for the help row.
+    "battle.hint.info_of": "{Info} {name}'s info",
+    "battle.hint.unit_info": "{Info} unit info",
     "battle.hint.next_unit": "{NextUnit} next unit",
     "battle.hint.rewind": "{Rewind} rewind",
     "battle.hint.hide_range": "{Cancel} hide range",

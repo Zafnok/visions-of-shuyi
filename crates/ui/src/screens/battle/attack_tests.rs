@@ -133,7 +133,10 @@ fn confirm_frames() -> f32 {
 #[test]
 fn attack_opens_the_forecast_swaps_the_weapons_and_cycles_targets_in_order() {
     let mut h = lord_menu(20);
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    assert_eq!(
+        help(&h),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     // Two swords reach: no weapon list (0442), the forecast with the
     // equipped one on the first target in (y, x) order, the raider at
     // (7, 1); right swaps to the other sword, left back.
@@ -169,9 +172,15 @@ fn attack_opens_the_forecast_swaps_the_weapons_and_cycles_targets_in_order() {
     }
     // Back to the menu, then the path.
     h.keys("d");
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    assert_eq!(
+        help(&h),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     h.keys("d");
-    assert_eq!(help(&h), "arrows move · f move here · d cancel");
+    assert_eq!(
+        help(&h),
+        "arrows move · f move here · d cancel · e Test Lord's info"
+    );
 }
 
 #[test]
@@ -367,7 +376,10 @@ fn cancel_skips_the_playback_and_the_next_keys_work() {
     h.keys("s");
     assert_eq!(hovered(&h), "Test Archer");
     h.keys("f");
-    assert_eq!(help(&h), "arrows move · f move here · d cancel");
+    assert_eq!(
+        help(&h),
+        "arrows move · f move here · d cancel · e Test Archer's info"
+    );
 }
 
 #[test]
@@ -393,7 +405,10 @@ fn pointing_at_an_enemy_walks_there_and_opens_its_forecast() {
     let mut h = harness(20);
     // Select the lord, steer to (7, 2), point at the raider above it.
     h.keys("f Right Up");
-    assert_eq!(help(&h), "arrows move · f attack · d cancel");
+    assert_eq!(
+        help(&h),
+        "arrows move · f attack · d cancel · e Raider's info"
+    );
     // Confirm walks, then the forecast on the raider with the equipped
     // sword; left and right swap to the other sword (0430).
     h.keys("f").wait(0.5);
@@ -409,7 +424,10 @@ fn pointing_at_an_enemy_walks_there_and_opens_its_forecast() {
     // Cancel goes back through the menu to the path, the cursor on the
     // lord's tile.
     h.keys("d d");
-    assert_eq!(help(&h), "arrows move · f move here · d cancel");
+    assert_eq!(
+        help(&h),
+        "arrows move · f move here · d cancel · e Test Lord's info"
+    );
 }
 
 /// Ticket 0329: the lord with the Moonblade (Moonlit: it hits Res) on the

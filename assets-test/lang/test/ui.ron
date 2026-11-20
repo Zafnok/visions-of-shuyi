@@ -929,6 +929,8 @@
     (key: "battle.hint.range", source: "{Select} range", text: "{Select} RANGE"),
     (key: "battle.hint.open_menu", source: "{Select} menu", text: "{Select} MENU"),
     (key: "battle.hint.info", source: "{Info} info", text: "{Info} INFO"),
+    (key: "battle.hint.info_of", source: "{Info} {name}'s info", text: "{Info} {name}'S INFO"),
+    (key: "battle.hint.unit_info", source: "{Info} unit info", text: "{Info} UNIT INFO"),
     (key: "battle.hint.next_unit", source: "{NextUnit} next unit", text: "{NextUnit} NEXT UNIT"),
     (key: "battle.hint.rewind", source: "{Rewind} rewind", text: "{Rewind} REWIND"),
     (key: "battle.hint.hide_range", source: "{Cancel} hide range", text: "{Cancel} HIDE RANGE"),

@@ -58,16 +58,28 @@ fn select_picks_on_the_map_and_confirm_keeps_menus_and_the_forecast() {
     );
     // Select does; steer beside the brigand at (7, 4).
     h.keys("g Right Right Right Up");
-    assert_eq!(help(&h), "arrows move · g move here · d cancel");
+    assert_eq!(
+        help(&h),
+        "arrows move · g move here · d cancel · e Test Lord's info"
+    );
     // Confirm doesn't pick the tile; Select does.
     h.keys("f");
-    assert_eq!(help(&h), "arrows move · g move here · d cancel");
+    assert_eq!(
+        help(&h),
+        "arrows move · g move here · d cancel · e Test Lord's info"
+    );
     h.keys("g").wait(0.5);
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    assert_eq!(
+        help(&h),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     // Select does nothing in the menu; Confirm picks Attack, and the
     // forecast stays on Confirm.
     h.keys("g");
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    assert_eq!(
+        help(&h),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     h.keys("f");
     assert_eq!(
         help(&h),
@@ -104,7 +116,10 @@ fn select_on_an_empty_tile_opens_the_map_menu_and_on_an_enemy_its_range() {
 /// The lord waits where it stands, so three units stay ready.
 fn one_wait(h: &mut Harness) {
     h.keys("f f");
-    assert_eq!(help(h), "arrows choose · f confirm · d back");
+    assert_eq!(
+        help(h),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     h.keys("f");
 }
 

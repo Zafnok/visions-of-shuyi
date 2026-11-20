@@ -892,25 +892,53 @@ fn the_menu_opens_beside_the_unit_drawn_at_its_new_tile() {
     assert_eq!(unit.name, "Test Lord");
 }
 
+/// 1307: with the lord selected, the help names the unit Info opens,
+/// `unit info` when its name would not fit the help row.
+#[test]
+fn the_info_hint_names_the_unit_or_says_unit_info() {
+    let c = ctx();
+    let named = |len: usize| {
+        let quick = quick();
+        let mut units = quick.state().units().to_vec();
+        let lord = units.iter_mut().find(|u| u.id == UnitId(1)).unwrap();
+        lord.name = "B".repeat(len);
+        let at = lord.pos;
+        let mut s = BattleScreen::new(battle(&c, quick.state().map().clone(), units));
+        s.cursor.jump(at);
+        let mut c = ctx();
+        step(&mut s, &mut c, &[Action::Confirm]);
+        s.help(&c)
+    };
+    let line = "arrows move · f move here · d cancel · e ";
+    assert_eq!(named(40), format!("{line}{}'s info", "B".repeat(40)));
+    assert_eq!(named(70), format!("{line}unit info"));
+}
+
 #[test]
 fn help_follows_the_mode() {
     let mut c = ctx();
     let mut s = quick();
     step(&mut s, &mut c, &[Action::Confirm]);
     // On the unit: its own tile is a legal end.
-    assert_eq!(s.help(&c), "arrows move · f move here · d cancel");
+    assert_eq!(
+        s.help(&c),
+        "arrows move · f move here · d cancel · e Test Lord's info"
+    );
     step(&mut s, &mut c, &[Action::CursorRight, Action::CursorDown]);
     // On the knight: can't stop there.
-    assert_eq!(s.help(&c), "arrows move · d cancel");
+    assert_eq!(s.help(&c), "arrows move · d cancel · e Test Knight's info");
     step(&mut s, &mut c, &[Action::CursorUp, Action::CursorRight]);
     step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.help(&c), "f skip");
     frame(&mut s, &mut c, &[], 1.0, false);
-    assert_eq!(s.help(&c), "arrows choose · f confirm · d back");
+    assert_eq!(
+        s.help(&c),
+        "arrows choose · f confirm · d back · e Test Lord's info"
+    );
     c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(
         s.help(&c),
-        "w\u{a0}a\u{a0}s\u{a0}d choose · j confirm · k back"
+        "w\u{a0}a\u{a0}s\u{a0}d choose · j confirm · k back · i Test Lord's info"
     );
 }
 

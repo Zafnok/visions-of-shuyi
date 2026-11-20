@@ -89,7 +89,7 @@ use self::event_sounds::CueQueue;
 use self::flight::Flight;
 use self::guide_voice::GuideVoice;
 use self::guides::GuidesScreen;
-use self::layout::{MAP_VIEW, map_area};
+use self::layout::{HELP_BAR, MAP_VIEW, map_area};
 use self::lessons::{EndAnswer, LessonState};
 use self::mode::{Effect, Line, MenuEntry, Mode, Selection, list_entry};
 use self::playback::{Playback, SceneCue, TIMINGS};
@@ -2365,7 +2365,27 @@ impl BattleScreen {
                 }
             }
         };
-        (ctx.text_styled(key, &[]), None)
+        (self.with_info_hint(ctx, ctx.text_styled(key, &[])), None)
+    }
+
+    /// `line`, then the Info key's hint where Info opens a unit over the
+    /// mode (a unit selected or its action menu, 1307): `<name>'s info`,
+    /// or `unit info` when the line with the name would not fit the help
+    /// row beside the debug hint.
+    fn with_info_hint(&self, ctx: &Ctx, line: StyledText) -> StyledText {
+        let info = self.mode.info_unit(self.cursor.pos, &self.state);
+        let Some(unit) = info.and_then(|id| self.state.unit(id)) else {
+            return line;
+        };
+        let name = ctx.words().unit(unit).to_owned();
+        let named = ctx.text_styled("battle.hint.info_of", &[("name", &name)]);
+        let named = join_hints([line.clone(), named]);
+        let debug = super::debug_hint(ctx).map_or(0, |h| h.chars().count() + 1);
+        let room = usize::try_from(HELP_BAR.w - 1).unwrap_or(0);
+        if named.width(&frame_widths(ctx)) <= room.saturating_sub(debug) {
+            return named;
+        }
+        join_hints([line, ctx.text_styled("battle.hint.unit_info", &[])])
     }
 
     /// The help line while picking an attack's target: the cursor keys
