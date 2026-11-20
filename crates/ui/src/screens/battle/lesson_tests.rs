@@ -936,6 +936,17 @@ fn swapping_the_forecasts_weapon_ticks() {
     press(&mut s, &mut c, &[Action::CursorDown]);
     assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
     assert_eq!(s.lesson_ticks(), [false]);
+    // Backed out to his menu: open, it stays while he could still swap.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[]);
+    assert!(
+        matches!(s.mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        s.mode()
+    );
+    assert!(s.lesson_open());
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
     press(&mut s, &mut c, &[Action::CursorLeft]);
     assert!(c.game.campaign_lessons.contains("swap"));
 }
