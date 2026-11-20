@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-20
 ---
 
 # 0192 — The playdate CI job installs the ARM compiler from a cache
@@ -82,12 +82,12 @@ None. Nothing a player sees changes; CI's `playdate` job is the check.
 
 ## Acceptance criteria
 
-- [ ] On this ticket's PR, a `playdate` run that restores the cache
+- [x] On this ticket's PR, a `playdate` run that restores the cache
       spends well under a minute in *Install the ARM compiler*, and the
       device build and both pdx checks pass.
-- [ ] `cargo test -p xtask workflow_guard` passes (the new cache names
+- [x] `cargo test -p xtask workflow_guard` passes (the new cache names
       no `target`).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -97,4 +97,24 @@ None. Nothing a player sees changes; CI's `playdate` job is the check.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- Done as planned in `.github/workflows/ci.yml`. A step names the
+  runner's Ubuntu codename. `actions/cache` (the pin the SDK's cache
+  already uses) keeps `~/arm-debs` under
+  `arm-none-eabi-debs-<codename>-v1`, and *Install the ARM compiler*
+  runs `dpkg -i` on what it holds. It downloads first only when the
+  folder is empty, and falls back to `apt-get install -f` if `dpkg`
+  can't finish.
+- Measured on PR #785, run 44789867303. Attempt 1 missed the cache: the
+  install took 51 s on a normal mirror and saved the cache (3 s).
+  Attempt 2, re-running only `playdate`, hit
+  `arm-none-eabi-debs-resolute-v1`: 2 s to restore and 4 s to install,
+  with no `apt-get update` and no mirror. The device build and both pdx
+  checks passed both times.
+- The cache is per branch: a PR first restores `main`'s, so after this
+  merges, the first `main` run of `playdate` fills it once for every PR.
+  A new Ubuntu release on `ubuntu-latest` changes the codename, and its
+  first run downloads once.
+- Gates: `cargo test -p xtask` unit tests pass, the workflow guard among
+  them. Locally, `tests/cli.rs` `a_moved_command_answers_through_xtask`
+  failed only because a running `trpg-tools.exe` (the shuyi MCP server)
+  locks the file it rebuilds; CI's `test` job runs it. No Rust changed.
