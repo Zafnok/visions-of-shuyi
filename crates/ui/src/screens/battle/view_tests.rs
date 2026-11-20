@@ -268,6 +268,44 @@ fn the_info_screen_is_the_units_and_closes() {
     assert!(s.view(&c).info.is_none());
 }
 
+/// 1303: an unnamed enemy's face is the shared soldier portrait in its
+/// first expression; without that portrait in the content, or on a
+/// generic unit of another side, there is none (the placeholder).
+#[test]
+fn an_unnamed_enemys_face_is_the_shared_soldier() {
+    use trpg_core::Faction;
+    let mut c = ctx();
+    let s = quick();
+    let at = Pos::new(8, 2);
+    let brigand = s.state().units().iter().find(|u| u.pos == at).unwrap();
+    assert_eq!(
+        (brigand.faction, &brigand.character),
+        (Faction::Enemy, &None)
+    );
+    let lead = c.game.lead.clone();
+    let shown = |c: &Ctx, unit: &trpg_core::Unit| {
+        let face = info::face((&c.game.content.portraits, &lead), unit);
+        face.map(|f| (f.portrait, f.expression))
+    };
+    // No soldier portrait (a build without the private art): no face.
+    assert_eq!(shown(&c, brigand), None);
+    let soldier = c.game.content.portraits["test_knight"].clone();
+    let id = info::UNNAMED_ENEMY_PORTRAIT;
+    c.game.content.portraits.insert(id.into(), soldier);
+    let neutral = Some((id.to_owned(), "neutral".to_owned()));
+    assert_eq!(shown(&c, brigand), neutral);
+    // A generic unit of another side keeps the placeholder.
+    for faction in [Faction::Player, Faction::Ally, Faction::Neutral] {
+        let mut other = brigand.clone();
+        other.faction = faction;
+        assert_eq!(shown(&c, &other), None, "{faction:?}");
+    }
+    // A named enemy keeps its own portrait.
+    let mut named = brigand.clone();
+    named.character = Some(trpg_core::CharacterId("test_knight".into()));
+    assert_eq!(shown(&c, &named).unwrap().0, "test_knight");
+}
+
 /// The Quick Battle with the lord at C with the knight and at B with the
 /// mage (viewed at camp), and the mage benched, as a battle screen.
 fn bonded_quick(c: &Ctx) -> BattleScreen {

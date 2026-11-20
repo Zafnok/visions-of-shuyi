@@ -1,7 +1,9 @@
 //! The glyph look of the unit info screen: a double box over the map and
 //! side panel, a 24 × 12 portrait area on the left (the unit's face drawn
-//! to fit it, as on the level-up page, ticket 1295; a placeholder box and
-//! label for a unit with none), Mov,
+//! to fit it, as on the level-up page, ticket 1295, an unnamed enemy's
+//! the shared soldier face, 1303; a placeholder box and label for a unit
+//! with no face: a generic unit that isn't an enemy, or a build without
+//! the private portraits), Mov,
 //! tags, weapon ranks (each with its kind's trait, ticket 0489),
 //! affinities and supports under it; name, class, EXP, HP with a
 //! bar, stats, timed effects and skills in the middle; weapons, armour,
