@@ -30,6 +30,8 @@ The verifier's corrections stand: #725's Playdate name cut and the key
 reuse in #643/#648 were already listed as starting rules, and #624's
 volume 80 → 97 is the same loudness on the new curve (`options.md`
 says so). So this ticket is about sorting, not about missed items.
+#624's volume 80 → 97 is now Nick's decision in 0879, no longer an
+agent's starting rule to sort.
 
 1256 comes first: it puts every ticket's notes under one heading,
 `### For the Act 1 playtest (1064)`, moves the old markers there, and

@@ -117,15 +117,18 @@ stays with that ticket.
    - **Web first, the Playdate pass after**: the 14 move to a later
      Playdate play-through. Small (ticket edits); waits: no.
    Home: 1064.
-5. **Art for the Swordsman, the Shadowblade and an indoor battle
-   backdrop.** Facts: of about 250 placed units, 44 Swordsmen, 9 Brawlers
-   and 1 Shadowblade (Dace) draw the fallback figure in the default
-   Pictures look. The Brawler's art was decided (`martial03`) and 0878
-   imports it; the Swordsman is missing from look-and-feel's *Fighters
-   with no Tiny Tales art* table. Backdrops exist only for mountains, so
-   the indoor maps (Greywater's kitchen, Veyne Hall, the envoy's house)
-   show an open field; 2 of the 8 bought backdrop sets are imported and
-   none is indoors. Options for each (picks from art already owned, a new
+5. **Art for the Swordsman, the Shadowblade and indoor, fort and bridge
+   battle backdrops.** Facts: of about 250 placed units, 44 Swordsmen, 9
+   Brawlers and 1 Shadowblade (Dace) draw the fallback figure in the
+   default Pictures look. The Brawler's art was decided (`martial03`) and
+   0878 imports it; the Swordsman is missing from look-and-feel's
+   *Fighters with no Tiny Tales art* table. Backdrops exist only for
+   mountains, so the indoor maps (Greywater's kitchen, Veyne Hall, the
+   envoy's house) show an open field, and so does every fight on a fort
+   or a bridge tile, Chapter 1's boss fight included (Harl stands on the
+   fort). 2 of the 8 bought backdrop sets are imported and none is
+   indoors. The indoor, fort and bridge backdrops are asked as one
+   question. Options for each (picks from art already owned, a new
    free or bought pack, or the fallback for the playtest; for the
    Shadowblade, also Dace's own art): small for owned art, medium for a
    new pack search; waits: no for the fallback. Home: 0878.

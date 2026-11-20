@@ -59,6 +59,10 @@ None.
   `preview`; if not, leave the steps as they are (0171's table names them).
 - The itch.io push in `release.yml` (0901). Either order: 0901's push
   steps key on `dry_run == 'false'`, so a PR run pushes nothing.
+- The web preview's itch.io push in `story-kit.yml`: 0775 moves it to
+  `demo.yml`'s by-hand run. Either order: if 0775 is done, there are no
+  itch steps left to skip on `pull_request`; if not, skip them as
+  written (step 2) and 0775 deletes them.
 
 ## Implementation steps
 

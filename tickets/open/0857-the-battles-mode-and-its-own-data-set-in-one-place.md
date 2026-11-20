@@ -63,6 +63,10 @@ None. Nothing a player sees changes; verified by the flow tests.
 **Out (do not do):**
 - Changing what the Options screen offers, or when a switch to Casual
   is allowed (0805, 1171).
+- 0927's option B, which may open the Classic → Casual switch at the
+  start of a battle that has no Preparations. Either order: if 0927
+  lands first, this ticket routes that switch through its one place
+  too; if this ticket lands first, 0927 uses it.
 - The save format (`Campaign` keeps its mode: it is what a save holds).
 
 ## Implementation steps

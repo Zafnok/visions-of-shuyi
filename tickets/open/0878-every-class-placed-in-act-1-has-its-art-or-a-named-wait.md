@@ -42,11 +42,13 @@ the fallback, so nothing flags it.
 - **Shadowblade**: the only Shadowblade placed in Act 1 is Dace
   (`rival`), who gets his own combat picture in 0862 and map picture in
   0735. Whether the class needs a picture of its own is Nick's call.
-- **Indoor backdrop**: `battlebacks.ron` keys backdrops only on
-  `mountain` and `peak`, so the 4 maps with indoor tiles
-  (`envoys_house`, `greywater_kitchen`, `veyne_guardroom`,
-  `veyne_study`) fight in front of `fields.png`. The bundle holds no
-  interior set: which picture to use is Nick's call.
+- **Indoor, fort and bridge backdrops**: `battlebacks.ron` keys
+  backdrops only on `mountain` and `peak`, so the 4 maps with indoor
+  tiles (`envoys_house`, `greywater_kitchen`, `veyne_guardroom`,
+  `veyne_study`) fight in front of `fields.png`, and so does every
+  fight on a fort or a bridge tile, Chapter 1's boss fight included
+  (Harl stands on the fort). The bundle holds no interior set: which
+  pictures to use is Nick's call.
 
 The three calls for Nick are asked in 0184's batch. This ticket doesn't
 wait for them: it imports what is decided and adds the check, with each
@@ -61,7 +63,7 @@ the same gap), and the amendments to 1064, 0757, 0755, 0756, 0237,
 
 **Answer first, for two parts only:** Swordsman's art (combat picture
 and map sprite), whether the Shadowblade class needs art of its own
-besides Dace's, and an interior backdrop for indoor maps. They are asked
+besides Dace's, and the indoor, fort and bridge backdrops. They are asked
 in 0184's batch, with options from the sources look-and-feel.md already
 lists. If 0184 has recorded the answers when this ticket starts, do
 those parts too. If not, leave them as named exceptions (step 4) and,
@@ -95,8 +97,8 @@ The Brawler part needs no answer. Verified by the check's test and
   commit `assets-private.rev`.
 
 **Out (do not do):**
-- Choosing Swordsman's art, a Shadowblade class picture or an interior
-  backdrop: Nick's, through 0184.
+- Choosing Swordsman's art, a Shadowblade class picture or the indoor,
+  fort and bridge backdrops: Nick's, through 0184.
 - Named characters' art: 0858, 0861, 0862, 0866, 0735.
 - Promoted classes' art: they are not placed in Act 1, and whether Act 1
   promotes is asked in 0184 (see 0606).
