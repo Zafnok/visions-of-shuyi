@@ -350,6 +350,20 @@ before sending) and `test-checklist.md` (all 167 checks). If 0774 lands,
 the demo's storage gets a name of its own, which resets each applicant's
 demo settings once.
 
+**Where it stands, 2026-11-20.** Every blocker is merged: 0768 (VS Code
+colors), 0769-0771 (the preview: no voices, back to Scenes, Chapter 1's
+cast only), 0778 (preview pushed by hand), 1303 (enemy faces), and from
+Nick's play of the demo: 0933 (keys without a click, engine#512), 1304 and
+1306 (Vix's lessons: order, ticks, arrows, spoken full words), 1305 and
+1307 (unit info from a selected unit, its portrait and hint). Nick re-ran
+Demo and Story kit from `main` the same day. Left before the first packet:
+Nick replays what changed, does `before-sending.md` sections 2 and 3 (the
+preview and the packet), and has each applicant sign the two agreements.
+Then a session builds each packet (`cargo xtask trial-packet --for <handle>
+--due "<date>"`, the links in `dist/trial/links.txt`) and Nick emails it
+with the compensation PDF. Not blocking, filed: 0090-0093, 0774-0777,
+0879, 0926-0932.
+
 Friction: estimate 270 (the ticket's), measured 706 (2.6×), accepted
 (`docs/engine/friction.md`).
 
