@@ -16,6 +16,7 @@ use shuyi_ui::dialogue::preview::{PreviewView, Tab};
 use trpg_content::bundle::{self, Bundle, skip_without_the_game};
 use trpg_core::LeadGender;
 use trpg_core::lead::DEFAULT_NAME;
+use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::{Core, FRAME_DT};
 use trpg_ui::input::{Action, RIGHT_HANDED};
 use trpg_ui::screen::Screen;
@@ -503,4 +504,43 @@ fn a_scene_played_to_its_end_opens_the_scenes_tab_on_that_scene() {
     assert!(!view(&h).open);
     assert_eq!(view(&h).playing.map(|p| p.text_box), Some(0));
     assert_eq!(shown(&h), "The road goes on.");
+}
+
+/// A scene played to its end stops its music: back on the tabs, nothing
+/// plays (ticket 1308).
+#[test]
+fn leaving_a_scene_stops_its_music() {
+    const MUSIC: &str = "@scene tune
+@music village
+> One.
+> Two.
+@end
+";
+    let stopped = |h: &Core| {
+        h.audio_requests()
+            .iter()
+            .filter(|r| matches!(r, AudioRequest::StopMusic))
+            .count()
+    };
+    let (mut h, _) = preview_of(&[("tune.dlg", MUSIC)]);
+    h.act(Action::Confirm);
+    assert!(screen(&h).playing().is_some());
+    assert!(
+        h.audio_requests()
+            .iter()
+            .any(|r| matches!(r, AudioRequest::PlayMusic { cue, .. } if cue == "village"))
+    );
+    assert_eq!(stopped(&h), 0, "no stop while the scene plays");
+    // Played to its end.
+    act(
+        &mut h,
+        &[
+            Action::Confirm,
+            Action::Confirm,
+            Action::Confirm,
+            Action::Confirm,
+        ],
+    );
+    assert!(screen(&h).playing().is_none());
+    assert_eq!(stopped(&h), 1);
 }
