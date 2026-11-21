@@ -445,6 +445,13 @@ impl DialogueScreen {
         self.log.map(|focus| log::view(ctx, &self.history, focus))
     }
 
+    /// The music the scene set last (`None` before its first `@music`):
+    /// what a screen showing it again plays (the script preview's, ticket
+    /// 1309).
+    pub fn music(&self) -> Option<&MusicLine> {
+        self.music.as_ref()
+    }
+
     /// The music playing at the line now on screen: the scene's last, or
     /// one it has just reached.
     fn music_here(&self) -> Option<MusicLine> {

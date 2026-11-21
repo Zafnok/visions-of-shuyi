@@ -522,25 +522,47 @@ fn leaving_a_scene_stops_its_music() {
             .filter(|r| matches!(r, AudioRequest::StopMusic))
             .count()
     };
+    let played = |h: &Core| {
+        h.audio_requests()
+            .iter()
+            .filter(|r| matches!(r, AudioRequest::PlayMusic { cue, .. } if cue == "village"))
+            .count()
+    };
     let (mut h, _) = preview_of(&[("tune.dlg", MUSIC)]);
     h.act(Action::Confirm);
     assert!(screen(&h).playing().is_some());
-    assert!(
-        h.audio_requests()
-            .iter()
-            .any(|r| matches!(r, AudioRequest::PlayMusic { cue, .. } if cue == "village"))
-    );
+    assert_eq!(played(&h), 1);
     assert_eq!(stopped(&h), 0, "no stop while the scene plays");
-    // Played to its end.
-    act(
-        &mut h,
-        &[
-            Action::Confirm,
-            Action::Confirm,
-            Action::Confirm,
-            Action::Confirm,
-        ],
-    );
-    assert!(screen(&h).playing().is_none());
+    // Cancel mid-scene: the tabs come up over the paused scene, and its
+    // music stops, once (ticket 1309).
+    h.act(Action::Cancel);
+    assert!(view(&h).open);
+    assert!(screen(&h).playing().is_some(), "the scene is paused");
     assert_eq!(stopped(&h), 1);
+    h.act(Action::CursorDown);
+    assert_eq!(stopped(&h), 1, "stopped once, not every frame");
+    // Cancel again resumes it, and its music plays again.
+    h.act(Action::Cancel);
+    assert!(!view(&h).open);
+    assert_eq!(shown(&h), "One.");
+    assert_eq!(played(&h), 2);
+    // Paused, then played again from the scenes: its music plays again.
+    h.act(Action::Cancel);
+    assert_eq!(stopped(&h), 2);
+    act(&mut h, &[Action::CursorUp, Action::Confirm]);
+    assert!(!view(&h).open);
+    h.wait(FRAME_DT);
+    assert_eq!(shown(&h), "One.");
+    assert_eq!(played(&h), 3);
+    assert_eq!(stopped(&h), 2);
+    // Played to its end.
+    for _ in 0..8 {
+        if screen(&h).playing().is_none() {
+            break;
+        }
+        h.act(Action::Confirm);
+    }
+    assert!(screen(&h).playing().is_none());
+    assert_eq!(stopped(&h), 3);
+    assert_eq!(played(&h), 3);
 }

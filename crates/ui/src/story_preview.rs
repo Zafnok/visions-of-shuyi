@@ -31,7 +31,7 @@ use shuyi_ui::dialogue::preview::{
 };
 use trpg_content::dialogue::FormatRules;
 use trpg_content::dialogue::ParsedScene;
-use trpg_content::{ContentError, ContentErrors, Stage};
+use trpg_content::{ContentError, ContentErrors, MusicLine, Stage};
 use trpg_core::lead::{DEFAULT_NAME, LEAD_ID, MAX_NAME_LEN, PORTRAIT_MALE};
 use trpg_core::{LeadGender, LeadProfile};
 
@@ -261,6 +261,12 @@ impl StoryPreview {
         screen.downcast_ref::<DialogueScreen>()
     }
 
+    /// Whether a scene is on screen: one plays and the tabs aren't over
+    /// it.
+    fn scene_shown(&self, ctx: &Ctx) -> bool {
+        self.playing().is_some() && !self.preview.view(ctx).open
+    }
+
     /// What it shows besides the engine's screen.
     pub fn view(&self, ctx: &Ctx) -> StoryPreviewView {
         let engine = self.preview.view(ctx);
@@ -435,12 +441,21 @@ impl Screen<Shuyi> for StoryPreview {
             self.reference = Some(0);
             return Transition::None;
         }
-        let was_playing = self.playing().is_some();
+        let was_shown = self.scene_shown(ctx);
         let next = self.preview.update(ctx, input);
-        // Back on the tabs, the scene's music stops: in the game the next
-        // screen plays its own (ticket 1308).
-        if was_playing && self.playing().is_none() {
+        let shown = self.scene_shown(ctx);
+        // Back on the tabs, whether the scene ended or Cancel paused it,
+        // its music stops: in the game the next screen plays its own
+        // (tickets 1308, 1309). A paused scene shown again plays the music
+        // it had set; a scene started afresh plays its own.
+        if was_shown && !shown {
             ctx.audio.stop_music();
+        } else if shown && !was_shown {
+            match self.playing().and_then(DialogueScreen::music) {
+                Some(MusicLine::Cue(cue)) => ctx.audio.play_music(cue),
+                Some(MusicLine::Stop) => ctx.audio.stop_music(),
+                None => {}
+            }
         }
         next
     }
