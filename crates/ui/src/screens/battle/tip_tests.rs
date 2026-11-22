@@ -6,11 +6,12 @@ use crate::input::{LEFT_HANDED, RIGHT_HANDED};
 use insta::assert_snapshot;
 use shuyi_ui::text::StyledText;
 use trpg_content::TipTrigger;
-use trpg_core::{Command, Event, Objective, Phase, StatGains, UnitId};
+use trpg_core::{Command, Event, Objective, Phase, StatGains, TerrainRules, UnitId};
 
 use super::banner::PHASE_BANNER_S;
 use super::layout::{MAP_VIEW, SIDE_PANEL, snap};
 use super::testing::{Stacked, battle_with, skirmish, skirmish_charged, through_ai_phases};
+use super::triggers::not_plain;
 use super::*;
 use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
@@ -238,17 +239,17 @@ fn cancel_dismisses_too_and_other_keys_wait() {
 fn a_tip_counts_as_seen_once_it_is_shown() {
     let mut c = tipped();
     let mut s = quick();
-    s.tips.fire(TipTrigger::FirstBattleStart);
-    s.tips.absorb(&mut c);
+    s.guide.tips.fire(TipTrigger::FirstBattleStart);
+    s.guide.tips.absorb(&mut c);
     assert_eq!(
-        s.tips.queued().collect::<Vec<_>>(),
+        s.guide.tips.queued().collect::<Vec<_>>(),
         [TipTrigger::FirstBattleStart]
     );
     assert_eq!(c.storage.read(TIPS_SEEN_KEY).unwrap(), None, "queued only");
     // Firing again doesn't queue it twice.
-    s.tips.fire(TipTrigger::FirstBattleStart);
-    s.tips.absorb(&mut c);
-    assert_eq!(s.tips.queued().count(), 1);
+    s.guide.tips.fire(TipTrigger::FirstBattleStart);
+    s.guide.tips.absorb(&mut c);
+    assert_eq!(s.guide.tips.queued().count(), 1);
     // Left before it showed: the next battle shows it.
     let mut retry = quick();
     assert_eq!(
@@ -261,7 +262,7 @@ fn a_tip_counts_as_seen_once_it_is_shown() {
         Some("battle_start")
     );
     let mut s = quick();
-    s.tips.show(Some(TipTrigger::FirstLowHp), &mut c);
+    s.guide.tips.show(Some(TipTrigger::FirstLowHp), &mut c);
     let seen = c.storage.read(TIPS_SEEN_KEY).unwrap().unwrap();
     assert_eq!(
         seen,
@@ -381,7 +382,7 @@ fn the_forecast_shows_its_tip() {
     // A tip waits out the combat that follows.
     press(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Combat(_)), "{:?}", s.mode());
-    s.tips.fire(TipTrigger::FirstLowHp);
+    s.guide.tips.fire(TipTrigger::FirstLowHp);
     press(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), None);
 }
@@ -462,7 +463,7 @@ fn tips_wait_for_the_player_phase_to_settle() {
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.state().phase(), Phase::Enemy);
     // A unit found badly hurt while the enemy plays: the tip waits.
-    s.tips.fire(TipTrigger::FirstLowHp);
+    s.guide.tips.fire(TipTrigger::FirstLowHp);
     // (The enemy-phase tip is queued behind it and shows first.)
     let shown = dismiss_all(&mut s, &mut c);
     assert_eq!(shown, [TipTrigger::FirstEnemyPhase]);
@@ -489,7 +490,7 @@ fn a_tip_fired_under_the_rewind_screen_waits_for_its_trigger() {
     let mut s = Stacked::new(s);
     s.press(&mut c, &[Action::Rewind]);
     assert!(s.rewind().is_some());
-    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.battle_mut().guide.tips.fire(TipTrigger::FirstLowHp);
     s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), None);
     // Closed: no tip comes up, and the one fired under it is still unseen.
@@ -501,7 +502,7 @@ fn a_tip_fired_under_the_rewind_screen_waits_for_its_trigger() {
     }
     assert!(!seen(&c, "low_hp"), "dropped unseen");
     // Its trigger again, on the map: it comes up at once.
-    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.battle_mut().guide.tips.fire(TipTrigger::FirstLowHp);
     s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
 }
@@ -1058,7 +1059,7 @@ fn a_tip_behind_another_comes_up_as_it_closes() {
     let mut s = quick();
     press(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
-    s.tips.fire(TipTrigger::FirstLevelUp);
+    s.guide.tips.fire(TipTrigger::FirstLevelUp);
     press(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
     press(&mut s, &mut c, &[Action::Confirm]);
@@ -1085,7 +1086,7 @@ fn a_tip_fired_under_a_screen_never_takes_the_menu_key() {
         &[Action::CursorDown, Action::CursorDown, Action::Confirm],
     );
     assert!(s.guides().is_some());
-    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.battle_mut().guide.tips.fire(TipTrigger::FirstLowHp);
     s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), None);
     // Back in the map menu: no tip.
@@ -1102,7 +1103,7 @@ fn a_tip_fired_under_a_screen_never_takes_the_menu_key() {
     assert!(!seen(&c, "low_hp"), "dropped unseen");
     // Its trigger again: it comes up, and a key pressed in the frame it
     // first shows doesn't close it; a fresh Cancel does.
-    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.battle_mut().guide.tips.fire(TipTrigger::FirstLowHp);
     s.press(&mut c, &[Action::Cancel]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
     s.press(&mut c, &[Action::Cancel]);
@@ -1122,12 +1123,12 @@ fn the_unseen_tips_are_those_not_shown_yet_and_none_while_tips_are_off() {
         .shown_tip()
         .and_then(|t| c.game.content.tips.for_trigger(t));
     let shown = shown.map_or_default(|t| t.id.clone());
-    let unseen: Vec<String> = s.tips.unseen(&c).map(|t| t.id.clone()).collect();
+    let unseen: Vec<String> = s.guide.tips.unseen(&c).map(|t| t.id.clone()).collect();
     assert_eq!(unseen.len(), c.game.content.tips.tips.len() - 1);
     assert!(!unseen.contains(&shown), "{shown} was shown");
     c.game.tips_enabled = false;
     press(&mut s, &mut c, &[]);
-    assert_eq!(s.tips.unseen(&c).count(), 0);
+    assert_eq!(s.guide.tips.unseen(&c).count(), 0);
 }
 
 /// Ticket 0463: the lord's forecast with its two swords shows the

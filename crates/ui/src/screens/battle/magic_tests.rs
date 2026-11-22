@@ -925,7 +925,7 @@ fn a_flash_fades_from_full_strength_to_nothing() {
     let c = ctx();
     let mut s = BattleScreen::new(field(&c, 0));
     let before = render(&s, &c);
-    s.flashes.push(TerrainFlash {
+    s.effects.flashes.push(TerrainFlash {
         pos: p(500, 500),
         t: 0.0,
     });

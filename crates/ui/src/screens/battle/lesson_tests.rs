@@ -736,10 +736,10 @@ fn the_enemy_phase_keeps_a_lesson_waiting_for_a_unit() {
     let mut s = quick();
     s.send(&Command::EndPhase);
     assert_eq!(s.state().phase(), Phase::Enemy);
-    s.lessons.fire(TipTrigger::FirstBattleStart);
-    s.lessons.absorb(&c, None, s.state().turn());
-    s.settle_lessons(false);
-    assert_eq!(s.lessons.current(), Some("unit"));
+    s.guide.lessons.fire(TipTrigger::FirstBattleStart);
+    s.guide.lessons.absorb(&c, None, s.state().turn());
+    s.guide.settle_lessons(&s.state, &s.mode, false);
+    assert_eq!(s.guide.lessons.current(), Some("unit"));
 }
 
 /// Only the arts list counts as the arts menu opening (0457): another
@@ -792,7 +792,10 @@ fn her_coming_lines_hold_only_the_lessons_still_to_start_here() {
         with("done", LessonLevel::Short, &[]),
     ];
     c.game.campaign_lessons.insert("done".to_owned());
-    let lines = quick().coming_guide_lines(&c);
+    let quick = quick();
+    let lines = quick
+        .guide
+        .coming_guide_lines(&c, quick.battle_id.as_deref());
     let line = |id: &str| trpg_content::voice::guide_line(&text(id));
     for id in ["anywhere", "here"] {
         assert!(lines.contains(&line(id)), "{id}");
@@ -1033,9 +1036,13 @@ fn ending_the_turn_is_put_away_after_turn_one() {
             state.apply(&Command::EndPhase).unwrap();
         }
         let mut s = BattleScreen::new(state.clone());
-        s.lessons.fire(TipTrigger::FirstBattleStart);
-        s.lessons.absorb(&c, None, turn);
-        s.settle_lessons(false);
-        assert_eq!(s.lessons.current().is_some(), turn == 1, "turn {turn}");
+        s.guide.lessons.fire(TipTrigger::FirstBattleStart);
+        s.guide.lessons.absorb(&c, None, turn);
+        s.guide.settle_lessons(&s.state, &s.mode, false);
+        assert_eq!(
+            s.guide.lessons.current().is_some(),
+            turn == 1,
+            "turn {turn}"
+        );
     }
 }

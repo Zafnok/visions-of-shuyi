@@ -33,11 +33,12 @@ pub mod banner;
 pub mod camera;
 pub mod cursor;
 pub mod doable;
+pub mod effects;
 pub mod event_sounds;
 pub mod flight;
 pub mod forecast;
 pub mod glyph;
-pub(crate) mod guide_voice;
+pub mod guide;
 pub mod guides;
 pub mod info;
 pub mod items;
@@ -61,21 +62,22 @@ pub mod skills;
 mod sounds;
 pub mod split_keys;
 pub mod stage;
+pub mod threat;
 pub mod tips;
+mod triggers;
 pub mod units;
 pub mod view;
 pub mod walk;
 
 use crate::prelude::*;
 use alloc::collections::VecDeque;
-use core::cell::{RefCell, RefMut};
 use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
-    LeadGender, LeadProfile, Objective, Outcome, Phase, Pos, StatValue, TerrainRules, ThreatAreas,
-    ThreatPlanner, TileSet, Turn, Unit, UnitId, danger_zone, next_command, threats_at,
+    LeadGender, LeadProfile, Objective, Outcome, Phase, Pos, StatValue, TileSet, Turn, Unit,
+    UnitId, next_command,
 };
 
 use self::ai_phase::{AiAction, PACING};
@@ -84,19 +86,18 @@ use self::banner::{Banner, BannerKind};
 use self::attack::{Targeting, aimed_first, aimed_options};
 use self::camera::Camera;
 use self::cursor::Cursor;
-use self::doable::Doable;
-use self::event_sounds::CueQueue;
+use self::effects::Effects;
 use self::flight::Flight;
-use self::guide_voice::GuideVoice;
+use self::guide::{Guide, Marks, Moment, Over, Took};
 use self::guides::GuidesScreen;
 use self::layout::{HELP_BAR, MAP_VIEW, map_area};
-use self::lessons::{EndAnswer, LessonState};
+use self::lessons::LessonState;
 use self::mode::{Effect, Line, MenuEntry, Mode, Selection, list_entry};
 use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{MapFrame, RewindEffect, RewindScreen};
 use self::shop::{ShopScreen, ShopVisit};
-use self::tips::TipState;
+use self::threat::ThreatDisplay;
 use self::view::{
     BannerView, BattleMenuView, BattleView, DialogView, ForecastView, InfoView, MapInfoView,
     MenuHeader, MenuPlace, MessageKind, MessageView, NotesView, ObjectiveView, PanelPreviewView,
@@ -107,14 +108,14 @@ use super::dialogue::DialogueScreen;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::map_view::{CursorView, MapScene, MapSkin, Place, ThreatView, UnitView, range};
+use crate::map_view::{CursorView, MapScene, MapSkin, Place, UnitView, range};
 use crate::screen::{
     Ctx, FrameInput, IdleMotion, Screen, ScreenResult, Shuyi, SkinSet, Transition, loop_clock_s,
 };
 use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
-use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
-use crate::tips::{LessonView, LessonsEndView, TipView};
+use crate::settings::{HELD_SPEED, MapZoom};
+use crate::tips::TipView;
 use crate::widgets::help::{
     action_key, frame_widths, hint_column, join_hints, key_pair, pad_last_hint, text_with_keys,
 };
@@ -122,6 +123,9 @@ use crate::words::{Language, Words};
 use shuyi_ui::grid::MapEdges;
 use shuyi_ui::grid::scene::RangesShown;
 use shuyi_ui::text::StyledText;
+
+pub use self::effects::{HealPopup, PopupKind, TERRAIN_FLASH_S, TerrainFlash};
+pub use self::threat::{danger_tiles, threat_enemies};
 
 /// The battle screen's skins (ADR-0083): the PC's glyph look, the
 /// Playdate's map over the whole screen with its corner pop-ups (ticket
@@ -203,108 +207,6 @@ pub const DEFEAT_MUSIC: &str = "defeat";
 /// tip (0483).
 pub const WATER: &str = "water";
 
-/// How long a tile flashes when its terrain changes, in seconds. *Tunable.*
-pub const TERRAIN_FLASH_S: f32 = 0.4;
-
-/// A tile whose terrain just changed (a tile cast, a fire burning out): it
-/// flashes for [`TERRAIN_FLASH_S`] seconds.
-#[derive(Debug, Clone, PartialEq)]
-pub struct TerrainFlash {
-    /// The tile.
-    pub pos: Pos,
-    /// Seconds it has flashed.
-    pub t: f32,
-}
-
-impl TerrainFlash {
-    /// How strong the flash is now: `1` at the change, fading to none.
-    pub fn strength(&self) -> f32 {
-        (1.0 - self.t / TERRAIN_FLASH_S).clamp(0.0, 1.0)
-    }
-}
-
-/// What a [`HealPopup`] tells of.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PopupKind {
-    /// HP restored: `+10`, in `hp_high`.
-    Heal,
-    /// HP lost to a fire burning out under the unit: `-5`, in `hp_low`.
-    Burn,
-}
-
-/// A `+10` shown over a unit that was healed, or a `-5` over one a fire
-/// burnt, for [`Timings::heal_popup`](playback::Timings::heal_popup)
-/// seconds (a burn's start once no banner is on screen).
-#[derive(Debug, Clone, PartialEq)]
-pub struct HealPopup {
-    /// The tile it floats over.
-    pub pos: Pos,
-    /// HP restored or lost.
-    pub amount: StatValue,
-    /// Whether the HP was restored or lost.
-    pub kind: PopupKind,
-    /// Seconds it has been up.
-    pub t: f32,
-}
-
-impl HealPopup {
-    /// What it reads: `+10` for a heal, `-5` for a burn.
-    pub fn text(&self) -> String {
-        match self.kind {
-            PopupKind::Heal => format!("+{}", self.amount),
-            PopupKind::Burn => format!("-{}", self.amount),
-        }
-    }
-}
-
-/// The tiles units hostile to the player could attack this turn
-/// ([`danger_zone`] with each unit's attack ranges); empty if it can't be
-/// worked out.
-pub fn danger_tiles(state: &BattleState) -> TileSet {
-    let tiles = &state.map().tiles;
-    danger_zone(
-        state.map(),
-        state.terrain(),
-        state.classes(),
-        state.units(),
-        Faction::Player,
-        |u| state.threat_ranges(u),
-    )
-    .unwrap_or_else(|_| TileSet::new(tiles.width(), tiles.height()))
-}
-
-/// Where the enemies stand that could attack unit `unit` in their next
-/// phase if it stood on `tile` ([`threats_at`] with each unit's attack
-/// ranges), in the battle's order; none if it can't be worked out.
-pub fn threat_enemies(state: &BattleState, unit: UnitId, tile: Pos) -> Vec<Pos> {
-    let ids = threats_at(
-        state.map(),
-        state.terrain(),
-        state.classes(),
-        state.units(),
-        unit,
-        tile,
-        |u| state.threat_ranges(u),
-    )
-    .unwrap_or_default();
-    enemy_tiles(state, ids)
-}
-
-/// Where the units `ids` stand, in that order.
-fn enemy_tiles(state: &BattleState, ids: Vec<UnitId>) -> Vec<Pos> {
-    let at = ids.into_iter().filter_map(|id| state.unit(id));
-    at.map(|u| u.pos).collect()
-}
-
-/// The answer of [`threat_enemies`] for a unit on a tile, kept by the
-/// screen so that it isn't worked out again every frame.
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct KeptThreat {
-    unit: UnitId,
-    tile: Pos,
-    enemies: Vec<Pos>,
-}
-
 /// Something the battle screen shows once no combat is playing, one at a
 /// time in order.
 #[derive(Debug, Clone, PartialEq)]
@@ -345,18 +247,6 @@ enum Opened {
     Shop(UnitId, Pos),
 }
 
-/// What a lesson just done holds back (0465, 0495, 1292).
-#[derive(Debug, Clone, Copy, Default)]
-struct AfterLesson {
-    /// Whether the box at the end of the lessons waits for a press on the
-    /// map: a lesson was just done, so a key meant for it never answers
-    /// the box.
-    end_waits: bool,
-    /// Whether a lesson was just done with another in line: it goes
-    /// straight to that one, never to a tip between them, until it opens.
-    next_first: bool,
-}
-
 /// The battle screen: the player browses the map with the cursor, selects
 /// and moves units ([`Mode`]), opens the map menu, ends the turn; phase and
 /// outcome banners show as the battle goes on, and the outcome's closes the
@@ -378,25 +268,12 @@ pub struct BattleScreen {
     view: (i32, i32),
     cursor: Cursor,
     mode: Mode,
-    /// The danger zone, while shown (recomputed after every command).
-    danger: Option<TileSet>,
+    /// The danger zone and the threat arrows (0405, 0448).
+    threat: ThreatDisplay,
     /// Where and when the selected unit's ranges were opened, for a map
     /// skin whose ranges spread out from it (ticket 0923): kept while the
     /// same unit stays selected ([`note_ranges`](Self::note_ranges)).
     ranges_shown: Option<RangesShown>,
-    /// The threat arrows last worked out (0448): the unit and the tile
-    /// they were for, and where the enemies stand
-    /// ([`threat_enemies`]). Kept until the scene asks about another unit
-    /// or tile, and dropped whenever the battle changes.
-    threats: RefCell<Option<KeptThreat>>,
-    /// The enemies' moves searched for the unit the threat arrows were
-    /// last worked out for ([`ThreatPlanner`], ticket 1251), so another
-    /// tile for it doesn't search them all again. Dropped with `threats`.
-    planner: RefCell<Option<ThreatPlanner>>,
-    /// Every enemy's threat area with every unit in place
-    /// ([`ThreatAreas`], ticket 1259): the threat arrows of any unit on its
-    /// own tile without a search. Dropped with `threats`.
-    areas: RefCell<Option<ThreatAreas>>,
     /// Auto-end: end the player phase when its last unit has acted. Off by
     /// default (`docs/design/turn-structure.md`, ticket 0420). The
     /// player's setting ([`Settings::auto_end_turn`]), read at the start
@@ -424,61 +301,21 @@ pub struct BattleScreen {
     /// The battle's own music cue, asked for again when a rewind undoes
     /// its ending ([`with_music`](Self::with_music)).
     music: Option<String>,
-    /// One-time tips waiting to show (0406).
-    tips: TipState,
-    /// The kind of [`mode`](Self::mode) the queued tips were in their
-    /// moment for, and whether it plays back a command: when it changes,
-    /// they are dropped (1292), unless it was a playback.
-    tip_mode: Option<(core::mem::Discriminant<Mode>, bool)>,
-    /// What a lesson just done holds back.
-    after_lesson: AfterLesson,
-    /// Checklist lessons waiting or open (0456).
-    lessons: LessonState,
-    /// The guide's voice for the box on screen (0476), and the lines kept
-    /// loaded with hers: the coming scenes' (1296).
-    guide_voice: GuideVoice,
-    /// The first lines of the scene this frame pushes, if it does: still
-    /// kept should her set change as it goes (1296).
-    pushed_lines: Vec<trpg_content::LineId>,
-    /// The answer the box at the end of the lessons is on (0465).
-    end_focus: usize,
-    /// What the units left to act could do, for the lessons (0464): worked
-    /// out when one asks, started anew whenever the battle changes.
-    doable: Doable,
-    /// What the player did since the lessons were last ticked
-    /// ([`tick_lessons`](Self::tick_lessons)).
-    noticed: Vec<DoneWhen>,
+    /// The guide: her tips, lessons and voice (0406, 0456, 0476).
+    guide: Guide,
     /// The id of the battle (its file's), which the game flow gives
     /// ([`in_battle`](Self::in_battle)): a lesson may start only in some
     /// battles. `None` for a battle made any other way.
     battle_id: Option<String>,
-    /// Heal numbers floating over units.
-    popups: Vec<HealPopup>,
-    /// Tiles flashing after their terrain changed.
-    flashes: Vec<TerrainFlash>,
+    /// The heal numbers, terrain flashes, event sounds and the walks'
+    /// and AI's speeds.
+    effects: Effects,
     /// The EXP bar and level-up pages of the last command (0602), shown
     /// once its combat has played.
     progress: Option<Progress>,
     /// The info screen's page, on a skin that shows it a page at a time
     /// (the Playdate's, ticket 1039): 0 when it opens.
     info_page: u8,
-    /// Sounds of events that no playback or walk plays (0424), waiting
-    /// for their moment.
-    cues: CueQueue,
-    /// The unit whose walk was shown since the last command: its move's
-    /// steps have been heard.
-    walked: Option<UnitId>,
-    /// Walking speed, in tiles per second, and an AI unit's while Confirm
-    /// is held: the map skin's
-    /// ([`walk`](shuyi_ui::grid::GridSkin::walk): its `normal` speed, or
-    /// `fast` with Fast animations, and `held`), as of the frame's start.
-    pace: (f32, f32),
-    /// How much faster the rest of an AI unit's action plays (the camera's
-    /// pan, the mark on the unit): the player's speeds for the AI's phases
-    /// ([`Settings::battle_speed`]), as of the frame's start.
-    ///
-    /// [`Settings::battle_speed`]: crate::settings::Settings::battle_speed
-    ai_speed: f32,
     /// The player chose `Restart Battle` or `Suspend`: the screen closes,
     /// and the game flow does it.
     leaving: Option<Leaving>,
@@ -502,49 +339,11 @@ pub struct BattleScreen {
 }
 
 /// The attack forecast `mode` shows, if any.
-fn forecast_of(mode: &Mode) -> Option<&Targeting> {
+pub(super) fn forecast_of(mode: &Mode) -> Option<&Targeting> {
     match mode {
         Mode::Targeting(t) => Some(t),
         Mode::CastTarget(t) => t.forecast(),
         _ => None,
-    }
-}
-
-/// What the mode shows that the lessons watch for (0456, 0457): a unit
-/// selected, the attack forecast open, an action menu or arts menu open, a
-/// spell aimed at a tile, or none of these.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Marks {
-    None,
-    Selected,
-    Forecast,
-    ActionMenu,
-    Arts,
-    TileAimed,
-}
-
-impl Marks {
-    fn of(mode: &Mode) -> Self {
-        match mode {
-            Mode::Selected(_) => Self::Selected,
-            _ if forecast_of(mode).is_some() => Self::Forecast,
-            Mode::ActionMenu { .. } => Self::ActionMenu,
-            Mode::List { menu, .. } if list_entry(menu) == MenuEntry::Arts => Self::Arts,
-            Mode::CastTarget(t) if matches!(t.target(), CastTarget::Tile(_)) => Self::TileAimed,
-            _ => Self::None,
-        }
-    }
-
-    /// What it coming up shows the player did.
-    fn done(self) -> Option<DoneWhen> {
-        match self {
-            Self::None => None,
-            Self::Selected => Some(DoneWhen::UnitSelected),
-            Self::Forecast => Some(DoneWhen::ForecastOpened),
-            Self::ActionMenu => Some(DoneWhen::ActionMenuOpened),
-            Self::Arts => Some(DoneWhen::ArtsOpened),
-            Self::TileAimed => Some(DoneWhen::TileAimed),
-        }
     }
 }
 
@@ -590,34 +389,18 @@ impl BattleScreen {
             outcome_music: OutcomeMusic::Unheard,
             music: None,
             state,
-            danger: None,
+            threat: ThreatDisplay::default(),
             ranges_shown: None,
-            threats: RefCell::new(None),
-            planner: RefCell::new(None),
-            areas: RefCell::new(None),
             auto_end: false,
             show_fights: true,
             end_armed: false,
             toast: None,
             queue: VecDeque::new(),
-            tips: TipState::default(),
-            tip_mode: None,
-            after_lesson: AfterLesson::default(),
-            lessons: LessonState::default(),
-            guide_voice: GuideVoice::default(),
-            pushed_lines: Vec::new(),
-            end_focus: 0,
-            doable: Doable::default(),
-            noticed: Vec::new(),
+            guide: Guide::default(),
             battle_id: None,
-            popups: vec![],
-            flashes: vec![],
+            effects: Effects::default(),
             progress: None,
             info_page: 0,
-            cues: CueQueue::default(),
-            walked: None,
-            pace: (walk::WALK_TILES_PER_S, walk::HELD_WALK_TILES_PER_S),
-            ai_speed: 1.0,
             leaving: None,
             player_view: None,
             notes_t: 0.0,
@@ -701,12 +484,12 @@ impl BattleScreen {
 
     /// The heal numbers on screen.
     pub fn popups(&self) -> &[HealPopup] {
-        &self.popups
+        &self.effects.popups
     }
 
     /// The tiles flashing after their terrain changed.
     pub fn flashes(&self) -> &[TerrainFlash] {
-        &self.flashes
+        &self.effects.flashes
     }
 
     /// Whether auto-end is on.
@@ -716,7 +499,7 @@ impl BattleScreen {
 
     /// The danger zone, while shown.
     pub fn danger(&self) -> Option<&TileSet> {
-        self.danger.as_ref()
+        self.threat.danger()
     }
 
     /// The EXP bar or level-up page on screen, if any: once the command's
@@ -812,7 +595,7 @@ impl BattleScreen {
             Queued::Flight(f) => Some(f),
             _ => None,
         });
-        waiting.map_or_default(|f| f.views(self.pace.0))
+        waiting.map_or_default(|f| f.views(self.effects.pace.0))
     }
 
     /// Asks for the outcome's music as its banner comes on screen (0809,
@@ -846,28 +629,26 @@ impl BattleScreen {
         self.notes_open() || self.mode == Mode::Objective
     }
 
-    /// Gives `action` to the tip or the battle notes box on screen, if any:
-    /// each takes the keys until it is closed (a tip by Confirm or Cancel,
-    /// once it has been drawn, 0467; the notes by Confirm). Returns whether
-    /// one took it.
+    /// Gives `action` to the battle notes box or the guide's box on
+    /// screen, if any: each takes the keys until it is closed (the notes
+    /// by Confirm; the guide's, [`Guide::take_key`]). Returns whether one
+    /// took it.
     fn overlay_key(&mut self, ctx: &mut Ctx, action: Action) -> bool {
-        if let Some(tip) = self.shown_tip() {
-            if matches!(action, Action::Confirm | Action::Cancel) && self.tips.on_screen(tip) {
-                self.tips.dismiss(tip);
-            }
-            return true;
-        }
         if self.notes_open() {
             if action == Action::Confirm {
                 self.queue.pop_front();
             }
             return true;
         }
-        if self.lessons_end_shown(ctx) {
-            self.lessons_end_key(ctx, action);
-            return true;
+        let (m, battle) = (self.moment(), self.battle_id.as_deref());
+        match self.guide.take_key(m, ctx, action, battle) {
+            Took::No => false,
+            Took::Yes => true,
+            Took::Restart => {
+                self.leaving = Some(Leaving::Restart);
+                true
+            }
         }
-        false
     }
 
     /// Counts the `dt` seconds the battle notes have been up, from 0 each
@@ -887,10 +668,7 @@ impl BattleScreen {
 
     /// Shows or hides the danger zone.
     fn toggle_danger(&mut self) {
-        self.danger = match self.danger {
-            Some(_) => None,
-            None => Some(danger_tiles(&self.state)),
-        };
+        self.threat.toggle_danger(&self.state);
     }
 
     /// Switches the map between its two zooms and saves the choice with
@@ -906,11 +684,12 @@ impl BattleScreen {
         }
         // If saving fails it still holds for this session.
         let _ = ctx.change_settings(|s| s.game.map_zoom = s.game.map_zoom.toggled());
-        self.notice(if ctx.settings().game.map_zoom == MapZoom::X1 {
-            DoneWhen::ZoomedOut
-        } else {
-            DoneWhen::ZoomedIn
-        });
+        self.guide
+            .notice(if ctx.settings().game.map_zoom == MapZoom::X1 {
+                DoneWhen::ZoomedOut
+            } else {
+                DoneWhen::ZoomedIn
+            });
     }
 
     /// Flips auto-end, saves it with the other options and says so.
@@ -927,532 +706,58 @@ impl BattleScreen {
         self.toast = Some((MessageView::note(text.to_owned()), TOAST_S));
     }
 
-    /// A player unit's level-up in `events` fires [`TipTrigger::FirstLevelUp`].
-    fn note_level_ups(&mut self, events: &[Event]) {
-        let player_level_up = events.iter().any(|e| {
-            matches!(e, Event::LeveledUp { unit, .. }
-                if self.state.unit(*unit).is_some_and(|u| u.faction == Faction::Player))
-        });
-        if player_level_up {
-            self.fire(TipTrigger::FirstLevelUp);
-        }
-    }
-
-    /// Notes that `trigger` happened, for the tips and the lessons.
-    fn fire(&mut self, trigger: TipTrigger) {
-        self.tips.fire(trigger);
-        self.lessons.fire(trigger);
-    }
-
-    /// Fires the triggers that show in the battle's current state (the
-    /// ones that come from a command's events are fired as it applies).
-    fn detect_tips(&mut self, ctx: &Ctx) {
-        for trigger in self.triggers_now() {
-            self.fire(trigger);
-        }
-        self.detect_wade_tip(ctx);
-    }
-
-    /// Fires [`TipTrigger::ZoomAvailable`] while the map, under a skin that
-    /// can zoom, is being browsed with no lesson in play but one that waits
-    /// for the turn to end (0466, 1304). After the lessons have absorbed
-    /// this frame's triggers, so the first frame of a battle sees the ones
-    /// it starts; the zoom lesson it starts is queued with the next frame's.
-    fn detect_zoom_tip(&mut self, ctx: &Ctx) {
-        let browsing = matches!(self.mode, Mode::Idle { .. });
-        if browsing && !self.lessons.busy() && ctx.game.map_skin.zoom().is_some() {
-            self.fire(TipTrigger::ZoomAvailable);
-        }
-    }
-
-    /// Fires [`TipTrigger::FirstWadeInReach`] while the selected unit could
-    /// step into a river (0483): `water` is the content's terrain, so it is
-    /// looked up here.
-    fn detect_wade_tip(&mut self, ctx: &Ctx) {
-        let Mode::Selected(sel) = &self.mode else {
-            return;
-        };
-        let water = ctx.game.content.terrain.display.id_of(WATER);
-        if water.is_some_and(|w| doable::wades_in_reach(&self.state, sel, w)) {
-            self.fire(TipTrigger::FirstWadeInReach);
-        }
-    }
-
-    /// The tip and lesson triggers the battle's current state shows.
-    fn triggers_now(&self) -> Vec<TipTrigger> {
-        let mut fired = Vec::new();
-        let state = &self.state;
-        if state.turn() == 1 && state.phase() == Phase::Player {
-            fired.push(TipTrigger::FirstBattleStart);
-        }
-        if state.phase() == Phase::Enemy {
-            fired.push(TipTrigger::FirstEnemyPhase);
-        }
-        let low = |u: &Unit| u.faction == Faction::Player && u.hp > 0 && u.hp * 2 <= u.stats.hp;
-        if state.units().iter().any(low) {
-            fired.push(TipTrigger::FirstLowHp);
-        }
-        match &self.mode {
-            Mode::Selected(sel) => {
-                fired.push(TipTrigger::FirstUnitSelected);
-                if self.has_skill(sel.unit) {
-                    fired.push(TipTrigger::FirstSkillUnit);
-                }
-                if doable::reaches_enemy(state, sel) {
-                    fired.push(TipTrigger::FirstEnemyInRange);
-                }
-            }
-            Mode::Targeting(t) => {
-                fired.push(TipTrigger::FirstForecast);
-                if !forecast::kind_effects(state, t).is_empty() {
-                    fired.push(TipTrigger::FirstEffective);
-                }
-                if t.can_swap() {
-                    fired.push(TipTrigger::FirstWeaponSwap);
-                }
-            }
-            Mode::Idle { .. } => {
-                let on_enemy = self.hovered().is_some_and(|u| u.faction == Faction::Enemy);
-                if on_enemy && self.danger.is_none() {
-                    fired.push(TipTrigger::DangerZoneAvailable);
-                }
-                if self.special_terrain(self.cursor.pos) {
-                    fired.push(TipTrigger::FirstTerrain);
-                }
-            }
-            Mode::ActionMenu { menu, arts, .. } => {
-                if menu.items().iter().any(|i| i.value == MenuEntry::Magic) {
-                    fired.push(TipTrigger::FirstCaster);
-                }
-                if art_list::can_use_art(arts) {
-                    fired.push(TipTrigger::ArtsAvailable);
-                }
-            }
-            Mode::List { menu, .. } => {
-                let on_tile = |t: &CastTarget| matches!(t, CastTarget::Tile(_));
-                let tile_spell = |line: &Line| match line {
-                    Line::Spell(c) => c.targets.iter().any(on_tile),
-                    _ => false,
-                };
-                if menu.items().iter().any(|i| tile_spell(&i.value)) {
-                    fired.push(TipTrigger::TileSpellAvailable);
-                }
-            }
-            _ => {}
-        }
-        fired.extend(self.lesson_triggers_now());
-        fired
-    }
-
-    /// The triggers only lessons use (0457) that the battle's current
-    /// state shows, besides the menus': every unit has acted, a unit has
-    /// acted on turn 1 (1304), turn 2 began, the threat arrows show.
-    fn lesson_triggers_now(&self) -> Vec<TipTrigger> {
-        let mut fired = Vec::new();
-        let state = &self.state;
-        if state.phase() != Phase::Player || state.outcome().is_some() {
-            return fired;
-        }
-        let browsing = matches!(self.mode, Mode::Idle { .. });
-        if self.no_unit_left() && browsing {
-            fired.push(TipTrigger::NoUnitLeft);
-        }
-        let acted = |u: &Unit| u.faction == Faction::Player && u.acted;
-        if state.turn() == 1 && browsing && state.units().iter().any(acted) {
-            fired.push(TipTrigger::FirstUnitActed);
-        }
-        if state.turn() == 2 {
-            fired.push(TipTrigger::SecondTurn);
-        }
-        if self.threat_view().is_some() {
-            fired.push(TipTrigger::ThreatArrowsShown);
-        }
-        fired
-    }
-
-    /// Whether, in the player's phase of a battle still on, every unit of
-    /// the player's has acted.
-    fn no_unit_left(&self) -> bool {
-        self.state.phase() == Phase::Player
-            && self.state.outcome().is_none()
-            && map_menu::ready_players(&self.state) == 0
-    }
-
-    /// Whether `unit` has a skill it can use now (a passive or an active).
-    fn has_skill(&self, unit: UnitId) -> bool {
-        let state = &self.state;
-        state
-            .unit(unit)
-            .is_some_and(|u| !u.usable_skills(state.classes(), state.skills()).is_empty())
-    }
-
-    /// Whether the terrain at `pos` is not plain ground: it gives a Def,
-    /// Avoid or healing bonus, or costs a movement type other than 1 to
-    /// enter (more, or impassable).
-    fn special_terrain(&self, pos: Pos) -> bool {
-        let state = &self.state;
-        let rules = state
-            .map()
-            .tiles
-            .get(pos)
-            .and_then(|&id| state.terrain().get(id));
-        rules.is_some_and(not_plain)
-    }
-
-    /// The tip on screen, if any: the first queued whose moment has come
-    /// (`due_tip`), unless an open lesson is on screen, or the next lesson
-    /// after one just done: tips wait for it (0456).
-    pub fn shown_tip(&self) -> Option<TipTrigger> {
-        let lesson_up = self.lesson_first() && self.lesson_moment();
-        self.due_tip().filter(|_| !lesson_up)
-    }
-
-    /// The first queued tip whose moment has come, if any. Tips wait out a
-    /// combat's playback, a scene queued, a screen over the battle (a
-    /// scene playing, the rewind screen) and the battle notes; the
-    /// enemy-phase tip shows as that phase begins (over its banner), the
-    /// others in a player phase without a banner. Only a tip still queued
-    /// is in its moment ([`take_in_tips`](Self::take_in_tips), 1292).
-    fn due_tip(&self) -> Option<TipTrigger> {
-        if self.playing()
+    /// What is on screen over the map now, as the guide's boxes wait for
+    /// it.
+    fn moment(&self) -> Moment {
+        let busy = self.playing()
             || self.progress.is_some()
             || self.queued_scene().is_some()
-            || self.tips.covered()
-            || self.notes_open()
-        {
-            return None;
-        }
-        self.tips.queued().find(|&t| {
-            t == TipTrigger::FirstEnemyPhase
-                || (self.state.phase() == Phase::Player && self.banner().is_none())
-        })
-    }
-
-    /// At the frame's start: the queued tips' moment passes if the kind of
-    /// mode changed, and those not on screen are dropped (1292: they show
-    /// the next time their trigger fires), then the tips and lessons the
-    /// battle's state fired are queued. A playback (a combat, an AI action)
-    /// ends the moment of none: a level-up's tip, fired as its combat
-    /// starts, shows once the map is back.
-    fn take_in_tips(&mut self, ctx: &mut Ctx) {
-        let playback = matches!(self.mode, Mode::Combat(_) | Mode::AiAction(_));
-        let now = (core::mem::discriminant(&self.mode), playback);
-        if self.tip_mode != Some(now) {
-            if !self.tip_mode.is_some_and(|(_, was)| was) {
-                self.tips.go_stale();
-            }
-            self.tip_mode = Some(now);
-        }
-        self.detect_tips(ctx);
-        self.absorb_lessons(ctx);
-        self.detect_zoom_tip(ctx);
-        self.tips.absorb(ctx);
-    }
-
-    /// The id of the line the guide says in the box on screen, the tip's
-    /// or else the lesson's: its `text`, never its items or `how` (0476).
-    fn guide_line(&self, ctx: &Ctx) -> Option<trpg_content::LineId> {
-        let content = &ctx.game.content;
-        let text = match self.shown_tip() {
-            Some(trigger) => &content.tips.for_trigger(trigger)?.text,
-            None => &content.lessons.get(self.shown_lesson()?)?.text,
+            || self.notes_open();
+        let over = if busy {
+            Over::Busy
+        } else if self.banner().is_some() {
+            Over::Banner
+        } else {
+            Over::Nothing
         };
-        Some(trpg_content::voice::guide_line(text))
-    }
-
-    /// The ids of the guide's lines this battle may still show (0494,
-    /// 0496), each once: the queued tips', the waiting lessons', the tips
-    /// not seen yet and the lessons that may yet start here. The order
-    /// doesn't matter: every one is kept loaded.
-    fn coming_guide_lines(&self, ctx: &Ctx) -> Vec<trpg_content::LineId> {
-        let content = &ctx.game.content;
-        let queued = self
-            .tips
-            .queued()
-            .filter_map(|t| content.tips.for_trigger(t));
-        let waiting = self
-            .lessons
-            .waiting()
-            .filter_map(|id| content.lessons.get(id));
-        let battle = self.battle_id.as_deref();
-        let to_start = content.lessons.lessons.iter().filter(|l| {
-            LessonState::shows(ctx, l.level)
-                && l.starts_in(battle)
-                && !ctx.game.campaign_lessons.contains(&l.id)
-        });
-        let texts = queued
-            .map(|t| &t.text)
-            .chain(waiting.map(|l| &l.text))
-            .chain(self.tips.unseen(ctx).map(|t| &t.text))
-            .chain(to_start.map(|l| &l.text));
-        let mut lines: Vec<trpg_content::LineId> = Vec::new();
-        for text in texts {
-            let line = trpg_content::voice::guide_line(text);
-            if !lines.contains(&line) {
-                lines.push(line);
-            }
+        Moment {
+            over,
+            phase: self.state.phase(),
+            decided: self.state.outcome().is_some(),
+            browsing_clear: matches!(self.mode, Mode::Idle { .. }) && self.queue.is_empty(),
         }
-        lines
     }
 
-    /// Whether this frame builds the set of lines kept loaded: when `due`
-    /// ([`GuideVoice::keep_due`]) and the battle `stays` on top, or the
-    /// screen going over it is a scene it plays (`pushing_scene`), whose
-    /// lines must stay in the set (1296). Any other screen over it leaves
-    /// the set as it was until the battle is back on top.
-    fn set_due(stays: bool, pushing_scene: bool, due: bool) -> bool {
-        (stays || pushing_scene) && due
-    }
-
-    /// The lines kept loaded for what the battle may still say, each once:
-    /// `pushed` (the scene it plays now), the coming scenes' first lines
-    /// and the guide's (1296).
-    fn coming_voice_lines(
-        &self,
-        pushed: Vec<trpg_content::LineId>,
-        ctx: &Ctx,
-    ) -> Vec<trpg_content::LineId> {
-        let mut lines = pushed;
-        for line in self
-            .coming_scene_lines(ctx)
-            .into_iter()
-            .chain(self.coming_guide_lines(ctx))
-        {
-            if !lines.contains(&line) {
-                lines.push(line);
-            }
-        }
-        lines
+    /// The tip on screen, if any ([`Guide`]'s, 0406).
+    pub fn shown_tip(&self) -> Option<TipTrigger> {
+        self.guide.shown_tip(self.moment())
     }
 
     /// The box of the tip on screen ([`Self::shown_tip`]), if any.
     pub fn tip_view(&self, ctx: &Ctx) -> Option<TipView> {
-        if !TipState::shown_in(ctx) {
-            return None;
-        }
-        let tip = ctx.game.content.tips.for_trigger(self.shown_tip()?)?;
-        Some(TipView::new(ctx, tip))
+        self.guide.tip_view(self.moment(), ctx)
     }
 
-    /// Whether a lesson may be on screen now: the player's phase of a
-    /// battle still on, with no combat or AI action playing, no EXP or
-    /// level up, scene, banner or battle notes over the map, and no screen
-    /// over the battle. Lessons wait as tips do; the rewind screen shows
-    /// one that needs it ([`rewind_screen`](Self::rewind_screen)).
-    fn lesson_moment(&self) -> bool {
-        !self.playing()
-            && self.progress.is_none()
-            && self.queued_scene().is_none()
-            && !self.tips.covered()
-            && !self.notes_open()
-            && self.state.phase() == Phase::Player
-            && self.state.outcome().is_none()
-            && self.banner().is_none()
-    }
-
-    /// The id of the lesson on screen, if any: the one in play, once its
-    /// moment has come. One not yet open also waits for a tip on screen,
-    /// so it comes after the tip of the same moment.
+    /// The id of the lesson on screen, if any (0456).
     pub fn shown_lesson(&self) -> Option<&str> {
-        let id = self.lessons.current()?;
-        let clear = self.lesson_first() || self.due_tip().is_none();
-        (self.lesson_moment() && clear).then_some(id)
-    }
-
-    /// Whether the lesson in play goes before any tip: it is open, or it
-    /// comes straight after one just done.
-    fn lesson_first(&self) -> bool {
-        self.lessons.is_open() || (self.after_lesson.next_first && self.lessons.current().is_some())
+        self.guide.shown_lesson(self.moment())
     }
 
     /// Whether the lesson in play is open: shown once and not done yet.
     /// While it is, the turn waits for it unless an item ends it.
     pub fn lesson_open(&self) -> bool {
-        self.lessons.is_open()
+        self.guide.lessons.is_open()
     }
 
     /// Each item of the lesson in play, ticked yet, in order.
     pub fn lesson_ticks(&self) -> &[bool] {
-        self.lessons.ticked()
+        self.guide.lessons.ticked()
     }
 
-    /// The box of the lesson on screen ([`Self::shown_lesson`]), if any,
-    /// which never hides the cursor's tile.
-    fn lesson_view(&self, ctx: &Ctx) -> Option<LessonView> {
-        let lesson = ctx.game.content.lessons.get(self.shown_lesson()?)?;
-        if !LessonState::shows(ctx, lesson.level) {
-            return None;
-        }
-        let ticked = self.lessons.ticked();
-        Some(LessonView::new(ctx, lesson, ticked, self.cursor.pos))
-    }
-
-    /// Whether the box at the end of the lessons is on screen (0465): they
-    /// are all done, and the map is back to browsing with nothing else over
-    /// it, so it never cuts into what the last lesson had the player doing.
+    /// Whether the box at the end of the lessons is on screen (0465).
     pub fn lessons_end_shown(&self, ctx: &Ctx) -> bool {
-        matches!(self.mode, Mode::Idle { .. })
-            && !self.after_lesson.end_waits
-            && self.queue.is_empty()
-            && self.lesson_moment()
-            && self.due_tip().is_none()
-            && LessonState::end_due(ctx, self.battle_id.as_deref())
-    }
-
-    /// The box at the end of the lessons, if it is on screen.
-    fn lessons_end_view(&self, ctx: &Ctx) -> Option<LessonsEndView> {
-        self.lessons_end_shown(ctx)
-            .then(|| LessonsEndView::new(ctx, self.end_focus, self.cursor.pos))
-    }
-
-    /// Gives `action` to the box at the end of the lessons: it takes every
-    /// key while it is up. Cancel does nothing: the box asks for an answer.
-    fn lessons_end_key(&mut self, ctx: &mut Ctx, action: Action) {
-        let last = EndAnswer::ALL.len() - 1;
-        match action {
-            Action::CursorUp | Action::CursorDown => {
-                self.end_focus = if action == Action::CursorUp {
-                    self.end_focus.checked_sub(1).unwrap_or(last)
-                } else if self.end_focus == last {
-                    0
-                } else {
-                    self.end_focus + 1
-                };
-                ctx.audio.menu(MenuSound::Move);
-            }
-            Action::Confirm => {
-                ctx.audio.menu(MenuSound::Select);
-                LessonState::end_answered(ctx);
-                let answer = EndAnswer::ALL[self.end_focus];
-                if answer == EndAnswer::RestartWithLessons {
-                    self.lessons.show_again(ctx);
-                }
-                if answer != EndAnswer::KeepGoing {
-                    self.leaving = Some(Leaving::Restart);
-                }
-            }
-            _ => {}
-        }
-    }
-
-    /// Queues the lessons the fired triggers start, then
-    /// [settles](Self::settle_lessons) them.
-    fn absorb_lessons(&mut self, ctx: &Ctx) {
-        let turn = self.state.turn();
-        self.lessons.absorb(ctx, self.battle_id.as_deref(), turn);
-        self.settle_lessons(ctx.game.map_skin.zoom().is_some());
-    }
-
-    /// In the player's phase of a battle still on, takes out of play the
-    /// lesson in front while no unit left to act can do an item it has
-    /// left ([`LessonState::settle`], 0464): one open comes back in a
-    /// later turn, one not open yet with its trigger. Zooming takes a
-    /// look that can zoom (`can_zoom`); ending the turn is taught on turn 1
-    /// only (1304, Nick: the player "already knows" after it). Swapping
-    /// weapons opens only in a forecast that swaps, so what she says is
-    /// about the unit on screen (1306); once open it stays while a unit
-    /// left could swap.
-    fn settle_lessons(&mut self, can_zoom: bool) {
-        if self.state.phase() != Phase::Player || self.state.outcome().is_some() {
-            return;
-        }
-        let state = &self.state;
-        let doable = &mut self.doable;
-        let swap_now = matches!(&self.mode, Mode::Targeting(t) if t.can_swap());
-        self.lessons
-            .settle_when(state.turn(), |done, open| match done {
-                DoneWhen::ZoomedIn | DoneWhen::ZoomedOut => can_zoom,
-                DoneWhen::TurnEnded => state.turn() == 1,
-                DoneWhen::WeaponSwapped if !open => swap_now,
-                _ => doable.can(state, done),
-            });
-    }
-
-    /// Notes that the player did `done`, for the lesson in play
-    /// ([`tick_lessons`](Self::tick_lessons) ticks it).
-    fn notice(&mut self, done: DoneWhen) {
-        self.noticed.push(done);
-    }
-
-    /// Notes that the battle used `action`, in the player's phase.
-    fn notice_pressed(&mut self, action: Action) {
-        if !self.ai_phase() {
-            self.notice(DoneWhen::Pressed(action));
-        }
-    }
-
-    /// Notes what the player did that changed the mode from what `was`
-    /// marks: selected a unit, picked where it goes, opened the forecast.
-    fn notice_mode(&mut self, was: Marks) {
-        let now = Marks::of(&self.mode);
-        let gone = matches!(
-            self.mode,
-            Mode::Moving { .. }
-                | Mode::ActionMenu { .. }
-                | Mode::Targeting(_)
-                | Mode::CastTarget(_)
-        );
-        if was == Marks::Selected && gone {
-            self.notice(DoneWhen::UnitMoved);
-        }
-        // Attacked from or backed out of: either counts (1304).
-        if was == Marks::Forecast && now != Marks::Forecast {
-            self.notice(DoneWhen::ForecastClosed);
-        }
-        if let Some(done) = now.done().filter(|_| now != was) {
-            self.notice(done);
-        }
-    }
-
-    /// Notes where a selected unit's path points, for the threat arrows'
-    /// lesson (0457): at a tile an enemy could attack it on (the arrows
-    /// show), or at one none could.
-    fn notice_threat(&mut self) {
-        if !matches!(self.mode, Mode::Selected(_)) || self.threat_target().is_none() {
-            return;
-        }
-        if self.threat_view().is_some() {
-            self.notice(DoneWhen::ThreatPointed);
-        } else {
-            self.notice(DoneWhen::SafePointed);
-        }
-    }
-
-    /// Notes what the player did that player command `cmd` with `events`
-    /// shows: a unit of theirs attacked (in the player's phase every combat
-    /// a command fights is the player's attack), moved after its action,
-    /// or they ended their phase.
-    fn notice_events(&mut self, cmd: &Command, events: &[Event]) {
-        match cmd {
-            Command::EndPhase => self.notice(DoneWhen::TurnEnded),
-            Command::MoveAfter { .. } => self.notice(DoneWhen::UnitMoved),
-            _ => {}
-        }
-        if events
-            .iter()
-            .any(|e| matches!(e, Event::CombatResolved { .. }))
-        {
-            self.notice(DoneWhen::Attacked);
-            if art_list::attacks_with_art(cmd) {
-                self.notice(DoneWhen::ArtAttacked);
-            }
-        }
-    }
-
-    /// Ticks the lesson in play's items for what was noticed since last
-    /// time; one that is done closes, and the campaign keeps it.
-    /// A lesson done makes the box at the end of the lessons wait for a
-    /// press on the map (0495), so a key meant for the lesson never answers
-    /// it.
-    fn tick_lessons(&mut self, ctx: &mut Ctx) {
-        let was_open = self.lessons.is_open();
-        for done in core::mem::take(&mut self.noticed) {
-            self.lessons.tick(ctx, done);
-        }
-        if was_open && !self.lessons.is_open() {
-            self.after_lesson.end_waits = true;
-            self.after_lesson.next_first = self.lessons.current().is_some();
-        }
+        let battle = self.battle_id.as_deref();
+        self.guide.lessons_end_shown(self.moment(), ctx, battle)
     }
 
     /// Closes the banner on screen. A victory's leaves the battle; a
@@ -1545,7 +850,7 @@ impl BattleScreen {
             _ => None,
         };
         // Its steps are heard as the walk is shown.
-        self.walked = unit;
+        self.effects.walked = unit;
         let Some(events) = self.apply(cmd) else {
             return;
         };
@@ -1569,7 +874,7 @@ impl BattleScreen {
         self.camera.origin = from;
         self.cursor.jump(start);
         let then = core::mem::take(&mut self.mode);
-        let pacing = PACING.at_speed(self.ai_speed, self.pace);
+        let pacing = PACING.at_speed(self.effects.ai_speed, self.effects.pace);
         let action = AiAction::new(unit, before, (from, to), path, then, pacing);
         self.mode = Mode::AiAction(Box::new(action));
     }
@@ -1596,7 +901,7 @@ impl BattleScreen {
         if !screen.has_text() {
             return None;
         }
-        self.pushed_lines = screen.first_lines();
+        self.guide.pushing_scene(screen.first_lines());
         Some(screen.with_battle(self.place()))
     }
 
@@ -1626,7 +931,7 @@ impl BattleScreen {
             || !matches!(self.mode, Mode::Idle { .. })
             || !self.queue.is_empty()
             || self.progress.is_some()
-            || self.lessons.in_play()
+            || self.guide.lesson_in_play()
         {
             return;
         }
@@ -1728,14 +1033,7 @@ impl BattleScreen {
         if view != self.view {
             self.refit(view);
         }
-        let (skin, settings) = (&ctx.game.map_skin, ctx.settings());
-        let walk = skin.walk();
-        let normal = match settings.game.anim_speed {
-            AnimSpeed::Normal => walk.normal,
-            AnimSpeed::Fast => walk.fast,
-        };
-        self.pace = (normal, walk.held);
-        self.ai_speed = settings.game.battle_speed(true);
+        self.effects.take_speeds(ctx);
         self.cursor.tick(dt);
     }
 
@@ -1807,7 +1105,7 @@ impl BattleScreen {
     fn apply(&mut self, cmd: &Command) -> Option<Vec<Event>> {
         let before = self.state.units().to_vec();
         let was_player = !self.ai_phase();
-        let walked = self.walked.take();
+        let walked = self.effects.walked.take();
         // Refused: the battle is unchanged and the player browses again.
         self.applying = Some(cmd.clone());
         let events = self.state.apply(cmd).ok();
@@ -1823,7 +1121,7 @@ impl BattleScreen {
                 self.toast = Some((MessageView::note(line), TOAST_S));
             }
             if was_player {
-                self.notice_events(cmd, events);
+                self.guide.notice_events(cmd, events);
             }
             let in_playback = playback.is_some();
             self.queue.extend(events.iter().filter_map(|e| match e {
@@ -1831,35 +1129,9 @@ impl BattleScreen {
                 Event::Fled { units } => Flight::new(&self.state, units).map(Queued::Flight),
                 _ => Banner::for_event(e).map(Queued::Banner),
             }));
-            self.popups.extend(events.iter().filter_map(|e| match *e {
-                Event::Healed { target, amount } if amount > 0 => {
-                    let pos = self.state.unit(target)?.pos;
-                    Some(HealPopup {
-                        pos,
-                        amount,
-                        kind: PopupKind::Heal,
-                        t: 0.0,
-                    })
-                }
-                Event::BurnDamage { pos, amount, .. } if amount > 0 => Some(HealPopup {
-                    pos,
-                    amount,
-                    kind: PopupKind::Burn,
-                    t: 0.0,
-                }),
-                _ => None,
-            }));
-            self.flashes.extend(events.iter().filter_map(|e| match *e {
-                Event::TerrainChanged { pos, .. } => Some(TerrainFlash { pos, t: 0.0 }),
-                _ => None,
-            }));
-            if self.danger.is_some() {
-                self.danger = Some(danger_tiles(&self.state));
-            }
-            self.threats.take();
-            self.planner.take();
-            self.areas.take();
-            self.doable = Doable::default();
+            self.effects.show_events(events, &self.state);
+            self.threat.battle_changed(&self.state);
+            self.guide.battle_changed();
             // Checked (phase, units ready) once back to browsing.
             self.end_armed = true;
             let told = (&self.state, self.language.words());
@@ -1880,7 +1152,7 @@ impl BattleScreen {
             let banner = art_list::playback_banner(&self.state, words, &events, &before);
             let playback = playback.map(|p| p.with_banner(banner));
             let cues = event_sounds::event_cues(&events, walked, playback.is_some(), &self.state);
-            self.cues.extend(cues);
+            self.effects.cues.extend(cues);
             let attacks = event_sounds::combat_attacks(&events, &before, &self.state);
             playback.map(|p| p.with_sounds(&attacks, event_sounds::heals(&events)))
         });
@@ -1895,28 +1167,6 @@ impl BattleScreen {
             None => Mode::after_command(&self.state),
         };
         played
-    }
-
-    /// Plays this frame's sounds (0424): the combat playback's and the
-    /// walk's that the coming tick of `dt` seconds reaches (`held`:
-    /// Confirm is down), and the queued events' that are due.
-    fn play_sounds(&mut self, ctx: &mut Ctx, dt: f32, held: bool) {
-        let mut due = match &self.mode {
-            Mode::Combat(playback) => playback.sounds(dt, held),
-            _ => Vec::new(),
-        };
-        if let Some((id, tiles)) = self.mode.tiles_entered(dt, held) {
-            self.walked = Some(id);
-            let step = self
-                .state
-                .unit(id)
-                .and_then(|u| event_sounds::unit_step_sound(&self.state, u));
-            due.extend(step.into_iter().cycle().take(tiles));
-        }
-        due.extend(self.cues.tick(dt));
-        for cue in due {
-            ctx.audio.play_sound(cue);
-        }
     }
 
     /// Applies `cmd`, which leaves the unit's action open (`Equip`), and
@@ -1992,9 +1242,10 @@ impl BattleScreen {
             cursor: self.cursor.pos,
             look: self.look.clone(),
         };
-        let lesson = self.lessons.needs_rewind().then(|| self.lesson_view(ctx));
-        RewindScreen::new(&self.history, &self.state, frame, ctx.words())
-            .with_lesson(lesson.flatten())
+        let lesson = self
+            .guide
+            .rewind_lesson(self.moment(), ctx, self.cursor.pos);
+        RewindScreen::new(&self.history, &self.state, frame, ctx.words()).with_lesson(lesson)
     }
 
     /// Opens the rewind screen on a battle that was lost (0822), clearing
@@ -2015,8 +1266,8 @@ impl BattleScreen {
         match effect {
             RewindEffect::None => {}
             RewindEffect::Close => {
-                self.notice(DoneWhen::RewindClosed);
-                self.tick_lessons(ctx);
+                self.guide.notice(DoneWhen::RewindClosed);
+                self.guide.tick_lessons(ctx);
                 if self.state.outcome().is_some() {
                     return self.game_over(ctx, true);
                 }
@@ -2025,10 +1276,8 @@ impl BattleScreen {
                 // The screen only confirms a listed point with a charge left.
                 if let Ok(state) = self.history.rewind_to(point) {
                     self.state = state;
-                    self.threats.take();
-                    self.planner.take();
-                    self.areas.take();
-                    self.doable = Doable::default();
+                    self.threat.battle_changed(&self.state);
+                    self.guide.battle_changed();
                     self.mode = Mode::after_command(&self.state);
                     self.queue.clear();
                     self.progress = None;
@@ -2039,9 +1288,6 @@ impl BattleScreen {
                         if let Some(cue) = &self.music {
                             ctx.audio.play_music(cue);
                         }
-                    }
-                    if self.danger.is_some() {
-                        self.danger = Some(danger_tiles(&self.state));
                     }
                 }
             }
@@ -2069,13 +1315,13 @@ impl BattleScreen {
         let shortcuts = map_menu::shortcuts(ctx.platform.keyboard, &ctx.keymap);
         let here = (&self.state, ctx.words());
         let (mode, effect) = mode::step_with(mode, action, self.cursor.pos, here, &shortcuts);
-        if self.lessons.holds_turn() && ends_turn(&before, &mode, &effect) {
+        if self.guide.holds_turn() && ends_turn(&before, &mode, &effect) {
             // An open lesson holds the turn (0456): nothing happens.
             self.mode = before;
             ctx.audio.menu(MenuSound::Denied);
             return None;
         }
-        let mode = mode.at_pace(self.pace.0);
+        let mode = mode.at_pace(self.effects.pace.0);
         if let Some(sound) = sounds::step_sound(action, &before, &mode, &effect) {
             ctx.audio.menu(sound);
         }
@@ -2118,7 +1364,7 @@ impl BattleScreen {
             // action; its next notches step the open screen.
             Action::Rewind | Action::RewindBack if self.can_open_rewind() => {
                 ctx.audio.menu(MenuSound::Select);
-                self.notice(DoneWhen::RewindOpened);
+                self.guide.notice(DoneWhen::RewindOpened);
                 opened = Some(Opened::Rewind);
             }
             Action::DangerZone if self.mode.cursor_free() => self.toggle_danger(),
@@ -2140,16 +1386,16 @@ impl BattleScreen {
             {
                 if self.move_cursor(action) {
                     ctx.audio.cursor_tick();
-                    self.notice(DoneWhen::CursorMoved);
+                    self.guide.notice(DoneWhen::CursorMoved);
                 }
             }
             _ => opened = self.step_mode(ctx, action),
         }
         if swaps && matches!(self.mode, Mode::Targeting(_)) {
-            self.notice(DoneWhen::WeaponSwapped);
+            self.guide.notice(DoneWhen::WeaponSwapped);
         }
-        self.notice_mode(was);
-        self.notice_pressed(action);
+        self.guide.notice_mode(was, &self.mode);
+        self.guide.notice_pressed(action, self.ai_phase());
         opened
     }
 
@@ -2157,9 +1403,9 @@ impl BattleScreen {
     /// the player did.
     fn open(&mut self, ctx: &mut Ctx, opened: Opened) -> Transition {
         if opened == Opened::Options {
-            self.notice(DoneWhen::OptionsOpened);
+            self.guide.notice(DoneWhen::OptionsOpened);
         }
-        self.tick_lessons(ctx);
+        self.guide.tick_lessons(ctx);
         Transition::Push(match opened {
             Opened::Options => Box::new(crate::screens::options::screen()),
             Opened::Guides => Box::new(GuidesScreen::new(&ctx.game.content)),
@@ -2189,7 +1435,8 @@ impl BattleScreen {
         };
         let own_pace = matches!(self.mode, Mode::Moving { .. } | Mode::AiAction(_));
         let dt = if own_pace { dt } else { scaled };
-        self.play_sounds(ctx, dt, held);
+        let here = (&self.mode, &self.state);
+        self.effects.play_sounds(ctx, here, dt, held);
         let mode = core::mem::take(&mut self.mode);
         self.mode = mode.tick(dt, held, &self.state, self.language.words());
         self.follow_ai_action();
@@ -2480,7 +1727,7 @@ impl BattleScreen {
             MapZoom::X1 => "battle.status.zoom_x1",
             MapZoom::X2 => "battle.status.zoom_x2",
         });
-        let danger = if self.danger.is_some() {
+        let danger = if self.threat.danger().is_some() {
             "battle.status.danger_on"
         } else {
             "battle.status.danger_off"
@@ -2542,7 +1789,7 @@ impl BattleScreen {
         let mut scene = terrain_scene(&self.state, origin, size);
         scene.clock_ms = clock_ms(ctx);
         scene.look.clone_from(&self.look);
-        for flash in &self.flashes {
+        for flash in &self.effects.flashes {
             if let Some(tile) = scene.tile_mut(flash.pos) {
                 tile.flashes.push(flash.strength());
             }
@@ -2568,115 +1815,6 @@ impl BattleScreen {
             scene.more = MapEdges::of_view(origin, size, map);
         }
         scene
-    }
-
-    /// The unit of the player's and the tile the threat arrows are for
-    /// (`docs/design/turn-structure.md`, *Threat arrows*), in the player's
-    /// phase of a battle still running:
-    ///
-    /// - browsing with the cursor on one of the player's units (one that
-    ///   has acted too): that unit where it stands;
-    /// - a unit selected and the cursor on a tile it can stop on, or on an
-    ///   enemy the path is aimed at: the unit at its path's end;
-    /// - the unit walking there, and then its action menu and the lists
-    ///   that opens: the same. Not while a target is picked (the forecast).
-    fn threat_target(&self) -> Option<(UnitId, Pos)> {
-        if self.state.phase() != Phase::Player || self.state.outcome().is_some() {
-            return None;
-        }
-        match &self.mode {
-            Mode::Idle { .. } => {
-                let unit = self.hovered()?;
-                (unit.faction == Faction::Player).then_some((unit.id, unit.pos))
-            }
-            Mode::Selected(sel) => {
-                let dest = sel.dest();
-                let pointed = self.cursor.pos == dest || sel.target.is_some();
-                (pointed && sel.reach.is_stoppable(dest)).then_some((sel.unit, dest))
-            }
-            Mode::Moving { sel, .. } | Mode::ActionMenu { sel, .. } | Mode::List { sel, .. } => {
-                Some((sel.unit, sel.dest()))
-            }
-            _ => None,
-        }
-    }
-
-    /// The threat arrows to show: the tile [`threat_target`] gives and
-    /// the enemies that could attack its unit there, if any can. Worked out
-    /// once for a unit and a tile, then kept until either changes or the
-    /// battle does.
-    ///
-    /// [`threat_target`]: Self::threat_target
-    fn threat_view(&self) -> Option<ThreatView> {
-        let (unit, tile) = self.threat_target()?;
-        // A unit selected: its planner is made at once, so the cursor's
-        // moves after cost almost nothing (1251).
-        if !matches!(self.mode, Mode::Idle { .. }) {
-            self.kept_planner(unit);
-        }
-        let mut kept = self.threats.borrow_mut();
-        let enemies = match &*kept {
-            Some(k) if (k.unit, k.tile) == (unit, tile) => k.enemies.clone(),
-            _ => {
-                let enemies = self.planned_threats(unit, tile);
-                *kept = Some(KeptThreat {
-                    unit,
-                    tile,
-                    enemies: enemies.clone(),
-                });
-                enemies
-            }
-        };
-        (!enemies.is_empty()).then_some(ThreatView { tile, enemies })
-    }
-
-    /// [`threat_enemies`] for `unit` on `tile`: on its own tile by the
-    /// battle's threat areas, made now if none are kept for its side;
-    /// elsewhere by the planner kept for `unit` ([`kept_planner`]).
-    ///
-    /// [`kept_planner`]: Self::kept_planner
-    fn planned_threats(&self, unit: UnitId, tile: Pos) -> Vec<Pos> {
-        let state = &self.state;
-        let (map, terrain, classes, units) =
-            (state.map(), state.terrain(), state.classes(), state.units());
-        let ranges = |u: &Unit| state.threat_ranges(u);
-        if let Some(standing) = state.unit(unit).filter(|u| u.pos == tile) {
-            let mut kept = self.areas.borrow_mut();
-            let mut ids = kept.as_ref().and_then(|a| a.threats_to(standing));
-            if ids.is_none() {
-                let faction = standing.faction;
-                *kept = ThreatAreas::new(map, terrain, classes, units, faction, ranges).ok();
-                ids = kept.as_ref().and_then(|a| a.threats_to(standing));
-            }
-            return enemy_tiles(state, ids.unwrap_or_default());
-        }
-        let kept = self.kept_planner(unit);
-        let Some(planner) = kept.as_ref() else {
-            return Vec::new();
-        };
-        let ids = planner.threats_at(map, terrain, classes, units, tile);
-        enemy_tiles(state, ids.unwrap_or_default())
-    }
-
-    /// The planner kept for `unit`: made now if the one kept is for
-    /// another unit, from the battle's threat areas if they are kept;
-    /// `None` if it can't be made.
-    fn kept_planner(&self, unit: UnitId) -> RefMut<'_, Option<ThreatPlanner>> {
-        let state = &self.state;
-        let (map, terrain, classes, units) =
-            (state.map(), state.terrain(), state.classes(), state.units());
-        let ranges = |u: &Unit| state.threat_ranges(u);
-        let mut kept = self.planner.borrow_mut();
-        if kept.as_ref().is_none_or(|p| p.unit() != unit) {
-            *kept = match &*self.areas.borrow() {
-                Some(areas) => {
-                    ThreatPlanner::with_areas(map, terrain, classes, units, unit, ranges, areas)
-                }
-                None => ThreatPlanner::new(map, terrain, classes, units, unit, ranges),
-            }
-            .ok();
-        }
-        kept
     }
 
     /// Notes where and when the selected unit's ranges opened: its tile,
@@ -2707,7 +1845,7 @@ impl BattleScreen {
             let tiles = self.state.map().tiles.positions();
             scene.tint(tiles.filter(|&p| area.contains(p)), range::EXIT);
         }
-        if let Some(zone) = &self.danger {
+        if let Some(zone) = self.threat.danger() {
             scene.tint(all(zone), range::DANGER);
         }
         match &self.mode {
@@ -2875,9 +2013,10 @@ impl BattleScreen {
             (StyledText::new(), None)
         };
         let message = self.message();
+        let (m, battle) = (self.moment(), self.battle_id.as_deref());
         BattleView {
             menu: self.menu_view(words),
-            popups: self.popups.clone(),
+            popups: self.effects.popups.clone(),
             panel: forecast
                 .is_none()
                 .then(|| self.panel_view(words, ctx.game.skin_set == SkinSet::Glyph)),
@@ -2886,9 +2025,9 @@ impl BattleScreen {
             notes,
             noted: self.noted(),
             banner: self.banner().map(|b| self.banner_view(b, words, limit)),
-            tip: self.tip_view(ctx),
-            lesson: self.lesson_view(ctx),
-            lessons_end: self.lessons_end_view(ctx),
+            tip: self.guide.tip_view(m, ctx),
+            lesson: self.guide.lesson_view(m, ctx, self.cursor.pos),
+            lessons_end: self.guide.lessons_end_view(m, ctx, battle, self.cursor.pos),
             toggles: self.toggles(ctx, end_turn, message.as_ref()),
             message,
             scene: self.scene(ctx),
@@ -3074,22 +2213,12 @@ impl BattleScreen {
             .collect()
     }
 
-    /// Ages the heal and burn numbers, the terrain flashes and the message
-    /// by `dt` seconds, dropping those whose time is up. A burn number
-    /// waits while a banner is on screen: the fire burns out as the phase
-    /// banner comes up, which would cover it for longer than it lasts.
+    /// Ages the heal and burn numbers and the terrain flashes
+    /// ([`Effects::tick`]) and the message by `dt` seconds, dropping those
+    /// whose time is up.
     fn tick_popups(&mut self, dt: f32) {
         let banner = self.banner().is_some();
-        for p in &mut self.popups {
-            if !(banner && p.kind == PopupKind::Burn) {
-                p.t += dt;
-            }
-        }
-        self.popups.retain(|p| p.t < TIMINGS.heal_popup);
-        for f in &mut self.flashes {
-            f.t += dt;
-        }
-        self.flashes.retain(|f| f.t < TERRAIN_FLASH_S);
+        self.effects.tick(dt, banner);
         if let Some((_, left)) = &mut self.toast {
             *left -= dt;
             if *left <= 0.0 {
@@ -3098,7 +2227,7 @@ impl BattleScreen {
         }
     }
 
-    /// The attack forecast on screen: while an attack's target is picked,    /// The attack forecast on screen: while an attack's target is picked,
+    /// The attack forecast on screen: while an attack's target is picked,
     /// or a spell's with the cursor on an enemy.
     fn forecast(&self) -> Option<&Targeting> {
         forecast_of(&self.mode)
@@ -3190,16 +2319,6 @@ fn terrain_scene(state: &BattleState, origin: Pos, size: (i32, i32)) -> MapScene
     scene
 }
 
-/// Whether terrain `t` is not plain ground: it gives a Def, Avoid or
-/// healing bonus, or costs a movement type other than 1 to enter (more, or
-/// impassable).
-fn not_plain(t: &TerrainRules) -> bool {
-    t.defense != 0
-        || t.avoid != 0
-        || t.heal_percent != 0
-        || t.move_cost.iter().any(|&c| c != Some(1))
-}
-
 impl BattleScreen {
     /// [`Screen::uncovered`]'s answer to what the screen above popped
     /// with, before the guide's lines are let go if it leaves.
@@ -3234,7 +2353,7 @@ impl BattleScreen {
     /// pushed over it.
     fn leaving(&mut self, transition: Transition, ctx: &mut Ctx) -> Transition {
         if !matches!(transition, Transition::None | Transition::Push(_)) {
-            self.guide_voice.leave(ctx);
+            self.guide.leave(ctx);
         }
         transition
     }
@@ -3253,20 +2372,18 @@ impl BattleScreen {
         self.take_in_tips(ctx);
         let mut actions: VecDeque<Action> = input.actions.iter().copied().collect();
         while let Some(action) = actions.pop_front() {
-            self.tick_lessons(ctx);
+            self.guide.tick_lessons(ctx);
             if self.overlay_key(ctx, action) {
                 if let Some(leaving) = self.leaving {
                     return self.leave(leaving);
                 }
                 continue;
             }
-            // A press on the map: the box at the end of the lessons may
-            // come up (0495).
-            self.after_lesson.end_waits = false;
+            self.guide.pressed_on_map();
             // The zoom is the player's view, not a move: in any phase.
             if action == Action::ZoomMap {
                 self.toggle_zoom(ctx);
-                self.notice_pressed(action);
+                self.guide.notice_pressed(action, self.ai_phase());
                 continue;
             }
             // The AI's phase: only Confirm (hold: faster) and Cancel (skip
@@ -3276,7 +2393,7 @@ impl BattleScreen {
             }
             if action == Action::ToggleAutoEnd {
                 self.toggle_auto_end(ctx);
-                self.notice_pressed(action);
+                self.guide.notice_pressed(action, self.ai_phase());
                 continue;
             }
             if self.progress_key(action) {
@@ -3312,13 +2429,16 @@ impl BattleScreen {
             }
         }
 
-        self.tick_lessons(ctx);
+        self.guide.tick_lessons(ctx);
         self.tick_notes(dt);
         let was = Marks::of(&self.mode);
         self.animate(ctx, dt, input.is_held(Action::Confirm));
-        self.notice_mode(was);
-        self.notice_threat();
-        self.tick_lessons(ctx);
+        self.guide.notice_mode(was, &self.mode);
+        if matches!(self.mode, Mode::Selected(_)) {
+            let threat = self.threat_target().map(|_| self.threat_view().is_some());
+            self.guide.notice_threat(threat);
+        }
+        self.guide.tick_lessons(ctx);
         let waiting = self.shown_tip().is_some() || self.playing();
         if !waiting {
             self.tick_flight(dt);
@@ -3336,23 +2456,15 @@ impl BattleScreen {
         if let Some(scene) = self.next_scene(ctx) {
             return Transition::Push(Box::new(scene));
         }
-        // What the frame did may start a lesson auto-end must wait for
-        // (every unit has acted: ending the turn), or leave one that can't
-        // be finished this turn.
-        for trigger in self.triggers_now() {
-            self.lessons.fire(trigger);
-        }
-        self.absorb_lessons(ctx);
+        self.take_in_lessons(ctx);
         self.check_auto_end(ctx);
         self.drive_ai(ctx);
-        self.tick_lessons(ctx);
+        self.guide.tick_lessons(ctx);
         // On screen as this frame ends, if it can still be done: open
         // from now on.
-        self.settle_lessons(ctx.game.map_skin.zoom().is_some());
-        if self.shown_lesson().is_some() {
-            self.lessons.mark_open();
-            self.after_lesson.next_first = false;
-        }
+        let can_zoom = ctx.game.map_skin.zoom().is_some();
+        self.guide.settle_lessons(&self.state, &self.mode, can_zoom);
+        self.guide.mark_shown(self.moment());
         Transition::None
     }
 }
@@ -3377,27 +2489,25 @@ impl Screen<Shuyi> for BattleScreen {
         let transition = self.update_frame(ctx, input);
         self.note_ranges(ctx);
         // Still on screen: its tip, if any, is seen (0467), and the guide
-        // says what its box or the lesson's says (0476).
+        // says what its box or the lesson's says (0476). A screen going
+        // over the battle keeps her set as it was, but for a scene it
+        // plays now, whose lines stay in it (1296); the set is sent anew
+        // once back on top.
         let stays = matches!(transition, Transition::None);
-        self.tips
-            .show(stays.then(|| self.shown_tip()).flatten(), ctx);
-        let line = stays.then(|| self.guide_line(ctx)).flatten();
-        // A screen going over the battle keeps the set as it was, but for
-        // a scene it plays now, whose lines stay in it (1296); the set is
-        // sent anew once back on top.
-        let pushed = core::mem::take(&mut self.pushed_lines);
-        let due = self.guide_voice.keep_due(line.as_ref(), ctx);
-        let coming = Self::set_due(stays, !pushed.is_empty(), due)
-            .then(|| self.coming_voice_lines(pushed, ctx));
-        self.guide_voice.show(line, coming, ctx);
+        let m = self.moment();
+        let scenes = self
+            .guide
+            .keep_due(stays, m, ctx)
+            .then(|| self.coming_scene_lines(ctx));
+        let battle = self.battle_id.as_deref();
+        self.guide.end_frame(stays, m, battle, scenes, ctx);
         self.leaving(transition, ctx)
     }
 
     /// A screen over the battle (a scene, the rewind screen, …): no tip or
     /// lesson shows until it goes.
     fn covered(&mut self, _ctx: &mut Ctx) {
-        self.tips.set_covered(true);
-        self.guide_voice.covered();
+        self.guide.covered();
     }
 
     /// On top again, with what the screen above popped with: the rewind
@@ -3406,7 +2516,7 @@ impl Screen<Shuyi> for BattleScreen {
     /// `Retry Battle` and `Title` leave. A scene, the Options screen and the
     /// Guides list hand nothing back.
     fn uncovered(&mut self, ctx: &mut Ctx, result: Option<ScreenResult>) -> Transition {
-        self.tips.set_covered(false);
+        self.guide.uncovered();
         let transition = self.answered(ctx, result);
         self.leaving(transition, ctx)
     }

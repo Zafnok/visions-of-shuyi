@@ -228,7 +228,7 @@ fn the_screen_waits_for_the_level_up_and_leaves_the_battle_cores() {
     press(&mut s, &mut c, &[Action::CursorLeft], 0.0);
     // So do tips and banners.
     c.game.tips_enabled = true;
-    s.tips.fire(TipTrigger::FirstLevelUp);
+    s.guide.tips.fire(TipTrigger::FirstLevelUp);
     press(&mut s, &mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), None);
     let banner = Event::PhaseStarted {
