@@ -5,10 +5,10 @@ type: infra
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["1291"]
 nick_input: none
-completed:
+completed: 2026-11-22
 ---
 
 # 1310 — Tip triggers are names, with a predicate row each
@@ -93,15 +93,15 @@ this lands first, 1081 adds a row.
 
 ## Acceptance criteria
 
-- [ ] Adding a tip trigger needs no edit in `crates/content/src/tip.rs`
+- [x] Adding a tip trigger needs no edit in `crates/content/src/tip.rs`
       (a test tip with a new name and predicate row, in `tests/it`), and a
       name with no predicate row fails a ui test.
-- [ ] `ch01_tips`, `ch01_lessons`, `lessons` and `save_files` in
+- [x] `ch01_tips`, `ch01_lessons`, `lessons` and `save_files` in
       `tests/it` pass unchanged; `tip_tests.rs` and `trigger_tests.rs`
       change only where a test is about the registry.
-- [ ] A profile's seen tips from before still read (a test).
-- [ ] A row for 1310 in `docs/engine/friction.md`, outcome 3.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A profile's seen tips from before still read (a test).
+- [x] A row for 1310 in `docs/engine/friction.md`, outcome 3.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -112,5 +112,44 @@ this lands first, 1081 adds a row.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **`TipTrigger` is a name** (`crates/content/src/tip.rs`): a `Copy`
+  struct holding an identifier of at most 32 bytes in place (no
+  allocation, no leak, no interner), read from a bare RON identifier
+  (`trigger: FirstForecast`) through `deserialize_identifier`. `Debug`
+  and `Display` print the bare name, so the engine's "FirstForecast
+  already has a tip" reads as before; names order as their text. The 23
+  old variants are associated constants with their old docs
+  (`#[allow(non_upper_case_globals)]`, so `TipTrigger::FirstBattleStart`
+  still compiles everywhere); a new trigger needs none
+  (`TipTrigger::new("…")`).
+- **The registry** (`crates/ui/src/screens/battle/triggers.rs`, now `pub
+  mod`): `ROWS`, one `Row { trigger, when }` per trigger, where `When` is the
+  moment with its predicate: `State` (each frame, to tips and lessons at
+  the start and to the lessons alone at the end), `Content` (the wade
+  tip), `AfterLessons` (the zoom tip), `Events` (level-ups) and `Screen`
+  (`FirstLoadGame`, `FirstProfileScreen`, fired by their screens). Each
+  predicate is a function; the rows are in the order the code fired them
+  (the old `match` arms were per mode, so a flat list keeps the order).
+  `unknown_triggers(content)` lists the names the tips and lessons use
+  with no row.
+- **Deviation:** `When` carries the predicate (one enum) rather than a
+  separate `check` field, so a row can't pair a moment with the wrong
+  signature. `lesson_triggers_now` is gone (its rows are `State` rows
+  gated on the player's phase): four calls in `lesson_tests.rs` now read
+  `triggers_now()`, which holds the same names. `BattleScreen` gains
+  `add_trigger_row` (rows after the registry's, for this battle), which
+  is how the `tests/it` test adds its new trigger's row.
+- **Tests:** the registry covers the shipped and test tips and lessons;
+  an unknown name in a tip or a lesson is reported once; one row per
+  name; a new name loads in `content` with no edit there, a bad name
+  fails; a Harness test (`battle::a_tip_with_a_new_trigger_name_shows_from_its_row`)
+  shows a tip of a new name from its row, and never without it; a
+  profile's `tips_seen` from before still reads (the seen set is by tip
+  id, so the names never reached a save). `ch01_tips`, `ch01_lessons`,
+  `lessons`, `save_files`, `tip_tests.rs` and `trigger_tests.rs` are
+  unchanged and pass.
+- Friction: estimate 150, measured 278 (1.9×), outcome 3 (row in
+  `docs/engine/friction.md`). 1081 is still open: it adds its row.
+- `tips.ron`'s header comment still lists the trigger names; it stays
+  accurate, and a tip with a new trigger should add its name there.
+- No gameplay rule decided; nothing a player sees changes.

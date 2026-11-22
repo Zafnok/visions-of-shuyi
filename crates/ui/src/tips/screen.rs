@@ -146,6 +146,23 @@ mod tests {
         assert!(TipScreen::once(&mut c, TipTrigger::FirstProfileScreen).is_some());
     }
 
+    /// Ticket 1310: a profile's seen tips from before triggers were names
+    /// (the ids, one a line, as it saved them) still read: the tip seen
+    /// then doesn't show again, the other does.
+    #[test]
+    fn a_profiles_seen_tips_from_before_still_read() {
+        use crate::storage::Storage as _;
+        let mut c = ctx();
+        c.game.tips_enabled = true;
+        let saved = c.game.content.tips.for_trigger(TipTrigger::FirstLoadGame);
+        assert_eq!(saved.map(|t| t.id.as_str()), Some("export_save"));
+        c.storage
+            .write(crate::tips::TIPS_SEEN_KEY, "battle_start\nexport_save")
+            .unwrap();
+        assert!(TipScreen::once(&mut c, TipTrigger::FirstLoadGame).is_none());
+        assert!(TipScreen::once(&mut c, TipTrigger::FirstProfileScreen).is_some());
+    }
+
     #[test]
     fn confirm_or_cancel_closes_it() {
         let mut c = ctx();

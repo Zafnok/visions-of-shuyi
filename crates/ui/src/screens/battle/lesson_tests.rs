@@ -711,7 +711,7 @@ fn the_second_turn_starts_in_its_player_phase_only() {
     let mut state = quick_battle(&c.game.content).unwrap();
     let mut seen = Vec::new();
     while !(state.turn() == 2 && state.phase() == Phase::Enemy) {
-        let fired = BattleScreen::new(state.clone()).lesson_triggers_now();
+        let fired = BattleScreen::new(state.clone()).triggers_now();
         seen.push((
             state.turn(),
             state.phase(),
@@ -719,7 +719,7 @@ fn the_second_turn_starts_in_its_player_phase_only() {
         ));
         state.apply(&Command::EndPhase).unwrap();
     }
-    let fired = BattleScreen::new(state.clone()).lesson_triggers_now();
+    let fired = BattleScreen::new(state.clone()).triggers_now();
     assert!(!fired.contains(&TipTrigger::SecondTurn));
     let second: Vec<_> = seen.iter().filter(|(_, _, f)| *f).collect();
     assert_eq!(second, [&(2, Phase::Player, true)]);
@@ -995,8 +995,7 @@ fn a_unit_acted_fires_on_turn_one_only() {
     let c = ctx();
     let fires = |state: &BattleState| {
         let s = BattleScreen::new(state.clone());
-        s.lesson_triggers_now()
-            .contains(&TipTrigger::FirstUnitActed)
+        s.triggers_now().contains(&TipTrigger::FirstUnitActed)
     };
     let mut state = quick_battle(&c.game.content).unwrap();
     assert!(!fires(&state), "nobody has acted");
@@ -1010,7 +1009,7 @@ fn a_unit_acted_fires_on_turn_one_only() {
     assert!(fires(&state));
     // Units are left to act: not everyone has.
     let s = BattleScreen::new(state.clone());
-    assert!(!s.lesson_triggers_now().contains(&TipTrigger::NoUnitLeft));
+    assert!(!s.triggers_now().contains(&TipTrigger::NoUnitLeft));
     while state.turn() < 2 || state.phase() != Phase::Player {
         state.apply(&Command::EndPhase).unwrap();
     }

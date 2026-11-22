@@ -64,7 +64,7 @@ pub mod split_keys;
 pub mod stage;
 pub mod threat;
 pub mod tips;
-mod triggers;
+pub mod triggers;
 pub mod units;
 pub mod view;
 pub mod walk;
@@ -303,6 +303,9 @@ pub struct BattleScreen {
     music: Option<String>,
     /// The guide: her tips, lessons and voice (0406, 0456, 0476).
     guide: Guide,
+    /// Trigger rows of this battle's after the registry's
+    /// ([`add_trigger_row`](Self::add_trigger_row), 1310).
+    extra_rows: Vec<triggers::Row>,
     /// The id of the battle (its file's), which the game flow gives
     /// ([`in_battle`](Self::in_battle)): a lesson may start only in some
     /// battles. `None` for a battle made any other way.
@@ -397,6 +400,7 @@ impl BattleScreen {
             toast: None,
             queue: VecDeque::new(),
             guide: Guide::default(),
+            extra_rows: Vec::new(),
             battle_id: None,
             effects: Effects::default(),
             progress: None,
