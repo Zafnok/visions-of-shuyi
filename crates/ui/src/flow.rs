@@ -386,7 +386,7 @@ impl FlowScreen {
         let battle = BattleScreen::resume(*history)
             .with_look(look.clone())
             .in_battle(&def.id)
-            .with_exit_name(def.exit_name.clone())
+            .with_place_name(def.place_name.clone())
             .with_music(music);
         flow.fight = Some(Fight { def, prep, look });
         flow.show(Stage::Battle, Box::new(battle));
@@ -819,7 +819,7 @@ impl FlowScreen {
         let battle = BattleScreen::start(state, &events)
             .with_look(fight.look.clone())
             .in_battle(&fight.def.id)
-            .with_exit_name(fight.def.exit_name.clone())
+            .with_place_name(fight.def.place_name.clone())
             .with_music(self.music.clone());
         self.show(Stage::Battle, Box::new(battle));
     }
