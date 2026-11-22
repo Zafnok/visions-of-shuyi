@@ -518,6 +518,13 @@ fn chapter_2_is_played_with_the_armies_chapter_1_leaves() {
 
 #[test]
 fn the_report_names_the_army() {
+    // A run kept before 0531 names where its army came from, no units.
+    let old = Army {
+        from: "campaign after ch01".to_owned(),
+        lines: vec![],
+    };
+    assert_eq!(old.line(), "army · campaign after ch01");
+    assert_eq!(Army::default().line(), "", "no army kept");
     let mut record = record();
     record.army = Army {
         from: "campaign after ch01".to_owned(),

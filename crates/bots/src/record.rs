@@ -89,13 +89,33 @@ pub fn record(
     seed: u64,
     wanted: Wanted<'_>,
 ) -> Result<Recorded, String> {
+    record_within(start, content, seed, wanted, LIMITS)
+}
+
+/// How long [`record`]'s search goes on before it gives up: Player phases
+/// tried (backing up counts), and the last turn.
+#[derive(Debug, Clone, Copy)]
+struct Limits {
+    steps: u32,
+    turns: u32,
+}
+
+/// [`record`]'s limits.
+const LIMITS: Limits = Limits {
+    steps: 200,
+    turns: 60,
+};
+
+/// [`record`], giving up past `limits`.
+fn record_within(
+    start: BattleState,
+    content: &Content,
+    seed: u64,
+    wanted: Wanted<'_>,
+    limits: Limits,
+) -> Result<Recorded, String> {
     let mut rng = SimRng::new(seed);
-    let good = |after: &BattleState| {
-        lost(after).is_empty()
-            && after
-                .outcome()
-                .is_none_or(|o| o == Outcome::Victory && wanted(after))
-    };
+    let good = |after: &BattleState| may_go_on(after, wanted);
     // Each turn played: the plans for it that are left, best first. The
     // first of each is the one being played.
     let mut turns: Vec<Vec<Plan>> = Vec::new();
@@ -103,7 +123,7 @@ pub fn record(
     let mut steps = 0;
     while state.outcome().is_none() {
         steps += 1;
-        if steps > 200 || state.turn() > 60 {
+        if steps > limits.steps || state.turn() > limits.turns {
             return Err(format!("no end in sight on turn {}", state.turn()));
         }
         let found = plans(&state, content, &mut rng, wanted)?;
@@ -141,6 +161,15 @@ pub fn record(
         .map(|plans| plans.into_iter().next().map_or_default(|(c, _)| c))
         .collect();
     Ok(Recorded { phases, summary })
+}
+
+/// Whether the search may go on from `after`: nobody lost, and the battle
+/// not over or won as `wanted`.
+fn may_go_on(after: &BattleState, wanted: Wanted<'_>) -> bool {
+    lost(after).is_empty()
+        && after
+            .outcome()
+            .is_none_or(|o| o == Outcome::Victory && wanted(after))
 }
 
 /// How good `state` is for the player, for [`record`]'s search: a win
@@ -215,40 +244,51 @@ fn try_phase(
     let turn = state.turn();
     while state.outcome().is_none() && state.phase() == Phase::Player && state.turn() == turn {
         let ai = next_command(state, &content.ai);
-        // A potion is for someone who is hurt.
-        let wasted = |action: &UnitAction| match action {
-            UnitAction::UseItem { target, .. } => {
-                let target = state.unit(*target);
-                target.is_none_or(|u| u.hp == u.stats.hp)
-            }
-            _ => false,
-        };
-        let legal: Vec<Command> = legal_commands(state)
-            .into_iter()
-            .filter(|c| !matches!(c, Command::Act { action, .. } if wasted(action)))
-            .collect();
-        let acts =
-            |c: &&Command| matches!(c, Command::Act { action, .. } if *action != UnitAction::Wait);
-        let pick = |from: Vec<&Command>, rng: &mut SimRng| {
-            let n = u32::try_from(from.len()).unwrap_or(0);
-            (n > 0).then(|| from[rng.roll_below(n) as usize].clone())
-        };
         let roll = if plain { 0 } else { rng.roll_below(10) };
-        let command = match roll {
-            0..=4 => ai,
-            5..=7 => pick(legal.iter().filter(acts).collect(), rng).or(ai),
-            8 => pick(
-                legal.iter().filter(|c| **c != Command::EndPhase).collect(),
-                rng,
-            ),
-            _ => Some(Command::EndPhase),
-        };
-        let command = command.unwrap_or(Command::EndPhase);
+        let command = choose(roll, ai, &useful(state), rng);
         if state.apply(&command).is_ok() {
             commands.push(command);
         }
     }
     commands
+}
+
+/// The legal commands of `state` but a potion for someone who isn't hurt.
+fn useful(state: &BattleState) -> Vec<Command> {
+    let wasted = |action: &UnitAction| match action {
+        UnitAction::UseItem { target, .. } => {
+            let target = state.unit(*target);
+            target.is_none_or(|u| u.hp == u.stats.hp)
+        }
+        _ => false,
+    };
+    legal_commands(state)
+        .into_iter()
+        .filter(|c| !matches!(c, Command::Act { action, .. } if wasted(action)))
+        .collect()
+}
+
+/// The command a try plays for a `roll` of 0 to 9: the AI's (`ai`) for 0
+/// to 4; for 5 to 7, any of `legal` that acts (not a Wait), else the AI's;
+/// for 8, any of `legal` but ending the phase; for 9, ending the phase.
+/// `rng` picks among them; with nothing to play, the phase ends.
+fn choose(roll: u32, ai: Option<Command>, legal: &[Command], rng: &mut SimRng) -> Command {
+    let acts =
+        |c: &&Command| matches!(c, Command::Act { action, .. } if *action != UnitAction::Wait);
+    let pick = |from: Vec<&Command>, rng: &mut SimRng| {
+        let n = u32::try_from(from.len()).unwrap_or(0);
+        (n > 0).then(|| from[rng.roll_below(n) as usize].clone())
+    };
+    let command = match roll {
+        0..=4 => ai,
+        5..=7 => pick(legal.iter().filter(acts).collect(), rng).or(ai),
+        8 => pick(
+            legal.iter().filter(|c| **c != Command::EndPhase).collect(),
+            rng,
+        ),
+        _ => Some(Command::EndPhase),
+    };
+    command.unwrap_or(Command::EndPhase)
 }
 
 /// A Player phase's commands and the battle after the enemy answered them.

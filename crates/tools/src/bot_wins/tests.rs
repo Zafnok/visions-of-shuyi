@@ -52,3 +52,39 @@ fn a_battle_off_the_way_is_refused() {
         "{error}"
     );
 }
+
+/// Line i's search is seeded the first seed plus i; a battle's retries are
+/// 1,000 apart, past every other line's seed.
+#[test]
+fn each_line_and_each_retry_has_a_seed_of_its_own() {
+    assert_eq!(line_seed(9, 0), 9);
+    assert_eq!(line_seed(9, 3), 12);
+    assert_eq!(search_seed(5, 0), 5);
+    assert_eq!(search_seed(5, 2), 2005);
+}
+
+/// A line that can't start a battle says which, and records nothing.
+#[test]
+fn a_line_names_the_battle_it_cannot_start() {
+    let content = trpg_content::load_embedded().unwrap();
+    let error = record_line(&content, &Wins::default(), &["quick".to_owned()], 0, 1).unwrap_err();
+    assert!(
+        error.contains("no story chapter fights \"quick\""),
+        "{error}"
+    );
+}
+
+/// Recording starts at the battle named, or at the first; one off the way
+/// is refused, listing those on it.
+#[test]
+fn recording_starts_at_the_battle_named() {
+    let on_the_way = ["ch01".to_owned(), "ch02".to_owned(), "ch03".to_owned()];
+    assert_eq!(first_to_record(&on_the_way, None), Ok(0));
+    assert_eq!(first_to_record(&on_the_way, Some("ch02")), Ok(1));
+    assert_eq!(first_to_record(&on_the_way, Some("ch03")), Ok(2));
+    let error = first_to_record(&on_the_way, Some("quick")).unwrap_err();
+    assert!(
+        error.ends_with("(those that do: ch01, ch02, ch03)"),
+        "{error}"
+    );
+}

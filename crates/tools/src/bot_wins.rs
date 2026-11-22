@@ -126,20 +126,12 @@ fn record_lines(
     options: &Options,
 ) -> Result<Vec<(String, String)>, String> {
     let on_the_way = won_on_the_way(content);
-    let start = match &options.from {
-        None => 0,
-        Some(battle) => on_the_way.iter().position(|b| b == battle).ok_or_else(|| {
-            format!(
-                "no later battle's army plays \"{battle}\" (those that do: {})",
-                on_the_way.join(", ")
-            )
-        })?,
-    };
+    let start = first_to_record(&on_the_way, options.from.as_deref())?;
     let battles = &on_the_way[start..];
     let lines: Vec<Result<Vec<(u64, Recorded)>, String>> = std::thread::scope(|scope| {
         let threads: Vec<_> = (0..options.lines)
             .map(|line| {
-                let seed = options.seed + u64::try_from(line).unwrap_or(0);
+                let seed = line_seed(options.seed, line);
                 scope.spawn(move || record_line(content, embedded, battles, line, seed))
             })
             .collect();
@@ -171,6 +163,31 @@ const SEARCHES: u64 = 3;
 /// any other line's seed.
 const SEED_STEP: u64 = 1000;
 
+/// Where in `on_the_way` (the battles later armies play, in story order)
+/// recording starts: at battle `from`, or the first.
+fn first_to_record(on_the_way: &[String], from: Option<&str>) -> Result<usize, String> {
+    let Some(battle) = from else {
+        return Ok(0);
+    };
+    on_the_way.iter().position(|b| b == battle).ok_or_else(|| {
+        format!(
+            "no later battle's army plays \"{battle}\" (those that do: {})",
+            on_the_way.join(", ")
+        )
+    })
+}
+
+/// The search's seed of line `line` (from 0) when line 1's is `first`.
+fn line_seed(first: u64, line: usize) -> u64 {
+    first + u64::try_from(line).unwrap_or(0)
+}
+
+/// The seed of a line's `attempt`th search (from 0) at a battle, its first
+/// `seed`: [`SEED_STEP`] apart.
+fn search_seed(seed: u64, attempt: u64) -> u64 {
+    seed + attempt * SEED_STEP
+}
+
 /// Line `line`'s wins of `battles`, in order, its search seeded `seed`:
 /// each from the army its wins before leave, the ones before the first of
 /// `battles` `embedded`'s. A search that finds no win is tried again with
@@ -192,7 +209,7 @@ fn record_line(
         let setup = setup.ok_or_else(|| format!("no story chapter fights \"{battle}\""))?;
         let mut failed = Vec::new();
         let won = (0..SEARCHES).find_map(|i| {
-            let seed = seed + i * SEED_STEP;
+            let seed = search_seed(seed, i);
             match record(BattleState::new(setup.clone()).0, content, seed, &|_| true) {
                 Ok(won) => Some((seed, won)),
                 Err(e) => {
