@@ -42,5 +42,5 @@
         source: "Seize the fort within 3 turns: send your lead straight there.",
         text: "SEIZE THE FORT WITHIN 3 TURNS: SEND YOUR LEAD STRAIGHT THERE.",
     ),
-    (key: "battles.test_escape.exit", source: "the east road", text: "THE EAST ROAD"),
+    (key: "battles.test_escape.place", source: "the east road", text: "THE EAST ROAD"),
 ]

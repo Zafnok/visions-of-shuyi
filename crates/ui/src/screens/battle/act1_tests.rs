@@ -59,7 +59,7 @@ fn an_escape_map_names_its_exit() {
     let c = ctx();
     let content = &c.game.content;
     let def = &content.battles["test_escape"];
-    let exit = def.exit_name.as_deref();
+    let exit = def.place_name.as_deref();
     let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
     let campaign = battle_campaign(content, def, GameMode::Classic, lead);
     let (s, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
@@ -77,6 +77,27 @@ fn an_escape_map_names_its_exit() {
         objective_text(&s, None, words),
         "GET EVERYONE TO THE EXIT (0/3 OUT)"
     );
+}
+
+/// Chapter 3's Seize point is named by its battle file (0331): the
+/// scriptorium, not its tile's terrain. A test of the content (ADR-0118).
+#[test]
+fn chapter_3_names_its_seize_point() {
+    if trpg_content::bundle::skip_without_the_game() {
+        return;
+    }
+    let c = ctx();
+    let content = &c.game.content;
+    let def = &content.battles["ch03"];
+    let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
+    let campaign = battle_campaign(content, def, GameMode::Classic, lead);
+    let (s, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
+    let place = def.place_name.as_deref();
+    assert_eq!(
+        objective_text(&s, place, Words::ENGLISH),
+        "Seize the scriptorium"
+    );
+    assert_eq!(objective_text(&s, None, Words::ENGLISH), "Seize the Throne");
 }
 
 #[test]

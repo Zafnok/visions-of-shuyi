@@ -270,6 +270,11 @@ impl SlotPickerScreen {
                 lines.extend(flow::opening_lines(ctx, Start::Save(&summary.save)));
             }
         }
+        // And the export tip's, which its box says on its first frame
+        // (1291): this set replaces the title's, which kept it too.
+        if self.export_tip_due(ctx) {
+            lines.extend(TipScreen::coming_lines(ctx, &[TipTrigger::FirstLoadGame]));
+        }
         lines
     }
 
@@ -349,10 +354,16 @@ impl SlotPickerScreen {
     /// loading, with a save in the list, where saves can be exported, the
     /// first time ([`TipScreen::once`]).
     fn export_tip(&self, ctx: &mut Ctx) -> Option<TipScreen> {
-        let saved = self.slots.iter().any(|s| matches!(s, Slot::Saved(_)));
-        let due = !self.is_saving() && saved && save_files::can_export(&ctx.platform);
-        due.then(|| TipScreen::once(ctx, TipTrigger::FirstLoadGame))
+        self.export_tip_due(ctx)
+            .then(|| TipScreen::once(ctx, TipTrigger::FirstLoadGame))
             .flatten()
+    }
+
+    /// Whether this list asks for its export tip: loading, with a save
+    /// in it, where saves can be exported.
+    fn export_tip_due(&self, ctx: &Ctx) -> bool {
+        let saved = self.slots.iter().any(|s| matches!(s, Slot::Saved(_)));
+        !self.is_saving() && saved && save_files::can_export(&ctx.platform)
     }
 
     /// The message under the panel, if any.

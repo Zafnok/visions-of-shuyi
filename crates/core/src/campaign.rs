@@ -253,10 +253,11 @@ pub struct BattleDef {
     pub triggers: Vec<Trigger>,
     /// The battle's strategy hints (0411).
     pub battle_notes: Vec<BattleNote>,
-    /// The place an escape map's exit leads to, named on the objective
-    /// line (`the far bank`; 0324). English: the screen translates
-    /// it. Only on an [`Objective::Escape`] battle.
-    pub exit_name: Option<String>,
+    /// The place an escape map's exit leads to (`the far bank`; 0324),
+    /// or a seize map's Seize point (`the scriptorium`; 0331), named on
+    /// the objective line. English: the screen translates it. Only on an
+    /// [`Objective::Escape`] or [`Objective::Seize`] battle.
+    pub place_name: Option<String>,
     /// The houses to save, if the battle has a village goal (0313).
     pub village: Option<VillageGoal>,
     /// Sets the rewind charges.

@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-21
 ---
 
 # 0081 — Decide: a bigger EXP cut for a unit above its enemy's level
@@ -116,10 +116,13 @@ really does.
 **Out (do not do):**
 - Building it: ticket **0610** (it also reruns the bots, since the
   army's levels at each chapter change).
-- How non-mages hurt armour (0080). Either order: if 0080 is answered,
-  redo the table with its rule (Aske's row gets real damage EXP); if not,
-  use today's and note in 0080 that this ticket's formula changes its
-  EXP numbers.
+- How non-mages hurt armour (0080, **answered 2026-11-22**: a bow hit
+  deals at least 2, a spear hit at least 3, both sides; built by 0333).
+  Redo the table with it: Aske's row gets real damage EXP (Lv 3 against
+  a Chapter 2 guard, Lv 5: 22 a shot that lands instead of 2, 82 for the
+  kill, by this ticket's formula), and Hollis's and Tamsin's spears always
+  count as damage on a guard. 0080's design doc uses this formula;
+  0610 builds it.
 - The EXP pace by the unit's own level (`exp_pace`, settled by 0608,
   done).
 
@@ -139,10 +142,10 @@ really does.
 
 ## Acceptance criteria
 
-- [ ] `progression.md` has the new formula, Nick's words and worked
+- [x] `progression.md` has the new formula, Nick's words and worked
       examples; `docs/design/README.md` has the row.
-- [ ] 0610's text says exactly what to build.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] 0610's text says exactly what to build.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -150,4 +153,31 @@ None (a decision); `cargo xtask ticket-lint`.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Nick's answer (2026-11-21):** option **C**, A's steeper slope with the
+kill bonus never below 7 (Awakening's floor); and **no**, a promoted unit
+does not count as higher-level for EXP. Recorded in `progression.md`
+(*EXP formulas*): `hit = (31 + 2d) / 3`; damage `clamp(2 × hit, 2,
+100)`; kill `clamp(2 × (max(0, hit) + max(7, 20 + 5d)) + 40 if boss, 2,
+100)`; worked examples with the old values beside them; a line in *Pace*.
+
+**Game claims checked** on the Fire Emblem Wiki's *Experience* page
+(read in a browser; the wiki refuses automated fetches). Two corrections
+to the ticket's text, shown to Nick: in the GBA games the "+20 levels"
+for a promoted unit is in the hit formula, while the kill bonus uses a
+class bonus (60 for most promoted classes); and Awakening's kill part for
+a unit 2+ levels above is `max(7, 26 + 3d)`, gentler than this game's
+old `max(0, 20 + 3d)`. Shown honestly: option C is a cut only within
+about 4 levels; 10+ levels above, a kill gives 20 (was 14).
+
+**Chapter 3 by hand** (not the bots: their per-unit report is 0527):
+twelve kills of Lv 6 guards from Lv 8 took Rue to Lv 12 with the old
+formula; with C she ends at Lv 11 (A: 10, B: 11).
+
+**The agent's starting rule:** inside the kill formula `hit` stops at 0,
+so a kill gives at least 14 before the pace even 16+ levels above (it
+matters only far past Act 1's levels).
+
+**Downstream:** 0610 rewritten with the exact formula, constants, worked
+examples as tests and a kill-never-under-14 property (`nick_input:
+none`; still blocked by 0527 and 0531). 0080's EXP numbers redone with
+the new formula, and its option A "22 EXP" flagged to redo.

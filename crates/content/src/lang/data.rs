@@ -135,9 +135,9 @@ fn note_key(id: &str, index: usize) -> String {
     format!("{BATTLE_PREFIX}{id}.note_{}", index + 1)
 }
 
-/// The key of battle `id`'s exit name: `battles.<id>.exit`.
-fn exit_key(id: &str) -> String {
-    format!("{BATTLE_PREFIX}{id}.exit")
+/// The key of battle `id`'s place name: `battles.<id>.place`.
+fn battle_place_key(id: &str) -> String {
+    format!("{BATTLE_PREFIX}{id}.place")
 }
 
 /// Whether `key` is the field of a tip that ends its key with `field`.
@@ -262,8 +262,8 @@ pub fn from_tables(tables: &Tables<'_>) -> DataText {
         for (i, note) in battle.battle_notes.iter().enumerate() {
             data.insert(note_key(id, i), note.text.clone());
         }
-        if let Some(exit) = &battle.exit_name {
-            data.insert(exit_key(id), exit.clone());
+        if let Some(place) = &battle.place_name {
+            data.insert(battle_place_key(id), place.clone());
         }
     }
     let mut text = DataText::new(data, tables.names.clone());
@@ -395,9 +395,10 @@ impl Lang {
         self.0.found(code, BATTLE_PREFIX, &note.text)
     }
 
-    /// The name of a battle's exit, `english`, in language `code`: found by
-    /// its English among the battle files' exits, as a note is.
-    pub fn exit_name<'a>(&'a self, code: &LangCode, english: &'a str) -> &'a str {
+    /// The name of a battle's place (its exit or Seize point), `english`,
+    /// in language `code`: found by its English among the battle files'
+    /// places, as a note is.
+    pub fn battle_place<'a>(&'a self, code: &LangCode, english: &'a str) -> &'a str {
         self.0.found(code, BATTLE_PREFIX, english)
     }
 }

@@ -80,7 +80,7 @@ fn frame(s: &mut BattleScreen, c: &mut Ctx) -> String {
 fn the_first_set_holds_the_trigger_scenes_and_the_guides_lines() {
     let mut c = voiced();
     let mut s = BattleScreen::new(quick_battle(&c.game.content).unwrap()).in_battle(QUICK_BATTLE);
-    let guide = s.coming_guide_lines(&c);
+    let guide = s.guide.coming_guide_lines(&c, s.battle_id.as_deref());
     assert_ne!(guide, [] as [LineId; 0]);
     assert_eq!(frame(&mut s, &mut c), "None");
     let sets = kept(&mut c);
@@ -185,7 +185,7 @@ fn the_set_is_built_when_due_on_top_or_pushing_a_scene() {
         for scene in [false, true] {
             for due in [false, true] {
                 let want = due && (stays || scene);
-                let got = BattleScreen::set_due(stays, scene, due);
+                let got = super::guide::Guide::set_due(stays, scene, due);
                 assert_eq!(got, want, "stays {stays}, scene {scene}, due {due}");
             }
         }

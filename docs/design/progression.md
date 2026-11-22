@@ -4,7 +4,8 @@ Decided: 2026-09-25
 Source: ticket 0005 (fliers moved to tier 3+ by ticket 0017, 2026-09-25;
 the lord's line added by ticket 0016, 2026-09-25; per-class stat caps
 removed by ticket 0019, 2026-09-28; seals only between battles by ticket
-0603, 2026-09-30)
+0603, 2026-09-30; a bigger EXP cut for a unit above its enemy's level by
+ticket 0081, 2026-11-21)
 
 ## Nick's words
 
@@ -234,6 +235,10 @@ kept that scale.
   per battle on average. Example: a Lv 45 unit hits an equal-level enemy:
   20 EXP, halved to **10**. Scaled awards round down but are **never below
   1 EXP**. Chapter 1 (levels 1–5) gets every award in full.
+  A unit above its enemies' level earns less than this (*EXP formulas*,
+  ticket 0081): a kill of an enemy 3 levels below gives half an
+  equal-level kill, so a unit that pulls ahead of the army slows down and
+  the others catch up.
   - The allied EXP pool is scaled **per receiving unit**: each share is
     scaled at that unit's own level.
   - Class points aren't scaled, and neither is the unused-rewind-charge
@@ -254,17 +259,55 @@ kept that scale.
 - **Level-up stats** use the unit's **current class** (its growths and
   tier) at the moment of the level up.
 
-### EXP formulas (*tunable*: FE GBA's shape, doubled for Nick's faster pace)
+### EXP formulas (FE GBA's shape, doubled for Nick's faster pace, with a steeper level gap)
 
-`d = target.level - unit.level` (character levels, signed). Each award
-below is then scaled by the unit's level (*Pace* above): in full to Lv 39,
-half from Lv 40, a quarter from Lv 70.
+Nick, after playing Chapters 1–4 (2026-11-08): "Mages (i.e. Rue) are too
+necessary (and thus get used too often) bc most enemies are far too
+armored, i.e. armored knights are literally impossible to kill without
+mages so she gets too much combat and thus snowballs" and "On the
+snowball point, we should penalize it, reduce XP depending on lv
+disparity without going to 0. Fire Emblem has a system like this". Asked
+in ticket 0081 (2026-11-21) between a steeper slope, a cut of 10% a level
+with a floor, the steeper slope with an Awakening-style floor on the kill
+bonus, and Path of Radiance's bonus EXP pool, he picked **the steeper
+slope with the kill bonus never below 7** (option C). Asked whether a
+promoted unit should count about 20 levels higher for EXP, as in the GBA
+games and Path of Radiance, he said **no**: only the shown level counts,
+promoted or not.
+
+`d = target.level - unit.level` (character levels, signed; promotion
+adds nothing, Nick, 0081). Each award below is then scaled by the unit's
+level (*Pace* above): in full to Lv 39, half from Lv 40, a quarter from
+Lv 70.
+
+`hit = (31 + 2 * d) / 3` (the level gap counts double, 0081; it was
+`(31 + d) / 3` before). In the kill formula `hit` is never below 0.
 
 | Event | EXP |
 | ----- | --- |
 | Took part in a combat (attacked or countered), dealt no damage and killed nobody | `2` |
-| Dealt damage (≥ 1 HP) and the target survived | `clamp(2 * ((31 + d) / 3), 2, 100)` |
-| Killed the target | `clamp(2 * ((31 + d) / 3 + max(0, 20 + 3 * d)) + (target is boss ? 40 : 0), 2, 100)` |
+| Dealt damage (≥ 1 HP) and the target survived | `clamp(2 * hit, 2, 100)` |
+| Killed the target | `clamp(2 * (hit + max(7, 20 + 5 * d)) + (target is boss ? 40 : 0), 2, 100)` |
+
+- What Nick fixed: the shape (the steeper slope, a floor under the kill
+  bonus, never 0, no promotion offset). The numbers (31, the doubled gap,
+  20 + 5d, the floor of 7) are *tunable*; 7 is Awakening's floor.
+- So a kill always gives at least 14 (`2 × (0 + 7)`) before the pace,
+  and always more than a hit at the same levels (unless both reach the
+  100 cap); a hit never gives less than 2. (*The agent's starting rule*: `hit` stops at 0
+  inside the kill formula, so a gap of 16 levels or more doesn't eat the
+  floor; it only matters for units far above Act 1's levels.)
+- The cut is steepest within about 4 levels: a kill falls from 60 at
+  equal levels to 38 two levels above and 30 three above, then stays
+  around 20–28 because of the floor. Far above the enemy (10+ levels) a
+  kill gives a little more than the old formula did (20, was 14); that is
+  the floor Nick picked.
+- A unit below its enemy earns a little more than before (the gap counts
+  double that way too): a hit 5 levels up gives 26 (was 24).
+- It doesn't stop Rue being the only one who can hurt a guard; that is
+  ticket 0080's. By hand, a Chapter 3 where Rue kills twelve Lv 6 guards
+  from Lv 8 took her to Lv 12 under the old formula and takes her to
+  Lv 11 now.
 | Healed an ally with a spell | `24` |
 | Tile cast (fire/ice on terrain, `magic.md`) | `24` (same as a heal, as `magic.md` asked) |
 | Used an active skill that isn't a combat (e.g. a buff) | `20` |
@@ -288,16 +331,23 @@ half from Lv 40, a quarter from Lv 70.
 
 Examples:
 
-| Case | d | EXP |
+| Case | d | EXP (before 0081) |
 | ---- | - | --- |
-| Hit, equal levels | 0 | 2 × 10 = 20 |
-| Hit, enemy 5 levels higher | +5 | 2 × 12 = 24 |
-| Kill, equal levels | 0 | 2 × (10 + 20) = 60 |
-| Kill, enemy 5 levels higher | +5 | 2 × (12 + 35) = 94 |
-| Kill, enemy 5 levels lower | −5 | 2 × (8 + 5) = 26 |
-| Kill, enemy 10 levels lower | −10 | 2 × (7 + 0) = 14 |
-| Kill a boss, equal levels | 0 | 60 + 40 = 100 |
-| Missed every strike | any | 2 |
+| Hit, equal levels | 0 | 2 × 10 = 20 (20) |
+| Hit, enemy 5 levels higher | +5 | 2 × 13 = 26 (24) |
+| Hit, enemy 3 levels lower | −3 | 2 × 8 = 16 (18) |
+| Kill, equal levels | 0 | 2 × (10 + 20) = 60 (60) |
+| Kill, enemy 1 level higher (Aske Lv 5 on a Chapter 3 guard, if she could hurt it) | +1 | 2 × (11 + 25) = 72 (66) |
+| Kill, enemy 5 levels higher | +5 | 2 × (13 + 45) = 116 → 100 (94) |
+| Rue Lv 8 hits a Chapter 3 guard (Lv 6) | −2 | 2 × 9 = 18 (18) |
+| Rue Lv 8 kills a Chapter 3 guard (Lv 6) | −2 | 2 × (9 + 10) = 38 (46) |
+| Kill, enemy 3 levels lower | −3 | 2 × (8 + 7) = 30 (40) |
+| Rue Lv 12 hits a Chapter 4 guard (Lv 7) | −5 | 2 × 7 = 14 (16) |
+| Rue Lv 12 kills a Chapter 4 guard (Lv 7) | −5 | 2 × (7 + 7) = 28 (26) |
+| Kill, enemy 10 levels lower | −10 | 2 × (3 + 7) = 20 (14) |
+| Hit, enemy 10 levels lower | −10 | 2 × 3 = 6 (14) |
+| Kill a boss, equal levels | 0 | 60 + 40 = 100 (100) |
+| Missed every strike | any | 2 (2) |
 
 ## Growths and level ups
 
