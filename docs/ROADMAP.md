@@ -138,6 +138,25 @@ was never played; 0804 and 1050 closed into **1064**, which waits for
 every round 4 ticket above, and none of them waits for 1118 or 1050 any
 more (Lane G of *Act 1 critical path*).
 
+**A new player's Chapter 1 session** (Nick, 2026-11-22, watching a
+player new to games play Chapter 1; all on the Act 1 critical path, by
+Nick's pick, except the terrain rules, which wait for their decisions):
+**1311** the low-HP tip shows whenever its moment comes · **1312** Vix's
+tip steps aside while unit info or another full page is open · **1319**
+stronger move and attack range colours · **1320** the game fills a
+1280×720 window · **0095** how the lead stands out on the map → **1313**
+· **0098** a mode easier than Casual → **0880** the mode → **0533** a
+newcomer bot · **0096** the tileset overhaul, moving tiles and drifting
+effects, and **1314** a graphics tier per target with a still fallback
+for every moving look (Nick: the Playdate and a future GBA come later
+but are never forgotten) → **1315** flowing water and swaying trees ·
+**1316** drifting petals · **1318** the tileset overhaul; **1317** every
+ticket says what the lesser targets get (after 1314) · **1321** Vix's
+tips show a small moving picture (after **0469**, widened to the tip
+box). Not yet on the critical path: **0094** deep water and who swims →
+**0336**; **0097** breakable barricades and one-way doors → **0337**,
+**0338** (their decisions say which battles use them).
+
 **Replaceable graphics** (Nick, 2026-10-01: swapping the map's glyphs for
 sprites from image files must be a small job; ADR-0038): **0231** pictures
 in the frame as sprite items (no open dependencies; 0711 and 0413 now draw
@@ -482,6 +501,17 @@ recruit joins outside battle.
   0766's test audit of the demo (2026-11-19): **1303** unnamed enemies
   show the soldier face in unit info. All before **0766** sends the demo
   out.
+- **L. A new player's Chapter 1 session** (Nick, 2026-11-22; all before
+  1064 by Nick's pick): **1311** the low-HP tip · **1312** the tip steps
+  aside for unit info · **1319** range colours · **1320** the window
+  filled · **0095** → **1313** the lead on the map · **0098** → **0880**
+  a mode easier than Casual → **0533** its newcomer bot · **1314**
+  graphics tiers and fallbacks → **1317** the lesser-targets checklist;
+  **0096** → **1315** moving tiles · **1316** drifting petals (both also
+  after 1314) · **1318** the tileset overhaul · **0469** → **1321**
+  pictures in Vix's tips. After their decisions say which battles:
+  **0094** → **0336** deep water; **0097** → **0337** barricades ·
+  **0338** one-way doors.
 
 **Phase 3: content.** **0743** the new cast's character sheets (after
 0736) → the scripts, one chapter at a time because the ledger makes
@@ -553,6 +583,7 @@ Design answers unblock most of the rules work. Suggested order:
 6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** the shieldbearer's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
    · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 (how a rider on foot looks: **0089**) · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870** (**0184** puts these first, in the order the balance tickets need them). Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick
+   · From a new player's Chapter 1 session (2026-11-22): **0095** the lead on the map · **0096** tilesets, moving tiles, drifting effects · **0098** a mode easier than Casual · **0094** deep water and swimmers · **0097** barricades and one-way doors
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)
