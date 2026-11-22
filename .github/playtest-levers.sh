@@ -10,10 +10,11 @@
 # and maps, the number tables in assets/data, the rules (crates/core), how
 # content becomes a battle (crates/content), the bots and their settings
 # (crates/bots), the engine pin, and the playtest command and this
-# workflow themselves. A later chapter is played with the army the earlier
-# ones leave (ticket 0520), so the chapters, the New Game file, the basic
-# shop and the recorded playthroughs that win the earlier chapters are
-# levers too. Tests, docs, dialogue's art and sound, fonts, text and the
+# workflow themselves. A later chapter is played with the armies the earlier
+# ones leave (tickets 0520, 0531), so the chapters, the New Game file, the
+# basic shop and the bots' recorded wins of the earlier chapters
+# (crates/bots/wins/, with the bots) are levers too; trpg-ui's replay
+# fixtures are not. Tests, docs, dialogue's art and sound, fonts, text and the
 # other data files are not.
 #
 # crates/content's modules that no battle reads (ticket 0173) are not
@@ -66,8 +67,6 @@ play=false
 while IFS= read -r path; do
   [ -z "$path" ] && continue
   case "$path" in
-    # The recorded playthroughs the bots' army plays (ticket 0520).
-    crates/ui/tests/it/fixtures/*_winning.ron) ;;
     # Tests and docs change no balance.
     */tests/*|*/tests.rs|*_tests.rs|*/testkit.rs|*.md) continue ;;
     assets/battles/*|assets/maps/*) ;;

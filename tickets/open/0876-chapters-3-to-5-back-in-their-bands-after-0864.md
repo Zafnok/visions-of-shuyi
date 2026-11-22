@@ -94,7 +94,9 @@ left to judge by playing goes on the Act 1 playtest's checklist (1064).
 
 1. Read `docs/playtesting.md` (*The army*, Chapters 3–5), 0864's, 0529's,
    0524's, 0531's and 0528's Completion notes. Run the five battles
-   first: the table above is from before 0531 and 0528.
+   first: the table above is from before 0531 and 0528. 0531's
+   Completion notes have the numbers with its 24 lines (seeds 1–200),
+   before 0528.
 2. `cargo run --release -q -p xtask -- playtest ch05 --bot hardcore` and
    `… ch04 …`; read the tries that fail.
 3. Fix a bot fault if there is one (with a test in `crates/bots`), then

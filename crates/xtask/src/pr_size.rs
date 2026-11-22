@@ -469,6 +469,7 @@ mod tests {
                 || *p == "Cargo.lock"
                 || p.starts_with(".claude/skills/shuyi-")
                 || p.starts_with("assets-test/tilesets/test")
+                || p.starts_with("crates/bots/wins/")
                 || *p == "assets/fonts/atlas.ron"
                 || p.starts_with("assets-src/fonts/")),
             "{left_out:?}"

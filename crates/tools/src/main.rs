@@ -12,6 +12,7 @@
 #![allow(clippy::print_stdout)]
 
 mod battler_import;
+mod bot_wins;
 mod check_script;
 mod content_layer;
 mod game_tools;
@@ -54,6 +55,7 @@ map-sprite-import [--list]         copy the bought map sprites the game uses int
 battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \
 tileset-import [--list]            pack the bought terrain tiles and write the game's tileset there\n  \
 playtest <battle-id> [options]     a bot plays a battle many times and reports (playtest --help)\n  \
+bot-wins (<battle-id> | --all)     record the bots' own wins, the lines their armies come from (bot-wins --help)\n  \
 skirmish new --at <x,y> --level <n> generate a skirmish whose bots land in their bands (skirmish --help)\n  \
 portrait-import <busts> <id>       cut bought busts into portraits (portrait-import --help)\n  \
 lines [scene]                      list every dialogue line with its line id (lines --help)\n  \
@@ -96,6 +98,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("battler-import") => battler_import_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("tileset-import") => tileset_import(&args.collect::<Vec<_>>()),
         Some("playtest") => playtest(&args.collect::<Vec<_>>()),
+        Some("bot-wins") => bot_wins::command(&repo_root(), &args.collect::<Vec<_>>()),
         Some("skirmish") => skirmish::command(&repo_root(), &args.collect::<Vec<_>>()),
         Some("portrait-import") => portrait_import(&args.collect::<Vec<_>>()),
         Some("lines") => lines(&args.collect::<Vec<_>>()),
@@ -832,7 +835,14 @@ mod tests {
         forwarded.sort_unstable();
         assert_eq!(ours, forwarded);
         // Each answers here: an unknown command would be 2 with no help.
-        for command in ["playtest", "lines", "check-script", "voice", "skirmish"] {
+        for command in [
+            "playtest",
+            "bot-wins",
+            "lines",
+            "check-script",
+            "voice",
+            "skirmish",
+        ] {
             assert_eq!(
                 dispatch(args(&[command, "--help"]).into_iter()),
                 0,

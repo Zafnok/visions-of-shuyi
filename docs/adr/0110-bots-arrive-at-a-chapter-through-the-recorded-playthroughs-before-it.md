@@ -1,6 +1,8 @@
 # ADR-0110: The bots arrive at a chapter through the recorded playthroughs before it
 
-- **Status:** Accepted
+- **Status:** Accepted; amended by ADR-0130 (0531: the army is built
+  once per line of the bots' own recorded wins, not from `trpg-ui`'s
+  fixtures)
 - **Date:** 2026-11-03
 - **Related tickets:** 0520 (this decision), 0848 (found the gap), 0803
   and 0848 (the recorded playthroughs)

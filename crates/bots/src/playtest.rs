@@ -15,25 +15,63 @@ use trpg_core::{
     GameMode, Objective, Outcome, Phase, UnitId,
 };
 
-use crate::{BaselineBot, BattleMeasures, Persona, PersonaBot};
+use crate::{BaselineBot, BattleMeasures, Persona, PersonaBot, line_of};
 
-/// A battle as the runner plays it: its setup in each game mode (the army
-/// a mode fields may differ), every try reseeding it.
+/// A battle as the runner plays it: its armies, each in both game modes
+/// (the army a mode fields may differ), every try reseeding one. One army,
+/// or one per line of the bots' recorded wins (ticket 0531): a try with
+/// seed `s` fields army [`line_of`]`(s, armies)`.
 #[derive(Debug, Clone)]
 pub struct BattleStage {
+    /// Each army, line 1's first; never empty.
+    armies: Vec<StageArmy>,
+}
+
+/// One army of a [`BattleStage`]: the battle as it fields it in each mode.
+#[derive(Debug, Clone, PartialEq)]
+pub struct StageArmy {
     /// The battle in Classic.
     pub classic: BattleSetup,
     /// The battle in Casual.
     pub casual: BattleSetup,
 }
 
-impl BattleStage {
+impl StageArmy {
     /// The battle in `mode`.
     pub fn setup(&self, mode: GameMode) -> &BattleSetup {
         match mode {
             GameMode::Classic => &self.classic,
             GameMode::Casual => &self.casual,
         }
+    }
+}
+
+impl BattleStage {
+    /// The battle with one army, `classic` and `casual`.
+    pub fn new(classic: BattleSetup, casual: BattleSetup) -> Self {
+        Self::of_lines(StageArmy { classic, casual }, Vec::new())
+    }
+
+    /// The battle with `first`'s army and `others`', a line each.
+    pub fn of_lines(first: StageArmy, others: Vec<StageArmy>) -> Self {
+        let mut armies = vec![first];
+        armies.extend(others);
+        Self { armies }
+    }
+
+    /// Its armies, line 1's first.
+    pub fn armies(&self) -> &[StageArmy] {
+        &self.armies
+    }
+
+    /// The battle in `mode` with the first army.
+    pub fn setup(&self, mode: GameMode) -> &BattleSetup {
+        self.armies[0].setup(mode)
+    }
+
+    /// The battle in `mode` as the try with seed `seed` fields it.
+    pub fn setup_for(&self, mode: GameMode, seed: u64) -> &BattleSetup {
+        self.armies[line_of(seed, self.armies.len())].setup(mode)
     }
 }
 
@@ -72,7 +110,14 @@ impl BattleEntrant {
     ) -> Self {
         let (first, _) = BattleState::new(stage.setup(mode).clone());
         let waiting = first.reinforcements().iter().map(|r| &r.unit);
-        let cast = first.units().iter().chain(waiting);
+        // Every army's units: the lines field the same characters, but a
+        // line may have lost one.
+        let others: Vec<BattleState> = stage.armies()[1..]
+            .iter()
+            .map(|a| BattleState::new(a.setup(mode).clone()).0)
+            .collect();
+        let theirs = others.iter().flat_map(BattleState::units);
+        let cast = first.units().iter().chain(waiting).chain(theirs);
         BattleEntrant {
             name: name.into(),
             mode,
@@ -105,7 +150,7 @@ impl Entrant<BattleStage, BattleState> for BattleEntrant {
     }
 
     fn start(&self, stage: &BattleStage, seed: u64) -> BattleState {
-        let mut setup = stage.setup(self.mode).clone();
+        let mut setup = stage.setup_for(self.mode, seed).clone();
         setup.seed = seed;
         BattleState::new(setup).0
     }

@@ -210,8 +210,5 @@ pub(crate) fn stage(id: &str) -> crate::BattleStage {
         let campaign = trpg_content::battle_campaign(content, def, mode, lead);
         campaign.battle_setup(def, &content.tables())
     };
-    crate::BattleStage {
-        classic: setup(GameMode::Classic),
-        casual: setup(GameMode::Casual),
-    }
+    crate::BattleStage::new(setup(GameMode::Classic), setup(GameMode::Casual))
 }

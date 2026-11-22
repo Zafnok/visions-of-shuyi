@@ -594,7 +594,7 @@ fn with_no_enemy_left_order_offers_the_escapes_and_advances_only() {
 /// A boss who can't be killed going down counts as an enemy felled.
 #[test]
 fn an_enemy_that_goes_down_counts_as_fallen() {
-    let mut setup = stage("test_hold").classic;
+    let mut setup = stage("test_hold").setup(GameMode::Classic).clone();
     let rogue = setup
         .units
         .iter_mut()
