@@ -255,6 +255,6 @@ only job is to heal. Open until a map needs one.
   (above). Still open, for a later map that needs them: how capturing
   works (it gives no benefits), and dedicated healing tiles.
 - **Bought pictures for the house and the throne** (and a better gate):
-  ticket 0471 finds a tileset with poorer houses and a throne, with other
-  gaps of the picture look.
+  ticket 0471 chose them with Nick (`look-and-feel.md`, *Art bought
+  beside Tiny Tales*), ticket 0460 imports them once bought.
 - Weather (Nick: "no weather for now").

@@ -79,9 +79,9 @@ playtest's checklist (1064).
   and in `docs/design/look-and-feel.md`'s battle map section.
 
 **Out (do not do):**
-- Better throne art (0471, Nick picks bought art). Either order: the mark
-  is independent of the tile's picture; if 0471 is done first, take the
-  pictures with its throne.
+- Better throne art (picked in 0471, imported by 0460). Either order: the
+  mark is independent of the tile's picture; if 0460 is done first, take
+  the pictures with its throne.
 - The objective line naming the place (0331) and the objective shown when
   a battle starts (0481). Either order; neither touches the map scene.
 - Marking other objectives (a boss, a defend point).

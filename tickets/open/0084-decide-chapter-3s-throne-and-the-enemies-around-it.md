@@ -134,7 +134,7 @@ the `docs/design/README.md` row; 0868's text updated with what to build.
 - The general AI rule for advancing: ticket **0528**. Either order: if
   0528 is decided first, show its rule here; if not, this ticket's
   choices per unit stand and 0528 must not undo them.
-- The throne's picture (0471) and the seize objective's name (0331).
+- The throne's picture (0460) and the seize objective's name (0331).
 - New or changed dialogue: waits for the writer (0766).
 
 ## Implementation steps

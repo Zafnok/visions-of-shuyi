@@ -5,10 +5,10 @@ type: research
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0322"]
 nick_input: decision
-completed:
+completed: 2026-11-22
 ---
 
 # 0471 — A tileset for poor houses, a throne and other gaps
@@ -79,11 +79,13 @@ him.
 
 ## Acceptance criteria
 
-- [ ] Nick picked a pack (or chose to keep the stand-ins); his words are
+- [x] Nick picked a pack (or chose to keep the stand-ins); his words are
       in `look-and-feel.md`.
 - [ ] If bought: the house and throne (and what else the pack covers)
       are drawn from it; credits list it; `assets-private.rev` is pinned.
-- [ ] `cargo xtask ticket-lint` and the `run-gates` skill pass.
+      *Not bought yet (Nick: "Not yet, record it"); moved to 0460.*
+- [x] `cargo xtask ticket-lint` and the `run-gates` skill pass (no code
+      changed: the docs and ticket gates; see the notes).
 
 ## Tests required
 
@@ -92,5 +94,53 @@ him.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+A decision, no code. Nick chose over four rounds of mockups (2026-11-21
+to 11-22): our village and throne hall drawn with the bundle's own
+tiles, each candidate pasted in from its store preview, the fires cut
+frame by frame from the stores' GIFs so they moved. The mockups stayed
+in the session's scratchpad, never committed (`CLAUDE.md`, *Bought art*).
+
+**Picked** (`look-and-feel.md`, *Art bought beside Tiny Tales for the
+stand-ins above*, with Nick's words):
+- House: edermunizz, *Castle and Village* ($9), the brown thatched
+  cottages.
+- Throne: ArMM1998, *Tile Fantasy: Castle* ($5).
+- Burning: Krishna Palacio, *Minifantasy: Raided Village* ($4.99), its
+  moving flames on the burnt trees. Its licence requires credit naming
+  him.
+- Gate: nothing better found; the archway stays.
+
+**Searched:** Mega Tiles' own packs first (all already owned: no throne,
+no poor house, no fire on the map; the Dungeons brazier flame and the
+Overworld smoke were shown as the free fire and turned down), then
+itch.io and Japanese free-material sites (Pipoya's free 16×16 throne
+was shown; nothing else fitting turned up there). Turned down: Ivess's
+huts, the World Map house recoloured to straw, TinyWorld's hide huts;
+MattWalkden's, Gridwright's, PixelHole's and Ventilatore's houses (too
+tidy or several tiles each); Pipoya's, Icarus Studios', Seliel's
+Iconic Castle and 16Pixel's thrones; brullov's fire. Nick asked what
+else each pack holds and about bundles: none of the three is in a
+bundle cheaper than buying it alone (Minifantasy's only 2D bundle is
+all 82 packs, $69.99).
+
+**Deviations:** nothing was bought (Nick: "Not yet, record it"), so the
+import is ticket **0460** (also: no terrain tile animates today, and
+Nick picked the fire for its motion, which is more than a swap of
+tiles). The house and throne rows of the table stay stand-ins until
+then.
+
+**Follow-up tickets:** 0460 (import the cottages, the throne and the
+moving fire, once bought; added to 1064's `blocked_by`), 0094 (whether
+a raided village shows houses on fire: the mockups set the flames on
+cottages at Nick's request, but no rule or map does today; added to
+1064's `blocked_by`). Other tickets that pointed at 0471 for the art
+now point at 0460 (0082, 0084, 0488, 0491, 0867, 0868, `terrain.md`,
+`ROADMAP.md`).
+
+**Gates:** no code, data or art changed, so only the gates that read
+docs and tickets were run: `sync-agent-skills -Check`, `ticket-lint`,
+`check-mentions`, `pr-size`.
+
+**The agent's starting rules:** none.
+
+Engine friction: none, no code.
