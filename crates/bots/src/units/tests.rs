@@ -168,6 +168,13 @@ fn exp_flags_under_half_an_even_share() {
         ..even()
     };
     assert_eq!(flags(&half), []);
+    // An army of no units flags no EXP.
+    let nobody = Standing {
+        exp: 0,
+        army_size: 0,
+        ..even()
+    };
+    assert_eq!(flags(&nobody), []);
 }
 
 #[test]

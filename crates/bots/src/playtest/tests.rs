@@ -369,6 +369,7 @@ fn a_try_measures_what_each_player_unit_did() {
     assert_eq!(m["dealt Swordsman"], 4, "{m:?}");
     assert_eq!(m["kills Swordsman"], 1, "{m:?}");
     assert_eq!(Some(m["exp Swordsman"]), exp, "{m:?}");
+    assert_eq!(unit_measure(&m, UNIT_DEALT, "Swordsman"), 4);
     assert_eq!(unit_measure(&m, UNIT_LEVELS, "Swordsman"), 0);
     assert!(!m.contains_key("levels Swordsman"), "{m:?}");
 }

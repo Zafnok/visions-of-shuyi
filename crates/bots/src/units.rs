@@ -13,10 +13,10 @@ pub const CAN_HURT_AT_LEAST: (u32, u32) = (2, 3);
 /// army's median is flagged (*the agent's starting value*, tunable).
 pub const LEVELS_BEHIND: i64 = 3;
 
-/// A unit with under this share of an even split of the EXP the army
-/// earned is flagged: `(1, 2)` is under half an even share (*the agent's
-/// starting value*, tunable).
-pub const EXP_SHARE_AT_LEAST: (u64, u64) = (1, 2);
+/// A unit with under an even split of the EXP the army earned, divided by
+/// this, is flagged: 2 is under half an even share (*the agent's starting
+/// value*, tunable).
+pub const EXP_SHARE_DIVISOR: u64 = 2;
 
 /// How many of the enemies on the map at `state`'s start player unit
 /// `unit` can hurt, and of how many ([`enemies_hurt`]). `(0, 0)` for a
@@ -74,7 +74,8 @@ pub enum Flag {
     CantHurt,
     /// It arrives [`LEVELS_BEHIND`] or more levels below the army's median.
     Behind,
-    /// It earned under [`EXP_SHARE_AT_LEAST`] of an even share of the EXP.
+    /// It earned under an even share of the EXP divided by
+    /// [`EXP_SHARE_DIVISOR`].
     LowExp,
 }
 
@@ -111,14 +112,16 @@ pub struct Standing {
 pub fn flags(standing: &Standing) -> Vec<Flag> {
     let (hurt, of) = standing.can_hurt;
     let (num, den) = CAN_HURT_AT_LEAST;
-    let cant_hurt = of > 0 && u64::from(hurt) * u64::from(den) < u64::from(of) * u64::from(num);
+    // No enemies: 0 < 0, no flag.
+    let cant_hurt = u64::from(hurt) * u64::from(den) < u64::from(of) * u64::from(num);
     let behind = standing.army_level - standing.level >= LEVELS_BEHIND;
-    // exp / army_exp < share / army_size, without dividing.
-    let (num, den) = EXP_SHARE_AT_LEAST;
-    let low_exp = standing.army_exp > 0
-        && standing.army_size > 0
-        && u128::from(standing.exp) * u128::from(standing.army_size) * u128::from(den)
-            < u128::from(standing.army_exp) * u128::from(num);
+    // exp / army_exp < 1 / (army_size * divisor), without dividing; no EXP
+    // earned: 0 < 0, no flag.
+    let low_exp = standing.army_size > 0
+        && u128::from(standing.exp)
+            * u128::from(standing.army_size)
+            * u128::from(EXP_SHARE_DIVISOR)
+            < u128::from(standing.army_exp);
     [
         (cant_hurt, Flag::CantHurt),
         (behind, Flag::Behind),

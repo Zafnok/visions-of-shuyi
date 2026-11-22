@@ -154,9 +154,9 @@ impl BattleMeasures {
                 .copied()
                 .unwrap_or(after + strike.damage);
             self.hp.insert(target, after);
-            if strike.hit && !strike.healed {
-                self.hurt(state, by, target, before - after, last_hurt_by);
-            }
+            // A miss takes nothing and an Absorb strike heals: neither
+            // lowers the HP, so neither counts.
+            self.hurt(state, by, target, before - after, last_hurt_by);
         }
     }
 
@@ -459,6 +459,36 @@ mod tests {
         // A fall with nobody hurting it in that command is nobody's kill.
         measures.observe(&battle.state, &[Event::UnitFell { unit: UnitId(4) }]);
         assert_eq!(measures.units[&UnitId(1)].kills, 1);
+    }
+
+    #[test]
+    fn measures_count_only_a_player_unit_hurting_an_enemy() {
+        let battle = Scripted::new(start(vec![
+            player(1, 5),
+            player(2, 4),
+            enemy(3, 6),
+            enemy(4, 7),
+        ]));
+        let mut measures = battle.measures.clone();
+        // Enemy 3 fells enemy 4, and player 1 strikes player 2.
+        measures.observe(
+            &battle.state,
+            &[
+                combat(3, 4, &[(Side::Attacker, 99, 0)]),
+                Event::UnitFell { unit: UnitId(4) },
+                combat(1, 2, &[(Side::Attacker, 3, 10)]),
+            ],
+        );
+        assert!(measures.units.is_empty(), "{:?}", measures.units);
+    }
+
+    #[test]
+    fn measures_take_a_strike_on_a_unit_of_unknown_hp_at_its_damage() {
+        let battle = Scripted::new(start(vec![player(1, 5), enemy(3, 6)]));
+        let mut measures = battle.measures.clone();
+        measures.hp.clear();
+        measures.observe(&battle.state, &[combat(1, 3, &[(Side::Attacker, 5, 3)])]);
+        assert_eq!(measures.units[&UnitId(1)].dealt, 5);
     }
 
     #[test]

@@ -52,7 +52,7 @@ pub use playtest::{
 };
 pub use skirmish::{Generated, Kind, Request, Units, add_place, add_to_pool, generate};
 pub use units::{
-    CAN_HURT_AT_LEAST, EXP_SHARE_AT_LEAST, Flag, LEVELS_BEHIND, Standing, can_hurt, enemies_hurt,
+    CAN_HURT_AT_LEAST, EXP_SHARE_DIVISOR, Flag, LEVELS_BEHIND, Standing, can_hurt, enemies_hurt,
     flags,
 };
 
