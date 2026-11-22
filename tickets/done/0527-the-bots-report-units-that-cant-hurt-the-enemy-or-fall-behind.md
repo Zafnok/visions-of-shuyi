@@ -201,8 +201,10 @@ Hardcore try of Chapter 3 took about 18 minutes of one core, and 100
 tries of all four would have taken hours. "Level by chapter" is the `lv`
 column of each chapter's table (the arrival army) and `levels med`
 (the median gain in the chapter), not a separate cross-chapter table.
-0080 isn't done, so the report only reports (no proposed player-side
-change).
+0080 was answered while this was built (Nick's "Report only"); the
+player-side search is 0533, so this report only reports. 0333 (bow and
+spear minimums) isn't done: a line in it says to update this ticket's
+Chapter 2 test when the bow's minimum lands.
 
 **The agent's starting rules** (bots tooling, not gameplay; tunable):
 `can hurt < 2/3`, `lv 3+ below the army` (the army's lower median),

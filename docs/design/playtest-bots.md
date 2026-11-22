@@ -249,8 +249,9 @@ try 17 · Normal · lost (lord fell T9) · died: Mira T6, Kael T8 · items 2
   little EXP (`docs/playtesting.md`, *Units that fall behind*). It
   **proposes, never tunes**: the player's units, classes and growths are
   Nick's, so a flag is a line to read before he plays, never a failure
-  and never a change the autobalance makes. Whether the bots should
-  also try player-side changes is ticket 0080's question.
+  and never a change the autobalance makes. The flagged units are where
+  the bots' player-side proposals start (*The player's side: proposed,
+  never applied*, ticket 0533).
 - **History across runs** ("each epoch", read as each batch of runs): every
   run of the report is kept, so a change shows as "Normal success 47% → 58%
   after the change". *Claude's reading of "epoch"; Nick may correct it.*
