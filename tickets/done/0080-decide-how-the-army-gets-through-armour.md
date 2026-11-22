@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-22
 ---
 
 # 0080 — Decide: how the army gets through armour
@@ -199,10 +199,10 @@ to three non-mage attacks" as the target the bots check.
 
 ## Acceptance criteria
 
-- [ ] Nick's answer, his words and the numbers are in the design files
+- [x] Nick's answer, his words and the numbers are in the design files
       named above; `docs/design/README.md` has the row.
-- [ ] 0333 (and 0527 if question 2 changed it) say exactly what to build.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] 0333 (and 0527 if question 2 changed it) say exactly what to build.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -210,4 +210,57 @@ None (a decision); `cargo xtask ticket-lint`.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Asked Nick in one round (three questions, 2026-11-22). He picked
+**"Piercing: min hit"**, then **"bow min 2 spear min 3"**, and for the
+bots **"Report only"**. Question 3 (how fast it should bite) wasn't
+asked: his two numbers set the pace (Aske 4 a round on any guard of
+Chapters 2–4, a spear 3 a hit), and 0333 re-balances the chapters
+into their bands around them. He may still ask for a target.
+
+**The ticket's numbers, checked against the bots' real arrival army**
+(a throwaway test printed `trpg_bots::arrival` for Chapters 2–4,
+Classic, with `threat_forecast` on every guard; not committed). Several
+were wrong and were fixed before asking:
+- Chapter 4's guards are **Lv 9** (26 HP, Def 17, 20 on the gate), not
+  Lv 7.
+- Steel weapons are sold from Chapter 5 and Tor's Bow comes after the
+  Envoy's House, so Aske has only the Iron Bow through Chapter 4.
+- The army's levels: Aske Lv 3 / 3 / 5 and Rue Lv 3 / 4 / 9 at Chapters
+  2 / 3 / 4 (the levels in `docs/playtesting.md` ~:310 are older); the
+  lead is Lv 12 at Chapter 4 (Steel Sword 8 ×3 on a guard).
+- The lead's Str is 8 at Lv 1 (0846), so his Iron and Steel Swords are
+  power 13 and 16, not 12 and 15.
+- Aske's Bow EXP is 66 of the 70 Bow C needs at Chapter 4.
+
+**Recorded:** `weapons-and-items.md` (Nick's words, the kinds' table,
+*Armoured units*, the formulas, a new *Piercing* section with the
+Chapters 2–4 table, Example W5), `stats-and-combat.md` (*Attack and
+damage*), `playtest-bots.md` (*The player's side: proposed, never
+applied*), the `docs/design/README.md` row, `docs/ROADMAP.md` (Lane I,
+Nick's queue).
+
+**Tickets:** 0333 rewritten to build exactly this (a per-kind minimum in
+the data beside the kind's trait, both sides, the unit info trait text,
+the re-balance) and now also blocked by 0534; 0527 says Nick's answer
+and the either-order with 0333; 0079 and 0081 note the answer (0081:
+the EXP numbers here use today's formula). New: **0533** the bots try
+player-side changes and report the ones that fit the bands (Nick's
+"Report only"; blocked by 0527), **0534** the bots' army repairs its
+worn weapons at Preparations (found here: by Chapter 4 Tamsin's only
+spear is broken and Aske's bow at 2/20; on 1064's chain).
+
+**The agent's starting rules** (in *Piercing*, Nick may veto):
+- Every bow and spear pierces, the special ones too, and every art or
+  active made with one (Piercing Lance ignores 5 Def, then the minimum).
+- A broken bow or spear keeps its minimum, as a broken axe does.
+- The forecast shows the number only, no mark (as for the axe's
+  minimum); the unit info screen names both traits, e.g. `Bow D ×3 vs
+  Flying, min damage 2`.
+- The rule is the same for both sides (the combat rules always are):
+  enemy spears and bows pierce too. Nick saw the archers' case (Hollis
+  takes 2 instead of 0); the spears' (Hollis takes 3 instead of 1 from
+  a guard) follows from it.
+- In the bots' player-side report, units 0527 flags are tried first.
+
+Not run: the optional bots run with the rule in (step 3). 0333 runs
+them for real, after 0534, with the re-recorded playthroughs.

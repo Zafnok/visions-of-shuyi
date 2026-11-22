@@ -116,10 +116,14 @@ really does.
 **Out (do not do):**
 - Building it: ticket **0610** (it also reruns the bots, since the
   army's levels at each chapter change).
-- How non-mages hurt armour (0080). Either order: if 0080 is answered,
-  redo the table with its rule (Aske's row gets real damage EXP); if not,
-  use today's and note in 0080 that this ticket's formula changes its
-  EXP numbers.
+- How non-mages hurt armour (0080, **answered 2026-11-22**: a bow hit
+  deals at least 2, a spear hit at least 3, both sides; built by 0333).
+  Redo the table with it: Aske's row gets real damage EXP (Lv 3 against
+  a Chapter 2 guard, Lv 5: 22 a shot that lands instead of 2, 74 for the
+  kill, by today's formula), and Hollis's and Tamsin's spears always
+  count as damage on a guard. 0080's EXP numbers use today's formula;
+  this ticket's answer changes them, and its building ticket (0610)
+  redoes them.
 - The EXP pace by the unit's own level (`exp_pace`, settled by 0608,
   done).
 

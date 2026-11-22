@@ -132,6 +132,23 @@ Follow-ups:
 > **Iron Plate from Chapter 2, a Steel Plate later**, maybe Steel versions
 > of the other armour too, numbers set later).
 
+**Getting through armour** (ticket 0080, 2026-11-22). After playing
+Chapters 1–4 (2026-11-08): "Aske the archer is too weak to even get XP so
+she snowballs inversely and becomes useless almost immediately. Her STR +
+wep are not enough to go thru the heavily armored units. Some things that
+might make this better are more thorough bots automated balancing (i.e.
+tweaking not just the enemy but also the player classes and units and
+levelups) OR introducing piercing mechanic with a guaranteed min hit i.e.
+2 or 3 min hit for piercing damage"; "Mages (i.e. Rue) are too necessary
+(and thus get used too often) bc most enemies are far too armored, i.e.
+armored knights are literally impossible to kill without mages so she
+gets too much combat and thus snowballs"; "Probably, we can introuce
+piercing". Asked how a non-mage should get through, he picked
+**"Piercing: min hit"** (over ignoring some Def, a minimum for every hit,
+and content changes: softer guards, an Armorslayer, an attack vow for
+Maud, Rending Arrow at rank D); asked which weapons and what minimum:
+**"bow min 2 spear min 3"**. See *Piercing* below.
+
 Reference (researched for Nick, 2026-09-25): *Fire Emblem: Fortune's Weave*
 has no weapon triangle. Swords deal 1.2x damage on follow-up strikes, spears
 are 2x effective against mounted units, bows 3x against flyers (range 2),
@@ -163,9 +180,9 @@ from facing another weapon type.
 | Type | Trait (Nick's choice, from Fortune's Weave) | Exact rule (*tunable* numbers) |
 | ---- | ------------------------------------------- | ------------------------------ |
 | Sword | Stronger follow-ups | Strikes 2..N (a unit's extra strikes) deal `damage * 6 / 5` (×1.2, rounded down) before crit. The first strike is normal. |
-| Spear | Good against land cavalry | Effective against **Mounted**: weapon might ×2. |
+| Spear | Good against land cavalry; **piercing** (0080) | Effective against **Mounted**: weapon might ×2. A hit always deals at least **3** damage (*Piercing*, below). |
 | Axe | Minimum damage, lower accuracy | A hit always deals at least **5** damage: `damage = max(damage, 5)` before crit. Axes have lower base `hit` in their stats. |
-| Bow | Good against flyers, ranged | Effective against **Flying**: weapon might ×3. Standard bows have range **2 only** (cannot attack or counter an adjacent unit). |
+| Bow | Good against flyers, ranged; **piercing** (0080) | Effective against **Flying**: weapon might ×3. A hit always deals at least **2** damage (*Piercing*, below). Standard bows have range **2 only** (cannot attack or counter an adjacent unit). |
 | Gauntlet | Evasive, light | While a gauntlet is **equipped**, the wielder's avoid is **+15**. Gauntlets are the lightest weapons (easiest to strike 2/3/4 times). |
 | Magic | Hits Res | Not a weapon: magic is **innate spells** with uses per battle, outside the loadout. See `magic.md` (0004). |
 
@@ -176,7 +193,9 @@ an attack's forecast notes a strike effective by its kind's trait
 
 **Armoured units** have no special weapon rule: armoured *classes* have high
 Def and low Res (Nick: "encouraged to use magic users on those enemies").
-That is class data for ticket 0005.
+That is class data for ticket 0005. Magic stays the best answer to armour;
+since 0080 bows and spears **pierce** (*Piercing*, below), so they always
+chip it, and axes (minimum 5, Armor Cleave) stay the heavy answer.
 
 **Unit tags.** Classes carry tags (ticket 0005/0302 data): `Mounted` (land
 cavalry), `Flying`, `Armored`. Flying units are **not** `Mounted` (spears are
@@ -198,6 +217,8 @@ might_eff   = broken ? weapon.might / 2 : weapon.might
 power       = (Physical ? A.Str : A.Mag) + might_eff * eff_mult
 damage      = max(0, power - mitigation)                 (as before)
 if weapon.kind == Axe and the strike hits:  damage = max(damage, 5)
+if weapon.kind == Bow and the strike hits:  damage = max(damage, 2)    (piercing, 0080)
+if weapon.kind == Spear and the strike hits:  damage = max(damage, 3)  (piercing, 0080)
 follow-up damage (strikes 2..N):  Sword ? damage * 6 / 5 : damage
 crit damage = (that strike's damage) * 3
 
@@ -205,14 +226,78 @@ hit         = clamp(weapon.hit - (broken ? 20 : 0) + A.Dex * 2 - avoid_B, 0, 100
 avoid_B     = B.Spd * 2 + terrain_B.avoid + (B has a Gauntlet equipped ? 15 : 0)
 ```
 
-Order for a strike's damage: base `damage` → axe minimum → sword follow-up
-×1.2 → crit ×3. The forecast shows the first-strike damage and, for swords
-with more than one strike, the follow-up damage too.
+Order for a strike's damage: base `damage` → the kind's minimum (axe,
+bow, spear) → sword follow-up ×1.2 → crit ×3. The forecast shows the
+first-strike damage and, for swords with more than one strike, the
+follow-up damage too.
 
 `A.Str`, `A.Spd`, `B.Def`, etc. are **gear-adjusted** stats: permanent stats
 plus the equipped armour and accessory bonuses. Gear may never push a stat
 above the hard ceiling in `stats-and-combat.md` (classes have no caps,
 ticket 0019).
+
+## Piercing (getting through armour)
+
+Decided: 2026-11-22
+Source: ticket 0080 (Nick's words in *Nick's words* above); built by
+ticket 0333.
+
+**Bows and spears pierce** (Nick): a hit with a bow never deals less
+than **2** damage, a hit with a spear never less than **3** (Nick's
+numbers). It is the axe's minimum (5) in a smaller size, so the axe stays
+the heavy answer to armour and magic the best one. The rule, exactly:
+
+- **Where it applies:** after mitigation (the target's Def *and* its
+  tile's Def), in the axe minimum's place: `damage = max(damage, 2)` for
+  a bow, `max(damage, 3)` for a spear, then crit ×3. So a guard on a gate
+  takes the same 2 or 3 as on a plain, and a crit of a minimum bow hit
+  deals 6. A miss deals 0.
+- **Both sides** (the combat rules are the same for both): enemy archers,
+  guards and riders pierce too. Hollis (Def 14 in Chapter 2) took 0 from a
+  Chapter 2 archer and 1 from a guard's spear; now he takes 2 and 3 (Nick
+  saw the archers' case before picking).
+- **A second trait** for the two kinds: bows stay ×3 against Flying,
+  spears ×2 against Mounted, and pierce as well.
+- **Every bow and spear** pierces, the special ones too (Tor's Bow, the
+  Fordwarden's Spear), and so does every Combat Art or active made with
+  one: Piercing Lance first ignores 5 of the Def, then the minimum holds
+  (*the agent's starting rule*, from "bow" and "spear" as kinds).
+- **A broken bow or spear** keeps its minimum, as a broken axe keeps its
+  5 (*the agent's starting rule*).
+- **On screen** (*the agent's starting rules*): the forecast shows the
+  number only, with no mark, as it does for the axe's minimum today. The
+  unit info screen names both traits beside the rank, e.g. `Bow  D  ×3 vs
+  Flying, min damage 2`.
+- **EXP:** a combat that deals the minimum is a combat that deals damage
+  (`progression.md`, *EXP formulas*): Aske (Lv 3) shooting a Lv 5 guard
+  gets **22** EXP instead of 2, and **74** for the kill. Weapon EXP gets
+  the hit's base and `dealt / 5` as for any hit.
+
+**What it does to the guards of Chapters 2–4.** The army the bots bring
+(`trpg_bots::arrival`, Classic; the recorded playthroughs' levels, and
+each unit's average growths), damage a hit × strikes, plain attacks
+(no arts or actives), before → after:
+
+| Unit (Ch 2 / Ch 3 / Ch 4 level) | Weapon | Ch 2 guard, Lv 5, 23 HP, Def 15 | Ch 3 guard, Lv 6, 24 HP, Def 15 (gate 18) | Ch 4 guard, Lv 9, 26 HP, Def 17 (gate 20) |
+| --- | --- | --- | --- | --- |
+| Aske (3 / 3 / 5) | Iron Bow | 0 → **2** ×2 | 0 → **2** ×2 (gate too) | 0 → **2** ×2 (gate too) |
+| Hollis (4 / 4 / 5) | Iron Spear | 1 → **3** ×1 | 1 → **3** (gate 0 → **3**) | 0 → **3** (gate 0 → **3**) |
+| Hollis | Steel Spear | 4 ×1 | 4 (gate 1 → **3**) | 2 → **3** (gate 0 → **3**) |
+| Tamsin (6 / 7 / 9) | Iron Spear | 1 → **3** ×2 | 2 → **3** ×2 (gate 0 → **3**) | 1 → **3** ×2 (gate 0 → **3**) |
+| Lead (5 / 5 / 12) | Steel Sword | 3 ×2 | 3 ×2 (gate 0) | 8 ×3 (gate 5) |
+| Joss (— / 3 / 3), Maud | Iron Sword, Iron Gauntlets | 0 | 0 | 0 |
+| Rue (3 / 4 / 9) | Fire | 13 ×2 | 14 ×2 | 19 ×2 |
+
+So Aske takes 6 of her rounds alone to fell a Chapter 2 guard (4 a round),
+7 in Chapter 4, and earns 22 EXP for every shot that lands instead of 2.
+Swords, gauntlets and Maud still do nothing to a guard: armour is still
+the spear's, the bow's, the axe's and magic's job. Chapters 1–4 are
+re-balanced for it by 0333 (every damage on the map changes).
+
+Not chosen (for the record, 0080): bows ignoring 5 Def (Aske 1 a hit in
+Chapter 4, 0 on a gate), a minimum for every hit, softer guards, an
+Armorslayer in the shop, an attack vow for Maud, and Rending Arrow at bow
+rank D.
 
 ## Attack speed (`as_bonus`)
 
@@ -725,6 +810,30 @@ Distance 1.
 
 **Forecast:** Attacker `dmg 11, hit 30, crit 0 (broken)` / Defender
 `dmg 5 ×2, hit 99, crit 8`.
+
+### Example W5 — a bow and a spear pierce a guard (0080)
+
+| | HP | Str | Dex | Spd | Def | Weapon | Rank | Armour | Tags | Terrain |
+|-|----|-----|-----|-----|-----|--------|------|--------|------|---------|
+| Attacker (Aske, archer Lv 3) | 18 | 6 | 8 | 6 | 3 | Iron Bow | D | Leather Vest (Def +2) | — | plain |
+| Defender (guard Lv 5, Chapter 2) | 23 | 8 | 5 | 2 | 11 | Iron Spear | D | Chain Mail (Def +4) | Armored | plain |
+
+Distance 2.
+
+- Attacker: power `6 + 6 = 12`, damage `max(0, 12 − 15) = 0`, raised to
+  the bow minimum **2**. Burden `max(0, 3 + 1 − 6/5) = 3`, AS `6 − 3 = 3`.
+- Defender: burden `max(0, 4 + 3 − 8/5) = 6`, AS `2 − 6 = −4`; diff 7 →
+  Aske **2 strikes**. Iron Spear range 1 → **no counter**.
+
+**Forecast:** Attacker `dmg 2 ×2` / Defender `—`. Both hit: the guard is
+at 19. Aske gets 22 EXP (2 if she had done 0).
+
+Variant W5b: Hollis (Str 9, Def 14 with Chain Mail, Iron Spear) attacks
+the same guard at distance 1: `16 − 15 = 1`, raised to the spear minimum
+**3**, one strike. The guard counters `15 − 14 = 1`, also raised to **3**.
+
+Variant W5c: the guard stands on a gate (Def +3, 18 in all). Aske's
+damage is still **2** a hit: the minimum comes after terrain.
 
 ## Open sub-questions (deferred)
 
