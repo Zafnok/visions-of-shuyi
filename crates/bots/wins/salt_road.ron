@@ -1,0 +1,389 @@
+// The bots' recorded wins of battle salt_road (ticket 0531): one per line, the
+// player's commands phase by phase, each from the army that line's wins of the
+// battles before leave (docs/playtesting.md, *The army*). Written by
+// `cargo xtask bot-wins`: never edit it by hand.
+[
+    // Line 1 (seed 1): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:5),action:UseSkill(skill:("brace"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(4),dest:(x:8,y:3),action:Attack(target:(11),slot:0,active:None,art:None)),
+        Act(unit:(2),dest:(x:7,y:3),action:Attack(target:(9),slot:0,active:None,art:Some(("line_pierce")))),
+        Act(unit:(6),dest:(x:9,y:4),action:Cast(spell:("frost"),target:Unit((10)),active:Some(("overcast")))),
+        Act(unit:(3),dest:(x:10,y:2),action:Wait),
+        Act(unit:(1),dest:(x:7,y:5),action:Attack(target:(13),slot:1,active:None,art:None)),
+        EndPhase,
+    ],
+    // Line 2 (seed 2): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:9,y:4),action:UseSkill(skill:("brace"),target:None)),
+        Act(unit:(6),dest:(x:10,y:5),action:Cast(spell:("fire"),target:Tile((x:11,y:6)),active:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:8,y:5),action:Cast(spell:("frost"),target:Unit((12)),active:Some(("overcast")))),
+        Act(unit:(1),dest:(x:6,y:2),action:Attack(target:(9),slot:1,active:None,art:Some(("guard_break")))),
+        Act(unit:(2),dest:(x:10,y:5),action:Attack(target:(13),slot:0,active:None,art:Some(("unhorse")))),
+        Act(unit:(3),dest:(x:7,y:5),action:UseItem(pack_index:0,target:(6))),
+        Act(unit:(7),dest:(x:5,y:4),action:UseItem(pack_index:1,target:(7))),
+        EndPhase,
+    ],
+    // Line 3 (seed 3): Some(Victory) on turn 3; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:4),action:UseSkill(skill:("brace"),target:None)),
+        Act(unit:(1),dest:(x:7,y:3),action:Wait),
+        EndPhase,
+        // Turn 2
+        Act(unit:(7),dest:(x:8,y:3),action:UseItem(pack_index:1,target:(1))),
+        Act(unit:(6),dest:(x:9,y:3),action:Cast(spell:("fire"),target:Unit((10)),active:None)),
+        Act(unit:(1),dest:(x:6,y:2),action:Attack(target:(9),slot:0,active:None,art:Some(("guard_break")))),
+        EndPhase,
+        // Turn 3
+        Act(unit:(6),dest:(x:10,y:7),action:Wait),
+        EndPhase,
+    ],
+    // Line 4 (seed 4): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:0,active:None,art:Some(("long_thrust")))),
+        Act(unit:(1),dest:(x:11,y:1),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(2),dest:(x:6,y:4),action:UseItem(pack_index:0,target:(2))),
+        Act(unit:(6),dest:(x:9,y:5),action:Wait),
+        Act(unit:(5),dest:(x:9,y:1),action:Cast(spell:("vigil_light"),target:Unit((1)),active:None)),
+        Act(unit:(1),dest:(x:11,y:2),action:Attack(target:(10),slot:0,active:None,art:Some(("flowing_cut")))),
+        Act(unit:(3),dest:(x:7,y:5),action:Attack(target:(13),slot:0,active:None,art:None)),
+        Act(unit:(4),dest:(x:7,y:4),action:Attack(target:(11),slot:0,active:None,art:None)),
+        Act(unit:(7),dest:(x:8,y:4),action:Attack(target:(11),slot:0,active:None,art:Some(("guard_break")))),
+        EndPhase,
+    ],
+    // Line 5 (seed 5): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(6),dest:(x:11,y:4),action:Cast(spell:("fire"),target:Tile((x:12,y:5)),active:None)),
+        Act(unit:(3),dest:(x:5,y:0),action:Wait),
+        Act(unit:(1),dest:(x:11,y:3),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:10,y:3),action:Cast(spell:("fire"),target:Unit((10)),active:None)),
+        Act(unit:(1),dest:(x:11,y:4),action:Attack(target:(12),slot:1,active:None,art:None)),
+        Act(unit:(2),dest:(x:6,y:2),action:Attack(target:(9),slot:1,active:None,art:Some(("unhorse")))),
+        Act(unit:(7),dest:(x:7,y:1),action:Attack(target:(9),slot:0,active:Some(("keen_edge")),art:None)),
+    ],
+    // Line 6 (seed 6): Some(Victory) on turn 3; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:0,active:None,art:Some(("long_thrust")))),
+        Act(unit:(1),dest:(x:7,y:3),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(1),dest:(x:8,y:2),action:UseSkill(skill:("inspire"),target:None)),
+        Act(unit:(6),dest:(x:9,y:4),action:Cast(spell:("cinder_oath"),target:Unit((10)),active:None)),
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(13),slot:0,active:None,art:Some(("unhorse")))),
+        Act(unit:(4),dest:(x:8,y:3),action:Attack(target:(11),slot:0,active:None,art:Some(("pinning_shot")))),
+        Act(unit:(7),dest:(x:8,y:4),action:Attack(target:(11),slot:0,active:None,art:None)),
+        Act(unit:(5),dest:(x:7,y:1),action:Cast(spell:("vigil_light"),target:Unit((1)),active:None)),
+        Act(unit:(3),dest:(x:10,y:6),action:Wait),
+        EndPhase,
+        // Turn 3
+        Act(unit:(6),dest:(x:8,y:7),action:Cast(spell:("fire"),target:Unit((12)),active:None)),
+    ],
+    // Line 7 (seed 7): Some(Victory) on turn 3; lost: []
+    [
+        // Turn 1
+        Act(unit:(7),dest:(x:7,y:6),action:Attack(target:(9),slot:0,active:None,art:Some(("guard_break")))),
+        Act(unit:(3),dest:(x:7,y:5),action:Attack(target:(9),slot:0,active:None,art:Some(("long_thrust")))),
+        EndPhase,
+        // Turn 2
+        Act(unit:(1),dest:(x:7,y:3),action:UseSkill(skill:("inspire"),target:None)),
+        Act(unit:(6),dest:(x:9,y:5),action:Cast(spell:("frost"),target:Unit((12)),active:None)),
+        Act(unit:(2),dest:(x:8,y:4),action:Attack(target:(13),slot:0,active:None,art:Some(("unhorse")))),
+        Act(unit:(7),dest:(x:8,y:5),action:Attack(target:(11),slot:0,active:None,art:Some(("guard_break")))),
+        Act(unit:(3),dest:(x:8,y:6),action:Attack(target:(10),slot:0,active:None,art:None)),
+        Act(unit:(5),dest:(x:7,y:5),action:UseItem(pack_index:1,target:(7))),
+        Act(unit:(4),dest:(x:8,y:3),action:Wait),
+        EndPhase,
+        // Turn 3
+        Act(unit:(6),dest:(x:6,y:3),action:Cast(spell:("frost"),target:Unit((10)),active:None)),
+    ],
+    // Line 8 (seed 8): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(7),dest:(x:7,y:6),action:Attack(target:(9),slot:0,active:None,art:Some(("guard_break")))),
+        Act(unit:(4),dest:(x:8,y:0),action:Wait),
+        Act(unit:(2),dest:(x:8,y:6),action:UseSkill(skill:("brace"),target:None)),
+        Act(unit:(1),dest:(x:7,y:5),action:Wait),
+        Act(unit:(6),dest:(x:9,y:6),action:Cast(spell:("fire"),target:Tile((x:11,y:6)),active:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(5),dest:(x:7,y:3),action:Wait),
+        Act(unit:(6),dest:(x:8,y:5),action:Cast(spell:("cinder_oath"),target:Unit((10)),active:Some(("overcast")))),
+        Act(unit:(1),dest:(x:6,y:8),action:Attack(target:(12),slot:0,active:None,art:None)),
+        Act(unit:(2),dest:(x:6,y:7),action:Attack(target:(13),slot:0,active:None,art:Some(("unhorse")))),
+        Act(unit:(7),dest:(x:7,y:7),action:Attack(target:(11),slot:0,active:None,art:Some(("flowing_cut")))),
+        Act(unit:(3),dest:(x:6,y:0),action:Wait),
+        Act(unit:(4),dest:(x:8,y:4),action:Wait),
+        EndPhase,
+    ],
+    // Line 9 (seed 9): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:5),action:UseSkill(skill:("brace"),target:None)),
+        Act(unit:(6),dest:(x:12,y:3),action:Cast(spell:("fire"),target:Tile((x:12,y:5)),active:None)),
+        Act(unit:(1),dest:(x:8,y:5),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:11,y:4),action:Cast(spell:("fire"),target:Unit((12)),active:Some(("overcast")))),
+        Act(unit:(1),dest:(x:6,y:6),action:Attack(target:(11),slot:1,active:None,art:Some(("guard_break")))),
+        Act(unit:(2),dest:(x:7,y:7),action:UseItem(pack_index:2,target:(2))),
+        Act(unit:(5),dest:(x:6,y:4),action:Cast(spell:("vigil_light"),target:Unit((1)),active:None)),
+        Act(unit:(7),dest:(x:7,y:6),action:UseItem(pack_index:1,target:(1))),
+        Act(unit:(3),dest:(x:8,y:6),action:Attack(target:(10),slot:0,active:None,art:None)),
+        Act(unit:(4),dest:(x:8,y:3),action:Wait),
+        EndPhase,
+    ],
+    // Line 10 (seed 10): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(7),dest:(x:7,y:6),action:Attack(target:(9),slot:0,active:None,art:None)),
+        Act(unit:(2),dest:(x:7,y:5),action:Wait),
+        Act(unit:(1),dest:(x:8,y:6),action:UseItem(pack_index:0,target:(7))),
+        Act(unit:(6),dest:(x:9,y:6),action:Cast(spell:("fire"),target:Tile((x:11,y:6)),active:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:8,y:4),action:Cast(spell:("fire"),target:Unit((10)),active:Some(("overcast")))),
+        Act(unit:(1),dest:(x:10,y:5),action:Attack(target:(12),slot:0,active:None,art:None)),
+        Act(unit:(2),dest:(x:8,y:6),action:Attack(target:(13),slot:0,active:None,art:Some(("unhorse")))),
+    ],
+    // Line 11 (seed 11): Some(Victory) on turn 3; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:0,active:None,art:Some(("long_thrust")))),
+        Act(unit:(1),dest:(x:10,y:2),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(4),dest:(x:6,y:5),action:Attack(target:(9),slot:0,active:None,art:None)),
+        Act(unit:(6),dest:(x:8,y:4),action:Cast(spell:("frost"),target:Unit((9)),active:Some(("overcast")))),
+        Act(unit:(1),dest:(x:11,y:2),action:Attack(target:(10),slot:1,active:None,art:Some(("guard_break")))),
+        Act(unit:(2),dest:(x:8,y:7),action:Attack(target:(11),slot:1,active:None,art:Some(("long_thrust")))),
+        Act(unit:(7),dest:(x:7,y:5),action:Attack(target:(11),slot:0,active:None,art:None)),
+        Act(unit:(3),dest:(x:12,y:2),action:UseItem(pack_index:0,target:(1))),
+        Act(unit:(5),dest:(x:10,y:2),action:Wait),
+        EndPhase,
+        // Turn 3
+        Act(unit:(1),dest:(x:9,y:5),action:Attack(target:(12),slot:0,active:None,art:None)),
+    ],
+    // Line 12 (seed 12): Some(Victory) on turn 3; lost: []
+    [
+        // Turn 1
+        Act(unit:(7),dest:(x:6,y:1),action:Wait),
+        Act(unit:(1),dest:(x:4,y:1),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:6,y:3),action:Cast(spell:("frost"),target:Unit((9)),active:Some(("overcast")))),
+        Act(unit:(2),dest:(x:10,y:4),action:Wait),
+        EndPhase,
+        // Turn 3
+        Act(unit:(6),dest:(x:10,y:3),action:Cast(spell:("frost"),target:Unit((10)),active:Some(("overcast")))),
+        Act(unit:(2),dest:(x:12,y:5),action:Attack(target:(12),slot:1,active:None,art:Some(("unhorse")))),
+        Act(unit:(4),dest:(x:8,y:3),action:Attack(target:(11),slot:0,active:None,art:Some(("close_shot")))),
+        Act(unit:(1),dest:(x:8,y:0),action:UseSkill(skill:("inspire"),target:None)),
+        Act(unit:(7),dest:(x:8,y:4),action:Attack(target:(11),slot:0,active:Some(("keen_edge")),art:None)),
+        Act(unit:(3),dest:(x:11,y:4),action:Attack(target:(12),slot:0,active:None,art:None)),
+        Act(unit:(5),dest:(x:11,y:1),action:Wait),
+        EndPhase,
+    ],
+    // Line 13 (seed 13): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:1,active:None,art:Some(("long_thrust")))),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:9,y:4),action:Cast(spell:("frost"),target:Unit((10)),active:None)),
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(11),slot:0,active:None,art:Some(("line_pierce")))),
+        Act(unit:(7),dest:(x:7,y:3),action:Attack(target:(9),slot:0,active:Some(("keen_edge")),art:None)),
+        Act(unit:(5),dest:(x:4,y:2),action:Wait),
+        Act(unit:(1),dest:(x:7,y:0),action:UseSkill(skill:("inspire"),target:None)),
+        Act(unit:(4),dest:(x:7,y:4),action:Attack(target:(13),slot:0,active:Some(("vault")),art:None)),
+        MoveAfter(unit:(4),to:Some((x:6,y:4))),
+        EndPhase,
+    ],
+    // Line 14 (seed 14): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(7),dest:(x:7,y:6),action:Attack(target:(9),slot:0,active:None,art:None)),
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:0,active:None,art:Some(("long_thrust")))),
+        Act(unit:(5),dest:(x:7,y:4),action:Cast(spell:("vigil_light"),target:Unit((7)),active:None)),
+        Act(unit:(3),dest:(x:10,y:1),action:Wait),
+        Act(unit:(6),dest:(x:10,y:5),action:Wait),
+        Act(unit:(1),dest:(x:8,y:4),action:UseSkill(skill:("inspire"),target:None)),
+        Act(unit:(4),dest:(x:9,y:2),action:Wait),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:8,y:7),action:Cast(spell:("frost"),target:Unit((12)),active:None)),
+        Act(unit:(1),dest:(x:10,y:3),action:Attack(target:(10),slot:0,active:None,art:None)),
+        Act(unit:(2),dest:(x:6,y:7),action:Attack(target:(13),slot:0,active:None,art:Some(("unhorse")))),
+        Act(unit:(7),dest:(x:8,y:5),action:Attack(target:(11),slot:0,active:None,art:Some(("guard_break")))),
+        Act(unit:(4),dest:(x:8,y:4),action:Attack(target:(11),slot:0,active:None,art:None)),
+        Act(unit:(3),dest:(x:9,y:6),action:Attack(target:(11),slot:0,active:None,art:None)),
+    ],
+    // Line 15 (seed 15): Some(Victory) on turn 3; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:2),action:UseSkill(skill:("brace"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(4),dest:(x:11,y:0),action:Wait),
+        Act(unit:(6),dest:(x:8,y:2),action:Cast(spell:("frost"),target:Unit((9)),active:None)),
+        Act(unit:(1),dest:(x:10,y:4),action:Wait),
+        EndPhase,
+        // Turn 3
+        Act(unit:(1),dest:(x:12,y:5),action:Attack(target:(12),slot:0,active:None,art:None)),
+        Act(unit:(6),dest:(x:11,y:2),action:Cast(spell:("frost"),target:Unit((10)),active:None)),
+    ],
+    // Line 16 (seed 16): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:1,active:None,art:Some(("long_thrust")))),
+        Act(unit:(6),dest:(x:12,y:3),action:Cast(spell:("fire"),target:Tile((x:12,y:5)),active:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:8,y:4),action:Cast(spell:("fire"),target:Unit((11)),active:None)),
+        Act(unit:(1),dest:(x:10,y:2),action:Attack(target:(10),slot:1,active:None,art:None)),
+        Act(unit:(2),dest:(x:7,y:3),action:Attack(target:(9),slot:0,active:None,art:Some(("unhorse")))),
+        Act(unit:(3),dest:(x:13,y:3),action:Attack(target:(12),slot:0,active:None,art:None)),
+        Act(unit:(7),dest:(x:7,y:5),action:Attack(target:(13),slot:0,active:None,art:Some(("guard_break")))),
+        Act(unit:(4),dest:(x:7,y:4),action:Attack(target:(13),slot:0,active:None,art:None)),
+    ],
+    // Line 17 (seed 17): Some(Victory) on turn 3; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:3),action:UseSkill(skill:("brace"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(1),dest:(x:6,y:2),action:Attack(target:(9),slot:0,active:None,art:Some(("guard_break")))),
+        Act(unit:(2),dest:(x:6,y:5),action:UseSkill(skill:("brace"),target:None)),
+        Act(unit:(6),dest:(x:10,y:5),action:Wait),
+        EndPhase,
+        // Turn 3
+        Act(unit:(6),dest:(x:8,y:7),action:Cast(spell:("frost"),target:Unit((10)),active:Some(("overcast")))),
+    ],
+    // Line 18 (seed 18): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:1,active:None,art:Some(("long_thrust")))),
+        EndPhase,
+        // Turn 2
+        Act(unit:(2),dest:(x:6,y:5),action:Attack(target:(9),slot:1,active:None,art:Some(("long_thrust")))),
+        Act(unit:(6),dest:(x:9,y:4),action:Cast(spell:("frost"),target:Unit((10)),active:None)),
+        Act(unit:(3),dest:(x:9,y:1),action:Wait),
+        Act(unit:(7),dest:(x:7,y:5),action:UseItem(pack_index:2,target:(2))),
+        Act(unit:(1),dest:(x:8,y:4),action:Attack(target:(11),slot:0,active:None,art:None)),
+        Act(unit:(4),dest:(x:7,y:4),action:Attack(target:(13),slot:0,active:None,art:None)),
+        Act(unit:(5),dest:(x:8,y:3),action:Cast(spell:("heal"),target:Unit((1)),active:None)),
+        EndPhase,
+    ],
+    // Line 19 (seed 19): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(1),dest:(x:10,y:2),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:10,y:3),action:Cast(spell:("frost"),target:Unit((10)),active:Some(("overcast")))),
+        Act(unit:(2),dest:(x:8,y:1),action:Attack(target:(9),slot:0,active:None,art:Some(("long_thrust")))),
+        Act(unit:(7),dest:(x:10,y:0),action:UseItem(pack_index:1,target:(7))),
+        Act(unit:(1),dest:(x:7,y:1),action:Attack(target:(9),slot:1,active:None,art:Some(("guard_break")))),
+        EndPhase,
+    ],
+    // Line 20 (seed 20): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(1),dest:(x:8,y:4),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:9,y:4),action:Cast(spell:("fire"),target:Unit((10)),active:None)),
+        Act(unit:(7),dest:(x:6,y:5),action:UseItem(pack_index:2,target:(7))),
+        Act(unit:(1),dest:(x:7,y:1),action:Attack(target:(9),slot:1,active:None,art:Some(("guard_break")))),
+        EndPhase,
+    ],
+    // Line 21 (seed 21): Some(Victory) on turn 3; lost: []
+    [
+        // Turn 1
+        Act(unit:(1),dest:(x:7,y:3),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:7,y:2),action:Cast(spell:("frost"),target:Unit((9)),active:None)),
+        Act(unit:(2),dest:(x:9,y:2),action:UseSkill(skill:("brace"),target:None)),
+        Act(unit:(1),dest:(x:10,y:5),action:Wait),
+        Act(unit:(3),dest:(x:11,y:5),action:UseItem(pack_index:0,target:(1))),
+        Act(unit:(7),dest:(x:10,y:3),action:Wait),
+        Act(unit:(5),dest:(x:10,y:2),action:Wait),
+        Act(unit:(4),dest:(x:10,y:1),action:Wait),
+        EndPhase,
+        // Turn 3
+        Act(unit:(1),dest:(x:12,y:4),action:Attack(target:(10),slot:1,active:None,art:Some(("flowing_cut")))),
+        Act(unit:(7),dest:(x:10,y:6),action:Attack(target:(12),slot:0,active:Some(("keen_edge")),art:None)),
+        Act(unit:(3),dest:(x:12,y:6),action:Attack(target:(12),slot:0,active:None,art:None)),
+        Act(unit:(4),dest:(x:11,y:5),action:Attack(target:(12),slot:0,active:None,art:Some(("close_shot")))),
+    ],
+    // Line 22 (seed 22): Some(Victory) on turn 3; lost: []
+    [
+        // Turn 1
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:0,active:None,art:Some(("long_thrust")))),
+        Act(unit:(1),dest:(x:9,y:3),action:UseSkill(skill:("inspire"),target:None)),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:11,y:2),action:Cast(spell:("frost"),target:Unit((10)),active:None)),
+        Act(unit:(5),dest:(x:9,y:2),action:UseSkill(skill:("sanctuary"),target:None)),
+        Act(unit:(1),dest:(x:8,y:4),action:Attack(target:(11),slot:1,active:None,art:None)),
+        Act(unit:(3),dest:(x:8,y:2),action:Attack(target:(9),slot:0,active:None,art:None)),
+        Act(unit:(4),dest:(x:6,y:5),action:UseItem(pack_index:2,target:(2))),
+        Act(unit:(2),dest:(x:10,y:6),action:Wait),
+        Act(unit:(7),dest:(x:10,y:3),action:Wait),
+        EndPhase,
+        // Turn 3
+        Act(unit:(6),dest:(x:12,y:5),action:Cast(spell:("frost"),target:Unit((12)),active:Some(("overcast")))),
+    ],
+    // Line 23 (seed 23): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(1),dest:(x:8,y:4),action:UseSkill(skill:("inspire"),target:None)),
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:1,active:None,art:Some(("long_thrust")))),
+        EndPhase,
+        // Turn 2
+        Act(unit:(6),dest:(x:10,y:5),action:Cast(spell:("fire"),target:Unit((11)),active:None)),
+        Act(unit:(2),dest:(x:3,y:5),action:UseItem(pack_index:2,target:(2))),
+        Act(unit:(5),dest:(x:8,y:3),action:Cast(spell:("heal"),target:Unit((1)),active:None)),
+        Act(unit:(1),dest:(x:5,y:3),action:Wait),
+        Act(unit:(7),dest:(x:10,y:3),action:Attack(target:(10),slot:0,active:None,art:None)),
+        Act(unit:(4),dest:(x:3,y:2),action:Wait),
+        Act(unit:(3),dest:(x:9,y:4),action:Attack(target:(10),slot:0,active:None,art:None)),
+        EndPhase,
+    ],
+    // Line 24 (seed 24): Some(Victory) on turn 2; lost: []
+    [
+        // Turn 1
+        Act(unit:(7),dest:(x:7,y:6),action:Attack(target:(9),slot:0,active:None,art:Some(("guard_break")))),
+        Act(unit:(2),dest:(x:7,y:5),action:Attack(target:(9),slot:0,active:None,art:Some(("long_thrust")))),
+        Act(unit:(6),dest:(x:10,y:5),action:Wait),
+        Act(unit:(1),dest:(x:10,y:4),action:Wait),
+        Act(unit:(3),dest:(x:10,y:6),action:Wait),
+        Act(unit:(5),dest:(x:10,y:2),action:Wait),
+        Act(unit:(4),dest:(x:10,y:1),action:Wait),
+        EndPhase,
+        // Turn 2
+        Act(unit:(3),dest:(x:12,y:3),action:Attack(target:(10),slot:0,active:None,art:None)),
+        Act(unit:(1),dest:(x:12,y:5),action:Attack(target:(12),slot:1,active:None,art:Some(("guard_break")))),
+        Act(unit:(6),dest:(x:8,y:7),action:Cast(spell:("frost"),target:Unit((11)),active:Some(("overcast")))),
+        Act(unit:(5),dest:(x:10,y:7),action:UseItem(pack_index:2,target:(5))),
+        Act(unit:(2),dest:(x:7,y:9),action:UseItem(pack_index:1,target:(2))),
+        Act(unit:(4),dest:(x:11,y:4),action:Attack(target:(13),slot:0,active:Some(("vault")),art:None)),
+        MoveAfter(unit:(4),to:Some((x:12,y:4))),
+        Act(unit:(7),dest:(x:11,y:7),action:Attack(target:(13),slot:0,active:None,art:Some(("flowing_cut")))),
+        EndPhase,
+    ],
+]

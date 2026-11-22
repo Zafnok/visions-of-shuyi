@@ -140,7 +140,7 @@ chapters/ch02.md`, *3. The battle*) if the map's story changes; the
 - New dialogue or a new named character: waits for the writer (0766).
 - The dismount rule (0083). Either order: if 0083 is answered, use its
   rule in the turn table; if not, note D/F against it there.
-- The house tile's look (0471).
+- The house tile's look (picked in 0471, imported by 0460).
 
 ## Implementation steps
 

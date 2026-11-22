@@ -322,7 +322,8 @@ recruit joins outside battle.
 
 - **A. World map:** **0322** the house, gate and throne tiles (after
   0037) → **0313** save the village · **0471** a tileset for poor
-  houses and a throne (after 0322; Nick buys) · **0409** the shop
+  houses and a throne (after 0322) → **0460** import the cottages,
+  throne and moving fire (Nick buys) · **0094** houses on fire? · **0409** the shop
   screen → **0473** its music (after 0028) · **0443** the Preparations shop tab (after
   0044) → **0474** a negative bonus reads `Res -3` · **0606** promote and reclass · **1003** supports and camp
   screens (after 0027) → **1007** the world map (after 0409, 0025,
@@ -418,7 +419,7 @@ recruit joins outside battle.
   explains wading · **0078** → **0484** stats easy to see in battle ·
   **0609** a spell learned in battle comes with its uses · **0762**
   voiced lines without long pauses (→ **0757**) · **0763** the dialogue
-  box at the bottom · ~~**0864** the sergeant a little stronger~~ done → **0531** the bots' armies don't hang on one recorded win → **0876** Chapters 3–5 back in their bands (also after 0527 and 0528, Lane I) ·
+  box at the bottom · ~~**0864** the sergeant a little stronger~~ done → ~~**0531** the bots' armies don't hang on one recorded win~~ done (8 lines of the bots' own wins; **0535** one table-driven replay test and `record-wins` after it, off the path) → **0876** Chapters 3–5 back in their bands (also after 0527 and 0528, Lane I) ·
   **0865** the music dips under a voiced line (after engine#2511 →
   engine#2342 → engine#2343).
 - **I. Nick's playtest of the Act 1 build** (2026-11-08). Decisions

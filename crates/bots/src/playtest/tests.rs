@@ -309,7 +309,7 @@ fn an_entrant_plays_its_mode_with_the_seed_of_its_try() {
     assert_eq!(normal.name(), "normal");
     assert_eq!(casual.mode(), GameMode::Casual);
     let started = casual.start(&stage, 9);
-    let mut want = stage.casual.clone();
+    let mut want = stage.setup(GameMode::Casual).clone();
     want.seed = 9;
     assert_eq!(started, BattleState::new(want).0);
     let sides: Vec<Phase> = normal.bots(1).iter().map(|(side, _)| *side).collect();
@@ -319,10 +319,10 @@ fn an_entrant_plays_its_mode_with_the_seed_of_its_try() {
 #[test]
 fn a_fallen_unit_the_cast_doesnt_know_is_named_by_its_id() {
     // A lord falls on the enemy's first strike.
-    let battle = BattleStage {
-        classic: setup(vec![lord(weak(player(1, 5))), rigged(enemy(2, 6))]),
-        casual: setup(vec![]),
-    };
+    let battle = BattleStage::new(
+        setup(vec![lord(weak(player(1, 5))), rigged(enemy(2, 6))]),
+        setup(vec![]),
+    );
     let mut entrant = baseline(GameMode::Classic, &battle);
     let tries = play_tries(&battle, &entrant, 1..2, 5).unwrap();
     assert_eq!(tries[0].measures["lord fell"], 1);
@@ -341,11 +341,11 @@ fn a_try_measures_what_each_player_unit_did() {
     // other player unit does nothing.
     let mut first = weak(enemy(3, 6));
     first.hp = 4;
-    let battle = BattleStage {
-        classic: setup(vec![rigged(player(1, 5)), player(2, 0), first, enemy(4, 8)]),
-        casual: setup(vec![]),
-    };
-    let mut state = BattleState::new(battle.classic.clone()).0;
+    let battle = BattleStage::new(
+        setup(vec![rigged(player(1, 5)), player(2, 0), first, enemy(4, 8)]),
+        setup(vec![]),
+    );
+    let mut state = BattleState::new(battle.setup(GameMode::Classic).clone()).0;
     let events = state
         .apply(&trpg_core::Command::Act {
             unit: UnitId(1),
@@ -411,10 +411,7 @@ fn arb_battle() -> impl Strategy<Value = BattleStage> {
             mode,
             ..setup(units.clone())
         };
-        BattleStage {
-            classic: in_mode(GameMode::Classic),
-            casual: in_mode(GameMode::Casual),
-        }
+        BattleStage::new(in_mode(GameMode::Classic), in_mode(GameMode::Casual))
     })
 }
 

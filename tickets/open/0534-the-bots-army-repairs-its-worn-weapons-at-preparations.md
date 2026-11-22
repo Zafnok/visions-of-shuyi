@@ -60,7 +60,11 @@ None. Verified by tests and the bots' tables in `docs/playtesting.md`.
   ticket's job, not this one's.
 - If a recorded playthrough no longer wins with the repaired army (a
   stronger hit kills earlier and a later command finds no target),
-  re-record it (each `chNN_winnable.rs` header says how) and say so.
+  re-record it and say so. Since 0531 the bots' army comes from their
+  own 24 lines of recorded wins (`crates/bots/wins/`, ADR-0130): the
+  playtest names the battle and line that stopped winning, and `cargo
+  xtask bot-wins <battle>` records it and every battle after it.
+  `trpg-ui`'s `chNN_winnable.rs` fixtures don't move the bots' army.
 
 **Out (do not do):**
 - Buying new weapons or armour for the army, or changing loadouts.

@@ -112,7 +112,7 @@ by playing goes on the Act 1 playtest's checklist (1064).
   placements.
 - **0331** (the Seize objective names its place, "the scriptorium"):
   either order; it adds a name field and doesn't care where the tile is.
-- The throne's look, the gate's, poor houses: 0471 (art Nick buys).
+- The throne's look, the gate's, poor houses: picked in 0471, imported by 0460.
 - The prior's stats, unless 0084 says so.
 
 ## Implementation steps

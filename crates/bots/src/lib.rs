@@ -25,6 +25,9 @@
 //!   ([`TunedBattle`], ticket 0509), the engine's `Knob`s.
 //! - [`generate`]: a skirmish to order, and [`reference_army`], what the
 //!   bots judge it with (ticket 0510).
+//! - [`arrival`]: the armies a player brings to a later chapter, one per
+//!   line of the bots' own recorded [`Wins`] (tickets 0520, 0531), and
+//!   [`record()`], the search that records a win.
 //! - [`can_hurt`] and [`flags`]: each player unit at a battle's start, and
 //!   whether it falls behind (ticket 0527).
 
@@ -35,11 +38,13 @@ mod bot;
 mod measures;
 mod persona;
 mod playtest;
+mod record;
 mod skirmish;
 mod units;
+mod wins;
 
 pub use army::{field_army, reference_army, reference_pack, roster_by, story_chapters, tier_at};
-pub use arrival::{arrival, chapters_before, prepare};
+pub use arrival::{arrival, arrival_with, chapters_before, prepare, start_of, won_on_the_way};
 pub use balance::{TunedBattle, generated_knobs, knobs};
 pub use bot::{BaselineBot, PlayerBot};
 pub use measures::{BattleMeasures, UnitTally};
@@ -47,14 +52,16 @@ pub use persona::{
     Persona, PersonaBot, PersonaOrder, Personas, Scoring, Tally, Weights, order, personas_from_ron,
 };
 pub use playtest::{
-    BattleEntrant, BattleMeasure, BattleStage, Faster, Player, Targets, UNIT_DEALT, UNIT_EXP,
-    UNIT_KILLS, UNIT_LEVELS, is_hold, unit_measure,
+    BattleEntrant, BattleMeasure, BattleStage, Faster, Player, StageArmy, Targets, UNIT_DEALT,
+    UNIT_EXP, UNIT_KILLS, UNIT_LEVELS, is_hold, unit_measure,
 };
+pub use record::{Recorded, Wanted, lost, play, play_others, record};
 pub use skirmish::{Generated, Kind, Request, Units, add_place, add_to_pool, generate};
 pub use units::{
     CAN_HURT_AT_LEAST, EXP_SHARE_DIVISOR, Flag, LEVELS_BEHIND, Standing, can_hurt, enemies_hurt,
     flags,
 };
+pub use wins::{LINES, Wins, file_text, line_of};
 
 #[cfg(test)]
 mod testkit;

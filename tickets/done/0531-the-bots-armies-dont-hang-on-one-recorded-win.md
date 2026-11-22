@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-22
 ---
 
 # 0531 — The bots' armies don't hang on one recorded win
@@ -85,33 +85,15 @@ army a player brings). If the fix changes that meaning (for example an
   (levels, or the bots' rates on a short run), with the margin stated
   in the ADR.
 - `docs/playtesting.md`, *The army*.
-- (2026-11-17 sweep) **One table-driven recorded-win test.** Replace the
-  hand-chained `chNN_winnable.rs`, `skirmishes.rs` and `side_quests.rs`
-  replay tests with one test that walks every battle with a
-  `fixtures/<battle>_winning.ron` in story order (the chapters, then the
-  world map's guards and side quests) and replays each by id. What a win
-  must leave (joins, items, houses, nobody lost) goes in the fixture's
-  header or is read from the data, not a module per battle. The army a
-  battle starts with is built by one shared function, used by this test
-  and by the bots.
 - (2026-11-17 sweep) **Bots find fixtures by id**, or read this ticket's
   new army data, instead of the hand-kept `PLAYTHROUGHS` array
   (`arrival.rs:23`). Adding a battle is its files plus one recorded
   fixture: no new module, no list to extend.
-- (2026-11-17 sweep) **`cargo xtask record-wins [<battle>|--all]`**: runs
-  the `record` step for one battle or for all of them in story order, so a
-  re-record after a balance change is one command.
-- (2026-11-17 sweep) **Relations, not tuned numbers, in public tests.** The
-  replay test reads what it expects from the loaded data (for example the
-  campaign's gold equals the battle's `clear_gold`, the fallen equal the
-  enemies at the start). Any test that must pin an exact tuned value moves
-  to the private repository's `content/tests/` (ADR-0118 §3) with the
-  `content-change` skill. Mechanism tests on `assets-test/` keep their
-  literals.
-- (2026-11-17 sweep) Size: this ticket is now likely past 2,000 changed
-  lines (deletions count). Measure with `cargo xtask pr-size` before
-  coding; if it won't fit, split the table-driven test and
-  `record-wins` into a ticket of their own with `write-ticket` first.
+- (Split to **0535** before coding, 2026-11-21, ADR-0101: with them this
+  ticket was past 2,500 changed lines.) The sweep's other items: one
+  table-driven recorded-win test in place of the per-battle replay
+  modules, `cargo xtask record-wins`, and relations in place of tuned
+  numbers in the public replay tests.
 
 **Out (do not do):**
 - Retuning any chapter (0876 and later tuning tickets; 0876 waits for
@@ -119,11 +101,8 @@ army a player brings). If the fix changes that meaning (for example an
 - The bands, the success rules, the personas' play.
 - The report's 95% intervals (0532). Either order: if 0532 is done, read
   "within the noise" from its intervals; if not, use seeds 1–400.
-- Reaching a battle through one Harness call (1289). **Either order**;
-  if 1289 is done and its helper fits, the table test uses it.
-- Moving public value tests outside the recorded wins (for example
-  `crates/content/tests/it/skills.rs`); only the replay tests' pins are
-  this ticket's.
+- The table-driven replay test, `record-wins` and the replay tests'
+  tuned pins (0535, blocked by this ticket).
 
 ## Implementation steps
 
@@ -136,43 +115,113 @@ army a player brings). If the fix changes that meaning (for example an
 3. Pick the fix, write the ADR, build it, and measure the spread again.
 4. Re-run every story battle's playtest; report the numbers before and
    after in the PR.
-5. (2026-11-17 sweep) Write the table-driven replay test and the shared
-   army builder, switch the bots to it, delete the per-battle modules and
-   `PLAYTHROUGHS`, add `record-wins`, and turn tuned literals into
-   relations (or move them to `content/tests/`). Run
-   `cargo xtask record-wins --all` once and check that every fixture
-   replays.
+5. (2026-11-17 sweep) Switch the bots to their own data, found by id,
+   and delete `PLAYTHROUGHS`. The rest of the sweep's step is 0535's.
 
 ## Acceptance criteria
 
 - [ ] Chapter 2's three success rates move by no more than about 5
       points between armies built from Chapter 1 recordings with
-      different seeds, on seeds 1–400 (numbers in the PR).
-- [ ] No `include_str!` (or any other read) in `crates/bots` names a
+      different seeds, on seeds 1–400 (numbers in the PR). **Partly:**
+      Casual 1 and Normal 3.75 points; Hardcore 9.25 on seeds 1–400,
+      0.75 on 401–800 and 4.25 over all 800 (Completion notes).
+- [x] No `include_str!` (or any other read) in `crates/bots` names a
       path under `crates/ui/tests`.
-- [ ] The tolerance check in Scope runs in CI and passes.
-- [ ] An ADR records the choice; `docs/playtesting.md` says how the army
+- [x] The tolerance check in Scope runs in CI and passes.
+- [x] An ADR records the choice; `docs/playtesting.md` says how the army
       is built.
-- [ ] One test replays every `*_winning.ron` fixture by id;
-      `ls crates/ui/tests/it/ch0*_winnable.rs` finds nothing, and
-      `grep -n PLAYTHROUGHS crates/bots/src` finds nothing.
-- [ ] `cargo xtask record-wins --all` re-records every fixture in story
-      order (and a single battle by id).
-- [ ] `grep -n "gold, 1000" crates/ui/tests/it` finds nothing: the
-      replay test reads tuned values from the data, and any exact pin
-      left is under the private `content/tests/`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `grep -n PLAYTHROUGHS crates/bots/src` finds nothing.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Unit: the army builder (the same content gives the same army; two
   recordings give one army, or the reports say which army each try used).
 - Unit or integration: the tolerance check.
-- Integration: the table-driven replay test over every fixture, and a
-  test that a battle with no fixture is reported by id, not skipped
-  silently.
 - The bots' playtest runs (reported in the PR).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Nick chose the fix, twice** (the ticket's *Nick input*: an army built
+any other way than from played lines changes its meaning). 2026-11-21,
+after the first measure: **"Several playthroughs"** over "Even share",
+"Lead gets more" and "Keep one recording". 2026-11-22, after 8 lines
+still left Chapter 2's Normal 14 points apart between two sets: **"24"**
+over 16 and keeping 8. ADR-0130 records both; it amends ADR-0110.
+
+**What the bots do now** (`docs/playtesting.md`, *The army*):
+
+- The bots keep their own recorded wins, `crates/bots/wins/<battle>.ron`,
+  24 **lines** per battle a later army plays (ch01, ch02, ch03,
+  aldwater, ch04, salt_road). A line is one player's way through the
+  story: its win of a battle is recorded from the army its own wins
+  before leave. `trpg-bots`' build script compiles them in, found by
+  battle id (no `PLAYTHROUGHS` list; nothing read from
+  `crates/ui/tests`). Marked generated in `.gitattributes`.
+- `trpg_bots::arrival` returns one army per line; the playtest's stage
+  holds them all and the try with seed N fields line (N − 1) mod 24 + 1,
+  so `--seed 17 --runs 1` and the `replay` of a kept play field the same
+  army again. The report shows a row per line and each unit's mean
+  level.
+- The recorder's search moved from `trpg-ui`'s tests to
+  `trpg_bots::record`, unchanged. `cargo xtask bot-wins --all` records
+  every line in story order, a thread per line (about 15–30 minutes on 24
+  cores: Chapter 4's search sometimes runs past turn 60, and is then tried
+  again with its seed + 1,000); `cargo xtask bot-wins <battle>` records it
+  and every battle after it.
+- Tolerance check in CI: `arrival::tests::the_lines_halves_bring_armies_alike`,
+  the odd lines against the even ones, every later battle: each unit's
+  mean level within 2 levels, the army's within 0.75 (measured widest:
+  1.25 and 0.43).
+- `.github/playtest-levers.sh` and `playtest-inputs.sh` no longer count
+  the UI's fixtures; the bots' wins are under `crates/bots/`, a lever.
+
+**Measured, Chapter 2, seeds 1–400** (Casual / Normal / Hardcore):
+
+| Army | Chapter 2 |
+| --- | --- |
+| `main`: one recording, Chapter 1 seed 803 | 40.5 / 54 / 62 |
+| one recording, seed 1 | 41 / 67 / 81 |
+| one recording, seed 2 | 46.5 / 69 / 75 |
+| 8 lines, seeds 1–8 | 45 / 59 / 73 |
+| 8 lines, seeds 9–16 | 45 / 45 / 80 |
+| **24 lines, seeds 1–24 (shipped)** | **47 / 55 / 79** |
+| 24 lines, seeds 25–48 | 46 / 58.5 / 70 |
+
+The two 24-line sets are 1, 3.75 and 9.25 points apart. Hardcore again
+on seeds 401–800: 72.25 and 73 (0.75 apart); over all 800 seeds 75.6
+and 71.4. So the first criterion is met for Casual and Normal on seeds
+1–400 and for Hardcore only over 800 seeds: two 400-try runs of the
+same army already differ by about 3.5 points (sd) from their own luck,
+so "no more than about 5" can't hold every time for any army. From the
+16 lines of the 8-line sets, a line's own Normal rate varies by about
+11 points; the mean of 24 by about 2.
+
+**Every later story battle, after** (24 lines, seeds 1–200), against
+**before** (`main` after 0864, seeds 1–100, 0876's table):
+
+| Battle | Before | After | Bands |
+| --- | --- | --- | --- |
+| ch02 | 40.5 / 54 / 62 (1–400) | 47 / 55 / 79 ⚠ (1–400) | 30–55 / 50–75 / 50–75 |
+| ch03 | 68 ⚠ / 70 / 42 ✗ | 67 ⚠ / 78.5 ⚠ / 57 | 30–55 / 50–75 / 50–75 |
+| aldwater | 100 / 50 ✗ / 80 | 100 / 85.5 / 82 | 70–100 / 70–95 / 70–95 |
+| ch04 | 50 / 32 ✗ / 31 ✗ | 64 ⚠ / 47.5 ✗ / 52 | 30–55 / 50–75 / 50–75 |
+| salt_road | 100 / 94 / 96 ⚠ | 100 / 86.5 / 94 | 70–100 / 70–95 / 70–95 |
+| ch05 | 51 / 15 ✗ / 11 ✗ | 59 / 32 ✗ / 22.5 ✗ | 40–70 / 50–75 / 50–75 |
+
+None is blocked. Bringing them back into their bands is 0876's (it
+waits for this ticket, 0527 and 0528); it now tunes against an army
+that holds.
+
+**Split before coding** (ADR-0101): the 2026-11-17 sweep's table-driven
+replay test, `cargo xtask record-wins` and the replay tests' tuned pins
+went to **0535** (blocked by this one). `trpg-ui` may not depend on
+`trpg-bots`, so `crates/ui/tests/it/playthrough.rs` keeps its copy of
+the search until 0535.
+
+- **The agent's starting rules:** none for the game. For the bots: 24
+  lines and the seed-to-line rule above; a failed search retried twice.
+- Engine friction: estimate 550 production lines, measured 749 (1.4×,
+  under 2×); signals: workaround no · third copy no · budget no.
+- PR size: estimate about 2,000 after the split, measured 2,101 before
+  these notes (the 6,400 lines of recorded wins are generated).

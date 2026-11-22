@@ -78,10 +78,19 @@ fn at_chapter_2_aske_cant_hurt_the_hound_guards_and_rue_can() {
     let content = content();
     let def = &content.battles["ch02"];
     let lead = LeadProfile::new("Lead", LeadGender::Male);
-    let setup = crate::arrival(content, def, GameMode::Classic, lead)
+    let lines = crate::arrival(content, def, GameMode::Classic, &lead)
         .unwrap()
         .unwrap_or_else(|| panic!("no army"));
-    let state = BattleState::new(setup).0;
+    // Every army line the bots field (ADR-0130).
+    assert_ne!(lines, []);
+    for setup in lines {
+        aske_cant_hurt_the_guards_and_rue_can(&BattleState::new(setup).0);
+    }
+}
+
+/// [`at_chapter_2_aske_cant_hurt_the_hound_guards_and_rue_can`] on one
+/// army line's start.
+fn aske_cant_hurt_the_guards_and_rue_can(state: &BattleState) {
     let id = |name: &str| {
         let unit = state.units().iter().find(|u| u.name == name);
         unit.unwrap_or_else(|| panic!("no {name}")).id
@@ -92,15 +101,15 @@ fn at_chapter_2_aske_cant_hurt_the_hound_guards_and_rue_can() {
     };
     let guards = [at(Pos::new(8, 6)), at(Pos::new(10, 6))];
     let hurts = |unit, enemy| {
-        let all = enemies_hurt(&state, unit);
+        let all = enemies_hurt(state, unit);
         all.iter().any(|&(e, hurt)| e == enemy && hurt)
     };
     for guard in guards {
         assert!(!hurts(id("Aske"), guard), "Aske hurts {guard:?}");
         assert!(hurts(id("Rue"), guard), "Rue can't hurt {guard:?}");
     }
-    let (aske, of) = can_hurt(&state, id("Aske"));
-    let (rue, _) = can_hurt(&state, id("Rue"));
+    let (aske, of) = can_hurt(state, id("Aske"));
+    let (rue, _) = can_hurt(state, id("Rue"));
     assert!(
         aske + 2 <= of && rue > aske,
         "Aske {aske}/{of}, Rue {rue}/{of}"
