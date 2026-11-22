@@ -322,7 +322,8 @@ recruit joins outside battle.
 
 - **A. World map:** **0322** the house, gate and throne tiles (after
   0037) → **0313** save the village · **0471** a tileset for poor
-  houses and a throne (after 0322; Nick buys) · **0409** the shop
+  houses and a throne (after 0322) → **0460** import the cottages,
+  throne and moving fire (Nick buys) · **0094** houses on fire? · **0409** the shop
   screen → **0473** its music (after 0028) · **0443** the Preparations shop tab (after
   0044) → **0474** a negative bonus reads `Res -3` · **0606** promote and reclass · **1003** supports and camp
   screens (after 0027) → **1007** the world map (after 0409, 0025,
