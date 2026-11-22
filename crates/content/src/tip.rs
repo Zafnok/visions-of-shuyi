@@ -503,7 +503,10 @@ mod tests {
             format!(r#"(tips: [(id: "a", trigger: {trigger}, title: "T", text: "x")])"#)
         };
         assert_eq!(errors(&tip(&longest)), Vec::<String>::new());
-        assert_eq!(errors(&tip(&format!("{longest}A"))).len(), 1);
+        let too_long = errors(&tip(&format!("{longest}A")));
+        assert_eq!(too_long.len(), 1);
+        let expected = "an identifier of at most 32 bytes";
+        assert!(too_long[0].contains(expected), "{too_long:?}");
         assert_eq!(errors(&tip("\"FirstForecast\"")).len(), 1);
         // A name used twice is still caught, by its name.
         let twice = r#"(tips: [(id: "a", trigger: NewOne, title: "T", text: "x"),
