@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-21
 ---
 
 # 0470 — The forecast's kill mark is a sprite from an asset file
@@ -54,11 +54,11 @@ None. The skull must look exactly as it does now.
 
 ## Acceptance criteria
 
-- [ ] `grep -rn "SKULL" crates/ui/src` finds nothing outside tests.
-- [ ] The forecast snapshot with a killing strike is unchanged (or, if
+- [x] `grep -rn "SKULL" crates/ui/src` finds nothing outside tests.
+- [x] The forecast snapshot with a killing strike is unchanged (or, if
       sprites render differently in snapshots, a test checks the sprite
       item's place and size, and the PR says why the snapshot moved).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -66,5 +66,30 @@ None. The skull must look exactly as it does now.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- The skull is `assets/images/kill_mark.png` (`KILL_MARK_PATH`), 8×9,
+  white where the old `SKULL` pattern had an `X` (46 pixels) and
+  see-through elsewhere. Our own picture, made from the code's pattern:
+  no `THIRD_PARTY_ASSETS.md` row.
+- `forecast::kill_mark` returns the sprite item: the whole picture,
+  `Paint::Solid(color)` (a silhouette in `hp_low`, as the rectangles
+  were), `Layer::Over`, 4 pixels down its cell as before
+  (`KILL_MARK_TOP` replaces `SKULL_TOP`: it is the place, not the
+  pattern). `SKULL` and the rectangle loop are gone.
+- **The one-bit skin drew the same pattern** (it called `skull` too), so
+  it gets the same fix, as the ticket's scope says. Its renderer draws a
+  sprite only from a one-bit picture in the Playdate's bundle (else a grey
+  box), so `playdate_images` gains a `mark` kind for the paths in
+  `MARKS` (only the kill mark: the other `images/` pictures are the sprite
+  map skins' and the hints', which the Playdate doesn't show). A test in
+  `trpg-playdate` draws it through the real one-bit pictures and checks
+  the screen inks exactly the skull's 46 pixels.
+- Snapshots: the three forecast snapshots with a kill changed only in
+  their item list: the 16 `over … hp_low` rectangles became one `over
+  sprite 632,y 8x9 images/kill_mark.png solid=hp_low` line at the
+  rectangles' top-left corner. No cell changed. Tests check the sprite's
+  place, size and paint in both skins.
+- No gameplay rule decided. Nothing for the Act 1 playtest beyond the
+  skull looking as it did.
+- Every pack's file lists in `shuyi.ron` name the new picture (the
+  disclosure test fails on a file it doesn't list).
+- Friction: estimate 40 production lines, measured 38: under 2×.
