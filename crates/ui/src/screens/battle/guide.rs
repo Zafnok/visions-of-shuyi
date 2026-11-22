@@ -605,3 +605,27 @@ impl Guide {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Ticket 1296, 1291: her set is built at a frame's end only while the
+    /// battle stays on top or pushes a scene, never as another screen
+    /// goes over it.
+    #[test]
+    fn the_set_is_built_only_on_top_or_pushing_a_scene() {
+        let (c, lines) = crate::tips::voice::testing::voiced();
+        let m = Moment {
+            over: Over::Nothing,
+            phase: Phase::Player,
+            decided: false,
+            browsing_clear: true,
+        };
+        let mut guide = Guide::default();
+        assert!(guide.keep_due(true, m, &c), "on top, first frame");
+        assert!(!guide.keep_due(false, m, &c), "a screen over it");
+        guide.pushing_scene(lines);
+        assert!(guide.keep_due(false, m, &c), "a scene it plays");
+    }
+}

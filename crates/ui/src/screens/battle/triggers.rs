@@ -162,7 +162,7 @@ impl BattleScreen {
             return fired;
         }
         let browsing = matches!(self.mode, Mode::Idle { .. });
-        if self.no_unit_left() && browsing {
+        if map_menu::ready_players(state) == 0 && browsing {
             fired.push(TipTrigger::NoUnitLeft);
         }
         let acted = |u: &Unit| u.faction == Faction::Player && u.acted;
@@ -176,14 +176,6 @@ impl BattleScreen {
             fired.push(TipTrigger::ThreatArrowsShown);
         }
         fired
-    }
-
-    /// Whether, in the player's phase of a battle still on, every unit of
-    /// the player's has acted.
-    fn no_unit_left(&self) -> bool {
-        self.state.phase() == Phase::Player
-            && self.state.outcome().is_none()
-            && map_menu::ready_players(&self.state) == 0
     }
 
     /// Whether `unit` has a skill it can use now (a passive or an active).

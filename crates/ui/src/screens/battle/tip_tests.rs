@@ -1160,3 +1160,18 @@ fn a_forecast_with_one_weapon_has_no_swap_tip() {
     assert!(!seen.contains(&TipTrigger::FirstWeaponSwap), "{seen:?}");
     assert!(seen.contains(&TipTrigger::FirstForecast), "{seen:?}");
 }
+
+/// Ticket 1291: the enemy phase's tip, which shows over its banner, still
+/// waits while something busy is over the map (here the battle's notes).
+#[test]
+fn the_enemy_phase_tip_waits_for_the_notes() {
+    let mut c = ctx();
+    c.game.tips_enabled = true;
+    let mut s = BattleScreen::new(quick_battle(&c.game.content).unwrap());
+    s.guide.tips.fire(TipTrigger::FirstEnemyPhase);
+    s.guide.tips.absorb(&mut c);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstEnemyPhase));
+    s.queue.push_front(Queued::Notes);
+    assert!(s.notes_open());
+    assert_eq!(s.shown_tip(), None);
+}
