@@ -1073,6 +1073,7 @@
         source: "Seize the objective",
         text: "SEIZE THE OBJECTIVE",
     ),
+    (key: "battle.objective.seize_at", source: "Seize {place}", text: "SEIZE {place}"),
     (
         key: "battle.objective.survive",
         source: "Survive {turns} turns",
