@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0849"]
 nick_input: none
-completed:
+completed: 2026-11-21
 ---
 
 # 0331 — Seize objective names its place
@@ -66,11 +66,11 @@ one text branch), like 0324's.
 
 ## Acceptance criteria
 
-- [ ] Chapter 3's objective line reads `Seize the scriptorium`; a Seize
+- [x] Chapter 3's objective line reads `Seize the scriptorium`; a Seize
       battle without a name keeps `Seize the <terrain>`.
-- [ ] A name on a battle whose objective isn't Seize, or an empty one,
+- [x] A name on a battle whose objective isn't Seize, or an empty one,
       is a content error.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -78,5 +78,26 @@ one text branch), like 0324's.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **One field for both objectives** (the ticket left it open): 0324's
+  `exit_name` became `place_name`, the place an objective names, read
+  on an `Escape` (where the exit leads) or a `Seize` (the Seize point)
+  battle. Escape and Seize never share a battle, so one field carries
+  both through the same path (`BattleDef::place_name`,
+  `BattleScreen::with_place_name`, `objective::lines`) instead of a
+  second copy of each; no shipped battle used `exit_name` yet (Chapter
+  6's comes with 0852), so only `test_escape` changed. Its translation
+  key is now `battles.<id>.place` (was `.exit`); `Lang::battle_place` and
+  `Words::battle_place` translate it (`place_name` was already the world
+  map's).
+- The loader's check: a `place_name` only with `Escape` or `Seize`, not
+  empty, one line (`place_name: only an escape or seize map names its
+  place`).
+- `objective_text`: a Seize with a name reads `Seize {place}`
+  (`battle.objective.seize_at`, in `en/ui.ron` and the `test` pack);
+  without one, the terrain line as before (`Seize the Throne`).
+- Chapter 3's battle file (private repository) names `the scriptorium`.
+- Tests: the content check (accepts on Seize, rejects elsewhere, empty,
+  two lines), `objective_text` with and without a name, and Chapter 3's
+  line from its content (skips without the game's content).
+- Friction: estimate 50, measured 36 added (0.7×).
+- No gameplay rules decided.

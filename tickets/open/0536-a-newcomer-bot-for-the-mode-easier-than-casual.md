@@ -1,5 +1,5 @@
 ---
-id: "0533"
+id: "0536"
 title: "A newcomer bot that plays the mode easier than Casual"
 type: feature
 milestone: M4 Enemy AI
@@ -11,7 +11,7 @@ nick_input: answer-first
 completed:
 ---
 
-# 0533 — A newcomer bot that plays the mode easier than Casual
+# 0536 — A newcomer bot that plays the mode easier than Casual
 
 ## Context
 

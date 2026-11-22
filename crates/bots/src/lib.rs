@@ -25,6 +25,9 @@
 //!   ([`TunedBattle`], ticket 0509), the engine's `Knob`s.
 //! - [`generate`]: a skirmish to order, and [`reference_army`], what the
 //!   bots judge it with (ticket 0510).
+//! - [`arrival`]: the armies a player brings to a later chapter, one per
+//!   line of the bots' own recorded [`Wins`] (tickets 0520, 0531), and
+//!   [`record()`], the search that records a win.
 
 mod army;
 mod arrival;
@@ -33,18 +36,24 @@ mod bot;
 mod measures;
 mod persona;
 mod playtest;
+mod record;
 mod skirmish;
+mod wins;
 
 pub use army::{field_army, reference_army, reference_pack, roster_by, story_chapters, tier_at};
-pub use arrival::{arrival, chapters_before, prepare};
+pub use arrival::{arrival, arrival_with, chapters_before, prepare, start_of, won_on_the_way};
 pub use balance::{TunedBattle, generated_knobs, knobs};
 pub use bot::{BaselineBot, PlayerBot};
 pub use measures::BattleMeasures;
 pub use persona::{
     Persona, PersonaBot, PersonaOrder, Personas, Scoring, Tally, Weights, order, personas_from_ron,
 };
-pub use playtest::{BattleEntrant, BattleMeasure, BattleStage, Faster, Player, Targets, is_hold};
+pub use playtest::{
+    BattleEntrant, BattleMeasure, BattleStage, Faster, Player, StageArmy, Targets, is_hold,
+};
+pub use record::{Recorded, Wanted, lost, play, play_others, record};
 pub use skirmish::{Generated, Kind, Request, Units, add_place, add_to_pool, generate};
+pub use wins::{LINES, Wins, file_text, line_of};
 
 #[cfg(test)]
 mod testkit;

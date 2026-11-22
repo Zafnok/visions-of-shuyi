@@ -44,7 +44,7 @@ the PR's changed lines against the ~3,000 limit; warns, never fails (ADR-0101)\n
 the game's tool program, trpg-tools, runs these (they build the game; cargo xtask <command>\n\
 still runs each, and `cargo run -p trpg-tools -- --help` lists them):\n  \
 skill-pack, sfx, test-tileset, lettering, title-art,\n  \
-map-sprite-import, battler-import, tileset-import, playtest, skirmish, portrait-import,\n  \
+map-sprite-import, battler-import, tileset-import, playtest, bot-wins, skirmish, portrait-import,\n  \
 lines, check-script, story-import, voice, voice-test-clips, icon, playdate, playdate-images,\n  \
 readme-pictures, and Shuyi's tools: shuyi (`cargo shuyi`), check-keys, check-text,\n  \
 lang-status, font-atlas, frame-png, web, private-assets (ADR-0129)";
@@ -930,7 +930,8 @@ mod tests {
     }
 
     /// Ticket 0173: comments, in-file tests and the content no battle reads
-    /// don't play; code, a new file and a recorded playthrough do.
+    /// don't play; code, a new file and the bots' recorded wins do, the UI's
+    /// replay fixtures don't (0531).
     #[cfg(unix)]
     #[test]
     fn playtest_levers_skip_comments_tests_and_presentation() {
@@ -956,7 +957,7 @@ mod tests {
             ("crates/content/src/credits.rs", "pub fn credits() {}\n"),
             ("crates/content/src/lang/data_tests.rs", "fn a() {}\n"),
             ("assets/data/terrain.ron", TERRAIN),
-            ("crates/ui/tests/it/fixtures/ch01_winning.ron", WINNING),
+            ("crates/bots/wins/ch01.ron", WINNING),
         ];
         let plays = |name, changes: &[(&str, Option<&str>)]| {
             let out = levers_output(name, &files, changes);
@@ -998,8 +999,17 @@ mod tests {
         ));
         assert!(plays("deleted", &[("crates/core/src/combat.rs", None)]));
         let winning = WINNING.replace("[1]", "[2]");
-        let fixture = "crates/ui/tests/it/fixtures/ch01_winning.ron";
+        let fixture = "crates/bots/wins/ch01.ron";
         assert!(plays("winning", &[(fixture, Some(&winning))]));
+        // trpg-ui's replay fixtures are no army's (0531).
+        let replay = (
+            "crates/ui/tests/it/fixtures/ch01_winning.ron",
+            Some(
+                "[]
+",
+            ),
+        );
+        assert!(!plays("replay", &[replay]));
         // A test module that isn't at column 0 is code.
         let nested = COMBAT.replace("a + 1\n}", "a + 1\n    #[cfg(test)]\n    mod x {\n    }\n}");
         assert!(plays(

@@ -572,10 +572,10 @@ fn the_test_pack_translates_a_little_of_every_kind() {
         lang.battle_note(&test, &notes[1])
             .starts_with("SEIZE THE FORT")
     );
-    let exit = content.battles["test_escape"].exit_name.as_deref();
+    let exit = content.battles["test_escape"].place_name.as_deref();
     let exit = exit.unwrap_or_default();
-    assert_eq!(lang.exit_name(&test, exit), "THE EAST ROAD");
-    assert_eq!(lang.exit_name(&en, exit), "the east road");
+    assert_eq!(lang.battle_place(&test, exit), "THE EAST ROAD");
+    assert_eq!(lang.battle_place(&en, exit), "the east road");
 }
 
 #[test]

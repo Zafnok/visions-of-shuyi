@@ -1,5 +1,5 @@
 ---
-id: "0094"
+id: "0099"
 title: "Decide: deep water in rivers, and who can swim"
 type: design-decision
 milestone: Design decisions
@@ -11,7 +11,7 @@ nick_input: decision
 completed:
 ---
 
-# 0094 — Decide: deep water in rivers, and who can swim
+# 0099 — Decide: deep water in rivers, and who can swim
 
 ## Context
 

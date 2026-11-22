@@ -43,33 +43,44 @@ playtest and the autobalance build it the same way) is, for a battle:
 - **with a `bots_army`** (a generated skirmish, a side quest, an optional
   fixed skirmish): the reference army (*Generating skirmishes*);
 - **of a story chapter after the first, or a fixed skirmish that guards
-  the way to one:** the army the chapters before it leave (ticket 0520,
-  `crates/bots/src/arrival.rs`; the guards, 1071). The campaign starts
-  as New Game; each earlier chapter's battle is won by its **recorded
-  playthrough** (the player's commands in
-  `crates/ui/tests/it/fixtures/<battle>_winning.ron`, which `trpg-ui`'s
-  `ch0N_winnable` tests play in the real game), the enemy playing as in
+  the way to one:** the armies the chapters before it leave, **one per
+  line** of the bots' recorded wins (tickets 0520 and 0531,
+  `crates/bots/src/arrival.rs`; the guards, 1071; ADR-0130). A line is one
+  player's way through the story, a winning playthrough of each battle on
+  the way (the player's commands in `crates/bots/wins/<battle>.ron`, 24
+  lines a file), each recorded from the army that line's wins before it
+  leave. For each line the campaign starts as New Game; each earlier
+  chapter's battle is won by that line's recording, the enemy playing as in
   the game, and its result applied as the game applies it: the EXP, every
   rewind charge unused (their bonus EXP), the clear gold and items, the
   pack's leftovers back in the stock, everyone rested. Whoever a scene
   recruits by the chapter joins fresh from the character data. On a
   world map, the fixed skirmishes that guard the way to a chapter's story
-  battle are won first, each by its recorded playthrough in the same way
-  (ticket 1071: every player wins them; `aldwater` before
-  Chapter 4, `salt_road` before Chapter 5), so a guard is played with
-  the army its chapter brings, after the guards before it. Then the
-  battle's Preparations: the pack (below), nothing else (weapons and
-  armour stay where they are);
+  battle are won first, each by its line's recording in the same way
+  (ticket 1071: every player wins them; `aldwater` before Chapter 4,
+  `salt_road` before Chapter 5), so a guard is played with the army its
+  chapter brings, after the guards before it. Then the battle's
+  Preparations: the pack (below), nothing else (weapons and armour stay
+  where they are). **Each try fields one line's army**: try N fields line
+  (N − 1) mod 24 + 1, so 400 tries play each line 16 or 17 times and
+  `--seed 17 --runs 1` plays try 17's army again. No single recording's
+  luck (who got the kills) sets the chapter's numbers (Nick, 2026-11-21:
+  "Several playthroughs"; 24 of them, 2026-11-22);
 - **else** (Chapter 1, the debug Quick Battle, the test battles): the
   characters of its player slots fresh from the character data, with the
   battle's default pack.
 
-The same content always gives the same army. Every report says which one
-it was on its second line, Classic's units with their class and level,
-the pack and the gold:
+The same content and recorded wins always give the same armies. Every
+report says which they were from its second line, Classic's units with
+their class and level, the pack and the gold; for the lines, a row each
+and every unit's mean level:
 
 ```
-army · campaign after ch01 · Lead exile lv 1, retainer guard lv 4, … · pack potion, potion, potion · gold 100
+army · fresh from the character data · Lead exile lv 1, retainer guard lv 4, … · pack potion, potion · gold 0
+army · campaign after ch01 · 24 lines: try N fields line (N − 1) mod 24 + 1
+  line 1 · Lead exile lv 5, Hollis Marr guard lv 4, … · pack potion, potion, potion · gold 100
+  …
+  mean · Lead 4.6, Hollis Marr 3.4, …
 ```
 
 **The pack in Preparations** (*the agent's starting rule*): first the
@@ -79,10 +90,26 @@ that the gold still pays for, bought and packed. So Chapter 2's bots,
 whose Chapter 1 playthrough drank its three Potions, buy three with 900
 of the 1000 gold it gave (Potions cost 300) and bring them.
 
-A recorded playthrough the rules no longer win (a balance change to an
-earlier chapter) stops the playtest of every later chapter with an error
-naming it: record a new one (its test says how) and look at what the
-change did to the chapter.
+**Recording the lines.** `cargo xtask bot-wins --all` records every
+battle's 24 lines in story order, each line on a thread of its own (the
+recorder's search: `trpg_bots::record`, the best of 300 tries at each
+Player phase, judged after the enemy has answered; about a minute a
+battle, so about 15 minutes in all on 24 cores). A search that finds no
+win (Chapter 4's can wander past turn 60) is tried again with its seed
+plus 1,000, then 2,000. `cargo xtask bot-wins ch03` records Chapter 3 and every battle
+after it on the way, since their armies change with it, and keeps the
+earlier ones. `--seed` and `--out` record another set of lines elsewhere,
+to compare (ticket 0531's measure). A recording the rules no longer win (a
+balance change to an earlier chapter) stops the playtest of every later
+chapter with an error naming the battle and the line: record them again
+and look at what the change did to the chapter. `trpg-ui`'s replay
+fixtures (`crates/ui/tests/it/fixtures/<battle>_winning.ron`) are the
+replay tests' own: re-recording one moves no army.
+
+**Within the noise.** A test keeps it so in CI
+(`trpg_bots`, `the_lines_halves_bring_armies_alike`): the odd lines and the
+even ones (recorded with different seeds) bring every later battle armies
+whose units' mean levels are within the margin ADR-0130 states.
 
 ### How the personas think
 

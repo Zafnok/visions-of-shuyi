@@ -68,7 +68,7 @@ Answers go to `docs/design/death-and-difficulty.md` and
 
 ## Scope
 
-**In:** the questions, the answers recorded, 0880 and 0533 adjusted.
+**In:** the questions, the answers recorded, 0880 and 0536 adjusted.
 
 **Out (do not do):** code.
 
@@ -76,13 +76,13 @@ Answers go to `docs/design/death-and-difficulty.md` and
 
 1. Read the design docs above and the bots' Chapter 1 results
    (`crates/bots/tests/ch01_difficulty.rs`) for numbers to show Nick.
-2. Ask with `ask-nick`; record; adjust 0880 and 0533.
+2. Ask with `ask-nick`; record; adjust 0880 and 0536.
 
 ## Acceptance criteria
 
 - [ ] The design docs say what the new mode changes, its name, where
       it's picked, and the new bot's band.
-- [ ] 0880 and 0533 match.
+- [ ] 0880 and 0536 match.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
