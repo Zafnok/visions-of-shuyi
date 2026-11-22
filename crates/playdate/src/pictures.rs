@@ -160,6 +160,59 @@ mod tests {
         }
     }
 
+    /// The forecast's kill mark (ticket 0470), drawn as a silhouette in the
+    /// text's black, inks exactly the pixels its PNG shows.
+    #[test]
+    fn the_kill_mark_draws_its_pixels_in_one_colour() {
+        let path = trpg_content::image::KILL_MARK_PATH;
+        let (table, pictures, bits) = on_the_playdate(|| {
+            let table = trpg_content::image::load().unwrap_or_default();
+            let pictures = Pictures::new(&table);
+            (
+                table,
+                pictures,
+                bundle::lent_bytes(path).unwrap_or_default(),
+            )
+        });
+        assert!(image(&table, &pictures, path).is_some());
+        // Its mask is the PNG's pixels that show (`playdate_images`' test).
+        let bitmap = Bitmap::parse(bits).unwrap();
+        let mask = bitmap.mask().unwrap();
+        let stride = Bitmap::stride(bitmap.width());
+        let white = Rgb::new(255, 255, 255);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE, Cell::new(' ', white, white));
+        let (w, h) = (i32::from(bitmap.width()), i32::from(bitmap.height()));
+        assert_eq!((w, h), (8, 9));
+        let mut sprite = Sprite::new(
+            table.id(path).unwrap(),
+            Rect::new(0, 0, w, h),
+            Rect::new(8, 20, w, h),
+            Layer::Over,
+        );
+        let palette =
+            trpg_content::playdate_palette::load_playdate(&trpg_content::PaletteDef::default())
+                .unwrap();
+        let black = Rgb::from(palette.colors["text"]);
+        sprite.paint = trpg_ui::glyph_buffer::Paint::Solid(black);
+        buf.add_sprite(sprite);
+        let atlas = trpg_content::font::load().unwrap();
+        let font_bits = bundle::lent_bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
+        let font = Font::new(&atlas, font_bits).unwrap();
+        let mut frame = Box::new([0u8; FRAME_BYTES]);
+        render(&buf, &font, &pictures, &playdate_map().unwrap(), &mut frame);
+        let mut inked = 0;
+        for y in 0..h {
+            for x in 0..w {
+                let (row, col) = (usize::try_from(y).unwrap(), usize::try_from(x).unwrap());
+                let shows = mask[row * stride + col / 8] >> (7 - col % 8) & 1 == 1;
+                assert_eq!(!is_white(&frame, 8 + x, 20 + y), shows, "({x}, {y})");
+                inked += i32::from(shows);
+            }
+        }
+        // The skull's 46 pixels, not a grey box.
+        assert_eq!(inked, 46);
+    }
+
     /// A converted portrait drawn at twice its image's size covers 64 × 64
     /// screen pixels, one picture pixel each.
     #[test]

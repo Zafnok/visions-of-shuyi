@@ -14,7 +14,6 @@ use shuyi_ui::text::StyledText;
 
 use super::{fill_placeholders, fill_styled};
 use crate::screen::Ctx;
-use crate::screens::battle::lessons::EndAnswer;
 use crate::widgets::help::styled_lines;
 
 /// Names-table id of the guide's name, the box's title (0731).
@@ -119,6 +118,32 @@ pub struct LessonItemView {
     pub label: StyledText,
     /// Whether it is done (ticked).
     pub done: bool,
+}
+
+/// An answer to the box at the end of the lessons (0465), in the box's order:
+/// the cursor starts on the first.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EndAnswer {
+    /// The battle goes on.
+    KeepGoing,
+    /// Back to turn 1; the lessons stay done.
+    Restart,
+    /// Back to turn 1; this battle's lessons show again.
+    RestartWithLessons,
+}
+
+impl EndAnswer {
+    /// Every answer, in the box's order.
+    pub const ALL: [Self; 3] = [Self::KeepGoing, Self::Restart, Self::RestartWithLessons];
+
+    /// Text key of its label.
+    pub fn text_key(self) -> &'static str {
+        match self {
+            Self::KeepGoing => "battle.lessons_end.keep_going",
+            Self::Restart => "battle.lessons_end.restart",
+            Self::RestartWithLessons => "battle.lessons_end.restart_with_lessons",
+        }
+    }
 }
 
 /// The guide's box at the end of the lessons (0465): the tip box, with

@@ -79,8 +79,9 @@ Bow 15–16, still **0** against Def 15–16. Rue's Mag is about 12 at Lv 8
 
 **Why Aske falls behind** (0081 has the EXP side): a combat that does no
 damage gives **2 EXP** (`progression.rs` ~:100). Aske Lv 5 hitting a
-Lv 6 guard for even 1 would get **20**; killing it, **66**. Each guard
-Rue kills at Lv 8 gives her **46**.
+Lv 6 guard for even 1 would get **22**; killing it, **72**. Each guard
+Rue kills at Lv 8 gives her **38** (0081's steeper formula, decided
+2026-11-21; it was 20, 66 and 46).
 
 **What already exists that bites armour:**
 - Axes: every hit does at least 5, and **Armor Cleave** (axe rank D,
@@ -175,9 +176,10 @@ to three non-mage attacks" as the target the bots check.
 
 **Out (do not do):**
 - Building it: ticket **0333**; the bots' player-side report: **0527**.
-- EXP for a unit above its enemy's level (0081). Either order: if 0081
-  is answered first, use its formula in the EXP numbers here; if not,
-  use today's and note it in 0081.
+- EXP for a unit above its enemy's level (0081, decided 2026-11-21):
+  use its formula (`progression.md`, *EXP formulas*) for the EXP numbers
+  here. *Why Aske falls behind* uses it; option A's "22 EXP" (Aske Lv 2 on a
+  Chapter 2 guard) was worked with the old one, so redo it.
 - Who wields the Houndmaster's Axe (0079). Either order: show its pick
   here if answered, else list "an axe user" as part of option H.
 - Tamsin's buff (0864) and the lead's (0846).

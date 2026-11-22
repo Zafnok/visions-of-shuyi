@@ -12,12 +12,16 @@
 
 use crate::prelude::*;
 use shuyi_ui::text::StyledText;
+use trpg_content::ImageTable;
+use trpg_content::image::KILL_MARK_PATH;
 use trpg_core::{Side, StatValue};
 
 use super::{TEXT_X, print_clipped};
 use crate::color::{Rgb, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, PanelLook, Rect};
+use crate::glyph_buffer::{
+    BoxStyle, Cell, GlyphBuffer, Layer, Overlay, Paint, PanelLook, PxRect, Rect, Sprite,
+};
 use crate::screen::{Ctx, loop_clock_s};
 use crate::screens::battle::layout::SIDE_PANEL;
 use crate::screens::battle::units::{faction_color, lit_fill, meter_cells};
@@ -133,36 +137,25 @@ pub fn uses_after_name(view: &ForecastView, side: &ForecastSideView, by: Side) -
 /// Column of the strike numbers, between the two sides.
 pub const NUMBER_X: i32 = SIDE_PANEL.x + 14;
 
-/// The kill mark: a skull, one cell wide, `X` = a pixel of the mark.
-// check-text: not player text (a picture)
-pub const SKULL: [&str; 9] = [
-    "..XXXX..", ".XXXXXX.", "XXXXXXXX", "X..XX..X", "X..XX..X", "XXX..XXX", ".XXXXXX.", ".X.XX.X.",
-    "..XXXX..",
-];
+/// Pixel row of the kill mark's top inside its cell: as the skull always
+/// sat, 4 down in the PC's 16-pixel cell.
+const KILL_MARK_TOP: i32 = 4;
 
-/// Pixel row of the skull's top inside its cell.
-const SKULL_TOP: i32 = 4;
-
-/// The skull drawn in the cell at `(x, y)` in `color`: one overlay per run
-/// of pixels in a row.
-pub fn skull(x: i32, y: i32, color: Rgb) -> Vec<Overlay> {
+/// The kill mark, a skull ([`KILL_MARK_PATH`]), in the cell at `(x, y)`
+/// as a silhouette in `color`, at its picture's own size: none if `images`
+/// has no such picture.
+pub fn kill_mark(images: &ImageTable, x: i32, y: i32, color: Rgb) -> Option<Sprite> {
+    let id = images.id(KILL_MARK_PATH)?;
+    let info = images.info(id)?;
+    let (w, h) = (
+        i32::try_from(info.width).ok()?,
+        i32::try_from(info.height).ok()?,
+    );
     let (cw, ch) = ConsoleSpec::PC.cell_px();
-    let mut runs = Vec::new();
-    for (row, line) in (0..).zip(SKULL) {
-        let mut start = None;
-        for (col, px) in (0..).zip(line.chars().chain(['.'])) {
-            match (px == 'X', start) {
-                (true, None) => start = Some(col),
-                (false, Some(s)) => {
-                    let rect = Rect::new(x * cw + s, y * ch + SKULL_TOP + row, col - s, 1);
-                    runs.push(Overlay::new(rect, color, Layer::Over));
-                    start = None;
-                }
-                _ => {}
-            }
-        }
-    }
-    runs
+    let dest = PxRect::new(x * cw, y * ch + KILL_MARK_TOP, w, h);
+    let mut sprite = Sprite::new(id, PxRect::new(0, 0, w, h), dest, Layer::Over);
+    sprite.paint = Paint::Solid(color);
+    Some(sprite)
 }
 
 /// Widths of the rows of each triangle of the swap mark, top to bottom,
@@ -421,8 +414,9 @@ fn paint_strikes(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) -> i32 {
             print_clipped(buf, (dmg_x + 6, y), 1, "!", c(UiColor::TextHighlight));
         }
         if s.kills {
-            for o in skull(dmg_x + 7, y, c(UiColor::HpLow)) {
-                buf.add_overlay(o);
+            let images = &ctx.game.content.images;
+            if let Some(mark) = kill_mark(images, dmg_x + 7, y, c(UiColor::HpLow)) {
+                buf.add_sprite(mark);
             }
         }
     }

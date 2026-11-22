@@ -736,10 +736,10 @@ fn the_enemy_phase_keeps_a_lesson_waiting_for_a_unit() {
     let mut s = quick();
     s.send(&Command::EndPhase);
     assert_eq!(s.state().phase(), Phase::Enemy);
-    s.lessons.fire(TipTrigger::FirstBattleStart);
-    s.lessons.absorb(&c, None, s.state().turn());
-    s.settle_lessons(false);
-    assert_eq!(s.lessons.current(), Some("unit"));
+    s.guide.lessons.fire(TipTrigger::FirstBattleStart);
+    s.guide.lessons.absorb(&c, None, s.state().turn());
+    s.guide.settle_lessons(&s.state, &s.mode, false);
+    assert_eq!(s.guide.lessons.current(), Some("unit"));
 }
 
 /// Only the arts list counts as the arts menu opening (0457): another
@@ -792,7 +792,10 @@ fn her_coming_lines_hold_only_the_lessons_still_to_start_here() {
         with("done", LessonLevel::Short, &[]),
     ];
     c.game.campaign_lessons.insert("done".to_owned());
-    let lines = quick().coming_guide_lines(&c);
+    let quick = quick();
+    let lines = quick
+        .guide
+        .coming_guide_lines(&c, quick.battle_id.as_deref());
     let line = |id: &str| trpg_content::voice::guide_line(&text(id));
     for id in ["anywhere", "here"] {
         assert!(lines.contains(&line(id)), "{id}");
@@ -1033,9 +1036,67 @@ fn ending_the_turn_is_put_away_after_turn_one() {
             state.apply(&Command::EndPhase).unwrap();
         }
         let mut s = BattleScreen::new(state.clone());
-        s.lessons.fire(TipTrigger::FirstBattleStart);
-        s.lessons.absorb(&c, None, turn);
-        s.settle_lessons(false);
-        assert_eq!(s.lessons.current().is_some(), turn == 1, "turn {turn}");
+        s.guide.lessons.fire(TipTrigger::FirstBattleStart);
+        s.guide.lessons.absorb(&c, None, turn);
+        s.guide.settle_lessons(&s.state, &s.mode, false);
+        assert_eq!(
+            s.guide.lessons.current().is_some(),
+            turn == 1,
+            "turn {turn}"
+        );
     }
+}
+
+/// Ticket 1291: at the frame's end the state's triggers go to the lessons
+/// alone (`take_in_lessons`): every unit having acted starts a lesson the
+/// turn's end does, before auto-end could end the turn, and queues no tip.
+#[test]
+fn the_frames_end_starts_the_lesson_every_unit_having_acted_fires() {
+    let mut c = lessoned();
+    c.game.tips_enabled = true;
+    c.game.campaign_tutorial = Some(TutorialLevel::Full);
+    let ends = Lesson {
+        trigger: TipTrigger::NoUnitLeft,
+        ..lesson("end_it", LessonLevel::Short, &[DoneWhen::TurnEnded])
+    };
+    c.game.content.lessons.lessons = vec![ends];
+    let mut state = quick_battle(&c.game.content).unwrap();
+    let ready: Vec<Unit> = state
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Player && !u.acted)
+        .cloned()
+        .collect();
+    for u in &ready {
+        let wait = Command::Act {
+            unit: u.id,
+            dest: u.pos,
+            action: UnitAction::Wait,
+        };
+        state.apply(&wait).unwrap();
+    }
+    let mut s = BattleScreen::new(state).in_battle(QUICK_BATTLE);
+    assert!(matches!(s.mode(), Mode::Idle { .. }));
+    assert_eq!(s.guide.lessons.current(), None);
+    s.take_in_lessons(&c);
+    assert_eq!(s.guide.lessons.current(), Some("end_it"));
+    s.guide.tips.absorb(&mut c);
+    assert_eq!(s.guide.tips.queued().count(), 0, "the lessons' alone");
+}
+
+/// Ticket 1291: the box at the end of the lessons shows only while the
+/// player browses the map: never with a unit selected.
+#[test]
+fn the_end_box_shows_only_while_browsing() {
+    let mut c = lessoned();
+    c.game.campaign_tutorial = Some(TutorialLevel::Full);
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    press(&mut s, &mut c, &CURSORS);
+    press(&mut s, &mut c, &[]);
+    press(&mut s, &mut c, &[Action::ZoomMap]);
+    assert!(s.lessons_end_shown(&c));
+    let lord = s.state().units()[0].id;
+    s.mode = Mode::Selected(Selection::new(s.state(), lord).unwrap());
+    assert!(!s.lessons_end_shown(&c), "a unit selected");
 }

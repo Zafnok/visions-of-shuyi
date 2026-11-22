@@ -51,6 +51,8 @@ use crate::screen::{
     Ctx, FrameInput, IdleMotion, KeyPrompt, Keyboard, Screen, ScreenResult, Shuyi, SkinSet,
     Transition,
 };
+use crate::tips::TipScreen;
+use crate::tips::screen::OUT_OF_BATTLE;
 use crate::tips::view::{FaceView, GUIDE_NAME};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
@@ -281,7 +283,8 @@ pub struct TitleScreen {
     /// note shows beside the menu.
     set_up: SetUp,
     /// New Game's first lines, kept loaded while the title is on top
-    /// (ticket 1293).
+    /// (ticket 1293), and the lines of the tips its Load Game and
+    /// Profile may show (1291).
     voices: KeptVoices,
     /// The campfire's crackle while it sounds ([`FIRE_SOUND`]).
     crackle: Option<SoundId>,
@@ -660,6 +663,21 @@ impl TitleScreen {
     }
 }
 
+impl TitleScreen {
+    /// The lines of the tips the screens the title opens may show (1291):
+    /// where saves can be exported, the Profile screen's, and the Load
+    /// Game list's while there is a save to load.
+    fn tip_lines(ctx: &Ctx) -> Vec<trpg_content::LineId> {
+        if !save_files::can_export(&ctx.platform) {
+            return Vec::new();
+        }
+        let saved = save::any_slot(&ctx.storage);
+        let [load, profile] = OUT_OF_BATTLE;
+        let tips: &[_] = if saved { &[load, profile] } else { &[profile] };
+        TipScreen::coming_lines(ctx, tips)
+    }
+}
+
 impl Screen<Shuyi> for TitleScreen {
     fn name(&self) -> &'static str {
         "title" // check-text: not player text (the screen's name)
@@ -687,7 +705,8 @@ impl Screen<Shuyi> for TitleScreen {
             self.time += input.dt().max(0.0);
         }
         if self.voices.due(ctx) {
-            let lines = flow::opening_lines(ctx, Start::NewGame);
+            let mut lines = flow::opening_lines(ctx, Start::NewGame);
+            lines.extend(Self::tip_lines(ctx));
             self.voices.keep(lines, ctx);
         }
         if self.waiting(ctx) {

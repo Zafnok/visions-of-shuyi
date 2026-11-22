@@ -24,6 +24,11 @@ pub const TEST_CARD_PATH: &str = "images/test_card.png";
 /// timed effect (ADR-0049).
 pub const EFFECT_MARKS_PATH: &str = "images/effect_marks.png";
 
+/// Path of the kill mark inside the bundle: an 8×9 skull, white where it
+/// shows, which the attack forecast puts after a strike that kills and
+/// draws in one colour (ticket 0470). Our own picture.
+pub const KILL_MARK_PATH: &str = "images/kill_mark.png";
+
 /// Path of the edge arrows inside the bundle: a generated 42×13 image
 /// (its tool was deleted, `assets/images/README.md`), a right, a left, a down and an up arrow,
 /// which a sprite map skin puts at the edges of the map's view where the

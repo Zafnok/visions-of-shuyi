@@ -253,6 +253,23 @@ pub static LETTERING: Kind = Kind {
     lettering: true,
 };
 
+/// The small marks of `images/` a screen draws on the Playdate too: the
+/// forecast's kill mark (ticket 0470). The other pictures there are the
+/// sprite map skins' and the hints', which the Playdate doesn't show.
+pub const MARKS: [&str; 1] = ["images/kill_mark.png"];
+
+/// A mark ([`MARKS`]): at its own size, drawn as a silhouette in one
+/// colour, so only its mask (its pixels that show) matters.
+pub static MARK: Kind = Kind {
+    name: "mark",
+    folder: "images",
+    scale: Scale::Times(1, 1),
+    styles: &[style("a", STYLE_A)],
+    lift: None,
+    rim: 0,
+    lettering: false,
+};
+
 /// The kind of the picture at `path` (relative to `assets/`), or `None`
 /// if the Playdate keeps it as it is.
 pub fn kind_of(path: &str) -> Option<&'static Kind> {
@@ -264,6 +281,9 @@ pub fn kind_of(path: &str) -> Option<&'static Kind> {
     }
     if LETTERINGS.contains(&path) {
         return Some(&LETTERING);
+    }
+    if MARKS.contains(&path) {
+        return Some(&MARK);
     }
     KINDS.iter().find(|kind| {
         path.strip_prefix(kind.folder)
@@ -515,6 +535,36 @@ mod tests {
         assert_eq!(name("portraitsx/a.png"), None);
         assert_eq!(name("fonts/atlas.png"), None);
         assert_eq!(name("images/effect_marks.png"), None);
+        assert_eq!(name("images/kill_mark.png"), Some("mark"));
+    }
+
+    /// The kill mark (ticket 0470) at its own size, see-through where the
+    /// PNG is: its mask is the skull.
+    #[test]
+    fn the_kill_mark_converts_to_its_own_mask() {
+        let path = crate::image::KILL_MARK_PATH;
+        let png = crate::bundle::bytes(path).unwrap();
+        let (w, h, rgba) = shuyi_assets::bitmap::convert::png_pixels(&png).unwrap();
+        let job = Job {
+            path,
+            scale: (1, 1),
+            kind: kind_of(path).unwrap(),
+        };
+        let bitmap_file = make(w, h, &rgba, &job).unwrap();
+        let bitmap = Bitmap::parse(&bitmap_file).unwrap();
+        assert_eq!(
+            (u32::from(bitmap.width()), u32::from(bitmap.height())),
+            (w, h)
+        );
+        let mask = bitmap.mask().unwrap();
+        let stride = Bitmap::stride(bitmap.width());
+        let pixels = rgba.as_chunks::<4>().0;
+        for y in 0..h as usize {
+            for x in 0..w as usize {
+                let shown = mask[y * stride + x / 8] >> (7 - x % 8) & 1 == 1;
+                assert_eq!(shown, pixels[y * w as usize + x][3] == 255, "({x}, {y})");
+            }
+        }
     }
 
     #[test]

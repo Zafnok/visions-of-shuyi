@@ -1381,7 +1381,7 @@ fn without_clips_the_map_looks_for_no_lines() {
 /// where the army stands, and again once it has moved.
 #[test]
 fn the_map_looks_again_once_the_army_moves() {
-    let (mut ctx, _) = crate::screens::battle::guide_voice::tests::voiced();
+    let (mut ctx, _) = crate::tips::voice::testing::voiced();
     let mut s = screen(&ctx);
     press(&mut s, &mut ctx, &[]);
     assert_eq!(s.voices_at.as_deref(), Some("home"));
