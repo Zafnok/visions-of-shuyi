@@ -240,6 +240,17 @@ try 17 · Normal · lost (lord fell T9) · died: Mira T6, Kael T8 · items 2
 - **Every try** is listed: result, who fell (died or retreated) and on which
   turn, items used, turns (Nick: "statistics on how many units
   died/retreated for each … attempt").
+- **Each unit** (ticket 0527, after Nick's Act 1 playtest found Aske
+  unable to hurt Chapter 2's armoured guards and Rue doing the killing):
+  a line per player unit per battle, with its level arriving, how many
+  of the map's enemies it can hurt at all, what it dealt, killed and
+  levelled per try, its share of the army's EXP, and a flag when it
+  can't hurt enough of them, arrives far below the army or earns too
+  little EXP (`docs/playtesting.md`, *Units that fall behind*). It
+  **proposes, never tunes**: the player's units, classes and growths are
+  Nick's, so a flag is a line to read before he plays, never a failure
+  and never a change the autobalance makes. Whether the bots should
+  also try player-side changes is ticket 0080's question.
 - **History across runs** ("each epoch", read as each batch of runs): every
   run of the report is kept, so a change shows as "Normal success 47% → 58%
   after the change". *Claude's reading of "epoch"; Nick may correct it.*

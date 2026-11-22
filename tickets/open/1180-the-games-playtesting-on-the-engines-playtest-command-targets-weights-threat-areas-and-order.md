@@ -98,6 +98,11 @@ not a prerequisite for this mechanical adoption.
   `BattleMeasures`; the CLI and its consumers use those names. Map the
   old `faster` target to the engine's `medians` entry with the same
   values, and keep `Targets::from_ron` as the game's file reader.
+  That includes 0527's per-unit measures (`dealt <name>`, `kills
+  <name>`, `exp <name>`, `levels <name>`, a 0 left out, read with
+  `trpg_bots::unit_measure`) and `BattleMeasures::units`; `can_hurt`,
+  `enemies_hurt` and `flags` (`crates/bots/src/units.rs`) stay the
+  game's.
 - Update the friction log, bots boundary row and ADR-0095 ownership notes.
 
 **Out (do not do):**

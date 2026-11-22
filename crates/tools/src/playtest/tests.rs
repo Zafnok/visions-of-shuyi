@@ -263,6 +263,7 @@ fn record() -> Record {
                 seconds_per_try: 0.01,
             },
         ],
+        units: vec![],
         report,
     }
 }
@@ -827,4 +828,125 @@ fn merge_files_reads_the_json_reports() {
     std::fs::write(dir.join("bad.json"), "{").unwrap();
     assert!(merge_files(&[dir.join("bad.json")]).is_err());
     std::fs::remove_dir_all(&dir).unwrap();
+}
+
+// ---- Units (ticket 0527) ------------------------------------------------------
+
+/// [`record`] with three units at the start, and per-unit measures in
+/// Normal's tries: Aske can hurt 1 of 3 enemies, arrives 3 levels below
+/// the army and earns 4 of 100 EXP; Rue does the killing.
+fn record_with_units() -> Record {
+    let mut record = record();
+    let unit = |name: &str, level, hurt| UnitStart {
+        name: name.to_owned(),
+        level,
+        hurt,
+        of: 3,
+    };
+    record.units = vec![unit("Aske", 2, 1), unit("Rue", 5, 3), unit("Lead", 5, 2)];
+    for (i, t) in record.report.entrants[0].tries.iter_mut().enumerate() {
+        let i = i64::try_from(i).unwrap();
+        let put = |t: &mut Tried, k: &str, v| {
+            t.measures.insert(k.to_owned(), v);
+        };
+        put(t, "dealt Rue", 20 + i);
+        put(t, "kills Rue", 2);
+        put(t, "exp Rue", 12);
+        put(t, "exp Lead", 7);
+        put(t, "levels Rue", 1);
+        if i < 2 {
+            put(t, "exp Aske", 2);
+            put(t, "dealt Aske", 3);
+        }
+    }
+    record
+}
+
+#[test]
+fn render_has_a_units_table_per_entrant_with_its_flags() {
+    let text = render(&record_with_units(), None);
+    let table = text
+        .split_once("ch01 · units (normal, 5 tries)\n")
+        .unwrap_or_else(|| panic!("{text}"))
+        .1;
+    let lines: Vec<&str> = table.lines().take(3).collect();
+    assert_eq!(
+        lines,
+        [
+            "Aske  lv 2   can hurt 1/3    dealt med 0    kills med 0   levels med +0   \
+             exp share 4%    ⚑ can hurt < 2/3 · lv 3+ below the army · exp < half a share",
+            "Rue   lv 5   can hurt 3/3    dealt med 22   kills med 2   levels med +1   \
+             exp share 61%",
+            "Lead  lv 5   can hurt 2/3    dealt med 0    kills med 0   levels med +0   \
+             exp share 35%",
+        ],
+        "{text}"
+    );
+    // The baseline's table follows, with its own tries.
+    assert!(text.contains("ch01 · units (baseline, 2 tries)"), "{text}");
+}
+
+#[test]
+fn a_run_kept_without_its_units_has_no_units_table() {
+    let text = render(&record(), None);
+    assert!(!text.contains("· units ("), "{text}");
+    // An older record reads with no units.
+    let mut json: serde_json::Value = serde_json::to_value(record()).unwrap();
+    json.as_object_mut().unwrap().remove("units");
+    let old: Record = serde_json::from_value(json).unwrap();
+    assert_eq!(old.units, []);
+}
+
+#[test]
+fn an_army_that_earned_no_exp_shows_no_share_and_no_exp_flag() {
+    let mut record = record_with_units();
+    for t in &mut record.report.entrants[0].tries {
+        t.measures.retain(|k, _| !k.starts_with("exp "));
+    }
+    let text = render(&record, None);
+    let rue = text
+        .lines()
+        .find(|l| l.starts_with("Rue "))
+        .unwrap_or_else(|| panic!("{text}"));
+    assert!(rue.ends_with("exp share -"), "{rue}");
+    assert!(!text.contains("exp < half"), "{text}");
+}
+
+/// A short run of the Quick Battle: a units line per player unit at its
+/// start, in each entrant's table, and the per-unit measures in its tries.
+#[test]
+fn a_playtest_run_reports_each_player_unit() {
+    let record = play_quick(&Options {
+        turn_cap: 6,
+        ..quick(Bot::Normal, 2)
+    });
+    let state = BattleState::new(stage(&CONTENT, &CONTENT.battles["quick"]).unwrap().classic).0;
+    let players: Vec<&str> = state
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Player)
+        .map(|u| u.name.as_str())
+        .collect();
+    let names: Vec<&str> = record.units.iter().map(|u| u.name.as_str()).collect();
+    assert_eq!(names, players);
+    assert!(record.units.iter().all(|u| u.of > 0 && u.hurt <= u.of));
+    let text = render(&record, None);
+    let table = text
+        .split_once("quick · units (normal, 2 tries)\n")
+        .unwrap_or_else(|| panic!("{text}"))
+        .1;
+    for (line, name) in table.lines().zip(&players) {
+        assert!(line.starts_with(name), "{name}: {line}");
+        assert!(
+            line.contains("can hurt ") && line.contains("dealt med "),
+            "{line}"
+        );
+    }
+    // Somebody hurt an enemy in six turns, and it is in the try's measures.
+    let tries = &record.report.entrants[0].tries;
+    let dealt = tries
+        .iter()
+        .flat_map(|t| t.measures.keys())
+        .any(|k| k.starts_with("dealt "));
+    assert!(dealt, "{tries:?}");
 }

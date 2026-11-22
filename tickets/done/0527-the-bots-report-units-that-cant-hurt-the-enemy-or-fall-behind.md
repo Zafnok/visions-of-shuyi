@@ -5,10 +5,10 @@ type: feature
 milestone: M4 Enemy AI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-22
 ---
 
 # 0527 — The bots report units that can't hurt the enemy or fall behind
@@ -137,15 +137,15 @@ pasted into `docs/playtesting.md` and the PR.
 
 ## Acceptance criteria
 
-- [ ] `can_hurt` on Chapter 2's start says Aske (Iron Bow) can't hurt
+- [x] `can_hurt` on Chapter 2's start says Aske (Iron Bow) can't hurt
       the two `hound_guard`s (Def 15) and Rue can (test).
-- [ ] A test battle with a scripted kill gives the killer `kills 1`, its
+- [x] A test battle with a scripted kill gives the killer `kills 1`, its
       `dealt` the HP taken and its `exp` the event's amount.
-- [ ] `cargo xtask playtest ch02 --bot normal --runs 5` prints a line per
+- [x] `cargo xtask playtest ch02 --bot normal --runs 5` prints a line per
       player unit with the numbers above, and a flag for a unit under a
       threshold (a test of the printing, and the output in the PR).
-- [ ] The first run of Chapters 1 to 4 is in `docs/playtesting.md`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The first run of Chapters 1 to 4 is in `docs/playtesting.md`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -155,4 +155,56 @@ pasted into `docs/playtesting.md` and the PR.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done 2026-11-22.
+
+- `BattleMeasures::units` (`UnitTally`: dealt, kills, exp, levels per
+  player unit), from `CombatResolved`'s strikes (HP before minus after,
+  so a last strike's overkill doesn't count), `Pushed` and
+  `CollisionDamage` (credited to the unit acting in that command:
+  `CombatResolved`'s attacker, `SpellCast`, `SkillUsed`, `ArtUsed`),
+  `UnitFell`/`UnitDowned` (a kill for the last unit to hurt it in that
+  command), `ExpGained` and `LeveledUp`. Only damage to `Faction::Enemy`
+  units counts.
+- `BattleMeasure::finish` adds `dealt <name>`, `kills <name>`, `exp
+  <name>`, `levels <name>` through the engine's runner, **a 0 left
+  out** (read with `trpg_bots::unit_measure`), so the try lines stay
+  short and the `--json` report and history keep them.
+- `crates/bots/src/units.rs`: `can_hurt` / `enemies_hurt` (each weapon
+  slot and known attack spell equipped on a copy of the start, then
+  `BattleState::threat_forecast` against each enemy on its tile, Combat
+  Arts and actives included) and `flags` with the three thresholds as
+  constants.
+- `cargo xtask playtest` prints a units table per bot after the bot
+  lines (no `--units` flag: about 7 lines per bot); `Record::units` keeps
+  each unit's arrival level and can-hurt count (`#[serde(default)]` for
+  older history), and `--merge` checks parts agree on it.
+- Docs: `docs/playtesting.md` *Units that fall behind* with the first
+  run of Chapters 1–4; `docs/design/playtest-bots.md` *What the report
+  shows*. Lines added to 1180 (the measures' names) and 1207 (the table)
+  so their move carries them.
+
+**Deviations.** The first run plays Chapter 1 over 100 tries and
+Chapters 2 to 4 over 30: with other sessions' builds on the machine, a
+Hardcore try of Chapter 3 took about 18 minutes of one core, and 100
+tries of all four would have taken hours. "Level by chapter" is the `lv`
+column of each chapter's table (the arrival army) and `levels med`
+(the median gain in the chapter), not a separate cross-chapter table.
+0080 isn't done, so the report only reports (no proposed player-side
+change).
+
+**The agent's starting rules** (bots tooling, not gameplay; tunable):
+`can hurt < 2/3`, `lv 3+ below the army` (the army's lower median),
+`exp < half a share` (under half of 1/n of the army's EXP over every
+try); a kill is the last unit to hurt the enemy in the same command;
+push and collision damage go to the unit acting; a Combat Art counts
+toward "can hurt".
+
+**What the first run says** (for 0080, 0333, 0610, 0870): Aske deals the
+least of the fighting units but Joss in every chapter and can't hurt
+Chapter 2's two hound guards; Rue takes a fifth to a third of the EXP;
+the bots barely use Joss, so they can't confirm or refute "Joss is a bit
+too strong"; Maud the cleric is always flagged `can hurt < 2/3` by
+design. The bands of Chapters 2–4 have moved since their last
+documented runs (ch02 Casual and Hardcore over the band, ch03 Hardcore
+under, ch04 Normal and Hardcore under, over 30 tries); not this
+ticket's to tune.

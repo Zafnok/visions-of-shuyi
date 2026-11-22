@@ -21,11 +21,14 @@ use shuyi_core::bots::playtest::{
     Check, Entrant as _, Found, PlaytestReport, Tried, judge, play_tries,
 };
 use trpg_bots::{
-    BattleEntrant, BattleStage, Player, Targets, arrival, chapters_before, field_army, is_hold,
-    personas_from_ron, reference_pack,
+    BattleEntrant, BattleStage, Player, Standing, Targets, UNIT_DEALT, UNIT_EXP, UNIT_KILLS,
+    UNIT_LEVELS, arrival, can_hurt, chapters_before, field_army, flags, is_hold, personas_from_ron,
+    reference_pack, unit_measure,
 };
 use trpg_content::{Content, battle_campaign};
-use trpg_core::{BattleDef, BattleSetup, Faction, GameMode, LeadGender, LeadProfile, Turn};
+use trpg_core::{
+    BattleDef, BattleSetup, BattleState, Faction, GameMode, LeadGender, LeadProfile, Turn,
+};
 
 /// The command's usage text.
 pub const USAGE: &str = "usage: cargo xtask playtest <battle-id> [options]\n\n\
@@ -236,6 +239,10 @@ pub struct Record {
     pub army: Army,
     /// Who played, in order.
     pub played: Vec<Played>,
+    /// Each player unit at the battle's start (none in a run kept before
+    /// ticket 0527).
+    #[serde(default)]
+    pub units: Vec<UnitStart>,
     /// The engine's report: every try's measures and the checks.
     pub report: PlaytestReport,
 }
@@ -273,6 +280,39 @@ impl Army {
             self.gold
         )
     }
+}
+
+/// A player unit at the battle's start (ticket 0527), Classic's army.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UnitStart {
+    /// Its name, as its measures name it.
+    pub name: String,
+    /// Its level arriving at the battle.
+    pub level: u32,
+    /// The enemies on the map it can hurt ([`can_hurt`]).
+    pub hurt: u32,
+    /// The enemies on the map.
+    pub of: u32,
+}
+
+/// Each player unit of `stage` (Classic's army) at the battle's start.
+pub fn unit_starts(stage: &BattleStage) -> Vec<UnitStart> {
+    let battle = BattleState::new(stage.classic.clone()).0;
+    let players = battle
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Player);
+    players
+        .map(|u| {
+            let (hurt, of) = can_hurt(&battle, u.id);
+            UnitStart {
+                name: u.name.clone(),
+                level: u.level,
+                hurt,
+                of,
+            }
+        })
+        .collect()
 }
 
 /// What a run found: the report's text, and whether the battle is blocked.
@@ -371,6 +411,7 @@ pub fn merge(records: Vec<Record>) -> Result<Record, String> {
             ("tier", part.tier != first.tier),
             ("turn cap", part.turn_cap != first.turn_cap),
             ("army", part.army != first.army),
+            ("units", part.units != first.units),
             ("bots", names(&part) != names(&first)),
             ("checks", part_checks != checks),
         ];
@@ -507,6 +548,7 @@ pub fn play(
         turn_cap: options.turn_cap,
         army: army(content, def, &stage),
         played,
+        units: unit_starts(&stage),
         report,
     })
 }
@@ -623,8 +665,88 @@ pub fn render(record: &Record, previous: Option<&Record>) -> String {
             was(&record.report, previous, &played.name),
         );
     }
+    for played in &record.played {
+        if let Some(entrant) = record
+            .report
+            .entrants
+            .iter()
+            .find(|e| e.name == played.name)
+        {
+            out.push_str(&units_table(record, &played.name, &entrant.tries));
+        }
+    }
     if let Some(p) = previous {
         let _ = writeln!(out, "previous  {} · commit {}", p.date, p.commit);
+    }
+    out
+}
+
+/// The units table of entrant `name`'s `tries` (ticket 0527): a line per
+/// player unit at the battle's start, its level, the enemies it can hurt,
+/// the medians of what it did per try, its share of the army's EXP over
+/// every try, and its flags (`trpg_bots::flags`). Nothing for a run kept
+/// without its units.
+fn units_table(record: &Record, name: &str, tries: &[Tried]) -> String {
+    let units = &record.units;
+    if units.is_empty() {
+        return String::new();
+    }
+    let mut out = String::new();
+    let _ = writeln!(
+        out,
+        "
+{} · units ({name}, {} tries)",
+        record.battle,
+        tries.len()
+    );
+    let per_try = |what: &str, unit: &str| -> Vec<i64> {
+        tries
+            .iter()
+            .map(|t| unit_measure(&t.measures, what, unit))
+            .collect()
+    };
+    let total = |unit: &str| -> u64 {
+        let sum: i64 = per_try(UNIT_EXP, unit).iter().sum();
+        u64::try_from(sum).unwrap_or(0)
+    };
+    let army_exp: u64 = units.iter().map(|u| total(&u.name)).sum();
+    let army_level = median(units.iter().map(|u| i64::from(u.level)).collect());
+    let width = units
+        .iter()
+        .map(|u| u.name.chars().count())
+        .max()
+        .unwrap_or(0);
+    for unit in units {
+        let exp = total(&unit.name);
+        let share = (exp * 100 + army_exp / 2)
+            .checked_div(army_exp)
+            .map_or_else(|| "-".to_owned(), |pct| format!("{pct}%"));
+        let standing = Standing {
+            can_hurt: (unit.hurt, unit.of),
+            level: i64::from(unit.level),
+            army_level,
+            exp,
+            army_exp,
+            army_size: u64::try_from(units.len()).unwrap_or(u64::MAX),
+        };
+        let flagged: Vec<&str> = flags(&standing)
+            .into_iter()
+            .map(trpg_bots::Flag::text)
+            .collect();
+        let hurt = format!("{}/{}", unit.hurt, unit.of);
+        let mut line = format!(
+            "{:<width$}  lv {:<2}  can hurt {hurt:<5}  dealt med {:<3}  kills med {:<2}  \
+             levels med +{:<2}  exp share {share:<4}",
+            unit.name,
+            unit.level,
+            median(per_try(UNIT_DEALT, &unit.name)),
+            median(per_try(UNIT_KILLS, &unit.name)),
+            median(per_try(UNIT_LEVELS, &unit.name)),
+        );
+        if !flagged.is_empty() {
+            let _ = write!(line, "  ⚑ {}", flagged.join(" · "));
+        }
+        let _ = writeln!(out, "{}", line.trim_end());
     }
     out
 }

@@ -4,7 +4,7 @@ use shuyi_core::bots::playtest::{Found, RateVerdict, Tried, judge, play_tries};
 use super::*;
 use crate::persona::Personas;
 use crate::personas_from_ron;
-use crate::testkit::{content, enemy, lord, player, rigged, setup, stage, weak};
+use crate::testkit::{attack, content, enemy, lord, player, rigged, setup, stage, tile, weak};
 
 fn targets() -> Targets {
     Targets::from_ron(include_str!("../../targets.ron")).unwrap()
@@ -281,7 +281,10 @@ fn the_baseline_report_numbers_are_0505s() {
                 assert_eq!(m[&format!("fell {name}")], 1, "{t:?}");
                 assert_eq!(m[&format!("fell {name} turn")], turn, "{t:?}");
             }
-            assert_eq!(m.len(), 6 + 2 * fell.len(), "{t:?}");
+            let per_unit = [UNIT_DEALT, UNIT_KILLS, UNIT_EXP, UNIT_LEVELS];
+            let of_a_unit = |k: &String| per_unit.iter().any(|w| k.starts_with(&format!("{w} ")));
+            let others = m.keys().filter(|k| !of_a_unit(k)).count();
+            assert_eq!(others, 6 + 2 * fell.len(), "{t:?}");
         }
     }
 }
@@ -328,6 +331,46 @@ fn a_fallen_unit_the_cast_doesnt_know_is_named_by_its_id() {
     let tries = play_tries(&battle, &entrant, 1..2, 5).unwrap();
     assert_eq!(tries[0].measures["fell unit 1"], 1);
     assert_eq!(tries[0].measures["lord fell"], 0);
+}
+
+/// Ticket 0527: a try's per-unit measures, named by the cast, a 0 left
+/// out.
+#[test]
+fn a_try_measures_what_each_player_unit_did() {
+    // The rigged player fells the weak enemy on its first strike; the
+    // other player unit does nothing.
+    let mut first = weak(enemy(3, 6));
+    first.hp = 4;
+    let battle = BattleStage {
+        classic: setup(vec![rigged(player(1, 5)), player(2, 0), first, enemy(4, 8)]),
+        casual: setup(vec![]),
+    };
+    let mut state = BattleState::new(battle.classic.clone()).0;
+    let events = state
+        .apply(&trpg_core::Command::Act {
+            unit: UnitId(1),
+            dest: tile(5),
+            action: attack(3),
+        })
+        .unwrap();
+    let exp = events.iter().find_map(|e| match e {
+        Event::ExpGained { unit, amount } if *unit == UnitId(1) => Some(i64::from(*amount)),
+        _ => None,
+    });
+    let entrant = baseline(GameMode::Classic, &battle);
+    let mut measure = entrant.measure();
+    measure.observe(&state, &trpg_core::Command::EndPhase, &events);
+    let report = shuyi_core::Report::<BattleState> {
+        outcome: None,
+        turns: 1,
+        commands: vec![],
+    };
+    let m = measure.finish(&report, &state);
+    assert_eq!(m["dealt Swordsman"], 4, "{m:?}");
+    assert_eq!(m["kills Swordsman"], 1, "{m:?}");
+    assert_eq!(Some(m["exp Swordsman"]), exp, "{m:?}");
+    assert_eq!(unit_measure(&m, UNIT_LEVELS, "Swordsman"), 0);
+    assert!(!m.contains_key("levels Swordsman"), "{m:?}");
 }
 
 #[test]
