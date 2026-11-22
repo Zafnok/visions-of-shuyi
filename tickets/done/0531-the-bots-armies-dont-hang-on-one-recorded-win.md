@@ -89,7 +89,7 @@ army a player brings). If the fix changes that meaning (for example an
   new army data, instead of the hand-kept `PLAYTHROUGHS` array
   (`arrival.rs:23`). Adding a battle is its files plus one recorded
   fixture: no new module, no list to extend.
-- (Split to **0533** before coding, 2026-11-21, ADR-0101: with them this
+- (Split to **0535** before coding, 2026-11-21, ADR-0101: with them this
   ticket was past 2,500 changed lines.) The sweep's other items: one
   table-driven recorded-win test in place of the per-battle replay
   modules, `cargo xtask record-wins`, and relations in place of tuned
@@ -102,7 +102,7 @@ army a player brings). If the fix changes that meaning (for example an
 - The report's 95% intervals (0532). Either order: if 0532 is done, read
   "within the noise" from its intervals; if not, use seeds 1–400.
 - The table-driven replay test, `record-wins` and the replay tests'
-  tuned pins (0533, blocked by this ticket).
+  tuned pins (0535, blocked by this ticket).
 
 ## Implementation steps
 
@@ -116,7 +116,7 @@ army a player brings). If the fix changes that meaning (for example an
 4. Re-run every story battle's playtest; report the numbers before and
    after in the PR.
 5. (2026-11-17 sweep) Switch the bots to their own data, found by id,
-   and delete `PLAYTHROUGHS`. The rest of the sweep's step is 0533's.
+   and delete `PLAYTHROUGHS`. The rest of the sweep's step is 0535's.
 
 ## Acceptance criteria
 
@@ -215,9 +215,9 @@ that holds.
 
 **Split before coding** (ADR-0101): the 2026-11-17 sweep's table-driven
 replay test, `cargo xtask record-wins` and the replay tests' tuned pins
-went to **0533** (blocked by this one). `trpg-ui` may not depend on
+went to **0535** (blocked by this one). `trpg-ui` may not depend on
 `trpg-bots`, so `crates/ui/tests/it/playthrough.rs` keeps its copy of
-the search until 0533.
+the search until 0535.
 
 - **The agent's starting rules:** none for the game. For the bots: 24
   lines and the seed-to-line rule above; a failed search retried twice.

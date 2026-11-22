@@ -1,5 +1,5 @@
 ---
-id: "0533"
+id: "0535"
 title: "One table-driven test replays every recorded win, and record-wins records them"
 type: infra
 milestone: M7 Chapter 1 & game flow
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 0533 — One table-driven test replays every recorded win, and record-wins records them
+# 0535 — One table-driven test replays every recorded win, and record-wins records them
 
 ## Context
 

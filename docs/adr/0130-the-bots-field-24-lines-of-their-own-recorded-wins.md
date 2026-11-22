@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-11-22
 - **Related tickets:** 0531 (this decision), 0520 and 1071 (the arrival
-  army), 0864 (found how far it moved), 0533 (the UI's replay tests)
+  army), 0864 (found how far it moved), 0535 (the UI's replay tests)
 - **Amends:** ADR-0110 (the arrival army: *Decision*, its first
   paragraph, and *Consequences*)
 
@@ -105,7 +105,7 @@ recording takes the same time on this machine's 24 cores).
   generated so `pr-size` and GitHub's diffs leave them out.
 - **Two copies of the search for now.** `trpg-ui` may not depend on
   `trpg-bots` (`xtask` checks it), so `crates/ui/tests/it/playthrough.rs`
-  keeps its copy for the UI's 11 `record` tests until 0533 records those
+  keeps its copy for the UI's 11 `record` tests until 0535 records those
   from the tool program too.
 - **A playtest lever.** `crates/bots/wins/` is under `crates/bots/`,
   already a lever of `.github/playtest-levers.sh`; the UI's fixtures no

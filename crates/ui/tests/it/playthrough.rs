@@ -4,7 +4,7 @@
 //!
 //! These fixtures are the replay tests' own: the bots record theirs with
 //! the same search, `trpg_bots::record` (`cargo xtask bot-wins`, ticket
-//! 0531), and 0533 leaves one copy of it.
+//! 0531), and 0535 leaves one copy of it.
 //!
 //! A fixture holds only what the player does (every Player phase's
 //! commands, its `EndPhase` included). The enemy plays as it does in the
