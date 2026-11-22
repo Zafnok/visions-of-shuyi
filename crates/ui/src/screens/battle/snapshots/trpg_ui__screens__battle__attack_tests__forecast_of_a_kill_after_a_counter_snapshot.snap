@@ -132,19 +132,4 @@ over  569,56 2x1  text_highlight
 over  572,56 2x1  text_highlight
 over  570,57 1x1  text_highlight
 over  572,57 1x1  text_highlight
-over  634,196 4x1  hp_low
-over  633,197 6x1  hp_low
-over  632,198 8x1  hp_low
-over  632,199 1x1  hp_low
-over  635,199 2x1  hp_low
-over  639,199 1x1  hp_low
-over  632,200 1x1  hp_low
-over  635,200 2x1  hp_low
-over  639,200 1x1  hp_low
-over  632,201 3x1  hp_low
-over  637,201 3x1  hp_low
-over  633,202 6x1  hp_low
-over  633,203 1x1  hp_low
-over  635,203 2x1  hp_low
-over  638,203 1x1  hp_low
-over  634,204 4x1  hp_low
+over  sprite 632,196 8x9  images/kill_mark.png 0,0 8x9 solid=hp_low

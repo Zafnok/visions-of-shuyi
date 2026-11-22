@@ -4,7 +4,7 @@
 use trpg_core::{Pos, StatValue};
 
 use super::*;
-use crate::map_view::playdate::tests::{SCREEN, braille, plains, shown};
+use crate::map_view::playdate::tests::{SCREEN, plains};
 use crate::screens::battle::forecast;
 use crate::screens::battle::forecast::tests::targeting;
 use crate::screens::battle::playdate::tests::ctx;
@@ -12,7 +12,6 @@ use crate::screens::battle::testing::skirmish;
 use crate::screens::battle::view::{LeftView, SkillLineView};
 use crate::screens::playdate::tests::{blank, c as ink, cell, find, row, rows};
 use crate::words::Words;
-use crate::{ConsoleSizes, ConsoleSpec};
 use insta::assert_snapshot;
 
 /// The lord's forecast against the brigand at `brigand_hp` (two strikes
@@ -103,14 +102,12 @@ fn the_kill_has_the_skull_and_the_strikes_after_it_are_grey() {
     let v = view(3, |_| {});
     let (buf, at) = painted(&v);
     let x = at.x + 2;
-    let skulls: Vec<(i32, i32)> = buf
-        .overlays()
-        .iter()
-        .map(|o| (o.rect.x / 8, o.rect.y / 16))
-        .collect();
-    assert_ne!(skulls, [] as [(i32, i32); 0]);
-    assert!(skulls.iter().all(|&s| s == (x + 7, 8)), "{skulls:?}");
-    assert!(buf.overlays().iter().all(|o| o.color == ink("text")));
+    // The kill mark after the lord's damage, black (ticket 0470).
+    let images = &ctx().game.content.images;
+    assert_eq!(
+        buf.sprites(),
+        [kill_mark(images, x + 7, 8, ink("text")).unwrap()]
+    );
     // The brigand's counter and the lord's second strike, after the fall.
     assert_eq!(
         cell(&buf, at.x + 2 + RIGHT + 2, 9).fg,
@@ -121,17 +118,6 @@ fn the_kill_has_the_skull_and_the_strikes_after_it_are_grey() {
     // The brigand's 3 of 20 HP: two cells of 10, all of them lost.
     assert_eq!(find(&buf, 3, "HP  3 → 0"), Some(x + RIGHT));
     assert_eq!(find(&buf, 4, "▒▒        "), Some(x + RIGHT));
-    // In pixels: the skull is drawn black over the white inside.
-    let frame = shown(&buf);
-    let picture = braille(&frame);
-    assert_ne!(picture, "");
-    let (cw, ch) = ConsoleSpec::PLAYDATE.cell_px();
-    let (sx, sy) = ((x + 7) * cw, 8 * ch);
-    let inked = (sx..sx + cw)
-        .flat_map(|px| (sy..sy + ch).map(move |py| (px, py)))
-        .filter(|&(px, py)| !crate::onebit::is_white(&frame, px, py))
-        .count();
-    assert!(inked > 20, "{inked} pixels of skull");
 }
 
 #[test]
@@ -299,13 +285,11 @@ fn the_affinity_line_and_a_counters_kill_skull_sit_in_the_targets_column() {
     assert_eq!(find(&buf, 7, "(resist)"), Some(rx));
     // The strikes a row lower: the counter on row 10, its skull after
     // its damage.
-    let skulls: Vec<(i32, i32)> = buf
-        .overlays()
-        .iter()
-        .map(|o| (o.rect.x / 8, o.rect.y / 16))
-        .collect();
-    assert_ne!(skulls, [] as [(i32, i32); 0]);
-    assert!(skulls.iter().all(|&s| s == (rx + 2 + 7, 10)), "{skulls:?}");
+    let images = &ctx().game.content.images;
+    assert_eq!(
+        buf.sprites(),
+        [kill_mark(images, rx + 2 + 7, 10, ink("text")).unwrap()]
+    );
 }
 
 #[test]
