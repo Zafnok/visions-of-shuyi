@@ -39,23 +39,19 @@ fn row(buf: &GlyphBuffer, y: i32) -> String {
 }
 
 #[test]
-fn the_skull_is_one_overlay_per_run_of_pixels_inside_its_cell() {
+fn the_kill_mark_is_its_picture_as_a_silhouette_inside_its_cell() {
+    let c = ctx();
+    let images = &c.game.content.images;
     let red = Rgb::new(200, 0, 0);
-    let runs = skull(3, 2, red);
-    let pixels: i32 = runs.iter().map(|o| o.rect.w * o.rect.h).sum();
-    let drawn = SKULL.iter().flat_map(|l| l.chars()).filter(|&c| c == 'X');
-    assert_eq!(pixels, i32::try_from(drawn.count()).unwrap());
+    let mark = kill_mark(images, 3, 2, red).unwrap();
+    assert_eq!(mark.image.path(), KILL_MARK_PATH);
+    assert_eq!((mark.paint, mark.layer), (Paint::Solid(red), Layer::Over));
+    // The whole 8 × 9 picture, 4 pixels down its cell, as the skull was.
     let (cw, ch) = ConsoleSpec::PC.cell_px();
-    for o in &runs {
-        assert_eq!((o.color, o.layer, o.rect.h), (red, Layer::Over, 1));
-        assert!(o.rect.x >= 3 * cw && o.rect.x + o.rect.w <= 4 * cw);
-        assert!(o.rect.y >= 2 * ch && o.rect.y < 3 * ch);
-    }
-    // The top row: one run of 4 pixels, 2 in from the left.
-    assert_eq!(runs[0].rect, Rect::new(3 * cw + 2, 2 * ch + 4, 4, 1));
-    // A row with gaps: `X..XX..X` is three runs.
-    let eyes: Vec<_> = runs.iter().filter(|o| o.rect.y == 2 * ch + 4 + 3).collect();
-    assert_eq!(eyes.len(), 3);
+    assert_eq!(mark.src, PxRect::new(0, 0, 8, 9));
+    assert_eq!(mark.dest, PxRect::new(3 * cw, 2 * ch + 4, 8, 9));
+    assert_eq!(mark.clip, mark.dest);
+    assert!(kill_mark(&ImageTable::default(), 3, 2, red).is_none());
 }
 
 #[test]
@@ -191,13 +187,9 @@ fn strikes_after_the_kill_are_dimmed_and_the_bars_shade_the_loss() {
     assert_eq!(fg(RIGHT_X + 3, STRIKE_ROW + 1), p.get(UiColor::TextDim));
     assert_eq!(fg(LEFT_X + 1, STRIKE_ROW + 2), p.get(UiColor::TextDim));
     // The skull on the first strike only.
-    let skulls: Vec<i32> = buf
-        .overlays()
-        .iter()
-        .filter(|o| o.color == p.get(UiColor::HpLow))
-        .map(|o| o.rect.y / i32::from(ConsoleSpec::PC.cell_h))
-        .collect();
-    assert!(!skulls.is_empty() && skulls.iter().all(|&y| y == STRIKE_ROW));
+    let images = &c.game.content.images;
+    let skull = kill_mark(images, LEFT_X + 7, STRIKE_ROW, p.get(UiColor::HpLow));
+    assert_eq!(buf.sprites(), [skull.unwrap()]);
     // The brigand at 3 of 20 falls: `→ 0` in `hp_low`. Its 3 HP round to
     // 2 cells of 12, all of them lost; the lord loses none of its 12.
     let after = buf.get(RIGHT_X + 8, HP_ROW).unwrap();

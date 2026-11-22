@@ -266,6 +266,26 @@ What it may change (Q11):
 | **Fixed skirmish, side quest** | Only the enemies' numbers: level, count, gear, and which classes appear. The map, named units (bosses, characters) and objectives stay as authored. |
 | **Story battle** | Same as fixed skirmishes. *Claude's reading: Nick grouped fixed skirmishes with side quests; story battles need their script intact, so they get the same limits. Nick may veto autobalancing story battles at all.* |
 
+### The player's side: proposed, never applied
+
+Decided 2026-11-22, ticket 0080. After Chapters 1–4 Nick suggested "more
+thorough bots automated balancing (i.e. tweaking not just the enemy but
+also the player classes and units and levelups)". Asked whether the bots
+should report player-side changes, also apply small ones inside limits,
+or neither, he picked **"Report only"**.
+
+- The player's classes, units, growths, level-ups and weapons stay
+  Nick's. The autobalancer never changes them; only the battle changes,
+  as above.
+- The bots **try** player-side changes and **report** which ones put each
+  chapter in its band, for example "Aske's Str growth 45 → 55 %: Chapter
+  3 Normal 58 → 66 %". Nick picks, and a ticket makes the change (as 0864
+  asks him about Tamsin).
+- Each report says which unit the change is for and why it was tried: a
+  unit the per-unit report flags (it can't hurt the enemies, falls behind
+  in level or EXP: ticket 0527) is where the bots look first (*the
+  agent's starting rule*).
+
 ## Generating a skirmish to order
 
 Nick tells Claude where and what, in words, for example:

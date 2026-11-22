@@ -120,6 +120,15 @@ Weapon-type traits, effectiveness, broken weapons and gauntlet avoid are in
 `weapons-and-items.md` (0003); spells, elemental affinities and healing in
 `magic.md` (0004).
 
+**Minimum damage on a hit** (0003, 0080): some weapon kinds raise a hit's
+`damage` after mitigation (terrain included), before the follow-up and
+crit multipliers: an axe to at least **5**, a spear to at least **3**, a
+bow to at least **2** (Nick, 0080: bows and spears *pierce*). Swords,
+gauntlets and magic have no minimum, so their hits can still do 0.
+Example: Aske's Iron Bow (power 12) into a Chapter 2 guard (Def 15) does
+`max(0, 12 − 15) = 0`, raised to 2; see `weapons-and-items.md`,
+*Piercing* and Example W5.
+
 ### Hit
 
 ```

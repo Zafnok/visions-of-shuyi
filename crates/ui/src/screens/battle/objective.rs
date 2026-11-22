@@ -18,16 +18,17 @@ use shuyi_ui::text::ToArg;
 /// The objective's lines for `state`: `Win:` and what wins it, then
 /// `Lose:` and the first thing that loses it, then `or` and each other
 /// (the village, the turn limit, the lead), then `Bonus:` and the
-/// village's rewards, if it has any. An escape names `exit`, the
-/// battle file's name for its exit, if it has one.
-pub fn lines(state: &BattleState, exit: Option<&str>, words: Words<'_>) -> Vec<ObjectiveLine> {
+/// village's rewards, if it has any. An escape or a seize names
+/// `place`, the battle file's name for its exit or Seize point, if it
+/// has one.
+pub fn lines(state: &BattleState, place: Option<&str>, words: Words<'_>) -> Vec<ObjectiveLine> {
     let line = |key: &str, text: String| ObjectiveLine {
         label: words.text(key).to_owned(),
         text,
     };
     let mut out = vec![line(
         "battle.objective.win_label",
-        objective_text(state, exit, words),
+        objective_text(state, place, words),
     )];
     for (i, lose) in losses(state, words).into_iter().enumerate() {
         let key = if i == 0 {

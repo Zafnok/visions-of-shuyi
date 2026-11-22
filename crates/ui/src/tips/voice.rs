@@ -1,5 +1,6 @@
 //! The guide speaks the box on screen (ticket 0476): a lesson's or a tip's
-//! `text`, by its line id ([`trpg_content::voice::guide_line`]). A box
+//! `text`, by its line id ([`trpg_content::voice::guide_line`]), in battle
+//! or in a tip box outside it ([`TipScreen`](super::TipScreen), 1291). A box
 //! coming on screen asks for her clip; it going, or another taking its
 //! place, stops it. With voices off, or no clip, nothing is asked for or
 //! stopped (0238).
@@ -19,7 +20,7 @@ use trpg_content::LineId;
 
 use crate::screen::Ctx;
 
-/// What the guide is saying on one battle screen.
+/// What the guide is saying on one screen: a battle, or a tip box.
 #[derive(Debug, Clone, Default)]
 pub struct GuideVoice {
     /// The line of the box on screen as the last frame ended, if any.
@@ -96,12 +97,12 @@ impl GuideVoice {
     }
 }
 
+/// Fixtures for the tests of the guide's voice, in and out of battle.
 #[cfg(test)]
-pub(crate) mod tests {
+pub(crate) mod testing {
     use super::*;
     use core::fmt::Write as _;
 
-    use crate::AudioRequest;
     use crate::screen::tests::ctx;
 
     /// A context whose voice manifest has a clip for every guide line
@@ -125,6 +126,14 @@ pub(crate) mod tests {
         c.audio.take();
         (c, ids)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::testing::voiced;
+    use super::*;
+
+    use crate::AudioRequest;
 
     fn keep(lines: &[LineId]) -> AudioRequest {
         AudioRequest::KeepVoices {

@@ -220,9 +220,10 @@ pub fn unit_list(state: &BattleState, words: Words<'_>) -> Menu<UnitId> {
 }
 
 /// What the objective asks, e.g. `Rout the enemy` or `Seize the Fort`;
-/// an escape names `exit`, the battle file's name for its exit, if it has
-/// one. *Claude's starting wording* until maps carry their own text.
-pub fn objective_text(state: &BattleState, exit: Option<&str>, words: Words<'_>) -> String {
+/// an escape or a seize names `place`, the battle file's name for its
+/// exit or Seize point, if it has one. *Claude's starting wording* until
+/// maps carry their own text.
+pub fn objective_text(state: &BattleState, place: Option<&str>, words: Words<'_>) -> String {
     match state.objective() {
         Objective::Rout { .. } => words.text("battle.objective.rout").to_owned(),
         Objective::DefeatUnit { unit, .. } => {
@@ -234,6 +235,10 @@ pub fn objective_text(state: &BattleState, exit: Option<&str>, words: Words<'_>)
                 None => words.text("battle.objective.defeat_boss").to_owned(),
             }
         }
+        Objective::Seize { .. } if let Some(name) = place => words.text_with(
+            "battle.objective.seize_at",
+            &[("place", &words.battle_place(name))],
+        ),
         Objective::Seize { pos, .. } => {
             let place = state
                 .map()
@@ -255,7 +260,7 @@ pub fn objective_text(state: &BattleState, exit: Option<&str>, words: Words<'_>)
             let out = state.escaped().len();
             let on_map = state.units().iter();
             let total = out + on_map.filter(|u| u.faction == Faction::Player).count();
-            escape_text(exit, (out, total), words)
+            escape_text(place, (out, total), words)
         }
     }
 }
@@ -267,7 +272,7 @@ pub fn escape_text(exit: Option<&str>, (out, total): (usize, usize), words: Word
         Some(place) => words.text_with(
             "battle.objective.escape_to",
             &[
-                ("place", &words.exit_name(place)),
+                ("place", &words.battle_place(place)),
                 ("out", &out),
                 ("total", &total),
             ],
@@ -531,6 +536,12 @@ mod tests {
             objective_text(&s, None, Words::ENGLISH),
             "Seize the objective"
         );
+        // A seize map whose battle file names its place (0331).
+        let place = Some("the scriptorium");
+        assert_eq!(
+            objective_text(&s, place, Words::ENGLISH),
+            "Seize the scriptorium"
+        );
         let s = with(Objective::Survive { turns: 5 });
         assert_eq!(
             (
@@ -557,7 +568,7 @@ mod tests {
     /// escape's with every player slot out.
     fn longest_objective(c: &crate::Ctx, def: &trpg_core::BattleDef, words: Words<'_>) -> String {
         use trpg_core::{GameMode, LeadGender, LeadProfile, lead::DEFAULT_NAME};
-        let exit = def.exit_name.as_deref();
+        let exit = def.place_name.as_deref();
         if let Objective::Escape { .. } = def.objective {
             let n = def.player_slots.len();
             return escape_text(exit, (n, n), words);
@@ -602,11 +613,11 @@ mod tests {
 
     /// An exit 60 characters long is too long.
     #[test]
-    fn an_exit_named_in_60_characters_does_not_fit() {
+    fn an_place_named_in_60_characters_does_not_fit() {
         let c = ctx();
         let mut def = c.game.content.battles["test_escape"].clone();
         assert!(fits(&longest_objective(&c, &def, Words::ENGLISH)));
-        def.exit_name = Some("x".repeat(60));
+        def.place_name = Some("x".repeat(60));
         assert!(!fits(&longest_objective(&c, &def, Words::ENGLISH)));
     }
 }

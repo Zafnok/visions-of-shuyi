@@ -101,10 +101,10 @@ struct RawBattle {
     triggers: Vec<Trigger>,
     #[serde(default)]
     battle_notes: Vec<RawNote>,
-    /// The place an escape map's exit leads to, written bare:
-    /// `exit_name: "the far bank"`.
+    /// The place an escape map's exit leads to, or a seize map's Seize
+    /// point, written bare: `place_name: "the far bank"`.
     #[serde(default, deserialize_with = "bare")]
-    exit_name: Option<String>,
+    place_name: Option<String>,
     /// The houses to save (0313), written bare: `village: (minimum: 3,
     /// rewards: [...])`.
     #[serde(default, deserialize_with = "bare")]
@@ -433,7 +433,7 @@ fn build(
         refs.dialogue,
     ));
     let battle_notes = v.notes(&raw.battle_notes, &everyone);
-    let exit_name = v.exit_name(raw.exit_name.as_deref(), objective.as_ref());
+    let place_name = v.place_name(raw.place_name.as_deref(), objective.as_ref());
     let village = v.village(raw.village.as_ref(), &map, &everyone);
     if !v.errors.is_empty() {
         return Err(v.errors);
@@ -456,7 +456,7 @@ fn build(
         objective: objective.unwrap_or(Objective::Rout { turn_limit: None }),
         triggers: raw.triggers,
         battle_notes,
-        exit_name,
+        place_name,
         village,
         difficulty: raw.difficulty,
         kind: raw.kind,
@@ -779,17 +779,21 @@ impl<'a, 'r> Checker<'a, 'r> {
         })
     }
 
-    /// The exit's name, trimmed: one line, and only on an escape map.
-    fn exit_name(&mut self, name: Option<&str>, objective: Option<&Objective>) -> Option<String> {
+    /// The objective's place name, trimmed: one line, and only on an
+    /// escape or seize map.
+    fn place_name(&mut self, name: Option<&str>, objective: Option<&Objective>) -> Option<String> {
         let name = name?.trim();
-        if !matches!(objective, None | Some(Objective::Escape { .. })) {
-            self.err("exit_name: only an escape map names its exit".to_owned());
+        if !matches!(
+            objective,
+            None | Some(Objective::Escape { .. } | Objective::Seize { .. })
+        ) {
+            self.err("place_name: only an escape or seize map names its place".to_owned());
         }
         if name.is_empty() {
-            self.err("exit_name: no text".to_owned());
+            self.err("place_name: no text".to_owned());
         }
         if name.chars().any(char::is_control) {
-            self.err("exit_name: the name must be one line".to_owned());
+            self.err("place_name: the name must be one line".to_owned());
         }
         Some(name.to_owned())
     }

@@ -20,7 +20,7 @@ use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::MapScene;
 use crate::screen::{Ctx, loop_clock_s};
 use crate::screens::battle::glyph::forecast::{
-    SIDES, Under, lost_shaded, skull, swap_arrows, under, uses_after_name, weapon_name,
+    SIDES, Under, kill_mark, lost_shaded, swap_arrows, under, uses_after_name, weapon_name,
 };
 use crate::screens::battle::units::{lit_fill, meter_cells};
 use crate::screens::battle::view::{ForecastSideView, ForecastView};
@@ -312,8 +312,9 @@ fn paint_strike(pen: Pen<'_>, view: &ForecastView, i: usize, buf: &mut GlyphBuff
     }
     if s.kills {
         // The Playdate's cells are the PC's size (8 × 16 pixels).
-        for o in skull(pen.x + dmg + 7, pen.y, ink.text) {
-            buf.add_overlay(o);
+        let images = &pen.ctx.game.content.images;
+        if let Some(mark) = kill_mark(images, pen.x + dmg + 7, pen.y, ink.text) {
+            buf.add_sprite(mark);
         }
     }
     if i == 0

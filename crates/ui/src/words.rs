@@ -295,10 +295,11 @@ impl<'a> Words<'a> {
         }
     }
 
-    /// The name of a battle's exit, `english` in its battle file.
-    pub fn exit_name(self, english: &'a str) -> &'a str {
+    /// The name of a battle's place (its exit or Seize point), `english`
+    /// in its battle file.
+    pub fn battle_place(self, english: &'a str) -> &'a str {
         match self.pack {
-            Some((lang, code)) => lang.exit_name(code, english),
+            Some((lang, code)) => lang.battle_place(code, english),
             None => english,
         }
     }
