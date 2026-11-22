@@ -245,7 +245,8 @@ Nick's queue).
 the data beside the kind's trait, both sides, the unit info trait text,
 the re-balance) and now also blocked by 0534; 0527 says Nick's answer
 and the either-order with 0333; 0079 and 0081 note the answer (0081:
-the EXP numbers here use today's formula). New: **0533** the bots try
+0080 merged after 0081, so the design doc's EXP numbers use 0081's
+formula: Aske's kill of a Chapter 2 guard is 82, her hit 22). New: **0533** the bots try
 player-side changes and report the ones that fit the bands (Nick's
 "Report only"; blocked by 0527), **0534** the bots' army repairs its
 worn weapons at Preparations (found here: by Chapter 4 Tamsin's only

@@ -270,7 +270,9 @@ the heavy answer to armour and magic the best one. The rule, exactly:
   Flying, min damage 2`.
 - **EXP:** a combat that deals the minimum is a combat that deals damage
   (`progression.md`, *EXP formulas*): Aske (Lv 3) shooting a Lv 5 guard
-  gets **22** EXP instead of 2, and **74** for the kill. Weapon EXP gets
+  gets **22** EXP instead of 2, and **82** for the kill (0081's formula;
+  at Lv 5 against a Chapter 4 guard, Lv 9: 26, and 100 for the kill).
+  Weapon EXP gets
   the hit's base and `dealt / 5` as for any hit.
 
 **What it does to the guards of Chapters 2–4.** The army the bots bring
