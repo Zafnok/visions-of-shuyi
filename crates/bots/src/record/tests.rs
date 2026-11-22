@@ -297,3 +297,46 @@ fn a_battle_won_before_the_search_counts_only_if_wanted() {
     let recorded = record(won.state, content, 1, &every).unwrap();
     assert_eq!(recorded.phases, Vec::<Vec<Command>>::new());
 }
+
+/// A Seize battle in `turns` turns or fewer: the lord at `x`, an enemy at
+/// 8, the tile to seize at `pos`.
+fn seize_at(pos: trpg_core::Pos, x: i32, turns: Option<u32>) -> BattleState {
+    let objective = Objective::Seize {
+        pos,
+        by_lord: true,
+        turn_limit: turns,
+    };
+    let units = vec![lord(player(1, x)), enemy(2, 8)];
+    BattleState::new(BattleSetup {
+        objective,
+        ..setup(units)
+    })
+    .0
+}
+
+/// A tile to seize the lord can't walk to costs as much as the farthest
+/// one could: the search heads anywhere else first.
+#[test]
+fn a_tile_to_seize_out_of_reach_costs_the_most() {
+    // The sea's corner: no swordsman walks there.
+    let state = seize_at(trpg_core::Pos::new(0, 0), 1, None);
+    let out_of_reach = 20 * i64::from(u32::MAX / 64);
+    let expected = -out_of_reach - 7 - (200 + 3 * foe(&state)) + 3 * 20;
+    assert_eq!(worth(&state, &every), expected);
+}
+
+/// A battle lost with nobody fallen (a Seize past its last turn) is no
+/// recording either.
+#[test]
+fn a_battle_lost_with_nobody_fallen_is_no_recording() {
+    let mut state = seize_at(tile(6), 1, Some(1));
+    for _ in 0..4 {
+        if state.outcome().is_none() {
+            state.apply(&Command::EndPhase).unwrap();
+        }
+    }
+    assert_eq!(state.outcome(), Some(Outcome::Defeat));
+    assert_eq!(lost(&state), Vec::<&str>::new());
+    let error = record(state, game(), 1, &every).unwrap_err();
+    assert!(error.starts_with("not a win: Some(Defeat)"), "{error}");
+}
