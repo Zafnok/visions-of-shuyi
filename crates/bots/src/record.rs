@@ -229,6 +229,10 @@ fn seize_field(state: &BattleState) -> Option<Grid<Option<u32>>> {
     Some(flow_field(tiles.width(), tiles.height(), [pos], cost))
 }
 
+/// More commands than any Player phase plays: a try stops there, where a
+/// command the rules keep refusing would loop for ever.
+const MOST_COMMANDS: usize = 1_000;
+
 /// One way to play the Player phase `state` is in, picked by `rng`: the
 /// AI's command for the player's side, or any legal command. `plain`: the
 /// AI's command every time.
@@ -242,7 +246,10 @@ fn try_phase(
     // One Player phase: with no enemy left (a Seize map), ending it
     // starts the next turn's Player phase at once.
     let turn = state.turn();
-    while state.outcome().is_none() && state.phase() == Phase::Player && state.turn() == turn {
+    for _ in 0..MOST_COMMANDS {
+        if state.outcome().is_some() || state.phase() != Phase::Player || state.turn() != turn {
+            break;
+        }
         let ai = next_command(state, &content.ai);
         let roll = if plain { 0 } else { rng.roll_below(10) };
         let command = choose(roll, ai, &useful(state), rng);
