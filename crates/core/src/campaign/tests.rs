@@ -138,7 +138,7 @@ fn def() -> BattleDef {
             text: "Spare the captain.".into(),
             units: vec![UnitId(5)],
         }],
-        exit_name: None,
+        place_name: None,
         village: None,
         difficulty: Difficulty::Normal,
         kind: BattleKind::Story,

@@ -652,6 +652,7 @@
     "battle.objective.defeat_boss": "Defeat the boss",
     "battle.objective.seize": "Seize the {place}",
     "battle.objective.seize_objective": "Seize the objective",
+    "battle.objective.seize_at": "Seize {place}",
     "battle.objective.survive": "Survive {turns} turns",
     "battle.objective.escape": "Get everyone to the exit ({out}/{total} out)",
     "battle.objective.village": "Houses: {saved} saved, {lost} lost",

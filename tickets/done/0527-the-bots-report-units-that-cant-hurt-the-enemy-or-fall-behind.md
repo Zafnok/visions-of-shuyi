@@ -53,11 +53,21 @@ growths are Nick's (`docs/design/playtest-bots.md`, *Autobalancing*
 Nick asked about bots that tune the player's side too; that is a design
 question for 0080 (how the army gets through armour), not this ticket.
 
-**0080's question 2** asks Nick whether the bots should also try
-player-side changes (report only, or apply them within limits he sets).
-**Either order with 0080:** if 0080 is done and he picked the second,
-this report grows to list the change it would make for each flagged
-unit; if not, build the report only (player stats stay his).
+**0080 answered it (2026-11-22):** asked whether the bots should also
+try player-side changes, Nick picked **"Report only"**: the bots try
+player-side changes and report which ones put each chapter in its band,
+and he picks; they never apply one (`docs/design/playtest-bots.md`,
+*The player's side: proposed, never applied*). That search is ticket
+**0533**, which starts from this ticket's flags. This ticket builds the
+per-unit report only, as below.
+
+**0080 also changed the numbers** (built by 0333): bow hits deal at
+least 2 and spear hits at least 3. **Either order with 0333:** `can_hurt`
+reads `trpg_core::forecast`, so it follows whichever rule is in; if 0333
+lands first, Aske can hurt every guard (the first acceptance criterion
+then checks a unit that still can't, e.g. Maud: her Iron Gauntlets'
+power 4 against Def 15, and no attack spell), and if not, write the criterion as it stands and add a line to
+0333 to update it.
 
 ## Nick input
 
@@ -111,6 +121,8 @@ pasted into `docs/playtesting.md` and the PR.
 **Out (do not do):**
 - Changing any unit, class, growth or weapon, or letting the autobalancer
   do so.
+- Trying player-side changes and reporting the ones that put a chapter in
+  its band (Nick's "Report only", 0080): ticket **0533**.
 - Changing the bands or the personas.
 - **1180** (the bots on the engine's playtest pieces) and **1207** (the
   CLI and history on the engine's). **Either order:** if they are done

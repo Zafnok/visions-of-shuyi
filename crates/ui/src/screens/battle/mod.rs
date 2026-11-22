@@ -329,9 +329,9 @@ pub struct BattleScreen {
     /// it ([`with_look`](Self::with_look)); a battle made any other way
     /// has the look of a map that names none.
     look: MapLook,
-    /// The battle file's name for its exit, named on an escape map's
-    /// objective line (0324).
-    exit_name: Option<String>,
+    /// The battle file's name for its objective's place, named on an
+    /// escape or seize map's objective line (0324, 0331).
+    place_name: Option<String>,
     /// The language of the last frame: what a command applied between
     /// frames names things in (a combat's fighters, a level up's skills).
     /// English until the first frame.
@@ -405,7 +405,7 @@ impl BattleScreen {
             player_view: None,
             notes_t: 0.0,
             look: MapLook::default(),
-            exit_name: None,
+            place_name: None,
             language: Language::default(),
         }
     }
@@ -417,10 +417,11 @@ impl BattleScreen {
         self
     }
 
-    /// This screen with the battle file's name for its exit, `name`.
+    /// This screen with the battle file's name for its objective's
+    /// place, `name`.
     #[must_use]
-    pub fn with_exit_name(mut self, name: Option<String>) -> Self {
-        self.exit_name = name;
+    pub fn with_place_name(mut self, name: Option<String>) -> Self {
+        self.place_name = name;
         self
     }
 
@@ -2161,7 +2162,7 @@ impl BattleScreen {
     fn banner_view(&self, banner: &Banner, words: Words<'_>, limit: Option<Turn>) -> BannerView {
         let mut view = banner.view(words, limit);
         if banner.kind == BannerKind::Objective {
-            view.lines = objective::lines(&self.state, self.exit_name.as_deref(), words);
+            view.lines = objective::lines(&self.state, self.place_name.as_deref(), words);
         }
         view
     }
@@ -2183,7 +2184,7 @@ impl BattleScreen {
                 });
                 Some(DialogView::Objective(ObjectiveView {
                     title: ctx.text("battle.objective.title").to_owned(),
-                    lines: objective::lines(&self.state, self.exit_name.as_deref(), words),
+                    lines: objective::lines(&self.state, self.place_name.as_deref(), words),
                     village: objective::village_count(&self.state, words),
                     turn: map_menu::turn_text(&self.state, words),
                     notes: under,
