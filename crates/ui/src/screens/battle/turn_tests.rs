@@ -3,7 +3,7 @@
 //! and the phase and outcome banners.
 
 use insta::assert_snapshot;
-use trpg_core::{ItemId, Objective, Outcome, UnitAction};
+use trpg_core::{ItemId, Objective, Outcome, UnitAction, danger_zone};
 
 use super::banner::{BannerKind, PHASE_BANNER_S};
 use super::layout::{ABOVE_HELP_BAR, MAP_VIEW, snap};

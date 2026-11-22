@@ -380,6 +380,73 @@ fn each_export_tip_shows_once_per_profile_naming_the_export_key() {
     assert_eq!(how, "Export the save under the cursor: i");
 }
 
+/// Ticket 1291: with the guide voiced and tips on, the line of the Load
+/// Game tip is kept loaded on a frame before the one its box asks for it
+/// on: on the web a clip not loaded 0.3 s after it is asked for is
+/// skipped, and the title keeps it from its first frame.
+#[test]
+fn the_load_game_tips_line_is_kept_before_its_box_says_it() {
+    use std::fmt::Write as _;
+    use trpg_content::TipTrigger;
+    use trpg_ui::AudioRequest;
+    let mut h = Harness::with_layout_and(RIGHT_HANDED, |ctx| {
+        fill(ctx, 1);
+        ctx.platform.storage_place = StoragePlace::Folder(FOLDER.to_owned());
+        ctx.game.tips_enabled = true;
+        let content = &ctx.game.content;
+        // Every scene's lines are voiced too: the saves' first lines.
+        let guide = trpg_content::voice::guide_scene(&content.lessons, &content.tips);
+        let scenes = content.dialogue.scenes.values().chain([&guide]);
+        let mut clips = String::new();
+        let mut ids = BTreeSet::new();
+        for l in scenes.flat_map(trpg_content::dialogue::Scene::lines) {
+            if ids.insert(l.id.clone()) {
+                let (id, text) = (l.id.to_string(), l.text.to_owned());
+                let _ = writeln!(
+                    clips,
+                    "(line: {id:?}, spoken: {text:?}, voice: \"v\", made_by: Recorded(actor: \"a\")),"
+                );
+            }
+        }
+        ctx.set_voice_manifest(&format!(
+            "(clips: [
+{clips}])"
+        ));
+        let warnings = ctx.take_warnings();
+        assert_eq!(warnings, [] as [String; 0]);
+    });
+    h.wait(0.1);
+    let content = &h.game().ctx().game.content;
+    let tip = content.tips.for_trigger(TipTrigger::FirstLoadGame);
+    let tip = tip.unwrap_or_else(|| panic!("no Load Game tip"));
+    let line = trpg_content::voice::guide_line(&tip.text);
+    open_under_a_tip(&mut h, "Down f");
+    let log = h.audio_log();
+    let played = log.iter().find_map(|(frame, r)| match r {
+        AudioRequest::PlayVoice { line: l, .. } if *l == line => Some(*frame),
+        _ => None,
+    });
+    let played = played.unwrap_or_else(|| panic!("{line} never asked for: {log:?}"));
+    let kept_before = log.iter().any(|(frame, r)| {
+        *frame < played
+            && matches!(r, AudioRequest::KeepVoices { lines } if lines.iter().any(|(l, _)| *l == line))
+    });
+    assert!(
+        kept_before,
+        "{line} not kept before frame {played}: {log:?}"
+    );
+    // The Load Game list keeps its saves' first lines, in place of the
+    // title's set: its set holds the tip's line too.
+    let last_set = log.iter().rev().find_map(|(frame, r)| match r {
+        AudioRequest::KeepVoices { lines } if *frame < played => Some(lines),
+        _ => None,
+    });
+    let last_set = last_set.unwrap_or_else(|| panic!("nothing kept: {log:?}"));
+    let saves = last_set.iter().any(|(l, _)| *l != line);
+    assert!(saves, "the saves' lines are voiced: {last_set:?}");
+    assert!(last_set.iter().any(|(l, _)| *l == line), "{last_set:?}");
+}
+
 /// A screen opened from the title by `keys`, with the tip over it.
 fn open_under_a_tip(h: &mut Harness, keys: &str) {
     // Load Game is opened by the game flow, a frame after the key.

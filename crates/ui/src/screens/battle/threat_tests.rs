@@ -11,7 +11,8 @@ use trpg_core::{
 };
 
 use super::testing::{Stacked, battle_with, quick_units, skirmish_charged};
-use super::{BattleScreen, KeptThreat, quick_battle, threat_enemies};
+use super::threat::KeptThreat;
+use super::{BattleScreen, quick_battle, threat_enemies};
 use crate::FrameInput;
 use crate::harness::FRAME_DT;
 use crate::input::Action;
@@ -33,7 +34,7 @@ fn shown(s: &BattleScreen, c: &Ctx) -> Option<(Pos, Vec<Pos>)> {
 
 /// Makes `s` remember `enemies` as the answer for `unit` on `tile`.
 fn plant(s: &BattleScreen, unit: UnitId, tile: Pos, enemies: &[Pos]) {
-    *s.threats.borrow_mut() = Some(KeptThreat {
+    *s.threat.threats.borrow_mut() = Some(KeptThreat {
         unit,
         tile,
         enemies: enemies.to_vec(),
@@ -72,14 +73,14 @@ fn the_enemies_that_could_attack_a_unit_on_a_tile_are_listed_by_their_tiles() {
 fn the_list_is_kept_for_its_unit_and_tile_and_worked_out_again_for_another() {
     let c = ctx();
     let s = quick(&c);
-    assert!(s.threats.borrow().is_none());
+    assert!(s.threat.threats.borrow().is_none());
     assert_eq!(shown(&s, &c), Some((p(3, 5), vec![p(7, 4)])));
     let kept = KeptThreat {
         unit: LORD,
         tile: p(3, 5),
         enemies: vec![p(7, 4)],
     };
-    assert_eq!(*s.threats.borrow(), Some(kept.clone()));
+    assert_eq!(*s.threat.threats.borrow(), Some(kept.clone()));
     // What is kept for this unit on this tile is what is shown...
     plant(&s, LORD, p(3, 5), &[p(0, 0), p(1, 1)]);
     assert_eq!(shown(&s, &c), Some((p(3, 5), vec![p(0, 0), p(1, 1)])));
@@ -89,10 +90,10 @@ fn the_list_is_kept_for_its_unit_and_tile_and_worked_out_again_for_another() {
     // Kept for another tile, or another unit: worked out again, and kept.
     plant(&s, LORD, p(3, 4), &[p(0, 0)]);
     assert_eq!(shown(&s, &c), Some((p(3, 5), vec![p(7, 4)])));
-    assert_eq!(*s.threats.borrow(), Some(kept.clone()));
+    assert_eq!(*s.threat.threats.borrow(), Some(kept.clone()));
     plant(&s, UnitId(2), p(3, 5), &[p(0, 0)]);
     assert_eq!(shown(&s, &c), Some((p(3, 5), vec![p(7, 4)])));
-    assert_eq!(*s.threats.borrow(), Some(kept));
+    assert_eq!(*s.threat.threats.borrow(), Some(kept));
 }
 
 #[test]

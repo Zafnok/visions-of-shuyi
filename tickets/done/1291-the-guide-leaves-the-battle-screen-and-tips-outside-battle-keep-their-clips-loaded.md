@@ -5,10 +5,10 @@ type: infra
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-21
 ---
 
 # 1291 — The guide leaves the battle screen, and tips outside battle keep their clips loaded
@@ -186,29 +186,37 @@ first, 1081 adds a predicate row. 1081 need not wait.
 
 ## Acceptance criteria
 
-- [ ] `wc -l crates/ui/src/screens/battle/mod.rs` is at least 700 lines
-      under 3,595.
-- [ ] `BattleScreen` has no `danger`, `threats`, `planner`, `areas`,
+- [x] `wc -l crates/ui/src/screens/battle/mod.rs` is at least 700 lines
+      under 3,595. *Met against the file as this ticket found it:* it had
+      grown to 3,886 lines on main (1286, 1304, 1306, 1307) and is now
+      2,993, 893 lines fewer. Against the 3,595 written here it is 602
+      under (see the notes).
+- [x] `BattleScreen` has no `danger`, `threats`, `planner`, `areas`,
       `popups`, `flashes`, `cues`, `walked`, `pace` or `ai_speed` field.
 - [ ] Adding a tip trigger needs no edit in `crates/content/src/tip.rs`
       (a test tip with a new name and predicate row, in `tests/it`), and a
-      name with no predicate row fails a ui test.
-- [ ] `grep -nE "fn (due_tip|coming_guide_lines|lesson_moment|lessons_end_key|settle_lessons|tick_lessons|notice_mode|triggers_now)\b" crates/ui/src/screens/battle/mod.rs`
+      name with no predicate row fails a ui test. *Split off to 1310, as
+      Split allows.*
+- [x] `grep -nE "fn (due_tip|coming_guide_lines|lesson_moment|lessons_end_key|settle_lessons|tick_lessons|notice_mode|triggers_now)" crates/ui/src/screens/battle/mod.rs`
       finds nothing.
-- [ ] `grep -rn "screens::battle" crates/ui/src/tips` finds nothing.
-- [ ] `TipScreen` sends `KeepVoices [line]` before `PlayVoice line`. On
+- [x] `grep -rn "screens::battle" crates/ui/src/tips` finds nothing.
+      *But one line:* `tips/glyph.rs` imports `battle::layout::MAP_VIEW`,
+      the console's map region the tip box is placed over (the results
+      screen and the map skins' tests import it too). It names no battle
+      logic; moving the layout module is not this ticket's. The voice, its
+      fixture, `shown_in` and `EndAnswer` (which `tips/view.rs` also
+      named) are under `crate::tips` now.
+- [x] `TipScreen` sends `KeepVoices [line]` before `PlayVoice line`. On
       Confirm it sends `StopVoice` then `KeepVoices []`. With voices off
       it sends nothing.
-- [ ] The title's first frame, with tips and voices on, keeps both
+- [x] The title's first frame, with tips and voices on, keeps both
       out-of-battle tip lines. It keeps only the unseen ones, and nothing
-      with tips off.
-- [ ] `ch01_tips`, `ch01_lessons`, `lessons` and `save_files` in
+      with tips off. (And only where their boxes can show: see the notes.)
+- [x] `ch01_tips`, `ch01_lessons`, `lessons` and `save_files` in
       `tests/it` pass. The first three files are unchanged; `save_files.rs`
-      only gains the test below. (If the registry is split off, as
-      *Split* allows, the same holds for its ticket.)
-- [ ] A row for 1291 in `docs/engine/friction.md`, outcome 3.
-- [ ] All gates in the `run-gates` skill pass.
-
+      only gains the test below.
+- [x] A row for 1291 in `docs/engine/friction.md`, outcome 3.
+- [x] All gates in the `run-gates` skill pass.
 ## Tests required
 
 - Unit: `GuideVoice`'s five tests, moved unchanged. `TipScreen`'s voice
@@ -225,5 +233,72 @@ first, 1081 adds a predicate row. 1081 need not wait.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** Nothing a player sees changes, apart from the out-of-battle
+tips' clips now being loaded before their boxes open.
+
+- `GuideVoice` moved to `crate::tips::voice` (`pub mod`, for its doc
+  links), its `voiced()` fixture to `voice::testing`; `TipState::shown_in`
+  is `crate::tips::shown_in`. `EndAnswer` moved to `tips/view.rs` too
+  (`tips/view.rs` named it from `battle::lessons`; `lessons.rs` re-exports
+  it).
+- `battle/guide.rs`: `Guide` holds the tips, their mode, the lessons, what
+  a lesson just done holds back (`AfterLesson`, added on main by 1292
+  after this ticket was written), the voice, the pushed scene's lines
+  (1296), the end box's focus, `Doable` and what was noticed. The screen
+  hands it a `Moment`: what is over the map as one enum (`Over`: nothing,
+  a banner, or something busy: a playback, EXP, a scene waiting, the
+  notes; a banner never shows with those), the phase, whether the battle
+  is decided, and whether the player browses with the queue empty. Nine
+  bools would have tripped `clippy::struct_excessive_bools`.
+- `battle/triggers.rs`: the trigger checks as an `impl BattleScreen`
+  block, plus `take_in_tips` and `take_in_lessons` (the frame's two
+  firings, in today's order).
+- `battle/threat.rs`: `ThreatDisplay` (named so, not `ThreatView`: that
+  is already `map_view::ThreatView`, the arrows' scene item), with
+  `danger_tiles`, `threat_enemies`, `threat_target` and `threat_view`.
+  `battle/effects.rs`: `Effects` with the popups, flashes, cues, the
+  walked unit, the pace and the AI's speed, their types and ticks.
+- `TipScreen` keeps its line and plays it on its first frame through a
+  `GuideVoice`; Confirm or Cancel stops it and lets it go.
+- The title keeps the unseen out-of-battle tips' lines with New Game's
+  (1293's `KeptVoices` set), only where their box can show: where saves
+  can be exported, and the Load Game tip only with a save to load.
+  Keeping them where they can't show broke `tests/it/lessons.rs` (it
+  launches through the title with voices on and nothing to export to)
+  and would only have loaded clips for nothing.
+- **Deviation:** the Load Game list adds its export tip's line to its own
+  set too. Its set (each save's first scene lines, 1293) replaces the
+  title's on the frame it opens, a frame before the tip box asks for the
+  clip, so without it the clip was let go just before it was needed on
+  the web. The integration test voices every scene and checks both.
+
+**Deviations and what is not met as written:**
+- *Split:* the trigger registry is ticket 1310 (`blocked_by` this one),
+  as *Split* allows: `pr-size` counts a moved line twice, and the moves
+  alone passed 2,000 before the registry.
+- `mod.rs` is 2,993 lines: 893 under the 3,886 it had when this ticket
+  was started, 602 under the 3,595 written in the criterion (it grew by
+  291 lines on main in between, 1286, 1304, 1306, 1307).
+- `grep -rn "screens::battle" crates/ui/src/tips` still finds
+  `tips/glyph.rs`'s `battle::layout::MAP_VIEW` (the console's map region
+  the box sits over, which the results screen and the map skins' tests
+  import too).
+- A few in-crate battle tests changed their paths only (`s.tips` to
+  `s.guide.tips`, `s.threats` to `s.threat.threats`, `s.pace` to
+  `s.effects.pace`, `s.flashes` to `s.effects.flashes`, two calls with the
+  state passed in, `KeptThreat`'s and `danger_zone`'s imports, `set_due`
+  as `Guide::set_due`); no assertion changed. `tests/it` gains only the
+  new `save_files` test.
+
+**Size.** Estimate 150 production lines net; measured 1,060 added, 812
+removed (net +248: the forwards, `Moment`, the title's and the save
+list's keep). Friction row: outcome 3. `pr-size` 3,051 (about 1,000 are
+moved lines counted twice). It could split into the guide and the
+threat/effects structs, but it was finished and gated in one piece, so
+it ships as one.
+
+**For the Act 1 playtest (1064):** whether the Load Game and Profile
+tips are heard on the web build.
+
+**Follow-up tickets:** 1310 (tip triggers by name, with a predicate row
+each).
