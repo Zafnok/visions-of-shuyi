@@ -34,9 +34,9 @@
     "player_outline": "#2a60ff",
 
     // Overlay background tints (blended ~75% over the terrain background)
-    "move_range": "#1c3a6a",
-    "attack_range": "#5a1a1a",
-    "heal_range": "#1a4a30",
+    "move_range": "#2a5ac8",
+    "attack_range": "#c82020",
+    "heal_range": "#2a8a50",
     "danger_zone": "#3a1010",
     // The exit area of an escape map (0319; *Claude's starting look*).
     "exit_area": "#4a4418",

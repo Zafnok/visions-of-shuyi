@@ -5,10 +5,10 @@ type: tuning
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-23
 ---
 
 # 1319 — Move and attack ranges are stronger and easy to tell apart
@@ -70,9 +70,9 @@ by pattern); new range styles.
 
 ## Acceptance criteria
 
-- [ ] Before/after pictures per theme in the PR.
-- [ ] The contrast test passes for every palette.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Before/after pictures per theme in the PR.
+- [x] The contrast test passes for every palette.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -84,3 +84,33 @@ Playdate: unchanged (patterns). GBA: no target.
 
 ## Completion notes
 
+- **Colours** (every theme but the Playdate's, whose patterns are out of
+  scope): move, attack and heal brighter and more saturated, the danger
+  zone unchanged. Earthy (default) move `#3a6fd0`, attack `#d83020`, heal
+  `#3a9a4a`; Moonlit `#2a5ac8`/`#c82020`/`#2a8a50`; Painterly
+  `#2088c0`/`#d03818`/`#2a9a50`; Parchment `#7898e0`/`#e85848`/`#78c070`.
+  The attack red is a notch redder than the ticket's starting `#d04030`:
+  over the picture look's mint grass the tint blends toward tan, and the
+  purer red keeps it rust instead. `docs/design/look-and-feel.md`'s
+  theme table follows.
+- **The test** (`crates/ui/src/map_view/range_contrast_tests.rs`): in every
+  theme, the move and attack tints, over `grass_bg`, `forest_bg`,
+  `road_bg` and the bought grass tile's colour (`#59cf93`, measured from a
+  picture: the gates never read the art), at the weakest strength any
+  range style tints (the shimmer's trough, 0.45), are at least ΔE 30
+  (CIE76) and 75° of hue apart. The old colours fail it in every theme
+  (the default's were ΔE 16 and 32° apart over the grass picture); the
+  new ones pass with ΔE 34 and 86° at the least.
+- **No engine change**: with the colours alone the two read clearly
+  apart in both looks, so the blend stays a constant.
+- **Pictures**: `docs/screenshots/1319-ranges-glyphs.png` and
+  `1319-ranges-pictures.png`, before and after in each theme, on the test
+  Quick Battle (ADR-0118: no tracked picture of a real map). Chapter 1
+  was rendered too, locally, and reads the same way.
+- **Left for the Act 1 playtest (1064)**: whether the tints are now too
+  strong over the bought tiles; whether the attack tint over grass in the
+  picture look (rust, not red: red over green blends toward brown at the
+  strength the range styles use) reads as "attack"; whether enemy initials
+  on an attack tile in the glyph look are still easy to read. If the
+  picture look needs a truer red, the next step is the engine change the
+  ticket named (the tint's strength a skin setting).
