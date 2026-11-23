@@ -47,7 +47,9 @@ the look, ADR-0038), so play records and bots are unchanged.
   wants a lighter Playdate version.
 
 **Out (do not do):** weather that changes rules (rain lowering hit);
-sounds; effects on screens 0096 didn't name.
+sounds (1332); effects on screens 0096 didn't name; bursts on hits
+(1333) and touches and creatures on the map (1334), which use this
+ticket's engine particles; each chapter's pick (1335–1342).
 
 ## Implementation steps
 
