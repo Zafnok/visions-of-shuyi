@@ -55,7 +55,7 @@ console), 1108, 1030, 1200.
   PRs past the 3,000-line limit. Text stays at 1× on 1280 × 720.
 - **A mix** lost for the same reason.
 
-Engine PR: Zafnok/shuyi-engine#538 (2333, opened 2026-11-23). Nick
+Engine PR: Zafnok/shuyi-engine#541 (2333, opened 2026-11-23). Nick
 merges it; the pin moves in a session of its own, after he confirms.
 
 What is left here once the pin has moved past 2333:
