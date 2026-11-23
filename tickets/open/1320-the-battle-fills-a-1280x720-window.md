@@ -5,8 +5,8 @@ type: bug
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
-blocked_by: []
+status: blocked
+blocked_by: ["engine#2333"]
 nick_input: none
 completed:
 ---
@@ -34,6 +34,46 @@ Not covered by 1217 (the battle's camera on the engine's `Viewport`, a
 refactor with no change a player sees, blocked by engine#3206) or 0072
 (when the map scrolls). Related done tickets: 1283 (window sized by the
 console), 1108, 1030, 1200.
+
+## Decision (2026-11-23)
+
+**Fractional scale, drawn sharp, through the engine's engine#2333**
+(engine ADR-0139). Weighed:
+
+- **Fractional scale with sharp bilinear** (chosen): the engine draws
+  the 100 × 32 console at a whole scale into a texture, then stretches
+  it with linear filtering, so a pixel's edge blends over one window
+  pixel at most. No screen changes: they keep laying out on 100 × 32.
+  Nick approved one tweak in the engine: `Fit` keeps the whole scale
+  when that already fills 90 % or more (1080p at 2×, 4K at 4×: 95 %), so
+  those stay pixel-perfect. At 1280 × 720 the game becomes 1125 × 720
+  (100 % of the height); at 1366 × 768, 1200 × 768; at 1600 × 900,
+  1406 × 900; at 800 × 600, 1× already fills the width.
+- **More cells** lost: it needs the engine's parked 2323 and 2376 and
+  every screen of the game laid out against any console size (title,
+  dialogue, menus, cinematics and art are drawn for 800 px), several
+  PRs past the 3,000-line limit. Text stays at 1× on 1280 × 720.
+- **A mix** lost for the same reason.
+
+Engine PR: Zafnok/shuyi-engine#538 (2333, opened 2026-11-23). Nick
+merges it; the pin moves in a session of its own, after he confirms.
+
+What is left here once the pin has moved past 2333:
+
+1. `impl GameSettings for` the game's settings: `const DEFAULT_SCALE:
+   ScaleMode = ScaleMode::Fit;`. The Playdate ignores it.
+2. `shuyi.ron`'s `desktop` and `web` targets: `scale: fit`, so
+   `check --target` checks the text at the scale the window draws. (The
+   check comparing them with `DEFAULT_SCALE` is engine#3242, not built
+   yet: keep them equal by hand.)
+3. The game's test of the placement (step 1, `crates/ui/src/console.rs`):
+   `place(ScaleMode::Fit, (800, 512), window)` at 1280 × 720,
+   1366 × 768, 1920 × 1080, 1600 × 900 and 800 × 600, each at least 90 %
+   of one side; today's `layout` values beside them.
+4. A game ADR recording this choice (pointing at engine ADR-0139).
+5. Step 3's "two console sizes" is moot: the console stays 100 × 32.
+   Say so in the completion notes.
+6. A windowed screenshot at 1280 × 720 before and after.
 
 ## Nick input
 
