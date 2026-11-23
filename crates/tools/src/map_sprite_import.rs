@@ -142,7 +142,7 @@ const BOW: &str = "MountedArcher/MountedArcher_Red1.png";
 
 /// Every class and named character of the Quick Battle and Chapter 1, and
 /// the bought sprite each is drawn as. Two rows may share a sprite.
-pub const SPRITES: [MapSprite; 26] = [
+pub const SPRITES: [MapSprite; 27] = [
     // The lead, by gender; the Exile class (the placeholder lord) as the
     // male lead.
     sprite(
@@ -159,6 +159,12 @@ pub const SPRITES: [MapSprite; 26] = [
         For::Class("exile"),
         "fighter_male",
         "heroes/FighterMale/map_sprite.png",
+    ),
+    // Joss (ticket 0858): the Thief hero, as his face.
+    sprite(
+        For::Character("defector"),
+        "thief",
+        "heroes/Thief/map_sprite.png",
     ),
     sprite(For::Class("mage"), "witch", "heroes/Witch/map_sprite.png"),
     sprite(
@@ -584,7 +590,10 @@ mod tests {
                     }
                 }
                 For::Character(id) => {
-                    assert!(trpg_content::tileset::LEAD_PICTURES.contains(&id), "{id}");
+                    let character = trpg_core::CharacterId(id.to_owned());
+                    let known = trpg_content::tileset::LEAD_PICTURES.contains(&id)
+                        || content.characters.characters.contains_key(&character);
+                    assert!(known, "{id}");
                 }
                 For::Fallback => {}
             }

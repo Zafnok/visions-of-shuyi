@@ -136,7 +136,8 @@ stays with that ticket.
    the picks are 0070's and 0076's). Facts: 20 speakers placed on screen
    have no portrait; Joss appears in 9 of the 10 scripts. Steps, with a
    time estimate for each (the session times the first and corrects the
-   rest): 0858, buy one pack and build Hendry's face; 0861, build the
+   rest): 0881 (split from 0858), a second look at Hendry's combat picture,
+   then buy one pack and build his face; 0861, build the
    prior's and Ned's faces; 0862, buy one $3 pack and build Gil's face;
    0866, download one free pack and build Hedda's and Ragna's faces. Six
    generator faces in all. Home: the four tickets.
