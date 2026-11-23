@@ -1077,3 +1077,51 @@ fn a_scene_over_the_battle_has_its_first_line_kept_before_it_plays() {
         "{line} not in {last_kept:?}"
     );
 }
+
+/// Ticket 1310: a tip whose trigger is a name no file had before shows
+/// from the row added for it, with no edit to the content crate's list of
+/// names (it keeps none); without the row it never shows.
+#[test]
+fn a_tip_with_a_new_trigger_name_shows_from_its_row() {
+    use trpg_ui::screens::battle::mode::Mode;
+    use trpg_ui::screens::battle::triggers::{Row, When};
+    let name = TipTrigger::new("TestUnitPickedUp");
+    let source = r#"(tips: [(id: "test_picked_up", trigger: TestUnitPickedUp,
+        title: "Picked up", text: "A test tip.")])"#;
+    let tips = trpg_content::tip::from_source("test.ron", source, None).unwrap();
+    // The tips shown until none is left, then after picking the lord up.
+    let close_tips = |h: &mut Harness| {
+        let mut seen = Vec::new();
+        for _ in 0..10 {
+            h.wait(0.1);
+            let Some(tip) = h.battle().and_then(BattleScreen::shown_tip) else {
+                return seen;
+            };
+            seen.push(tip);
+            h.keys("f");
+        }
+        panic!("the tips never ran out: {seen:?}");
+    };
+    for with_row in [false, true] {
+        let mut h = Harness::with_layout(RIGHT_HANDED);
+        h.ctx_mut().game.content.tips.tips.extend(tips.tips.clone());
+        h.with_tips();
+        h.keys("Down f Left f f f");
+        assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+        if with_row {
+            let picked_up = |s: &BattleScreen| matches!(s.mode(), Mode::Selected(_));
+            let row = Row {
+                trigger: name,
+                when: When::State(picked_up),
+            };
+            h.battle_mut().unwrap().add_trigger_row(row);
+        }
+        let before = close_tips(&mut h);
+        assert!(!before.contains(&name), "{before:?}");
+        assert_eq!(h.cursor_tile(), Some(LORD));
+        h.keys("f");
+        let after = close_tips(&mut h);
+        assert_eq!(after.contains(&name), with_row, "{after:?}");
+        assert!(after.contains(&TipTrigger::FirstUnitSelected), "{after:?}");
+    }
+}
