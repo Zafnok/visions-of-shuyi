@@ -30,6 +30,16 @@ painter with animated tiles) cover the engine half. Motion is drawn from
 the time alone, never stepped (`shuyi-animate` skill; `SH2103`: the rules
 never read a clock).
 
+**From 1314 (done, ADR-0131):** a skin reads the tier from
+`ctx.platform.graphics` (`GraphicsTier::{Minimal, Reduced, Full}`; the
+Playdate is `Reduced`). Each moving row carries a
+`trpg_content::motion::Motion` (`lowest`, and a `stills` entry per lower
+tier: `(show: FirstFrame)`, with `todo: "..."` for a picture still to
+make) and the skin draws `motion.drawn(tier)`. Add the rows to
+`motion::moving_looks` (its `TODO(1315)`); the content test
+`every_moving_look_names_its_stills` then checks them. Preview with
+`cargo shuyi frame-png --graphics reduced`.
+
 ## Nick input
 
 **Answer first:** 0096. Nothing to check after merge: verified by tests

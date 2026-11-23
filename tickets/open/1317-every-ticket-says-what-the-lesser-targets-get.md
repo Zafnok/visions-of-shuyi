@@ -27,6 +27,11 @@ the Playdate: `write-ticket`, `work-ticket`, `engine-change`,
 `ascii-art` and `ask-nick` don't. The tickets 0336, 1311–1316 and 1318
 already carry a trial `## Lesser targets` section.
 
+**From 1314 (done, ADR-0131):** the override is `cargo shuyi frame-png
+--graphics reduced|minimal` for a picture, and `SHUYI_GRAPHICS=reduced`
+for a debug build of the game; the fallback is a `motion::Motion` with a
+still per lower tier, and a still to make is its `todo`.
+
 ## Nick input
 
 None (process).

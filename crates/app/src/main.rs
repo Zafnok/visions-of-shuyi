@@ -112,7 +112,7 @@ fn folders_on_disk(root: &std::path::Path) -> Vec<shuyi::assets::bundle::Layer> 
     let read = |name: &str| match shuyi_app::read_folder(&root.join(name), name, limit) {
         Ok(layer) => Some(layer),
         Err(e) => {
-            macroquad::logging::warn!("{}: {}", name, e);
+            macroquad::logging::warn!("{name}: {e}");
             None
         }
     };
