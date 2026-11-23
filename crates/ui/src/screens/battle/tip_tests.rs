@@ -1175,3 +1175,114 @@ fn the_enemy_phase_tip_waits_for_the_notes() {
     assert!(s.notes_open());
     assert_eq!(s.shown_tip(), None);
 }
+
+/// The pages and questions of ticket 1312 her boxes step aside for: unit
+/// info, the map menu, its unit list and the objective page.
+fn pages(s: &BattleScreen, c: &Ctx) -> [(&'static str, Mode); 4] {
+    let lord = UnitId(1);
+    [
+        (
+            "info",
+            Mode::Info {
+                unit: lord,
+                back: None,
+            },
+        ),
+        (
+            "map menu",
+            Mode::MapMenu {
+                menu: map_menu::map_menu(&s.state, map_menu::MapEntry::EndTurn),
+            },
+        ),
+        (
+            "unit list",
+            Mode::UnitList {
+                menu: map_menu::unit_list(&s.state, c.words()),
+            },
+        ),
+        ("objective", Mode::Objective),
+    ]
+}
+
+/// Closes the page open with Cancel, back to the map.
+fn close_page(s: &mut BattleScreen, c: &mut Ctx) {
+    for _ in 0..4 {
+        if !s.mode().covers_guide() {
+            return;
+        }
+        press(s, c, &[Action::Cancel]);
+    }
+    panic!("the page never closed: {:?}", s.mode());
+}
+
+/// Ticket 1312: her tip on screen steps aside while a page is open, takes
+/// none of its keys, and is back, the same tip, once it closes.
+#[test]
+fn a_tip_steps_aside_for_a_page_and_comes_back() {
+    for kind in 0..4 {
+        let mut c = tipped();
+        let mut s = quick();
+        press(&mut s, &mut c, &[]);
+        assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
+        let (name, page) = pages(&s, &c)[kind].clone();
+        s.mode = page;
+        press(&mut s, &mut c, &[]);
+        let view = s.view(&c);
+        assert_eq!(view.tip, None, "{name}");
+        assert_eq!(view.lesson, None, "{name}");
+        assert_eq!(s.shown_tip(), None, "{name}");
+        if name == "info" {
+            assert!(view.info.is_some(), "the info screen");
+        }
+        // Its keys reach the page: Cancel closes it, not the tip.
+        close_page(&mut s, &mut c);
+        assert_eq!(s.mode(), &Mode::default(), "{name}");
+        assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart), "{name}");
+        assert_eq!(s.view(&c).tip.unwrap().heading, "Your move", "{name}");
+    }
+}
+
+/// Ticket 1312: a tip that fires while a page is open waits for it to
+/// close.
+#[test]
+fn a_tip_fired_on_a_page_waits_for_it_to_close() {
+    for kind in 0..4 {
+        let mut c = tipped();
+        let mut s = quick();
+        dismiss_all(&mut s, &mut c);
+        let (name, page) = pages(&s, &c)[kind].clone();
+        s.mode = page;
+        press(&mut s, &mut c, &[]);
+        s.guide.fire(TipTrigger::FirstLowHp);
+        s.guide.tips.absorb(&mut c);
+        press(&mut s, &mut c, &[]);
+        assert_eq!(s.shown_tip(), None, "{name}");
+        assert_eq!(s.view(&c).tip, None, "{name}");
+        close_page(&mut s, &mut c);
+        assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp), "{name}");
+    }
+}
+
+/// Ticket 1312: the info screen opened by its key while a tip is queued
+/// takes the info screen's keys (the next unit), and the Playdate's view
+/// has no tip over it either.
+#[test]
+fn unit_info_takes_its_keys_with_a_tip_waiting() {
+    let mut c = tipped();
+    let mut s = quick();
+    dismiss_all(&mut s, &mut c);
+    press(&mut s, &mut c, &[Action::Info]);
+    assert!(matches!(s.mode(), Mode::Info { .. }), "{:?}", s.mode());
+    s.guide.fire(TipTrigger::FirstLowHp);
+    s.guide.tips.absorb(&mut c);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Info { .. }), "{:?}", s.mode());
+    c.game.skin_set = SkinSet::Playdate;
+    let view = s.view(&c);
+    assert!(view.info.is_some());
+    assert_eq!(view.tip, None);
+    c.game.skin_set = SkinSet::Glyph;
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(s.mode(), &Mode::default());
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
+}
