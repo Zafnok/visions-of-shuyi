@@ -265,7 +265,8 @@ hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 �
 | `army · …` | The army the bots fielded (*The army*): where it comes from, each unit's class and level, the pack, the gold. |
 | `N/100 succeed … band …` | How many tries met the bot's success rule, and the band its tier wants: **✓** in the band, **✗ too hard** under it, **⚠ too easy** over it. `blocked` after it: under the 20% floor. |
 | `turns median … lower` | Hardcore's median turns against Normal's, both over the tries won with nobody dying: **✓** when Hardcore is faster. A **✗** here says the bots are wrong, not the map. **–** when one has no such try. |
-| `try N · …` | One line per try: `N` is its seed, how it ended (`Victory`, `Defeat`, or `unfinished` at the turn cap), the turn it stopped on, then its measures: `deaths` (Classic) or `retreats` (Casual), each unit that fell (`fell keeper 1`) and on which turn (`fell keeper turn 6`), `items` used, whether the `lord fell`, `turns` played (the cap if it stopped there), `won`. |
+| `try N · …` | One line per try: `N` is its seed, how it ended (`Victory`, `Defeat`, or `unfinished` at the turn cap), the turn it stopped on, then its measures: `deaths` (Classic) or `retreats` (Casual), each unit that fell (`fell keeper 1`) and on which turn (`fell keeper turn 6`), `items` used, whether the `lord fell`, `turns` played (the cap if it stopped there), `won`, and what each player unit did (*Units that fall behind*): `dealt Rue 58`, `kills Rue 4`, `exp Rue 112`, `levels Rue 1` (a 0 is left out). |
+| `… · units (…)` | A table per bot, a line per player unit: *Units that fall behind*. |
 | bot lines | Per bot: its mode, the tries won, how many tries had 0, 1, 2, 3 or more units fall and the unit that fell most often, items used per try, the median turns, how long a try took (the only numbers that differ between two runs with the same arguments), and the previous run's success count as `was …`. |
 | `previous` | The run before this one, when there was one; its numbers are the `was …`. |
 
@@ -568,6 +569,117 @@ Chapters 2 to 5 were recorded again after it, and the later armies moved:
 ch03 68 ⚠ / 70 / 42 ✗, aldwater 100 / 50 ✗ / 80, ch04 50 / 32 ✗ / 31 ✗,
 salt_road 100 / 94 / 96 ⚠, ch05 51 / 15 ✗ / 11 ✗ (seeds 1–100). Ticket
 0876 brings them back.
+
+## Units that fall behind
+
+The battle's numbers can't show one unit falling behind: Nick's Act 1
+playtest (2026-11-08) found Aske unable to hurt Chapter 2's armoured
+guards and Rue doing most of the killing, while every band was met. So
+after the bot lines the report has a table per bot, one line per player
+unit at the battle's start (ticket 0527):
+
+```
+ch02 · units (normal, 5 tries)
+Aske         lv 3   can hurt 11/13  dealt med 8    kills med 0   levels med +0   exp share 7%    ⚑ exp < half a share
+Rue          lv 3   can hurt 13/13  dealt med 70   kills med 3   levels med +2   exp share 37%
+```
+
+| Part | Meaning |
+| ---- | ------- |
+| `lv` | Its level arriving at the battle: the army the chapters before leave (*The army*), the lower median over the army lines the bots field (ADR-0130), so run each chapter to see the levels chapter by chapter. |
+| `can hurt h/n` | Of the `n` enemies on the map at the start, how many it can hurt at all (the lower median over the army lines): any weapon or attack spell it can equip forecasts more than 0 damage against the enemy on its own tile, its terrain included, with any Combat Art it may use (`trpg_bots::can_hurt`). No play needed: the same for every bot. |
+| `dealt med` | The median per try of the HP it took off enemies (the overkill of a last strike not counted). |
+| `kills med` | The median per try of the enemies it felled: a kill is the last unit to hurt it. |
+| `levels med` | The median per try of the levels it gained in the battle. |
+| `exp share` | Its share of all the EXP the army earned over every try (`-` when nobody earned any). |
+| `⚑ …` | Its flags, below. |
+
+The flags (*the agent's starting values*, tunable: the constants in
+`crates/bots/src/units.rs`):
+
+- `can hurt < 2/3`: it can hurt under two thirds of the enemies;
+- `lv 3+ below the army`: it arrives 3 or more levels below the army's
+  median;
+- `exp < half a share`: it earned under half of an even split of the
+  army's EXP (with 6 units, under 1/12).
+
+A flag is a line to read, never a failure, as a band missed is only
+reported. It **proposes, never tunes**: the player's units, classes and
+growths are Nick's (`design/playtest-bots.md`), and the autobalance never
+changes them. Read a flag against the unit's job: a cleric that can hurt
+nobody and earns its EXP by healing is flagged as `can hurt < 2/3` by
+design; an archer flagged the same way is the problem Nick found.
+
+The first run, 2026-11-22 (ticket 0527), `--bot all`: Chapter 1 over
+100 tries, Chapters 2 to 4 over 30 (a Hardcore try of Chapter 3 takes
+about 18 minutes of one core). It was made before the bots fielded 24
+army lines of their own recorded wins (ADR-0130), with the one army the
+recorded playthroughs left; a run now reads the lines. Normal's tables:
+
+```
+ch01 · units (normal, 100 tries)
+Lead         lv 1   can hurt 14/14  dealt med 65   kills med 4   levels med +2   exp share 26%
+Hollis Marr  lv 3   can hurt 14/14  dealt med 34   kills med 1   levels med +0   exp share 11%
+Tamsin Rook  lv 2   can hurt 14/14  dealt med 74   kills med 2   levels med +2   exp share 20%
+Aske         lv 2   can hurt 13/14  dealt med 10   kills med 1   levels med +0   exp share 9%
+Maud         lv 1   can hurt 7/14   dealt med 0    kills med 0   levels med +1   exp share 13%   ⚑ can hurt < 2/3
+Rue          lv 1   can hurt 14/14  dealt med 47   kills med 3   levels med +2   exp share 21%
+
+ch02 · units (normal, 30 tries)
+Lead         lv 5   can hurt 13/13  dealt med 24   kills med 1   levels med +1   exp share 18%
+Hollis Marr  lv 4   can hurt 13/13  dealt med 17   kills med 0   levels med +1   exp share 18%
+Tamsin Rook  lv 6   can hurt 13/13  dealt med 20   kills med 1   levels med +0   exp share 10%
+Aske         lv 3   can hurt 11/13  dealt med 7    kills med 0   levels med +0   exp share 10%
+Maud         lv 2   can hurt 0/13   dealt med 0    kills med 0   levels med +0   exp share 10%   ⚑ can hurt < 2/3
+Rue          lv 3   can hurt 13/13  dealt med 45   kills med 2   levels med +2   exp share 34%
+
+ch03 · units (normal, 30 tries)
+Lead         lv 5   can hurt 13/14  dealt med 125  kills med 4   levels med +4   exp share 33%
+Hollis Marr  lv 4   can hurt 14/14  dealt med 11   kills med 1   levels med +1   exp share 9%
+Tamsin Rook  lv 7   can hurt 14/14  dealt med 48   kills med 1   levels med +1   exp share 9%
+Aske         lv 3   can hurt 11/14  dealt med 6    kills med 0   levels med +0   exp share 5%    ⚑ exp < half a share
+Maud         lv 2   can hurt 0/14   dealt med 0    kills med 0   levels med +2   exp share 14%   ⚑ can hurt < 2/3
+Rue          lv 4   can hurt 14/14  dealt med 70   kills med 4   levels med +3   exp share 24%
+Joss Pellam  lv 3   can hurt 10/14  dealt med 2    kills med 0   levels med +0   exp share 5%    ⚑ exp < half a share
+
+ch04 · units (normal, 30 tries)
+Lead         lv 12  can hurt 13/13  dealt med 103  kills med 4   levels med +2   exp share 24%
+Hollis Marr  lv 5   can hurt 12/13  dealt med 28   kills med 1   levels med +2   exp share 17%
+Tamsin Rook  lv 9   can hurt 10/13  dealt med 16   kills med 0   levels med +0   exp share 4%    ⚑ exp < half a share
+Aske         lv 5   can hurt 10/13  dealt med 14   kills med 1   levels med +1   exp share 13%
+Maud         lv 4   can hurt 0/13   dealt med 0    kills med 0   levels med +1   exp share 12%   ⚑ can hurt < 2/3
+Rue          lv 9   can hurt 13/13  dealt med 86   kills med 4   levels med +2   exp share 24%
+Joss Pellam  lv 3   can hurt 10/13  dealt med 2    kills med 0   levels med +0   exp share 6%    ⚑ exp < half a share
+```
+
+Casual and Hardcore differ from Normal only in the EXP flags: Hardcore
+also flags Aske in Chapters 1 and 2 and Hollis Marr in Chapter 3, Casual
+flags Maud in Chapter 2, and neither flags Joss in Chapter 3 (8% and
+11%). Chapter 4 flags Tamsin,
+Maud and Joss for all three.
+
+How to read it against Nick's notes:
+
+- **Aske** can hurt every enemy but one in Chapter 1, and 11 of 13 in
+  Chapter 2 (the two `hound_guard`s, Def 15, are the ones her Iron Bow
+  can't scratch; `trpg_bots`' test checks it), 11 of 14 in Chapter 3,
+  10 of 13 in Chapter 4. More telling than the share: in every chapter
+  she deals the least of the units that fight but Joss, 6 to 14 HP
+  per try, and her level gain is +0 or +1 where Rue's is +2 or +3.
+- **Rue** deals the most in Chapter 2 and the second most in Chapters 3
+  and 4 (the third in Chapter 1), and takes a fifth to a third of the
+  army's EXP, rising from lv 1 to lv 9 by
+  Chapter 4: what Nick saw.
+- **The Lead** deals the most from Chapter 3 on and arrives at Chapter 4
+  at lv 12; the bots lean on the lead, so read its share as theirs as
+  much as the map's.
+- **Joss** joins at lv 3 for Chapter 3 and the bots barely use him (2 to
+  12 HP per try). Nick found him a bit too strong; the bots don't play
+  him enough to show it, so this line says little about his numbers.
+- **Maud**, the cleric, is flagged `can hurt < 2/3` by design (7 of 14 in
+  Chapter 1, by her gauntlet; none after); her EXP comes from healing.
+- No unit arrives 3 levels below the army's median: Joss in Chapter 4 is
+  2 below.
 
 ## History
 

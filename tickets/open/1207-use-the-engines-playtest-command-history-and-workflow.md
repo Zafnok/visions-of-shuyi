@@ -61,7 +61,10 @@ command, not by a new gameplay sign-off.
   for the stage's difficulty.
 - Declare the old report lines as engine summary items over the same
   named measures: won, deaths in Classic or retreats in Casual per try,
-  most fallen unit, items median/max and turns median. The engine
+  most fallen unit, items median/max and turns median, and 0527's units
+  table (a line per player unit at the start, `Record::units`: its
+  level, `can hurt h/n`, the medians of `dealt`, `kills` and `levels`,
+  its share of the army's EXP and its flags, `trpg_bots::flags`). The engine
   supplies seconds per try, `was ...`, previous date/commit, history,
   report serialization, `--brief`, groups and threads.
 - Delete the old `crates/tools/src/playtest.rs` and its generic wrapper
