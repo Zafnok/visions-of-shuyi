@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-23
 ---
 
 # 1312 — Vix's tip steps aside while unit info or another full page is open
@@ -73,16 +73,16 @@ or lesson text (dialogue writing is paused).
 
 ## Acceptance criteria
 
-- [ ] Test: a tip showing, open unit info → the view has info and no
+- [x] Test: a tip showing, open unit info → the view has info and no
       tip; close it → the same tip is back.
-- [ ] Test: a trigger fires during unit info → the tip shows only after
+- [x] Test: a trigger fires during unit info → the tip shows only after
       it closes.
-- [ ] Test: in unit info, the info screen's keys reach it (not the tip).
-- [ ] The same for `UnitList`, `Objective` and `MapMenu` (one test each,
+- [x] Test: in unit info, the info screen's keys reach it (not the tip).
+- [x] The same for `UnitList`, `Objective` and `MapMenu` (one test each,
       or one table test).
-- [ ] A `frame-png` before/after of Chapter 1's unit info with a tip due,
+- [x] A `frame-png` before/after of Chapter 1's unit info with a tip due,
       in the PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -96,3 +96,25 @@ test checks its view.
 
 ## Completion notes
 
+- `Mode::covers_guide` (`mode.rs`) lists the pages and questions: `Info`,
+  `MapMenu`, `UnitList`, `Objective`, `EndTurnPrompt`, `RestartPrompt`,
+  `SuspendPrompt`. The guide's `Moment` carries it as `paged`; while it is
+  true, `due_tip` and `lesson_moment` give nothing, so the tip, the lesson
+  and the box at the end of the lessons are left out of the view and take
+  no keys. The skins needed no change.
+- `Guide::take_in_mode` skips a page's mode: the queued tips keep the
+  moment of the mode under it and are judged by the mode it closes to (a
+  page closing to the mode it opened from keeps them; closing elsewhere
+  makes them stale, as any mode change does). Nothing is marked stale or
+  seen while the page is open. Her voice stops when the page opens and
+  does not replay the same line when it closes, as with pushed screens.
+- Tests: `tip_tests.rs` (a tip on screen steps aside for each of info,
+  the map menu, the unit list and the objective page and comes back; a
+  tip fired on each waits; unit info takes its keys with a tip waiting,
+  and the Playdate's view has no tip), `lesson_tests.rs` (the open lesson
+  steps aside for unit info). The cursor lesson's property test now checks
+  the lesson box only while no page is open: Cancel on the map opens the
+  map menu, where the box now steps aside.
+- Pictures: `docs/screenshots/1312-info-before.png` (Chapter 1, the cursor
+  lesson over unit info, the fix turned off) and `1312-info-after.png`.
+- No gameplay rules decided.

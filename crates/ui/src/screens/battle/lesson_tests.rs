@@ -164,7 +164,11 @@ proptest! {
             if i < 4 {
                 seen.insert(i);
             }
-            prop_assert_eq!(s.shown_lesson().is_none(), seen.len() == 4);
+            // The lesson steps aside while the info screen or the map menu
+            // is open (1312).
+            if !s.mode().covers_guide() {
+                prop_assert_eq!(s.shown_lesson().is_none(), seen.len() == 4);
+            }
             prop_assert_eq!(c.game.campaign_lessons.contains(TEST_LESSON), seen.len() == 4);
             // Back to browsing for the next key.
             press(&mut s, &mut c, &[Action::Cancel, Action::Cancel]);
@@ -1098,4 +1102,25 @@ fn the_end_box_shows_only_while_browsing() {
     let lord = s.state().units()[0].id;
     s.mode = Mode::Selected(Selection::new(s.state(), lord).unwrap());
     assert!(!s.lessons_end_shown(&c), "a unit selected");
+}
+
+/// Ticket 1312: the open lesson steps aside while unit info is open,
+/// the info screen takes its keys, and it is back as it was once closed.
+#[test]
+fn the_lesson_steps_aside_for_unit_info() {
+    let mut c = lessoned();
+    let mut s = quick();
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.shown_lesson(), Some(TEST_LESSON));
+    press(&mut s, &mut c, &[Action::Info]);
+    assert!(matches!(s.mode(), Mode::Info { .. }), "{:?}", s.mode());
+    let view = s.view(&c);
+    assert!(view.info.is_some());
+    assert_eq!(view.lesson, None);
+    assert_eq!(s.shown_lesson(), None);
+    assert!(s.lesson_open());
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(s.mode(), &Mode::default());
+    assert_eq!(s.shown_lesson(), Some(TEST_LESSON));
+    assert_eq!(s.view(&c).lesson.unwrap().progress, "0 of 4 done");
 }
