@@ -185,7 +185,11 @@ impl Entrant<BattleStage, BattleState> for BattleEntrant {
 /// - `items`: battle-pack items the player's units used;
 /// - `turns`: the last turn played (the turn cap if that stopped it);
 /// - for each player unit that fell, `fell <name>` (1) and `fell <name>
-///   turn` (the turn it fell on).
+///   turn` (the turn it fell on);
+/// - for each player unit, what it did (ticket 0527): `dealt <name>` (HP
+///   taken off enemies), `kills <name>` (enemies felled), `exp <name>`
+///   (unit EXP gained) and `levels <name>` (levels gained); a measure that
+///   is 0 is left out, as [`unit_measure`] reads it.
 pub struct BattleMeasure {
     measures: BattleMeasures,
     cast: BTreeMap<UnitId, (String, bool)>,
@@ -242,8 +246,42 @@ impl Measure<BattleState> for BattleMeasure {
             out.insert(format!("fell {name} turn"), i64::from(turn));
         }
         out.insert("lord fell".to_owned(), i64::from(lord_fell));
+        for (id, tally) in &m.units {
+            let name = self
+                .cast
+                .get(id)
+                .map_or_else(|| format!("unit {}", id.0), |(name, _)| name.clone());
+            let counts = [
+                (UNIT_DEALT, tally.dealt),
+                (UNIT_KILLS, tally.kills),
+                (UNIT_EXP, tally.exp),
+                (UNIT_LEVELS, tally.levels),
+            ];
+            for (what, n) in counts.into_iter().filter(|&(_, n)| n > 0) {
+                out.insert(format!("{what} {name}"), i64::from(n));
+            }
+        }
         out
     }
+}
+
+/// The per-unit measures' names (ticket 0527), before the unit's name:
+/// `dealt Aske`.
+pub const UNIT_DEALT: &str = "dealt";
+/// See [`UNIT_DEALT`].
+pub const UNIT_KILLS: &str = "kills";
+/// See [`UNIT_DEALT`].
+pub const UNIT_EXP: &str = "exp";
+/// See [`UNIT_DEALT`].
+pub const UNIT_LEVELS: &str = "levels";
+
+/// Unit `name`'s measure `what` (one of [`UNIT_DEALT`] and the others) in
+/// a try's `measures`: 0 when it is left out.
+pub fn unit_measure(measures: &Measures, what: &str, name: &str) -> i64 {
+    measures
+        .get(&format!("{what} {name}"))
+        .copied()
+        .unwrap_or(0)
 }
 
 /// What the personas should achieve (`docs/design/playtest-bots.md`), as

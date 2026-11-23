@@ -112,6 +112,11 @@ what is left to judge by playing goes on the Act 1 playtest's checklist
   and 2) and 0855 (Chapter 1 after the armour weights) did. The tables
   go in `docs/playtesting.md`, with 0527's per-unit lines before and
   after (Aske's *can hurt* share and EXP share should rise).
+- **0527's test of the old rule** (`crates/bots/src/units/tests.rs`,
+  `at_chapter_2_aske_cant_hurt_the_hound_guards_and_rue_can`) fails once
+  a bow's minimum is in: change it to say Aske can now hurt both
+  `hound_guard`s, and check a unit that still can't (Maud: her Iron
+  Gauntlets' power 4 against Def 15, and no attack spell).
 
 **Out (do not do):**
 - The options Nick didn't pick (0080): ignoring Def, a minimum for every
