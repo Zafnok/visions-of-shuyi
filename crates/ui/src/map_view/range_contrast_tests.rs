@@ -130,3 +130,17 @@ fn move_and_attack_ranges_are_easy_to_tell_apart_in_every_theme() {
     }
     assert!(failures.is_empty(), "{failures:#?}");
 }
+
+#[test]
+fn every_theme_has_the_same_range_colours() {
+    // Nick, ticket 1319: a theme doesn't change the ranges, so a washed-out
+    // theme doesn't wash them out too.
+    let ranges = |theme| {
+        let def = load_theme(theme).unwrap();
+        ["move_range", "attack_range", "heal_range"].map(|name| def.get(name).unwrap())
+    };
+    let default = ranges(Theme::default());
+    for theme in Theme::ALL {
+        assert_eq!(ranges(theme), default, "{theme:?}");
+    }
+}

@@ -34,7 +34,9 @@
     // The tiles are the same in every theme, so this is too.
     "player_outline": "#2a60ff",
 
-    // Overlay background tints (blended ~75% over the terrain background)
+    // Overlay background tints (blended ~75% over the terrain background).
+    // The move, attack and heal ranges are the same in every theme (Nick,
+    // ticket 1319): bright enough to tell apart over any ground.
     "move_range": "#3a6fd0",
     "attack_range": "#d83020",
     "heal_range": "#3a9a4a",

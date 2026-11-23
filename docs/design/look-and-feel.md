@@ -2279,17 +2279,20 @@ Overlays and cursor, as `move / attack / cursor / hp_high / hp_low`:
 
 | Theme | Values |
 | ----- | ------ |
-| C | `#2088c0 #d03818 #f0c850 #8cd050 #e8582a` |
-| E | `#7898e0 #e85848 #2a2218 #3a7a2a #b01e10` |
-| G | `#2a5ac8 #c82020 #ffc860 #70d080 #ff5030` |
+| C | `#3a6fd0 #d83020 #f0c850 #8cd050 #e8582a` |
+| E | `#3a6fd0 #d83020 #2a2218 #3a7a2a #b01e10` |
+| G | `#3a6fd0 #d83020 #ffc860 #70d080 #ff5030` |
 
 E is a light theme: "acted" dimming must fade toward the background, not toward
 black.
 
 The move and attack colours were brightened in ticket 1319 (a new player
-found the two hard to tell apart over grass); a test in `crates/ui`
-(`map_view/range_contrast_tests.rs`) keeps them a minimum contrast apart in
-every theme.
+found the two hard to tell apart over grass), and Nick decided there
+(2026-11-23) that the move, attack and heal ranges are **the same in every
+theme**: a theme doesn't change them, so a washed-out theme such as
+Parchment doesn't wash them out too. A test in `crates/ui`
+(`map_view/range_contrast_tests.rs`) keeps them equal and a minimum
+contrast apart over every theme's ground.
 
 ## Open sub-questions
 
