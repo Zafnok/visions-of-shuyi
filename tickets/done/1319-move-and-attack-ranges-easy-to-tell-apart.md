@@ -98,9 +98,10 @@ Playdate: unchanged (patterns). GBA: no target.
   of today's strength over the bought tiles (attack tiles read red, not
   rust, over grass). That needs the engine change this ticket named (a
   tint strength the game sets per skin), so it is its own game ticket
-  after the engine's, as his rule for engine steps says: a follow-up
-  ticket waiting on that engine change. The glyph look keeps today's
-  strength.
+  after the engine's, as his rule for engine steps says: engine#3243
+  (`Zafnok/shuyi-engine`, a tint strength a game sets for each skin),
+  then 1343, which moves the pin and sets the picture look's tints to
+  150%. The glyph look keeps today's strength.
 - **The tests** (`crates/ui/src/map_view/range_contrast_tests.rs`):
   every theme has the same range colours; and in every theme, the move
   and attack tints, over `grass_bg`, `forest_bg`, `road_bg` and the
