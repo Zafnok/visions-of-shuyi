@@ -38,7 +38,7 @@ console), 1108, 1030, 1200.
 ## Decision (2026-11-23)
 
 **Fractional scale, drawn sharp, through the engine's engine#2333**
-(engine ADR-0139). Weighed:
+(engine ADR-0140). Weighed:
 
 - **Fractional scale with sharp bilinear** (chosen): the engine draws
   the 100 × 32 console at a whole scale into a texture, then stretches
@@ -70,7 +70,7 @@ What is left here once the pin has moved past 2333:
    `place(ScaleMode::Fit, (800, 512), window)` at 1280 × 720,
    1366 × 768, 1920 × 1080, 1600 × 900 and 800 × 600, each at least 90 %
    of one side; today's `layout` values beside them.
-4. A game ADR recording this choice (pointing at engine ADR-0139).
+4. A game ADR recording this choice (pointing at engine ADR-0140).
 5. Step 3's "two console sizes" is moot: the console stays 100 × 32.
    Say so in the completion notes.
 6. A windowed screenshot at 1280 × 720 before and after.
