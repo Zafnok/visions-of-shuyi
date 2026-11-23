@@ -146,7 +146,7 @@ say how it uses it.
 - The engine's `main` is past the old pin: `crates/app/src/main.rs`'s
   log line now inlines its arguments (macroquad's logging is the `log`
   crate since engine #522, and clippy reads it). The move also takes the
-  engine's pack format to version 21 (3347): a pack baked before is
+  engine's pack format to version 22 (3347): a pack baked before is
   refused, and the game bakes no pack in the repository.
 - Friction: estimate 110 production lines (the `frame-png` `--light`
   option and the tileset's optional fields, ticket 1314's own sizes),
