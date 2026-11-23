@@ -88,9 +88,14 @@ fn the_lab_conversion_matches_known_values() {
     near(Rgb::new(255, 255, 255), [100.0, 0.0, 0.0]);
     near(Rgb::new(0, 0, 0), [0.0, 0.0, 0.0]);
     near(Rgb::new(255, 0, 0), [53.24, 80.09, 67.20]);
-    let (delta_e, gap) = contrast(Rgb::new(255, 0, 0), Rgb::new(0, 0, 255));
-    assert!((delta_e - 176.3).abs() < 0.5, "{delta_e}");
-    assert!((gap - 93.7).abs() < 0.5, "{gap}");
+    // A grey this dark is on the straight parts of both curves.
+    near(Rgb::new(5, 5, 5), [1.371, 0.0, 0.0]);
+    let (red, blue) = (Rgb::new(255, 0, 0), Rgb::new(0, 0, 255));
+    for (a, b) in [(red, blue), (blue, red)] {
+        let (delta_e, gap) = contrast(a, b);
+        assert!((delta_e - 176.3).abs() < 0.5, "{delta_e}");
+        assert!((gap - 93.7).abs() < 0.5, "{gap}");
+    }
 }
 
 #[test]
