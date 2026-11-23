@@ -150,7 +150,13 @@ newcomer bot · **0096** the tileset overhaul, moving tiles and drifting
 effects, and **1314** a graphics tier per target with a still fallback
 for every moving look (Nick: the Playdate and a future GBA come later
 but are never forgotten) → **1315** flowing water and swaying trees ·
-**1316** drifting petals · **1318** the tileset overhaul; **1317** every
+**1316** drifting petals · **1318** the tileset overhaul · **More life,
+chapter by chapter** (Nick, 2026-11-23, after Stardew Valley's small
+touches): **1322** ambient sound and **1323** hit particles and map
+touches (with 0096, the palette) → **1332** the ambience player ·
+**1333** hit bursts in the fight · **1334** dust, splashes and creatures
+(both after 1316) → **1324–1331** each chapter's picks (Chapters 6–8
+after their battles) → **1335–1342** each chapter's data; **1317** every
 ticket says what the lesser targets get (after 1314) · **1321** Vix's
 tips show a small moving picture (after **0469**, widened to the tip
 box). Not yet on the critical path: **0099** deep water and who swims →
@@ -512,7 +518,9 @@ recruit joins outside battle.
   a mode easier than Casual → **0536** its newcomer bot · **1314**
   graphics tiers and fallbacks → **1317** the lesser-targets checklist;
   **0096** → **1315** moving tiles · **1316** drifting petals (both also
-  after 1314) · **1318** the tileset overhaul · **0469** → **1321**
+  after 1314) · **1318** the tileset overhaul · **1322**, **1323** →
+  **1332**, **1333**, **1334** → **1324–1331** → **1335–1342** ambience,
+  particles and sounds chapter by chapter · **0469** → **1321**
   pictures in Vix's tips. After their decisions say which battles:
   **0099** → **0336** deep water; **0097** → **0337** barricades ·
   **0338** one-way doors.
@@ -587,7 +595,7 @@ Design answers unblock most of the rules work. Suggested order:
 6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** the shieldbearer's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
    · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · ~~**0080** how the army gets through armour~~ ✅ decided 2026-11-22 (bows and spears pierce) · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 (how a rider on foot looks: **0089**) · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870** (**0184** puts these first, in the order the balance tickets need them). Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick
-   · From a new player's Chapter 1 session (2026-11-22): **0095** the lead on the map · **0096** tilesets, moving tiles, drifting effects · **0098** a mode easier than Casual · **0099** deep water and swimmers · **0097** barricades and one-way doors
+   · From a new player's Chapter 1 session (2026-11-22): **0095** the lead on the map · **0096** tilesets, moving tiles, drifting effects · **1322** ambient sound · **1323** hit particles and map touches → **1324–1331** each chapter's ambience · **0098** a mode easier than Casual · **0099** deep water and swimmers · **0097** barricades and one-way doors
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)

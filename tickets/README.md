@@ -31,6 +31,10 @@ tickets/
 | `11xx` | **The engine** | Shuyi Engine, the open-source engine split from the game ([ADR-0063](../docs/adr/0063-an-engine-and-a-game-one-boundary-now-two-repositories-later.md), [`docs/engine/`](../docs/engine/README.md)). Here: 1101 (the study), 1102–1118 and 1154 (the carve), 1131 (the code moves), 1151–1153 and 1157 (living with two repositories: engine friction, the engine-change skill, the first sweep, moving the engine parts of open game tickets), 1158–1172 (what the first sweep filed), 1180 (the game's playtesting on the engine's, from the sweep of 0506's playtest area), 1181 (the engine's MCP server on the game), 1192 (the engine's skill pack in the game, from 1189) → 1194 (`check-skills` as a gate, after engine#2559), 1193 (the MCP server's `check`, `bots` and `replay` on the game), 1183–1187 (from the retro of the last 50 PRs, 2026-10-22: the game's halves of engine#2541, #2371 and #2233, the first sweep's leftovers, and friction estimates against a reference). 1119–1129, 1132–1135 and 1140–1150 moved to the [engine's repository](https://github.com/Zafnok/shuyi-engine/tree/main/tickets) with their numbers. Not on the Act 1 critical path, except 1177 (the pin move 0449 and 0740 wait for) |
 | `12xx`+ | Later | Created as needed |
 
+The `00xx` block is full (0099, 2026-11-23): a new design decision takes
+the next free number in its system's block (or `13xx`), with `type:
+design-decision` and `nick_input: decision`, as 1006 and 1009 do.
+
 New tickets (including bugs) take the next free number in their block. Numbers
 are never reused.
 

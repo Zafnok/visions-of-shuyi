@@ -78,6 +78,13 @@ or a page made from `frame-png` frames) of Chapter 1's map:
 Answers go to `docs/design/look-and-feel.md` (a new *Moving tiles and
 effects* part) and shape 1315, 1316 and 1318.
 
+**A palette for the chapter passes** (Nick, 2026-11-23, "lets take it
+chapter by chapter"): this answer, with 1322 (ambient sound) and 1323
+(hit particles, map touches and creatures), is the set of kinds that
+1324–1331 pick from, one chapter each. So ask it as kinds (petals,
+leaves, ash, mist, snow…) that a chapter can name, not only for
+Chapter 1.
+
 ## Scope
 
 **In:** the questions, pictures and loops; the answers recorded; 1315,
