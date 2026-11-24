@@ -7,6 +7,7 @@ model: sonnet-5 / gpt-6.1-terra
 effort: high
 status: todo
 blocked_by: ["1037", "1035", "1040"]
+blocks: ["1064"]
 nick_input: none
 completed:
 ---

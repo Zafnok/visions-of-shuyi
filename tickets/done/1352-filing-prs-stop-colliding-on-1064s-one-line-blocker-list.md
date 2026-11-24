@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-24
 ---
 
 # 1352 — Filing PRs stop colliding on 1064's one-line blocker list
@@ -62,12 +62,12 @@ the decision queue itself (0184).
 
 ## Acceptance criteria
 
-- [ ] Two branches each adding a different 1064 blocker merge without a
+- [x] Two branches each adding a different 1064 blocker merge without a
       conflict (a test or a scripted check in the PR).
-- [ ] `cargo xtask ticket-lint` still reports a blocker that isn't a
+- [x] `cargo xtask ticket-lint` still reports a blocker that isn't a
       ticket (a test).
-- [ ] The skills carry the two rules and lose the one.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The skills carry the two rules and lose the one.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -79,3 +79,27 @@ None (process).
 
 ## Completion notes
 
+- **Format: `blocks: ["1064"]` on the blocker tickets**, not a list file.
+  New tickets always take the highest ids, so in a sorted list file every
+  filing PR would add its line at the end, and two of those still conflict.
+  With `blocks`, a PR that files a blocker edits only its own ticket's
+  file. 1064's 217 ids (not 218: the retro's count was one off) moved to a
+  `blocks: ["1064"]` line under each ticket's `blocked_by`, done tickets
+  included (no pruning). 1064 keeps `blocked_by: []` with a comment saying
+  where its blockers are, and its text says how to check them.
+- `ticket-lint` reads the optional `blocks` key and reports one that isn't
+  a list, names an id that isn't a ticket (engine ids too), names the
+  ticket itself, or repeats a pair that the other ticket's `blocked_by`
+  already holds. Tests in `crates/xtask/src/tickets.rs`, among them
+  `two_branches_filing_different_blockers_merge_without_a_conflict` (a
+  real git repository, two branches, one merge) and
+  `run_reports_a_blocks_id_that_is_not_a_ticket`.
+- The readiness rule in `tickets/README.md`, `work-ticket` and
+  `write-ticket` now adds "and no open ticket names it in `blocks`", with
+  the grep that lists 1064's open blockers.
+- `write-ticket`: "When unsure, add it" is gone; a design decision blocks
+  1064 only with a one-line reason as a comment on its `blocks` line; a
+  sweep's clean-up blocks a feedback build only if the build uses its
+  output. `work-ticket` §6: merge `main` only for a real conflict, never
+  to catch up. Loaders synced (no loader text changed).
+- No gameplay rules decided.

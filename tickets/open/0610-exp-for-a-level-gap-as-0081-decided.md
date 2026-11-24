@@ -7,6 +7,7 @@ model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: ["0081", "0527", "0531"]
+blocks: ["1064"]
 nick_input: none
 completed:
 ---

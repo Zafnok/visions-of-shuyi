@@ -4,6 +4,11 @@
 //! A `blocked_by` id of the form `engine#NNNN` is a ticket of Shuyi Engine's
 //! repository (ticket 1152). Only its form is checked by default, so the
 //! gates never reach the network; `--check-engine` also looks it up.
+//!
+//! The optional `blocks` key is the other side of `blocked_by`: a ticket that
+//! says `blocks: ["1064"]` is one of 1064's blockers (ticket 1352). A PR that
+//! files a blocker then edits only its own ticket's file, so two such PRs
+//! never touch the same line.
 
 use std::collections::HashSet;
 use std::fs;
@@ -73,6 +78,8 @@ struct TicketFields {
     status: Option<String>,
     completed: Option<String>,
     blocked_by: Option<Vec<String>>,
+    /// The tickets this one blocks (its optional `blocks` key).
+    blocks: Option<Vec<String>>,
 }
 
 /// One ticket file: where it is, what it says, and every problem found in
@@ -113,6 +120,7 @@ pub fn run(repo_root: &Path, pr_branch: Option<&str>, check_engine: bool) -> Vec
 
     errors.extend(check_unique_ids(&tickets));
     errors.extend(check_blocked_by_exists(&tickets));
+    errors.extend(check_blocks(&tickets));
 
     if let Some(branch) = pr_branch {
         errors.extend(check_pr_branch(&tickets, branch));
@@ -258,6 +266,11 @@ fn parse_ticket(display_path: String, folder: Folder, filename: &str, content: &
                     )
                 {
                     errors.push("`blocked_by` must be a list of ticket id strings".to_string());
+                }
+
+                fields.blocks = string_list(map, "blocks");
+                if map.contains_key(Value::from("blocks")) && fields.blocks.is_none() {
+                    errors.push("`blocks` must be a list of ticket id strings".to_string());
                 }
 
                 if let Some(id) = &fields.id {
@@ -429,6 +442,50 @@ fn check_blocked_by_exists(tickets: &[Ticket]) -> Vec<String> {
     errors
 }
 
+/// Each id in a `blocks` list must be a ticket of this repository (an engine
+/// ticket can't wait on the game's) other than the ticket itself, and must not
+/// also name the ticket in its own `blocked_by`: one place per pair.
+fn check_blocks(tickets: &[Ticket]) -> Vec<String> {
+    let mut errors = Vec::new();
+    for ticket in tickets {
+        let Some(blocks) = &ticket.fields.blocks else {
+            continue;
+        };
+        let own_id = ticket.fields.id.as_deref();
+        for target_id in blocks {
+            let path = &ticket.display_path;
+            if Some(target_id.as_str()) == own_id {
+                errors.push(format!("{path}: `blocks` names the ticket itself"));
+                continue;
+            }
+            let target = tickets
+                .iter()
+                .find(|t| t.fields.id.as_deref() == Some(target_id.as_str()));
+            let Some(target) = target else {
+                errors.push(format!(
+                    "{path}: `blocks` references unknown ticket id `{target_id}`"
+                ));
+                continue;
+            };
+            let listed_twice = own_id.is_some_and(|id| {
+                target
+                    .fields
+                    .blocked_by
+                    .iter()
+                    .flatten()
+                    .any(|dep| dep == id)
+            });
+            if listed_twice {
+                errors.push(format!(
+                    "{path}: `blocks: [\"{target_id}\"]` is also in {}'s `blocked_by`; keep one",
+                    target.display_path
+                ));
+            }
+        }
+    }
+    errors
+}
+
 /// With `--pr-branch t<NNNN>-<slug>`, ticket `NNNN` must be in `tickets/done/`
 /// (that PR is expected to be the one archiving it). Branches that don't
 /// follow the `t<NNNN>-` convention (e.g. `main`, `dependabot/...`) are
@@ -470,6 +527,7 @@ mod tests {
                 status: Some(status.to_string()),
                 completed: None,
                 blocked_by: Some(blocked_by.iter().map(|s| (*s).to_string()).collect()),
+                blocks: None,
             },
             errors: Vec::new(),
         }
@@ -856,6 +914,157 @@ completed:
         assert_eq!(ticket_id_from_branch("t304-pathfinding"), None);
         assert_eq!(ticket_id_from_branch("main"), None);
         assert_eq!(ticket_id_from_branch("t0304"), None);
+    }
+
+    // -- blocks: the other side of blocked_by (ticket 1352) --
+
+    fn blocking(id: &str, folder: Folder, blocks: &[&str]) -> Ticket {
+        let mut t = ticket(id, folder, "todo", &[]);
+        t.fields.blocks = Some(blocks.iter().map(|s| (*s).to_string()).collect());
+        t
+    }
+
+    #[test]
+    fn parses_an_optional_blocks_list() {
+        let fm = VALID_FRONTMATTER.replace(
+            "blocked_by: [\"0102\"]\n",
+            "blocked_by: [\"0102\"]\nblocks: [\"1064\"] # a reason\n",
+        );
+        let t = parse_ticket("p".to_string(), Folder::Open, "0106-x.md", &fm);
+        assert!(t.errors.is_empty(), "{:?}", t.errors);
+        assert_eq!(t.fields.blocks, Some(vec!["1064".to_string()]));
+        let without = parse_ticket(
+            "p".to_string(),
+            Folder::Open,
+            "0106-x.md",
+            VALID_FRONTMATTER,
+        );
+        assert_eq!(without.fields.blocks, None);
+    }
+
+    #[test]
+    fn flags_blocks_that_is_not_a_list() {
+        let fm = VALID_FRONTMATTER.replace(
+            "blocked_by: [\"0102\"]\n",
+            "blocked_by: [\"0102\"]\nblocks: \"1064\"\n",
+        );
+        let t = parse_ticket("p".to_string(), Folder::Open, "0106-x.md", &fm);
+        assert!(
+            t.errors
+                .iter()
+                .any(|e| e.contains("`blocks` must be a list of ticket id strings")),
+            "{:?}",
+            t.errors
+        );
+    }
+
+    #[test]
+    fn blocks_naming_an_existing_ticket_is_clean_from_open_or_done() {
+        let tickets = vec![
+            ticket("1064", Folder::Open, "todo", &[]),
+            blocking("0100", Folder::Open, &["1064"]),
+            blocking("0101", Folder::Done, &["1064"]),
+        ];
+        assert_eq!(check_blocks(&tickets), Vec::<String>::new());
+    }
+
+    #[test]
+    fn blocks_naming_a_ticket_that_does_not_exist_is_reported() {
+        let tickets = vec![blocking("0100", Folder::Open, &["1064", "engine#2001"])];
+        let errors = check_blocks(&tickets);
+        assert_eq!(errors.len(), 2, "{errors:?}");
+        assert!(errors[0].contains("unknown ticket id `1064`"), "{errors:?}");
+        assert!(
+            errors[1].contains("unknown ticket id `engine#2001`"),
+            "{errors:?}"
+        );
+    }
+
+    #[test]
+    fn blocks_naming_the_ticket_itself_is_reported() {
+        let tickets = vec![blocking("0100", Folder::Open, &["0100"])];
+        let errors = check_blocks(&tickets);
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].contains("names the ticket itself"), "{errors:?}");
+    }
+
+    #[test]
+    fn a_pair_in_both_blocks_and_blocked_by_is_reported() {
+        let tickets = vec![
+            ticket("1064", Folder::Open, "todo", &["0100"]),
+            blocking("0100", Folder::Open, &["1064"]),
+        ];
+        let errors = check_blocks(&tickets);
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].contains("keep one"), "{errors:?}");
+    }
+
+    /// Runs `git` in `dir` with a fixed author and no user config, and
+    /// returns whether it succeeded.
+    fn git(dir: &Path, args: &[&str]) -> bool {
+        Command::new("git")
+            .current_dir(dir)
+            .env(
+                "GIT_CONFIG_GLOBAL",
+                if cfg!(windows) { "NUL" } else { "/dev/null" },
+            )
+            .env("GIT_CONFIG_NOSYSTEM", "1")
+            .args(["-c", "user.name=t", "-c", "user.email=t@example.com"])
+            .args(["-c", "commit.gpgsign=false", "-c", "core.autocrlf=false"])
+            .args(args)
+            .output()
+            .expect("run git")
+            .status
+            .success()
+    }
+
+    fn write_ticket(root: &Path, file: &str, frontmatter_line: &str) {
+        let id = &file[..4];
+        let fm = VALID_FRONTMATTER
+            .replace("\"0106\"", &format!("\"{id}\""))
+            .replace("blocked_by: [\"0102\"]", frontmatter_line);
+        fs::write(root.join("tickets/open").join(file), fm).unwrap();
+    }
+
+    #[test]
+    fn two_branches_filing_different_blockers_merge_without_a_conflict() {
+        let root = make_temp_tickets_dir("blocks-merge");
+        write_ticket(&root, "1064-playtest.md", "blocked_by: []");
+        assert!(git(&root, &["init", "-q", "-b", "main"]));
+        assert!(git(&root, &["add", "-A"]));
+        assert!(git(&root, &["commit", "-q", "-m", "base"]));
+
+        for (branch, file) in [("a", "1400-one.md"), ("b", "1401-two.md")] {
+            assert!(git(&root, &["switch", "-q", "-c", branch, "main"]));
+            write_ticket(&root, file, "blocked_by: []\nblocks: [\"1064\"]");
+            assert!(git(&root, &["add", "-A"]));
+            assert!(git(&root, &["commit", "-q", "-m", branch]));
+        }
+        assert!(git(&root, &["switch", "-q", "a"]));
+        assert!(
+            git(&root, &["merge", "-q", "--no-edit", "b"]),
+            "the second filing branch conflicted"
+        );
+
+        assert_eq!(run(&root, None, false), Vec::<String>::new());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn run_reports_a_blocks_id_that_is_not_a_ticket() {
+        let root = make_temp_tickets_dir("blocks-unknown");
+        write_ticket(&root, "1400-one.md", "blocked_by: []\nblocks: [\"1064\"]");
+        let errors = run(&root, None, false);
+        assert_eq!(errors.len(), 1, "{errors:#?}");
+        assert!(
+            errors[0].contains("tickets/open/1400-one.md"),
+            "{errors:#?}"
+        );
+        assert!(
+            errors[0].contains("unknown ticket id `1064`"),
+            "{errors:#?}"
+        );
+        let _ = fs::remove_dir_all(&root);
     }
 
     // -- end to end over the real repo --

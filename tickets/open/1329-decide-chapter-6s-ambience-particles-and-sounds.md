@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: blocked
 blocked_by: ["0096", "1322", "1323", "0852"]
+blocks: ["1064"]
 nick_input: decision
 completed:
 ---

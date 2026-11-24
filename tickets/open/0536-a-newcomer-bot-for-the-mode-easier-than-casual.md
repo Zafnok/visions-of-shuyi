@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: blocked
 blocked_by: ["0098", "0880"]
+blocks: ["1064"]
 nick_input: answer-first
 completed:
 ---

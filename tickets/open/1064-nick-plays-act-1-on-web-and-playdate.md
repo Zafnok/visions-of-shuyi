@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0512", "0250", "0254", "0318", "0446", "0449", "0461", "0462", "0463", "0465", "0466", "0468", "0736", "0737", "0738", "0739", "0740", "0741", "0742", "0842", "0843", "0844", "0845", "0846", "0847", "1039", "1041", "1043", "1044", "1046", "1058", "1060", "1062", "0313", "0409", "0443", "0606", "1003", "1007", "1008", "1065", "0319", "0511", "0506", "0509", "0510", "1038", "1042", "1051", "1056", "1057", "1059", "1066", "1067", "1068", "1069", "0743", "0744", "0252", "0745", "0746", "0747", "0748", "0749", "0750", "0848", "0849", "0850", "0851", "0852", "0853", "0854", "1070", "1071", "0529", "1090", "1072", "1083", "1084", "1073", "1178", "0513", "0320", "0321", "0074", "1074", "0322", "0471", "0323", "0608", "1075", "0324", "0855", "0515", "0516", "0472", "1076", "1077", "0325", "0326", "0327", "0328", "0329", "0076", "1196", "0473", "0474", "0520", "0858", "1081", "1082", "1198", "0330", "0521", "0753", "1080", "0523", "1086", "0524", "1087", "0078", "0478", "0479", "0480", "0481", "0482", "0483", "0484", "0609", "0762", "0763", "0864", "0876", "0531", "0865", "0332", "0333", "0534", "0334", "0528", "0527", "0610", "0870", "0867", "0868", "0485", "0486", "0487", "0488", "0489", "0490", "0491", "0869", "1088", "1089", "0453", "0871", "0492", "0530", "0494", "0495", "0499", "0183", "0773", "1295", "1292", "1293", "0861", "0862", "0866", "0877", "0878", "0335", "1296", "1303", "0091", "0879", "0460", "0094", "1311", "1312", "1319", "1320", "0095", "1313", "0098", "0880", "0536", "0096", "1314", "1315", "1316", "1317", "1318", "1321", "0469", "1323", "1324", "1325", "1326", "1327", "1328", "1329", "1330", "1331", "1332", "1333", "1334", "1335", "1336", "1337", "1338", "1339", "1340", "1341", "1342", "0881"]
+blocked_by: [] # and every ticket whose frontmatter says blocks: ["1064"]
 nick_input: sign-off
 completed:
 ---
@@ -29,7 +29,8 @@ gameplay tickets are verified by tests, `cargo shuyi frame-png` pictures
 and the playtest bots (0506, 0509; the whole act by 0512), and whatever
 was left to judge by playing collects here.
 
-`blocked_by` holds: the bots' run of all of Act 1 (0512), which itself
+Its blockers (each says `blocks: ["1064"]` in its own frontmatter since
+1352; `tickets/README.md`) are: the bots' run of all of Act 1 (0512), which itself
 waits for the content and the Playdate work; the round 3 tickets 0804
 was waiting for (its open blockers, carried over); the Playdate tickets
 1050 was waiting for; and the Act 1 critical path in `docs/ROADMAP.md`
@@ -132,7 +133,7 @@ feel, difficulty, story, looks, controls, sounds, pauses that feel long.
 
 ## Implementation steps
 
-1. Check every `blocked_by` id is in `tickets/done/`, `main` is green and
+1. Check no ticket in `tickets/open/` says `blocks: ["1064"]`, `main` is green and
    the playtest page has `main`'s build (`playtest-itch.yml`'s last run).
 2. Version bump PR, tag, release; build the `.pdx`.
 3. Build the checklist page from the sources above (`artifact-design`

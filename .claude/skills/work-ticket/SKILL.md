@@ -21,7 +21,8 @@ discipline here is the whole quality system.
 
 - If the user named a ticket, use it.
 - Otherwise list candidates: tickets in `tickets/open/` with `status: todo` whose
-  every `blocked_by` id exists in `tickets/done/`. Prefer the lowest number on
+  every `blocked_by` id exists in `tickets/done/` and that no open ticket
+  names in `blocks` (`tickets/README.md`). Prefer the lowest number on
   the Act 1 critical path in `docs/ROADMAP.md`. Tell the user which one you
   picked and why in one sentence.
 - **An `engine#NNNN` in `blocked_by`** is a Shuyi Engine ticket. It is done
@@ -300,7 +301,10 @@ tickets anymore."
   `sync_with_base_branch` tool in an app worktree) only for a conflict or when
   the PR needs something that landed on `main`. An acceptance grep that
   proves something is gone (§4) needs it: merge, run the grep again, then
-  merge the PR.
+  merge the PR. **Merge `main` only for a real conflict** (or those two
+  needs), never to bring the branch up to date: every merge re-runs every
+  check, and the PR waits on them again (the feedback-latency retro,
+  2026-11-24, ticket 1352).
 
 ## Don'ts
 

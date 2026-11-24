@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
 blocked_by: ["0308", "0037", "0322"]
+blocks: ["1064"]
 nick_input: none
 completed: 2026-10-26
 ---

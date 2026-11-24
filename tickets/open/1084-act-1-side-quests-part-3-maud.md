@@ -7,6 +7,7 @@ model: fable-5.1 / gpt-6-astra
 effort: high
 status: blocked
 blocked_by: ["1083", "1070", "0018", "0069", "0749", "0509", "0013", "0323", "0608", "0329", "0766"]
+blocks: ["1064"]
 nick_input: none
 completed:
 ---

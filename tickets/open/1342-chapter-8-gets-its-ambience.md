@@ -7,6 +7,7 @@ model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: blocked
 blocked_by: ["1331", "1332", "1334", "1315", "1316", "0854"]
+blocks: ["1064"]
 nick_input: answer-first
 completed:
 ---
