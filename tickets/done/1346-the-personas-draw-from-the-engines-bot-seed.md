@@ -108,29 +108,34 @@ Hardcore 11/20). No band and no battle changed.
 
 **Bands** (100 tries, seeds 1–100). *Before* is `main`'s last playtest run
 (Actions run 45314741164, the engine pin move #808, whose code this branch
-starts from). *After* is Chapter 1 played locally and the rest from this
-PR's `playtest` run:
+starts from). *After* is this PR's `playtest` run (Actions run 45325182246); Chapter 1
+played locally gave the same 58/50/66:
 
 | Battle | Casual before → after | Normal before → after | Hardcore before → after |
 | --- | --- | --- | --- |
-| act1_random_ash | 95% in → CI (70–100) | 93% in → CI (70–95) | 100% above → CI (70–95) |
-| act1_random_ford | 89% in → CI (70–100) | 45% below → CI (70–95) | 60% below → CI (70–95) |
-| act1_random_road | 92% in → CI (70–100) | 69% below → CI (70–95) | 93% in → CI (70–95) |
-| aldwater | 100% in → CI (70–100) | 88% in → CI (70–95) | 81% in → CI (70–95) |
+| act1_random_ash | 95% in → 93% in (70–100) | 93% in → 92% in (70–95) | 100% above → 99% above (70–95) |
+| act1_random_ford | 89% in → 87% in (70–100) | 45% below → 42% below (70–95) | 60% below → 55% below (70–95) |
+| act1_random_road | 92% in → 93% in (70–100) | 69% below → 67% below (70–95) | 93% in → 89% in (70–95) |
+| aldwater | 100% in → 99% in (70–100) | 88% in → 82% in (70–95) | 81% in → 82% in (70–95) |
 | ch01 | 53% in → 58% above (30–55) | 51% in → 50% in (50–75) | 69% in → 66% in (50–75) |
-| ch02 | 48% in → CI (30–55) | 55% in → CI (50–75) | 83% above → CI (50–75) |
-| ch03 | 68% above → CI (30–55) | 76% above → CI (50–75) | 55% in → CI (50–75) |
-| ch04 | 65% above → CI (30–55) | 37% below → CI (50–75) | 55% in → CI (50–75) |
-| ch05 | 65% in → CI (40–70) | 31% below → CI (50–75) | 23% below → CI (50–75) |
-| millhaven_road | 96% in → CI (70–100) | 62% in → CI (55–80) | 71% in → CI (55–80) |
-| salt_road | 100% in → CI (70–100) | 88% in → CI (70–95) | 90% in → CI (70–95) |
-| side_company_ledger | 36% in → CI (30–55) | 8% below → CI (50–75) | 44% below → CI (50–75) |
-| side_letters_home | 79% above → CI (30–55) | 35% below → CI (50–75) | 67% in → CI (50–75) |
-| smugglers_cove | 95% in → CI (70–100) | 77% in → CI (55–80) | 84% above → CI (55–80) |
+| ch02 | 48% in → 49% in (30–55) | 55% in → 54% in (50–75) | 83% above → 86% above (50–75) |
+| ch03 | 68% above → 74% above (30–55) | 76% above → 72% in (50–75) | 55% in → 60% in (50–75) |
+| ch04 | 65% above → 60% above (30–55) | 37% below → 37% below (50–75) | 55% in → 55% in (50–75) |
+| ch05 | 65% in → 57% in (40–70) | 31% below → 42% below (50–75) | 23% below → 21% below (50–75) |
+| millhaven_road | 96% in → 93% in (70–100) | 62% in → 54% below (55–80) | 71% in → 75% in (55–80) |
+| salt_road | 100% in → 99% in (70–100) | 88% in → 86% in (70–95) | 90% in → 89% in (70–95) |
+| side_company_ledger | 36% in → 42% in (30–55) | 8% below → 3% below (50–75) | 44% below → 43% below (50–75) |
+| side_letters_home | 79% above → 76% above (30–55) | 35% below → 37% below (50–75) | 67% in → 69% in (50–75) |
+| smugglers_cove | 95% in → 98% in (70–100) | 77% in → 78% in (55–80) | 84% above → 86% above (55–80) |
 
-Many personas were outside their bands before this change; the new
-seeding only moves each share by a few points. That is a fresh draw of
-100 tries, not a change in how the personas play. Per the ticket, no band
-or setting was moved; the misses are findings for the balancing tickets.
+Many personas were outside their bands before this change (26 in, 7
+above, 9 below of 42), and after it (25 in, 7 above, 10 below). The new
+seeding moves each share by a few points, at most 11 (Normal on Chapter
+5, 31% → 42%, still below). Three verdicts changed: Casual on Chapter 1
+left its band (53% → 58%, above 55), Normal on Millhaven Road left it
+(62% → 54%, under 55), and Normal on Chapter 3 came back in (76% →
+72%). That is a fresh draw of 100 tries, not a change in how the personas
+play. Per the ticket, no band or setting was moved; the misses are
+findings for the balancing tickets.
 
 **Friction:** estimate 10 production lines, measured 2 added (0.2×), under 2×.
