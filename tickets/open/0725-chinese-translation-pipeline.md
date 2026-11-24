@@ -28,10 +28,13 @@ The pack's code is `zhhans` (ADR-0045 allows 2 to 8 lowercase letters;
 
 ## Nick input
 
-None. 0045 answered what a player sees (the characters for "Shuyi", the
-title, names in characters or Latin, who checks the Chinese). If 0045
-recorded that Nick's wife reads the short lists, step 7 applies; nothing
-else in this ticket waits on a person.
+None. 0045 answered what a player sees
+(`docs/design/voices-languages-and-script.md`, *Chinese (Simplified)*):
+"Shuyi" is **姝怡**; the title is **姝怡的魔幻之境**, short
+**姝怡幻境**; every name is written in characters chosen for their
+sound; Nick's wife reads the short lists (step 7) and plays Chapter 1
+later (0726). Nothing in this ticket waits on a person: 0726 waits for
+her review of the lists.
 
 ## Scope
 
@@ -71,7 +74,9 @@ write the README whole and add a line to 0718 saying to do that.
    commonly used for foreign names (the Xinhua transliteration table's
    habits: 艾, 克, 莉, 斯…), note the pinyin and the plain meaning of
    each character, and avoid pairs that read as an ordinary word or an
-   unlucky one. "Shuyi" uses exactly the characters 0045 recorded.
+   unlucky one. "Shuyi" is exactly 姝怡, and her surname is never
+   used. The lead's default name gets a Chinese form like any other
+   (0045's starting rule); a name the player typed is shown as typed.
    Entered in `assets/lang/zhhans/data.ron` as `names.<id>`. Names stay
    renameable: the rename rule in `docs/story/names.md` gains a line (a
    rename makes the Chinese entry stale).
@@ -96,8 +101,8 @@ write the README whole and add a line to 0718 saying to do that.
 6. `assets/lang/zhhans/lang.ron`: name `简体中文`, `made_by: Machine`,
    and the fields 0239 added (`wide_font`, `wide_punctuation: true`) if
    0239 is done; if it isn't, add a line to 0239 to set them.
-7. Only if 0045 says Nick's wife checks the short lists: put the title,
-   the names table and the glossary in one plain page
+7. Nick's wife checks the short lists (0045): put the title (both
+   forms), the names table and the glossary in one plain page
    (`docs/story/zh/for-review.md`: Chinese beside English, nothing
    else), ask Nick in the PR description to pass it to her, and record
    her changes as they come. The PR does not wait for them.

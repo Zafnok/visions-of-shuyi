@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0042"]
+blocked_by: []
 nick_input: none
 completed:
 ---
@@ -18,7 +18,17 @@ completed:
 The font is Terminus 8×16 and a cell holds one 8×16 `char` (ADR-0016).
 Japanese glyphs are 16×16. [ADR-0045 §4](../../docs/adr/0045-languages-text-by-key-and-line-ids.md):
 the atlas gains 16×16 glyphs from the font Nick chose in 0042, and a wide
-glyph takes two cells. This ticket makes Japanese text *drawable*; 0237
+glyph takes two cells.
+
+**Chinese first** (Nick, 2026-11-24, 0045: "lets do chinese first"):
+this ticket doesn't wait for the Japanese font. If 0042 hasn't chosen
+it when this is worked, the first wide font is the Chinese default
+0045 chose, **Fusion Pixel 12px** (`zh_hans`, its 12×12 glyph drawn in
+the 16×16 space; `docs/design/voices-languages-and-script.md`,
+*Chinese (Simplified)*), as the set `zhhans`, and everything below
+that says "the Japanese font" means it. 0239 then adds the Chinese
+details (punctuation, breaking), and the Japanese set comes with 0042's
+answer (0239 step 3). This ticket makes Japanese text *drawable*; 0237
 makes it wrap and fit.
 
 **The engine does the drawing: engine#2301** (in
@@ -35,7 +45,7 @@ atlas and the game's own layout code. engine#2301 shipped as engine
 
 ## Nick input
 
-None (the font is 0042's answer).
+None (the font is 0042's answer, or 0045's while 0042 is open).
 
 ## Scope
 

@@ -36,8 +36,9 @@ wrapping routines, the widths of its places and its layouts.
 ([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
 bucket B1): engine#2302 is in the engine's `tickets/done/` at the
 game's pin (`e738ffc`), so it is off `blocked_by`. What still blocks
-this is 0236, which waits on Nick's 0042 (a Japanese font); 0184 queues
-that question.
+this is 0236, which no longer waits on Nick's 0042: since 0045
+(2026-11-24, Chinese first) its first wide font can be the Chinese
+one.
 
 ## Nick input
 

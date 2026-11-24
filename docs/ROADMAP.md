@@ -199,17 +199,23 @@ options (Chinese added 2026-10-04), and a
 script a hired writer can take over; **not** a blocker for Chapter 1 or
 Act 1). Shared first step: **0717** every dialogue line gets an id (no
 open dependencies).
-*Japanese* (ADR-0045): **0042** Nick picks the font and how a language is
-chosen → **0233** screen text by key (no open dependencies) → **0234** the
+*Japanese* (ADR-0045): **0042** Nick picks the Japanese font, names and
+title (how a language is chosen and labelled was 0045's, for every
+language) → **0233** screen text by key (no open dependencies) → **0234** the
 rest of the screens (the battle and class change screens: **0243**) and **0235** data names, tips and dialogue (also needs
-0717); **0236** wide glyphs (after 0042 and engine#2301) → **0237**
+0717); **0236** wide glyphs (the first wide font: Chinese's, since
+0042 is open; engine#2301 done) → **0237**
 Japanese line breaking (after engine#2302); **0825** the Options row (after 0805); **0718** the translation
 pipeline → **0719** Chapter 1 and the screens in Japanese (after 0716).
-*Chinese (Simplified)*, on the same engine work: **0045** Nick gives the
-characters for "Shuyi", the Chinese title and font, and says who checks
-it (after 0042) → **0239** a wide font per language and Chinese line
-breaking (after 0236, 0237 and engine#2303); **0725** the translation pipeline (after
-0235) → **0726** Chapter 1 and the screens in Chinese (after 0716, 0825).
+*Chinese (Simplified)*, on the same engine work: **0045** done
+(2026-11-24, Chinese first: 姝怡, the title 姝怡的魔幻之境, Fusion Pixel
+12px, Nick's wife checks the lists and plays Chapter 1) → **0239** a
+wide font per language and Chinese line breaking (after 0236, 0237;
+engine#2303 done) → **0261** Unifont 16px as a second font in Options
+(after 0825); **0262** typing Chinese names with the system's input
+method (after 0068; not Chapter 1); **0725** the translation pipeline
+(after 0235) → **0726** Chapter 1 and the screens in Chinese (after
+0716, 0825, and Nick's wife's review of the lists).
 *Voices* (ADR-0046, ADR-0107): **0043** done, Nick picked the tools, what is
 voiced and each voice by ear; **0238** playback plumbing (after 0717) →
 **0754** the voice's word for the player's name, **0720** the dialogue screen
@@ -594,7 +600,7 @@ Design answers unblock most of the rules work. Suggested order:
 4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** the red captain's combat picture (done: Shironejiya's bearded axe bandit) · **0040** more packs for fighters with no fitting art (done) · **0413** how the combat scene looks · **0022** victory sting (done: Fupi's Win Jingle, a random version each win) · **0023** defeat sting (done: no sting; The Fallen plays from the banner through Game Over) · **0024** Game Over music (done: The Fallen loops, with a pause between rounds) · **0810** how battle rewards are shown
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0812** chapter card · **0813** transitions
    · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
-   · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
+   · **0042** Japanese: font, naming the lead, names, title · **0043** AI voices: the tool, what is voiced, each voice by ear · ~~**0045** Chinese~~ ✅ decided 2026-11-24 (the characters for "Shuyi", the Chinese title, the fonts, who checks it, and for every language how one is picked and labelled)
 6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** the shieldbearer's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
    · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · ~~**0080** how the army gets through armour~~ ✅ decided 2026-11-22 (bows and spears pierce) · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 (how a rider on foot looks: **0089**) · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870** (**0184** puts these first, in the order the balance tickets need them). Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick

@@ -6,8 +6,8 @@ milestone: M7 Chapter 1 & game flow
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
-blocked_by: ["0042", "0233", "0805"]
-nick_input: answer-first
+blocked_by: ["0233", "0805"]
+nick_input: none
 completed:
 ---
 
@@ -16,9 +16,19 @@ completed:
 ## Context
 
 0233 put a language in `Ctx`; nothing lets a player change it. Nick
-decides in 0042 how a language is picked (asked on first launch, follows
-the system, or Options only) and how a machine translation is labelled
-(`docs/design/voices-languages-and-script.md`, *Japanese*). 0805 builds
+decided in 0045 (2026-11-24, for every language;
+`docs/design/voices-languages-and-script.md`, *Picking a language and
+saying it is machine-made*) how a language is picked and how a machine
+translation is labelled:
+
+- First launch asks for the language once, before anything else is
+  asked (the keyboard-layout picker after it), with the computer's
+  language highlighted when the game has a pack for it, English
+  otherwise. Options has a Language row too.
+- A machine-translated language says so beside its name wherever it is
+  picked: **简体中文 (机器翻译，母语者审校)** for Chinese, which a native
+  reader checks, **日本語 (機械翻訳)** for Japanese. A human translation
+  has no note. 0805 builds
 the Options screen and `Settings`.
 
 **Where it is kept** (0058, `docs/design/options.md`, *Where options are
@@ -28,22 +38,20 @@ profiles to exist first.
 
 ## Nick input
 
-**Answer first:** ticket 0042 (questions 2 and 3). Build exactly what the
-design doc says; if it doesn't cover something a player would see, stop
-and ask through `ask-nick`.
+None: 0045 answered. Build exactly what the design doc says; if it
+doesn't cover something a player would see, stop and ask through
+`ask-nick`.
 
 ## Scope
 
-**In:** `Settings::language`; an Options row; the first-launch behaviour
-0042 chose; the machine-translation label 0042 chose.
+**In:** `Settings::language`; an Options row; the first-launch
+language list; the machine-translation labels.
 
 **Out (do not do):** the translations (0719, 0726); a kana name-entry screen (its
 own ticket if 0042 asks for one); store page text (0907).
 
-Either order with 0045 (Chinese): the row lists whatever packs exist and
-labels them by `made_by`, so a Chinese pack needs nothing more here. If
-0045 chose a different label for a checked translation, 0045 writes the
-ticket for it.
+The row lists whatever packs exist and labels them, so a Chinese or
+Japanese pack needs nothing more here once it says how it was made.
 
 ## Implementation steps
 
@@ -55,15 +63,21 @@ ticket for it.
    `Ctx::debug_tools`). Each language is shown by its own name from
    `lang.ron` (`日本語`), whatever the current language is. Changing it
    takes effect at once on every screen.
-3. The label for `made_by: Machine` packs, as 0042 decided (beside the
-   name, a one-time notice, or nothing in game).
-4. First launch, as 0042 decided. If "follows the system": `app` reads
-   the OS / browser language once and passes it to `Ctx` (only `app` may
-   ask the platform, ADR-0004), and the engine's `best_match` (engine
-   #278, 2253) picks the game's pack that fits the system's languages,
-   by their BCP 47 tags (engine #276, 2226); a system language with no
-   pack gives the source language, English (`LangCode::default()`).
-   Write no matching of the game's own.
+3. The label beside a pack's name: `made_by: Machine` adds the pack's
+   own note, in its own language: `(机器翻译，母语者审校)` for the Chinese
+   pack, which a native reader checks, `(機械翻訳)` for Japanese. Keep
+   the note's text in the pack (its `lang.ron` or a key of its
+   `ui.ron`), so "checked" is the pack's fact and not code's; if the
+   engine's `lang.ron` can't carry it, follow the `engine-change` skill.
+4. First launch: a language list, once, before the layout picker, every
+   language by its own name with its label. `app` reads the OS / browser
+   language once and passes it to `Ctx` (only `app` may ask the
+   platform, ADR-0004), and the engine's `best_match` (engine #278,
+   2253) picks the pack that fits the system's languages, by their BCP 47
+   tags (engine #276, 2226): that row starts highlighted. A system
+   language with no pack highlights English (`LangCode::default()`).
+   Write no matching of the game's own. Once picked, the list is not
+   shown again; the Options row changes it.
 5. A pack that names a language whose glyphs the atlas lacks can't
    happen (0236's atlas test), but until 0236 lands the row hides any
    pack whose own name can't be drawn.

@@ -168,9 +168,10 @@ stays with that ticket.
    **park them** (marked so ticket sessions skip them until Nick reopens
    one; 0181 defines the marker): small, waits: no; or **leave them** as
    now. Home: each ticket, through 0181's marker.
-8. **0042 (the Japanese font, picking a language, the label), after
-   0766.** Facts: 0042 has no blockers and gates 5 open tickets directly
-   (0045, 0236, 0718, 0825, 0907); the Japanese translation (0719) waits
+8. **0042 (the Japanese font, names, the title), after 0766.** Facts:
+   0042 has no blockers and gates 2 open tickets directly (0718, 0907;
+   0045 answered picking a language and the label for every language on
+   2026-11-24, and 0236 and 0825 no longer wait for 0042); the Japanese translation (0719) waits
    on the writer anyway. Options: ask it right after question 1, or
    later. Small; waits: no (not on 1064's chain). Home: 0042.
 9. **Does the Playdate speed work (1057, 1068, 1078) wait for 1170?**

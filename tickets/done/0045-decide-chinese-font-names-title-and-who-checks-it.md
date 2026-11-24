@@ -5,10 +5,10 @@ type: design-decision
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
-blocked_by: ["0042"]
+status: done
+blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-24
 ---
 
 # 0045 — Decide: Chinese (Simplified) — the font, the title and the name Shuyi, names, naming the lead, who checks it
@@ -23,6 +23,11 @@ technical plan is the same one
 ([ADR-0045](../../docs/adr/0045-languages-text-by-key-and-line-ids.md));
 this ticket asks Nick the parts a player sees that are *different* for
 Chinese.
+
+**Chinese went first** (Nick, 2026-11-24: "why should chinese be
+blocked by japanese? lets do chinese first."), so this ticket asked the
+two shared questions itself and 0042 no longer asks them; the text
+below is as written before that.
 
 0042 comes first because two of its answers are shared and are not asked
 again here: how a player picks a language, and how a machine translation
@@ -119,15 +124,90 @@ covered); Cantonese. No mockup made with bought art is committed
 
 ## Acceptance criteria
 
-- [ ] Every question above has Nick's answer, verbatim, in the design doc.
-- [ ] The characters for "Shuyi" are written in the design doc exactly as Nick gave them.
-- [ ] The chosen font's licence is quoted with its source URL and passes ADR-0013; its coverage count is recorded.
-- [ ] The mockups are in `docs/screenshots/` and contain no bought art.
-- [ ] Follow-up tickets exist for anything the answers add; `cargo xtask ticket-lint` passes.
+- [x] Every question above has Nick's answer, verbatim, in the design doc.
+- [x] The characters for "Shuyi" are written in the design doc exactly as Nick gave them.
+- [x] The chosen font's licence is quoted with its source URL and passes ADR-0013; its coverage count is recorded.
+- [x] The mockups are in `docs/screenshots/` and contain no bought art.
+- [x] Follow-up tickets exist for anything the answers add; `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
 None (docs only).
 
 ## Completion notes
+
+Asked Nick on 2026-11-24, in one session; his wife answered some of it
+with him. Everything is recorded in
+`docs/design/voices-languages-and-script.md`: *Picking a language and
+saying it is machine-made* (every language) and *Chinese (Simplified)*.
+
+**What changed from the plan**
+
+- **Chinese before Japanese.** Asked whether to do 0042 first, Nick said
+  "why should chinese be blocked by japanese? lets do chinese first." So
+  this ticket asked the two shared questions (picking a language, the
+  machine-translation label) for every language, dropped its
+  `blocked_by` on 0042, and rendered no Japanese font beside the Chinese
+  (none is chosen yet). 0042 now asks only the Japanese font, naming the
+  lead, names and the title, and renders the Chinese font beside its
+  candidates. 0236 no longer waits for 0042: its first wide font can be
+  the Chinese one.
+- **Her surname stays out of the public repository.** Nick gave it with
+  her first name; he then chose a first-name-only credit, so the design
+  doc quotes his words with the surname left out, and the rules say it is
+  never used.
+- **The title changed after the first answer**: Nick picked 姝怡幻境,
+  then "My wife changed her mind": 姝怡的魔幻之境 as the full title,
+  姝怡幻境 as its short name.
+- **Two fonts.** Nick asked whether there were other options; the only
+  other one that passed, Fusion Pixel 10px (D), was rendered too. Answer:
+  Fusion Pixel 12px by default, Unifont 16px (spaced lines) in Options.
+
+**The fonts checked** (read at the source 2026-11-24; coverage counted
+from the downloaded files with Python's `gb2312` codec): Fusion Pixel
+12px, Unifont, Fusion Pixel 10px passed. Ark Pixel 12px was dropped for
+gaps (3,641 / 3,755 reported); Ark Pixel 16px is retired (65 / 3,755);
+Cubic 11 has Traditional shapes and no BDF (Fusion Pixel already fills
+its gaps from it); Vonwaon Bitmap (CC0) was dropped because its
+characters trace back to a company's commercial DOS fonts; Zpix (paid
+for commercial use), WenQuanYi Bitmap Song (GPL only) and IPix (its own
+terms) failed. The table is in the design doc.
+
+**Mockups** (`docs/screenshots/0045-*.png`): real 2× frames of the
+dialogue (`0704-dialogue.png`, placeholder portraits) and unit info
+(`1312-info-after.png`, the public placeholder lead), with the text
+painted over cell by cell from the fonts' BDF / hex files and Terminus
+for Latin, by a throwaway Python script (not committed). The line is
+Hollis's from Chapter 1, machine-translated for the mockup only; the
+stat names follow Fire Emblem's Chinese conventions (力量, 魔力, 技巧…)
+for the mockup only. No bought art.
+
+**Follow-up tickets**
+
+- **0261** a second Chinese font in Options: Unifont 16px with spaced
+  lines (after 0239, 0825).
+- **0262** typing a name in Chinese with the system's input method
+  (after 0068, 0239). Not part of Chapter 1, so not in 0726's
+  `blocked_by`.
+- Nick's wife's review of the lists is 0725's step 7 (now required);
+  0726 waits for it in its *Nick input*. No ticket of its own.
+
+**Tickets changed:** 0042 (title, questions 2 and 3 removed, Fusion
+Pixel `ja` among the candidates), 0236 (no longer waits for 0042; the
+Chinese font can be the first wide font), 0237, 0239 (the font, its
+licence and placement), 0725 (姝怡, the titles, step 7 required), 0726
+(waits for her review; Latin lead names until 0262), 0825 (the
+first-launch list and the labels; no longer waits for 0042), 0906 (the
+Chinese titles in the trademark search), 0907 (the credit and the
+checked label), 0184, and `docs/ROADMAP.md`.
+
+**The agent's starting rules** (Nick can veto):
+
+- The first-launch list shows each language by its own name, whatever
+  the screen's language.
+- The full Chinese title is on the title screen and the store page; the
+  short one where the full one doesn't fit.
+- The lead's default name shows in its Chinese form; a typed name shows
+  as typed, Latin letters included.
+- The Unifont row's wording and place in Options are 0261's to propose.
 
