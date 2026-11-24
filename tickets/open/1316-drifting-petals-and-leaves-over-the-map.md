@@ -25,6 +25,18 @@ an overlay and a loop sound). Motion is computed from the time alone
 (`shuyi-animate` skill); the rules never see it (`core` knows nothing of
 the look, ADR-0038), so play records and bots are unchanged.
 
+**From 1314 (done, ADR-0131):** a skin reads the tier from
+`ctx.platform.graphics` (`GraphicsTier`; the Playdate is `Reduced`).
+Each effect carries a `trpg_content::motion::Motion`: `lowest: Full` and
+`stills: {Reduced: (show: Nothing), Minimal: (show: Nothing)}`, with
+`todo: "..."` where 0096 wants a lighter Playdate version. Hand the
+effects to `motion::check` in the content test
+`every_moving_look_names_its_stills` (its `TODO(1316)`), beside 1315's
+tile rows. The particle cap
+per tier, if one is needed, is a field of the effect's data (ADR-0131
+Consequences), not a fourth tier. Preview with `cargo shuyi frame-png
+--graphics reduced`.
+
 ## Nick input
 
 **Answer first:** 0096. Nothing to check after merge: verified by tests,

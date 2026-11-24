@@ -69,7 +69,7 @@ pub use screen::{
     Ctx, FrameInput, KeyPrompt, LoadError, Screen, ScreenStack, Shuyi, ShuyiCtx, Transition,
 };
 pub use settings::{PortraitStyle, RangeStyle, Settings, ShuyiSettings, ThreatArrows};
-pub use shuyi_ui::{FileDrops, PlatformFacts};
+pub use shuyi_ui::{FileDrops, GraphicsTier, PlatformFacts};
 pub use shuyi_ui::{GameHooks, ScreenHook};
 pub use storage::{MemoryStorage, Storage, StorageError};
 pub use trpg_content::ImageId;

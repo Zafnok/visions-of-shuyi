@@ -33,6 +33,7 @@ shuyi-platform = { git = "https://github.com/Zafnok/shuyi-engine", rev = "7d60a2
 shuyi = { git = "https://github.com/Zafnok/shuyi-engine", rev = "7d60a21a59dee89031db83224b5f9ca5a832dbe3" }
 shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "7d60a21a59dee89031db83224b5f9ca5a832dbe3" }
 shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "7d60a21a59dee89031db83224b5f9ca5a832dbe3" }
+shuyi-embed = { git = "https://github.com/Zafnok/shuyi-engine", rev = "7d60a21a59dee89031db83224b5f9ca5a832dbe3" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

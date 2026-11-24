@@ -174,6 +174,7 @@ fn the_games_options_are_read() {
             light: Some("dusk".into()),
             tips: true,
             opens: Opens::Title,
+            graphics: None,
             after: Vec::new(),
         })
     );
@@ -201,6 +202,38 @@ fn the_games_options_are_read() {
     assert!(Start::of(&unknown).is_err());
     assert!(parse(&["a.png", "--light"]).is_err());
     assert!(parse(&["a.png", "--bogus"]).is_err());
+    // A graphics tier, by name in any case (ADR-0131).
+    let graphics = |tier| Start::of(&parse(&["a.png", "--graphics", tier]).unwrap().game);
+    assert_eq!(
+        graphics("reduced").unwrap().graphics,
+        Some(GraphicsTier::Reduced)
+    );
+    assert_eq!(
+        graphics("Minimal").unwrap().graphics,
+        Some(GraphicsTier::Minimal)
+    );
+    assert_eq!(
+        graphics("low"),
+        Err("--graphics: full, reduced or minimal, not low".into())
+    );
+}
+
+/// Ticket 1314: `--graphics` shows a lesser target's tier on the PC's
+/// screen, and the game's map today is the same picture at every tier:
+/// nothing on it moves yet.
+#[test]
+fn a_picture_at_each_graphics_tier() {
+    let dir = temp_dir("graphics");
+    let render = |tier: &str| {
+        let mut options = parse(&["t.png", "--battle", "test", "--graphics", tier]).unwrap();
+        options.scale = Some(1);
+        run(&dir, &options).unwrap();
+        fs::read(dir.join("t.png")).unwrap()
+    };
+    let full = render("full");
+    assert_eq!(render("reduced"), full);
+    assert_eq!(render("minimal"), full);
+    let _ = fs::remove_dir_all(&dir);
 }
 
 #[test]
@@ -1272,6 +1305,19 @@ fn replay_refuses_a_record_that_isnt_one() {
 fn the_playdates_facts_are_the_engines() {
     let facts = trpg_ui::platform::playdate_facts().unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(facts, engine_facts("playdate"));
+}
+
+/// Ticket 1314 (ADR-0131): the PC and the web show every moving look, the
+/// Playdate its stills. No target is `Minimal` yet.
+// TODO(gba): a `gba` target at `Minimal` once the game builds one
+// (engine#3022 measures a GBA); nothing ships there today.
+#[test]
+fn each_target_has_its_graphics_tier() {
+    for id in ["desktop", "web"] {
+        assert_eq!(engine_facts(id).graphics, GraphicsTier::Full, "{id}");
+    }
+    let playdate = trpg_ui::platform::playdate_facts().unwrap_or_else(|e| panic!("{e}"));
+    assert_eq!(playdate.graphics, GraphicsTier::Reduced);
 }
 
 /// The facts of the engine's profile `id`.

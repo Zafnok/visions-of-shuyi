@@ -44,6 +44,7 @@ pub mod lesson;
 pub mod lettering;
 pub mod lighting;
 pub mod map;
+pub mod motion;
 pub mod names;
 pub mod palette;
 #[cfg(feature = "std")]

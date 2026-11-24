@@ -315,11 +315,11 @@ fn rows_show_their_values() {
             "On*",
             "On*",
             "Earthy painterly*",
-            // The old 80 on the engine's loudness curve (engine #318).
-            "<97/100>",
-            "<97/100>",
+            // Nick's start, the top (0879).
+            "<100/100>",
+            "<100/100>",
             "On*",
-            "<97/100>",
+            "<100/100>",
             "On*",
             "Off*",
             "Right-handed",
@@ -632,10 +632,12 @@ fn discard_puts_every_setting_back_and_saves_nothing() {
         if row.is_setting() {
             s = s.focused_on(row.key());
             press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorRight]);
+            // Two left and one right: a volume at the top moves down.
+            press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
             press(&mut s, &mut c, &[Action::CursorRight]);
         }
     }
-    assert!(s.changed(&c) && c.settings().fullscreen && c.volume(MUSIC) != 97);
+    assert!(s.changed(&c) && c.settings().fullscreen && c.volume(MUSIC) != 100);
     press(&mut s, &mut c, &[Action::Cancel]);
     press(&mut s, &mut c, &[Action::CursorLeft]);
     assert_eq!(s.leaving(), Some(LeaveChoice::Discard));

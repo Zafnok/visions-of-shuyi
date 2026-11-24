@@ -5,10 +5,10 @@ type: tuning
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: ["1319"]
 nick_input: none
-completed:
+completed: 2026-11-23
 ---
 
 # 1343 — The picture look's range tints are 150% as strong
@@ -81,4 +81,20 @@ for); new range styles.
 Playdate: unchanged (one-bit patterns). GBA: no target.
 
 ## Completion notes
+
+- `MapSkin::range_show` (`crates/ui/src/map_view/skin.rs`) gives the
+  sprite skin `RangeStyle::show().with_strength(SPRITE_RANGE_STRENGTH)`
+  (150) and the glyph and one-bit skins the style's own show;
+  `with_marks` builds every skin with it. A small method in place of the
+  inline call in step 1, so the test of step 2 can read the strength
+  (the kit skin behind `MapSkin` is a `dyn GridSkin`).
+- Test: `the_picture_look_tints_ranges_at_150_percent_and_the_others_at_100`,
+  every `RangeStyle`, and the rest of the look unchanged.
+- Pictures: `docs/screenshots/1343-ranges.png` (a selected unit's
+  ranges) and `1343-danger.png` (the danger zone), test Quick Battle,
+  picture look, every theme, before and after.
+- For the Act 1 playtest (1064): at 150% the danger zone over the bought
+  grass is much darker (a deep brown-red rather than a light green-brown
+  wash); judge whether it still lets the terrain read.
+- No starting rules decided.
 

@@ -24,6 +24,12 @@ crashes it, so the checks below read every file's header.
 ```ron
 (
     music_fade_ms: 500,           // old track fades out this long, then the new one starts
+    groups: [
+        // The volume a new player's group starts at on Options (0-100 on
+        // the loudness curve; engine GroupDef). Optional: a group left
+        // out starts at the engine's default.
+        (id: "music", volume: 100),
+    ],
     ducks: [
         // While a voice clip plays, lower a sound group to `to` on the
         // loudness curve (each step 0.6 dB: 90 is 6 dB under) over
@@ -68,6 +74,10 @@ crashes it, so the checks below read every file's header.
 - `license` is `"CC0-1.0"`, `"CC-BY-3.0"`, `"CC-BY-4.0"` or `"Own"`
   (ADR-0013, ADR-0027). A credit that isn't `Own` needs a `title`, an
   `author` and a `source` link. The license texts are in `licenses/`.
+- `groups` sets where the Music (`music`), Sound (`sfx`) and Voice
+  (`voice`) volumes start for a new player, and what `Restore defaults`
+  puts them back to. The numbers are Nick's, from
+  `docs/design/options.md` (*Volumes*): 100 for all three (0879).
 - Every cue id (sounds, music and pools together) is unique.
 - `length_ms` is the track's real length: screens that keep time with the
   music wrap their clock there

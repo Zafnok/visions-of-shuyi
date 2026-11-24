@@ -879,6 +879,44 @@ mod tests {
         }
     }
 
+    /// Every table `build.rs` writes on the engine's walk (ticket 1347) is
+    /// sorted by path, each path once, with no `README.md` and no two paths
+    /// that differ only by case; and the Playdate's table of `assets/` is
+    /// [`ASSETS`] without [`PLAYDATE_LEFT_OUT`], in the same order.
+    #[test]
+    fn every_table_is_sorted_once_by_case_and_the_playdates_is_assets_less_its_list() {
+        let tables = [
+            ("assets", ASSETS),
+            ("assets-test", TEST),
+            (CONTENT_DISPLAY_ROOT, CONTENT),
+            ("the Playdate's", PLAYDATE),
+            ("the Playdate's content", PLAYDATE_CONTENT),
+            ("the demo's", DEMO),
+        ];
+        for (name, table) in tables {
+            let paths: Vec<&str> = table.iter().map(|(path, _)| *path).collect();
+            assert!(paths.windows(2).all(|w| w[0] < w[1]), "{name}: {paths:?}");
+            assert!(
+                !paths
+                    .iter()
+                    .any(|path| path.rsplit('/').next() == Some("README.md")),
+                "{name}: {paths:?}"
+            );
+            let mut folded: Vec<String> = paths.iter().map(|path| path.to_lowercase()).collect();
+            folded.sort_unstable();
+            folded.dedup();
+            assert_eq!(folded.len(), paths.len(), "{name}: {paths:?}");
+        }
+        assert!(PLAYDATE_LEFT_OUT.windows(2).all(|w| w[0] < w[1]));
+        let kept: Vec<&str> = ASSETS
+            .iter()
+            .map(|(path, _)| *path)
+            .filter(|path| PLAYDATE_LEFT_OUT.binary_search(path).is_err())
+            .collect();
+        let playdate: Vec<&str> = PLAYDATE.iter().map(|(path, _)| *path).collect();
+        assert_eq!(playdate, kept);
+    }
+
     /// Each table is its folder on disk, file for file and byte for byte,
     /// without the READMEs (ADR-0105). The content's too (ADR-0117),
     /// without its `tests/` (ADR-0118): empty

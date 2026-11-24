@@ -5,10 +5,10 @@ type: infra
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-24
 ---
 
 # 1314 — Each target has a graphics tier, and every moving look a still fallback
@@ -90,13 +90,13 @@ target or port; changing the Playdate's look.
 
 ## Acceptance criteria
 
-- [ ] Engine ticket closed and the pin moved past it.
-- [ ] A test: the Playdate target reports `Reduced` (or the chosen name),
+- [x] Engine ticket closed and the pin moved past it.
+- [x] A test: the Playdate target reports `Reduced` (or the chosen name),
       desktop and web `Full`.
-- [ ] A test: an animated tile row with no fallback fails the check; one
+- [x] A test: an animated tile row with no fallback fails the check; one
       with `fallback: todo` is listed, not failed.
-- [ ] The ADR is merged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The ADR is merged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -109,4 +109,47 @@ This ticket is the lesser-targets plan; 1317 makes every later ticket
 say how it uses it.
 
 ## Completion notes
+
+- **Engine** (engine ticket 3347, its PR Zafnok/shuyi-engine#535):
+  `GraphicsTier::{Minimal, Reduced, Full}` (ordered, `Full` the default)
+  in each target profile (`graphics:`) and in `PlatformFacts::graphics`,
+  with `with_graphics`; the engine's Playdate profile is `Reduced`. A
+  debug build of `shuyi-app` shows another tier when `SHUYI_GRAPHICS`
+  names one.
+- **Game:** both copies of the Playdate's profile say `graphics:
+  Reduced`; the desktop and the web take the engine's (`Full`). A skin
+  asks `ctx.platform.graphics` (`trpg_ui` re-exports `GraphicsTier`).
+  No target is `Minimal`: a `TODO(gba)` beside the tier test, and a row
+  in `docs/targets.md`.
+- **The fallback:** `trpg_content::motion`: a `Motion` (`lowest`, a
+  `stills` entry per lower tier: `show: FirstFrame | Nothing`, and a
+  `todo` for a picture still to make), `Motion::drawn(tier)` for the
+  skins (a still left out draws frame 0, never a crash), and
+  `motion::check`. The content test `every_moving_look_names_its_stills`
+  runs it over the content's moving looks, none yet (an empty list with
+  `TODO(1315)`, `TODO(1316)`), fails on a problem and prints each to-do.
+  A function that collected them would return nothing until 1315, a
+  mutant no test can catch, so 1315 writes it with its data.
+- **The override:** `cargo shuyi frame-png --graphics reduced|minimal`,
+  and `SHUYI_GRAPHICS` for a debug build of the game. A test draws the
+  test battle at each tier: the same picture today.
+- **ADR-0131.**
+- Deviations: the fallback is written `(show: FirstFrame, todo: "…")`
+  rather than `fallback: todo`, so a still to make still says what
+  stands in for it. The check is a content test, not a `cargo shuyi lint`
+  rule (the engine's lint has no game data rules). The tier is not
+  folded into a parked engine ticket: 2359, 2360, 2103 and 2370 are all
+  blocked, so engine ticket 3347 is new. The override is a variable and a
+  `frame-png` option, not a debug-menu row (ADR-0131, Alternatives).
+- Handoffs written into 1315, 1316 and 1317 ("From 1314 (done)").
+- The pin: Zafnok/shuyi-engine#535 merged, and the engine-pin PR
+  Zafnok/visions-of-shuyi#808 moved the pin past it (to `7d60a21a`), with
+  its ledger section, the Playdate profiles' `graphics: Reduced` and the
+  `crates/app/src/main.rs` log line. This PR merged it and kept its
+  versions of those files, so it moves no pin itself.
+- Friction: estimate 110 production lines (the `frame-png` `--light`
+  option and the tileset's optional fields, ticket 1314's own sizes),
+  measured 100 (0.9×), under 2×.
+- No gameplay rule was decided: nothing moves yet, and the Playdate's
+  look is unchanged.
 

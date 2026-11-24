@@ -22,7 +22,7 @@ use trpg_content::Theme;
 use trpg_core::{GameMode, TutorialLevel};
 use trpg_ui::ShuyiCtx;
 use trpg_ui::audio::Gain;
-use trpg_ui::audio::groups::{MUSIC, SFX};
+use trpg_ui::audio::groups::{MUSIC, SFX, VOICE};
 use trpg_ui::color::UiColor;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord};
@@ -312,13 +312,13 @@ fn at(music: u8, sound: u8) -> (Gain, Gain) {
 #[test]
 fn volumes_reach_the_mixer_and_persist() {
     let mut h = options();
-    // The defaults: 97 of 100 each, where the old 80 was (engine #318).
-    assert_eq!(heard(&h), at(97, 97));
+    // The defaults: 100 of 100 each, the top (Nick, 0879).
+    assert_eq!(heard(&h), at(100, 100));
     // The slider: five at a time.
     h.keys(TO_MUSIC).keys("Left Left Left");
-    assert_eq!(heard(&h), at(82, 97));
+    assert_eq!(heard(&h), at(85, 100));
     let slider = ValueView::Volume {
-        level: 82,
+        level: 85,
         max: 100,
     };
     assert_eq!(value(&h, Row::MusicVolume), slider);
@@ -334,23 +334,23 @@ fn volumes_reach_the_mixer_and_persist() {
     // The game's keys do nothing while it is open; nothing changes yet.
     h.keys("Down d");
     assert_eq!(h.screens(), ["title", "options"]);
-    assert_eq!(heard(&h), at(82, 97));
+    assert_eq!(heard(&h), at(85, 100));
     h.keys("Enter");
-    assert_eq!(heard(&h), at(7, 97));
+    assert_eq!(heard(&h), at(7, 100));
     assert_eq!(settings(&h).volumes.get(MUSIC), Some(7));
     // 0 is silent, by the box or by the slider (which stops there).
     h.keys("f").type_text("0").keys("Enter");
-    assert_eq!(heard(&h), (Gain::SILENT, loudness(97)));
+    assert_eq!(heard(&h), (Gain::SILENT, Gain::FULL));
     h.keys("Left");
     assert_eq!(settings(&h).volumes.get(MUSIC), Some(0));
     // Escape leaves the volume as it was.
     h.keys("f").type_text("55").keys("Escape");
     assert_eq!(settings(&h).volumes.get(MUSIC), Some(0));
     assert_eq!(h.screens(), ["title", "options"]);
-    // The sound volume, up to its loudest and no further.
-    h.keys("Down Right Right Right Right Right");
+    // The sound volume, down a step, up to its loudest and no further.
+    h.keys("Down Left Right Right");
     assert_eq!(heard(&h), (Gain::SILENT, Gain::FULL));
-    assert_eq!(settings(&h).volumes.get(SFX), Some(100));
+    assert_eq!(h.game().ctx().volume(SFX), 100);
     // Each step that changed it ticks (at the new volume); the second
     // Right changed nothing.
     h.clear_audio().keys("Left Right Right");
@@ -659,6 +659,9 @@ fn restore_defaults_asks_first_and_keeps_the_layout_and_the_keys() {
     h.keys("f f");
     assert!(shows(&h, "Defaults restored"));
     assert_eq!(settings(&h), Settings::default().with_layout(RIGHT_HANDED));
+    // The volumes are back at Nick's start, the top (0879).
+    assert_eq!(heard(&h), at(100, 100));
+    assert_eq!(h.gain(VOICE), loudness(100));
     // Custom keys are reset on the Key bindings screen, not here.
     assert_eq!(h.game().ctx().layout_bindings(RIGHT_HANDED), keys);
     h.keys(KEEP);
@@ -890,7 +893,7 @@ fn leaving_asks_and_each_answer_does_its_part(open: fn() -> Harness, under: &[&s
     h.keys("Right").keys("Down Down Down Down Down Right");
     h.keys("Down Down Down Down Down Down Down Left");
     assert!(h.fullscreen());
-    assert_eq!(h.gain(MUSIC), loudness(92));
+    assert_eq!(h.gain(MUSIC), loudness(95));
     assert_eq!(stored(&h), saved_before, "nothing saved yet");
     // Leaving asks, on Back.
     h.keys("d");
@@ -910,7 +913,7 @@ fn leaving_asks_and_each_answer_does_its_part(open: fn() -> Harness, under: &[&s
     assert_eq!(h.screens(), under);
     assert_eq!(settings(&h), before);
     assert!(!h.fullscreen());
-    assert_eq!(h.gain(MUSIC), loudness(97));
+    assert_eq!(h.gain(MUSIC), loudness(100));
     assert_eq!(stored(&h), saved_before);
     // Again, and Keep: saved.
     h.keys("f Right d Left Left f");
