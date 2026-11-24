@@ -34,9 +34,14 @@ crashes it, so the checks below read every file's header.
     sounds: [
         // files: relative to assets/audio/. Several files = variants, one
         // picked at random each time. volume: percent, 0-100.
-        (id: "menu_move", files: ["sfx/menu_move.wav"], volume: 100, credit: Own),
+        // Optional cue rules (engine ADR-0139, ticket 1349): pick
+        // (Random, the default, NoRepeat, Shuffle, InOrder), volume_min,
+        // and min_gap_ms: a play this soon after the cue's last one that
+        // sounded is dropped (Harness::dropped_sounds lists it).
+        (id: "menu_move", files: ["sfx/menu_move.wav"], volume: 100, min_gap_ms: 30,
+         credit: Own),
         (id: "step_foot", files: ["sfx/step_1.ogg", "sfx/step_2.ogg"], volume: 80,
-         credit: Credit("footsteps")),
+         pick: NoRepeat, credit: Credit("footsteps")),
     ],
     music: [
         // file: relative to music/. Loops unless `looped: false`.

@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-23
 ---
 
 # 1349 — The game's sound cues take the engine's cue rules
@@ -71,10 +71,10 @@ Estimate: data in `assets/audio/audio.ron` and the content's manifest
 
 ## Acceptance criteria
 
-- [ ] A test: a held cursor key plays one tick per step it moves, with
+- [x] A test: a held cursor key plays one tick per step it moves, with
       no stack, and `dropped_sounds` lists the rest.
-- [ ] A test: two footsteps in a row never play the same file.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A test: two footsteps in a row never play the same file.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -82,5 +82,36 @@ Estimate: data in `assets/audio/audio.ron` and the content's manifest
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Which cues stack** (searched in `crates/ui`): the map cursor's tick
+  (`cursor_tick`, one per tile moved, so two arrows in one frame or a late
+  frame owed several held-key repeats ticks several times at once), the
+  menus' `menu_move` (the same through `AudioQueue::menu`), and the step
+  sounds (`effects.rs` plays one per tile entered in a frame, and a
+  hurried walk enters a tile about every 21 ms). The hit, cast and heal
+  cues can't: a cue's next strike is at least a flash, a result and a gap
+  later (1.05 s, about 260 ms at ×4 hurry), so they got no rule.
+- **The gap: `min_gap_ms: 30`** on `cursor_move`, `menu_move`,
+  `step_foot`, `step_armored` and `step_mounted`, in both manifests
+  (`assets/audio/audio.ron` and the private repository's
+  `content/audio/audio.ron`). Measured in the Harness: a held arrow
+  (repeat every 55 ms, `keymap.ron`) ticks every three or four frames
+  (50 or 67 ms), and two taps in the Harness are two frames (33 ms) apart.
+  30 drops a second play in the same frame or the next one at 60 frames a
+  second, and stays under every held repeat and under two frames at 30
+  frames a second, so a tile the cursor moves on its own frame always
+  ticks.
+- **`pick: NoRepeat`** on `step_foot`, the one cue with several files.
+- **Tests** (`crates/ui/tests/it/sound_cues.rs`): before the rules, two
+  arrows in one frame played two ticks and nothing was dropped, and the
+  enemy phase's footsteps played files `0, 0, 1, 0, 2, 2, …`. After: a
+  held key ticks once per tile with no drop, a two-arrow frame and a late
+  frame tick once with the rest in `dropped_sounds`, and fourteen
+  footsteps never repeat a file.
+- **Session record**: not blessed; it did not move (its hashes hold the
+  sounds asked for, which the rules don't change).
+- `assets/audio/README.md` names the new fields.
+- *For the Act 1 playtest (1064), not a rule decided:* a walk hurried
+  with Confirm held plays fewer footsteps (one per ~33 ms instead of
+  nearly every frame). `audio.md` says each step picks one of three "at
+  random"; NoRepeat still does, among the two the last step didn't play.
+- No follow-up tickets.
