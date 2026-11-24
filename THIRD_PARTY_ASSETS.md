@@ -96,6 +96,49 @@ from another seller gets its own row and credit.
     and UI kit, *Terrains Plus* and the two *Trees* packs (48-pixel tiles
     in another style).
 
+- **ELV Games, "Game Assets Mega Bundle"** (293 products),
+  <https://itch.io/s/79053/game-assets-mega-bundle>, store
+  <https://elvgames.itch.io/>. Bought by Nick on **2026-11-24** for
+  **$59.99**, for ticket 0096 (its *Rogue Adventure* tilesets were one of
+  his two favourite looks for the battle map). *Private*: the files are
+  never in this repository. Every download as bought (464 files) is in the
+  private repository's release `originals-elv-games`; the packs the game
+  may use are sorted in `library/elv-games/`, with every pack's licence in
+  `library/elv-games/licences/`.
+  - **Licence**, the store's terms (<https://elvgames.itch.io/terms>, last
+    updated 2022-07-20), one for every pack: "The Assets may be used for
+    commercial or non-commercial purposes." "The Assets can be freely
+    edited and modified, make sure it's clearly stated they have been
+    modified." "The Assets may not be resold, published, or distributed in
+    any way except as an integral part of the project for which they were
+    used; this also applies to those that have been edited or modified."
+    "The Assets may not be used as a standalone on any kind of physical
+    content, including but not limited to printed materials, merchandise,
+    or tangible products." "The Assets cannot be used on any kind of Crypto
+    or NFT related project." The packs' own `License.txt` adds: "You
+    cannot: Use on Training/Generative AI", and asks for "Credits to
+    ElvGames" (the sound packs: "Credits to ElvGames & Pegonthetrack").
+    **When we edit one of these pictures or sounds, the credits say it was
+    modified.**
+  - **Credits named in the packs:** art by ElvGames; the sound effect packs
+    by ElvGames and Pegonthetrack (<https://linktr.ee/pegonthetrack>).
+  - **AI-assisted:** no. 290 of the 292 product pages with downloads say
+    "No generative AI was used" (read 2026-11-24); the other two, the
+    *Sprite Creator Tool* and the *Retro Character Creator Tool*
+    (programs, not used), give no answer.
+  - **What we may use** (sorted in the library; nothing chosen yet): the
+    *Rogue Adventure* tilesets (every area, the Overworld, the animated
+    trees and the winter/autumn jungle), its heroes, monsters, bosses and
+    item icons; the 32- and 16-pixel weapon and armor icons; the fire,
+    ice, lightning and buff/debuff effects; *Game Sound Effects 1–2*,
+    *Magic & Spells 1–2*, *User Interface 1–2*, *Footsteps 1* and
+    *Ambient Weather Loops 1*; *Turn Based RPG Monsters* 1–10 and 20–22;
+    *Pixel Battlers* 1–11; the *Neatpixels* fonts. In the release only
+    (another style or another kind of game): the *Fantasy Dreamland* and
+    *Farming Game* lines, the platformer tilesets, *Retro Monsters*,
+    *EvoMonsters*, the tower defense, card and domino packs, the UI kits,
+    the creator tools.
+
 ## Shipped items
 
 | Item | Source URL | Version | License | License file | Used for | Added by ticket |
