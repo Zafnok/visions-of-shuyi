@@ -27,6 +27,9 @@
     ),
     // The player leaves through the system's Home: a game shows no Quit.
     quit: System,
+    // Stills, and at most a few cheap moving looks a game picks: no
+    // particles, no effects over the screen (the engine's, engine PR 535).
+    graphics: Reduced,
     budgets: (
         // The engine profile's, provisional there too.
         frame_instructions: 2_000_000,

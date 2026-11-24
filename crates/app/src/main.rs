@@ -112,7 +112,10 @@ fn folders_on_disk(root: &std::path::Path) -> Vec<shuyi::assets::bundle::Layer> 
     let read = |name: &str| match shuyi_app::read_folder(&root.join(name), name, limit) {
         Ok(layer) => Some(layer),
         Err(e) => {
-            macroquad::logging::warn!("{}: {}", name, e);
+            // On stderr, as macroquad's `warn!` printed it: this runs before
+            // `run_app` installs the engine's log sinks, so a `log` line
+            // here would go nowhere (engine PR 522).
+            eprintln!("{name}: {e}");
             None
         }
     };

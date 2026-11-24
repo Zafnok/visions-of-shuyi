@@ -343,6 +343,20 @@ fn any_key_shows_the_menu_and_starts_the_music() {
     assert_eq!(h.snapshot(), title().snapshot());
 }
 
+/// `docs/design/title-screen.md`: a mouse click doesn't dismiss the
+/// prompt, though the engine ends its wait at a pointer press (engine PR
+/// 521); a key still does.
+#[test]
+fn a_click_does_not_dismiss_the_prompt() {
+    let mut h = waiting_title();
+    let waiting = h.snapshot();
+    h.click(400, 256);
+    assert_eq!(music(&h), [] as [&str; 0]);
+    assert_eq!(h.snapshot(), waiting);
+    h.keys("z");
+    assert_eq!(music(&h), ["title"]);
+}
+
 #[test]
 fn the_key_that_ends_the_wait_does_nothing_else() {
     let mut h = waiting_title();
