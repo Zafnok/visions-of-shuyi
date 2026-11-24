@@ -485,7 +485,14 @@ fn harness(start: &Start) -> Result<Harness, String> {
         .playdate
         .then(|| Ok::<_, String>((playdate_palette()?, playdate_facts()?)))
         .transpose()?;
+    // An unknown `--light`, found by `setup`.
+    let mut unknown_light = None;
     let setup = |ctx: &mut Ctx| {
+        // The light goes in before any start: a battle takes its look as
+        // it opens (`--battle`, ticket 0260).
+        if let Some(light) = &start.light {
+            unknown_light = light_every_battle(&mut ctx.game.content, light).err();
+        }
         if let Some((palette, facts)) = playdate {
             // As `crates/playdate/src/start.rs` starts the game.
             ctx.console = ConsoleSpec::PLAYDATE;
@@ -537,20 +544,29 @@ fn harness(start: &Start) -> Result<Harness, String> {
     if start.tips {
         h.with_tips().with_lessons();
     }
-    if let Some(light) = &start.light {
-        let content = &mut h.ctx_mut().game.content;
-        if content.lighting.get(light).is_none() {
-            let known = content.lighting.names();
-            return Err(format!(
-                "--light: no light \"{light}\"; the lights are {known}"
-            ));
-        }
-        let battles: Vec<String> = content.battles.keys().cloned().collect();
-        content
-            .battle_lights
-            .extend(battles.into_iter().map(|id| (id, light.clone())));
+    match unknown_light {
+        Some(e) => Err(e),
+        None => Ok(h),
     }
-    Ok(h)
+}
+
+/// Has every battle of `content` fought in the light `light` (`--light`).
+///
+/// # Errors
+///
+/// When `light` is none of the lights.
+fn light_every_battle(content: &mut trpg_content::Content, light: &str) -> Result<(), String> {
+    if content.lighting.get(light).is_none() {
+        let known = content.lighting.names();
+        return Err(format!(
+            "--light: no light \"{light}\"; the lights are {known}"
+        ));
+    }
+    let battles: Vec<String> = content.battles.keys().cloned().collect();
+    content
+        .battle_lights
+        .extend(battles.into_iter().map(|id| (id, light.to_owned())));
+    Ok(())
 }
 
 /// `h`'s frame painted as `start` says.

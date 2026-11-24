@@ -5,10 +5,10 @@ type: bug
 milestone: M1 Engine
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-24
 ---
 
 # 0260 — frame-png's --light reaches a battle opened with --battle
@@ -65,12 +65,29 @@ same way and say so in the PR).
 
 ## Acceptance criteria
 
-- [ ] The test above passes, and fails on today's code.
-- [ ] `a_light_must_be_one_of_the_lights` still passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The test above passes, and fails on today's code.
+- [x] `a_light_must_be_one_of_the_lights` still passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Integration: the tool's own test (above).
 
 ## Completion notes
+`--light` is now applied in `harness()`'s `setup` closure (a new
+`light_every_battle`), which every start runs before it opens the title,
+a battle, a scene or the script preview, so `start_on_battle` takes the
+battle's look with the light already in `content.battle_lights`. An
+unknown light still fails with the same message, now returned after the
+harness is built.
+
+The MCP session (`start`) builds its game with the same `harness()`, so
+it had the same order bug and is fixed by the same change.
+
+Test: `the_light_reaches_a_battle_opened_at_once`
+(`crates/tools/src/game_tools/tests.rs`). The test build draws the test
+battle's ground as glyphs, which no light shades, so it reads the open
+battle's map scene look (`night` with `--light night`, not `night`
+without); it fails on the old code (`noon`).
+
+No gameplay rules decided. No follow-up tickets.

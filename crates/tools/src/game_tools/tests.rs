@@ -129,6 +129,22 @@ fn a_session_opens_on_the_battle_asked_for() {
     assert_eq!(h.top_screen(), "dialogue");
 }
 
+/// Ticket 0260: `--light` reaches the battle `--battle` opens, whose look
+/// is taken as it opens. The test build draws its ground as glyphs, which
+/// no light shades, so this reads the open battle's look.
+#[test]
+fn the_light_reaches_a_battle_opened_at_once() {
+    let light = |args: &[&str]| {
+        let mut all = vec!["a.png", "--battle", "test"];
+        all.extend(args);
+        let start = Start::of(&parse(&all).unwrap().game).unwrap();
+        let h = harness(&start).unwrap();
+        h.map_scene().unwrap().look.light.clone()
+    };
+    assert_eq!(light(&["--light", "night"]), "night");
+    assert_ne!(light(&[]), "night");
+}
+
 /// `bench` on the Playdate plays the game on its 50 × 15 console, each
 /// frame drawn in one bit; there is no other one-bit target.
 #[test]
