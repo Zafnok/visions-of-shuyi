@@ -60,7 +60,19 @@ pub fn new(ctx: Ctx, root: Box<dyn Screen<Shuyi>>) -> Game {
 /// every character narrow. The wide characters only, not the atlas's ink
 /// boxes, which place key caps: those stay the platform's to give, as they
 /// were before wide glyphs.
+///
+/// Workaround (ticket 0236): not on the Playdate's console, which prints
+/// every character narrow as before. With a wide set, the engine's
+/// `GlyphBuffer` looks each printed character up in it
+/// (`CellWidths::is_wide`, a `BTreeSet`), which put the Playdate's
+/// `battle-cursor-sweep` frame over its 2,000,000-instruction budget
+/// (2,069,579; 1,983,326 without it). No Chinese is shown on the
+/// Playdate yet. Remove this once `is_wide` answers a character below the
+/// set's first at once.
 fn with_atlas_widths(mut game: Game) -> Game {
+    if game.ctx().console == <crate::ConsoleSpec as crate::console::ConsoleSizes>::PLAYDATE {
+        return game;
+    }
     let wide = game.ctx().game.content.font.wide_chars();
     let widths = shuyi_assets::font::CellWidths::wide(wide);
     game.set_widths(widths);

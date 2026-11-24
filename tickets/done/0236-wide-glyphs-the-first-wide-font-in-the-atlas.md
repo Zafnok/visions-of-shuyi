@@ -183,6 +183,17 @@ font that ships only as TTF is converted to BDF at 16 px here (a one-off, docume
   the typewriter's reveal and the dialogue's timing, a stored name's
   length (`save_files/import.rs`), the writer's preview's token column.
 
+- **Workaround: the Playdate prints narrow.** With the wide set, the
+  engine's `GlyphBuffer` looks every printed character up in it
+  (`CellWidths::is_wide`, a `BTreeSet`): CI's bench put the Playdate's
+  `battle-cursor-sweep` frame at 2,069,579 instructions, over its
+  2,000,000 budget (1,983,326 on `main`). `game::with_atlas_widths` skips
+  the Playdate's console, which keeps it as it was on `main` (it never got
+  widths: it boots without the platform's `App`). The fix is an engine
+  fast path (`is_wide` answering a character below the set's first at
+  once); its engine ticket waits for Nick's OK. No Chinese is shown on the
+  Playdate yet.
+
 **Friction:** 2.4× (estimate 200 production lines, measured 477),
 accepted: most of it is rustfmt rewrapping about 90 calls that gained a
 widths argument (a row in `docs/engine/friction.md`).
