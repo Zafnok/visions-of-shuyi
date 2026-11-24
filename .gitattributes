@@ -20,6 +20,8 @@ assets/fonts/atlas.ron                  linguist-generated
 assets-test/tilesets/test.ron           linguist-generated
 assets-test/tilesets/test_auto.ron      linguist-generated
 assets-test/tilesets/test_units.ron     linguist-generated
+# The bots' recorded wins, written by `cargo xtask bot-wins` (ticket 0531).
+crates/bots/wins/*.ron                  linguist-generated
 # Font sources, inputs to `cargo shuyi font-atlas` (one is 31,000 lines).
 assets-src/fonts/*.bdf                  linguist-generated
 # The engine's skill pack, copied at the pin (ADR-0097).

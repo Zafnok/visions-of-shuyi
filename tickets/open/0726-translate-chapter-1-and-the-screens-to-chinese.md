@@ -29,9 +29,17 @@ this ticket while 0766 is open without asking Nick.
 
 ## Nick input
 
-None. Nothing waits on a person. If 0045 recorded that Nick's wife plays
-Chapter 1 in Chinese, that happens after this merges (on the playtest
-page's build), and what she finds becomes tickets through `write-ticket`.
+None, but one thing waits on a person: 0045 recorded that Nick's wife
+reads the title, the names and the glossary before they are used
+(`docs/design/voices-languages-and-script.md`, *Chinese (Simplified)*).
+Before translating, check that `docs/story/zh/for-review.md` (0725
+step 7) records her changes; if it doesn't, ask Nick whether she has
+read it, and don't start until she has. She also plays Chapter 1 in
+Chinese after this merges (on the playtest page's build); what she
+finds becomes tickets through `write-ticket`.
+
+The lead's name stays in Latin letters until typing Chinese lands
+(0262): a line that says a typed name shows it inside the Chinese text.
 
 ## Scope
 

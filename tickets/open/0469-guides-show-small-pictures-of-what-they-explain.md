@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: []
+blocks: ["1064"]
 nick_input: decision
 completed:
 ---
@@ -42,6 +43,18 @@ into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
 **Decision** (`ask-nick`) with mockups: still pictures vs short loops;
 where in the Guides layout; on the Playdate, none or a smaller one-bit
 picture.
+
+**Widened 2026-11-22** (Nick, after watching a new player play Chapter 1:
+"We should embed images or sprites into the guides (options menu) and
+vix tips where appropriate like for example she said "this is your
+cursor" why don't we show the blinking cursor (animated) in the tip bar
+itself"): ask also which of Vix's tips and lessons show a picture in the
+tip box, where in the box, and which pictures move (the cursor's blink
+at least). Since then on the Act 1 critical path (in 1064's
+`blocked_by`, Nick's pick, 2026-11-22). 1321 builds the tip box's side and waits for this answer;
+the Playdate's version follows 1314's graphics tiers if it is done
+(either order: if not, record the Playdate answer and 1321 leaves a
+`TODO(1314)`).
 
 ## Scope
 

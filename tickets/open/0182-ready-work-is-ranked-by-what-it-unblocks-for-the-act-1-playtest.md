@@ -48,6 +48,15 @@ bucket B5 with 1180, 1207, 0173, 1170 and 1294):
   Nick's ranking call, not this tool's: the output shows the question
   (step 10) and never reorders it.
 
+**Amended by the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md) (2026-11-24).** Ready work was passed
+over for a day to two weeks with no decision in the way (0485, 0488,
+0491: about 362 h; 1311: about 46 h; 0528 about a day after it was
+unblocked). Rank the newest feedback round's ready tickets first (today
+1311, 1320 once its engine ticket lands, 0528, 0610, 0485, 0488, 0491),
+then the clean-ups that block a feedback build (0335, which 0334 has
+waited on about 160 h since its decision). Tag value-only tweaks when
+filing so they go first, in one PR per round.
+
 ## Nick input
 
 None to build it. The tool surfaces one open ranking question (step 10):

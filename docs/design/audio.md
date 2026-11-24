@@ -47,6 +47,9 @@ His words, round by round, are in the [appendix](#appendix-nicks-words).
    plays, the music goes slightly quieter, and fades back to full after the
    line ends. Only when the line has a clip, voices are on and the voice
    volume isn't 0. Sound effects don't dip.
+12. **A place has a sound bed under its music** (ticket 1322): one quiet
+   loop of the place (a meadow, a river, a hall's hush), with its own
+   volume on Options. No passing calls for now. See [*Ambience*](#ambience-ticket-1322-2026-11-23).
 
 ## Music cues
 
@@ -249,6 +252,72 @@ Nick picked in one round of a listening page
   from 0026 (Market Day, Town Theme, Town Theme 3, Minstrel Guild) and
   `village_home` stay as they were.
 
+## Ambience (ticket 1322, 2026-11-23)
+
+Nick picked over three rounds of a listening page
+(https://claude.ai/artifact/T6YeygJ9ubs3apgU1Hmx4e): a frame of the
+Chapter 1 battle with its track (`battle_bright`), a sound bed under it,
+passing calls on top, the map's light, and sliders for the music, the bed
+and the calls. His words are in the [appendix](#appendix-nicks-words).
+Which bed each place gets is each chapter's ticket (1324–1331).
+
+- **A place has a sound bed**: one quiet loop of the place under its
+  music (wind in a meadow, a river, a hall's hush), the way the title's
+  crackle (0922) sits under the title song. Stardew Valley does the same:
+  a loop per season and time of day (birdsong on spring days, crickets at
+  night). Not picked: no ambience (Fire Emblem on the Game Boy Advance
+  plays only music on its maps) and passing calls (below).
+- **Where it plays:** the battle map, a scene over its place (0029), the
+  world map, a town while it is open, and camp.
+- **Not in the fight.** When a fight's combat stage opens, the bed stops;
+  it comes back when the fight closes and the map is back (Nick: "it can
+  cut the ambience and resume post fight").
+- **How loud:** a bed is levelled on import like a music track, to the
+  music's own loudness (Nick: "ambient should be same volume as music").
+  The player sets it with **its own volume on Options**, which starts
+  **10 under the music's** on the 0–100 scale: 90 against the music's 100
+  (0879), so 6 dB quieter (0.6 dB a step, `options.md`, *Volumes*). If the
+  music's start ever moves, the ambience's start moves with it, 10 under.
+  The world map, towns and camp play their beds as loud as a battle does.
+- **In conversations the bed dips under a voiced line**, exactly as the
+  music does (rule 11): only while a line's clip plays, and back up after
+  it. Otherwise a scene plays its place's bed at the usual level.
+- **The world map's bed keeps playing through the quiet** between two
+  rounds of the map's track (the 30 s quiet, *Starting values*), so the
+  map still sounds like a place.
+- **The bed follows the map's light** (0438): a place may have a bed per
+  light, such as birdsong at noon and crickets at night, as Stardew Valley
+  does. A place with one bed plays it in every light.
+- **No passing calls, for now.** Single sounds at random gaps (a bird, a
+  dog, a bell) were heard at three paces and two bells. Nick: "for now I
+  don't like the randomness and loudness of the calls", and never in a
+  battle ("not in a battle"). They are looked at again after more of the
+  tickets that give the game life (ticket 1344).
+- **The Playdate** plays the same beds if they run well there (the bench,
+  1314's `Reduced` tier); if they don't, it has no ambience.
+
+The beds heard (all CC0 on Freesound; credit them all, rule 3):
+
+| Bed | Heard as | Author | Source | License | Nick |
+| --- | -------- | ------ | ------ | ------- | ---- |
+| Summer Meadow (County Donegal: birds, insects) | the day bed | baryy | [freesound 409143](https://freesound.org/s/409143/) | CC0 | **Picked**: "the summer meadow sounds nicest" |
+| Wheat in the Wind (a wheat field, mostly wind, a few birds) | the day bed | bdvictor | [freesound 240914](https://freesound.org/s/240914/) | CC0 | heard, not picked |
+| SummerOpenFieldDusk.wav (a field by a lake at dusk) | the dusk bed | kvgarlic | [freesound 135472](https://freesound.org/s/135472/) | CC0 | heard (the idea of a bed per light picked, not this sound) |
+| AMBIENCE NIGHT FIELD CRICKET 01.wav (crickets at midnight) | the night bed | sengjinn | [freesound 175020](https://freesound.org/s/175020/) | CC0 | heard, as above |
+| Night Crickets Back Porch.aiff (a woods' edge at night) | another place | hdfreema | [freesound 333221](https://freesound.org/s/333221/) | CC0 | heard |
+| Gentle Stream Natural Stream Sound | a river | BurghRecords | [freesound 446019](https://freesound.org/s/446019/) | CC0 | heard |
+| AMB_Wind_Howling_empty Church close to window | a hall's hush, wind outside | Tonmeister88 | [freesound 557380](https://freesound.org/s/557380/) | CC0 | heard |
+
+The calls heard and not used (for 1344): Blackbird in the morning
+(Sesom42, [431911](https://freesound.org/s/431911/)), Birds chirping 04
+(swiftoid, [182500](https://freesound.org/s/182500/)), distant_dog.wav
+(Heigh-hoo, [54545](https://freesound.org/s/54545/)),
+Bells_distant_in_town.wav (ivolipa, [266525](https://freesound.org/s/266525/),
+"too loud and long for a call"), TollBell.wav (daytripper,
+[73678](https://freesound.org/s/73678/), one toll, softened), Hooded
+crow.wav (straget, [404687](https://freesound.org/s/404687/)) and Owl Hoot
+(Breviceps, [465697](https://freesound.org/s/465697/)); all CC0.
+
 ## Sound effects
 
 | Cue | When it plays | Sound | Author | Source | License |
@@ -324,6 +393,18 @@ sign-off: "it should sound like a heal").
   0.15 s; it comes back over 0.6 s once the line ends. The friend asked
   for "slightly" and "prob a fade transition"; the numbers are Claude's
   (`audio.ron`'s `ducks`), to judge in the Act 1 playtest.
+- A place's bed (1322) starts and stops with its screen, fading as its
+  music does (0.5 s). When a fight's combat stage opens, the bed fades out
+  over 0.5 s; when the fight closes, it fades back in over 0.5 s from
+  where its loop is. Under a voiced line it dips by the music's numbers
+  (6 dB, 0.15 s down, 0.6 s back).
+- A bed is a 30–40 s stretch of its recording, its next 2 s crossfaded
+  into its start so that it loops without a seam, as the crackle's is
+  (0922, `assets-src/audio/import.py`).
+- A place that has beds for some lights but not the one its map is in
+  plays its noon bed.
+- The Ambience volume row on Options sits under the Sound volume
+  (`options.md`, *Volumes*).
 
 ## Open sub-questions (not needed for Chapter 1; Nick: "we have enough sounds for ch1 atp")
 
@@ -337,6 +418,9 @@ sign-off: "it should sound like a heal").
 - **The wuxia continent** (a later act, `assets-private/story/design/setting-and-tone.md`) "would probably
   have more eastern themes". It needs its own round, which also picks
   Act 2's world map track (0025).
+- **Passing calls** (1322): single sounds at random gaps over a bed, not
+  wanted "for now"; ticket 1344 asks again after more of the tickets that
+  give the game life. Never in a battle.
 - **Places and moments without a cue yet:** shops. Nick hasn't been
   asked about it (ticket 0028). Level up is Nick's own work.
 - **Content ID** (decided 2026-10-01, ticket 0904): **no check before
@@ -706,3 +790,55 @@ build, passed on by Nick; ticket 0865):
 > ensure the voice exists and AI voice option is checked and voice volume
 > is not 0) we should duck the music volume slightly and return it to
 > full vol after a line ends -- prob a fade transition in volume
+
+**Ambience, round 1** (ticket 1322, 2026-11-23; listening page
+https://claude.ai/artifact/T6YeygJ9ubs3apgU1Hmx4e). The Chapter 1 battle
+with its track: A none, B a bed only, C a bed and passing calls (a
+blackbird, sparrows, a dog, a chapel bell, at one every 8–20 s or 20–45 s);
+the bed 12, 18 or 24 dB under the music; noon, dusk and night beds; two
+day beds. Nick first asked for sliders:
+
+> add sliders for music and ambient in the artifact so I can play around
+> and hear it better
+
+then:
+
+> probably ambient shoudl be same volume as music w its own in game volume
+> slider and then that should be set to 1 tick under music by default (or
+> if we use 100 scale, 10 ticks under)
+>
+> I think the calls are a good idea but not in a battle and not at this
+> frequency and the chapel bell is too loud and long for a call so for
+> battles I think the bed only is the right idea
+>
+> for me the summer meadow sounds nicest and the idea of time of day is a
+> good idea
+
+**Ambience, round 2** (the same page, with the bed at 6 dB under, paces of
+20–45, 45–90 and 90–180 s, and one soft toll for the bell). Where the bed
+plays (the fight, scenes, the world map and towns, camp):
+
+> prob not in the fight it can cut the ambience and resume post fight
+>
+> for conversations I think it would be good to make the ambience drop a
+> bit in volume similar to how music already does
+>
+> yea world map and towns should both have ambience and it can be loud
+> like in battle
+>
+> for camp yes same as world map/towns/battles
+
+Where calls play:
+
+> for now I don't like the randomness and loudness of the calls but they
+> might be revisited later so keep that part open as to revisit after
+> several more life tickets (the ones which make the game less amateur and
+> more polished)
+
+How often: "again for now TBD".
+
+**Ambience, round 3.** Asked whether "drop a bit" meant quieter for the
+whole conversation or a dip under voiced lines like the music's, Nick
+picked "Dips under voiced lines". The world map's bed through the map
+track's 30 s quiet: "Yes, it keeps playing". The Playdate: "Yes, if it runs
+well" (the same beds, unless the bench says they cost too much).

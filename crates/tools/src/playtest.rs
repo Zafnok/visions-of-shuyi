@@ -21,11 +21,14 @@ use shuyi_core::bots::playtest::{
     Check, Entrant as _, Found, PlaytestReport, Tried, judge, play_tries,
 };
 use trpg_bots::{
-    BattleEntrant, BattleStage, Player, Targets, arrival, chapters_before, field_army, is_hold,
-    personas_from_ron, reference_pack,
+    BattleEntrant, BattleStage, Player, StageArmy, Standing, Targets, UNIT_DEALT, UNIT_EXP,
+    UNIT_KILLS, UNIT_LEVELS, arrival, can_hurt, chapters_before, field_army, flags, is_hold,
+    personas_from_ron, reference_pack, unit_measure,
 };
 use trpg_content::{Content, battle_campaign};
-use trpg_core::{BattleDef, BattleSetup, Faction, GameMode, LeadGender, LeadProfile, Turn};
+use trpg_core::{
+    BattleDef, BattleSetup, BattleState, Faction, GameMode, LeadGender, LeadProfile, Turn,
+};
 
 /// The command's usage text.
 pub const USAGE: &str = "usage: cargo xtask playtest <battle-id> [options]\n\n\
@@ -59,7 +62,7 @@ pub const PERSONAS_FILE: &str = "crates/bots/personas.ron";
 pub const TARGETS_FILE: &str = "crates/bots/targets.ron";
 
 /// The lead's name in a playtest.
-const LEAD_NAME: &str = "Lead";
+pub const LEAD_NAME: &str = "Lead";
 
 /// Who plays the player's side.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -236,16 +239,29 @@ pub struct Record {
     pub army: Army,
     /// Who played, in order.
     pub played: Vec<Played>,
+    /// Each player unit at the battle's start (none in a run kept before
+    /// ticket 0527).
+    #[serde(default)]
+    pub units: Vec<UnitStart>,
     /// The engine's report: every try's measures and the checks.
     pub report: PlaytestReport,
 }
 
-/// The army a run fielded (ticket 0520).
+/// The army a run fielded (ticket 0520): one, or one per line of the
+/// bots' recorded wins (0531).
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Army {
     /// Where it comes from: `campaign after ch01`, `reference army lv 35
     /// by ch02` or `fresh from the character data`.
     pub from: String,
+    /// Each army, line 1's first. A run kept before 0531 has none.
+    #[serde(default)]
+    pub lines: Vec<ArmyLine>,
+}
+
+/// One army of an [`Army`]: Classic's units, pack and gold.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct ArmyLine {
     /// Each unit in unit order, `Lead exile lv 1`.
     pub units: Vec<String>,
     /// The pack, by item id.
@@ -254,25 +270,143 @@ pub struct Army {
     pub gold: u32,
 }
 
-impl Army {
-    /// `army · campaign after ch01 · Lead exile lv 1, … · pack potion,
-    /// potion · gold 100`; nothing for a run with no army kept.
-    pub fn line(&self) -> String {
-        if self.from.is_empty() {
-            return String::new();
-        }
+impl ArmyLine {
+    /// `Lead exile lv 1, … · pack potion, potion · gold 100`.
+    fn text(&self) -> String {
         let pack = if self.pack.is_empty() {
             "empty".to_owned()
         } else {
             self.pack.join(", ")
         };
         format!(
-            "army · {} · {} · pack {pack} · gold {}",
-            self.from,
+            "{} · pack {pack} · gold {}",
             self.units.join(", "),
             self.gold
         )
     }
+}
+
+impl Army {
+    /// `army · campaign after ch01 · Lead exile lv 1, … · pack potion,
+    /// potion · gold 100` for one army. For several, which line a try
+    /// fields, then a row per line and each unit's mean level:
+    ///
+    /// ```text
+    /// army · campaign after ch01 · 24 lines: try N fields line (N − 1) mod 24 + 1
+    ///   line 1 · Lead exile lv 5, … · pack potion · gold 100
+    ///   mean · Lead 4.6, Hollis Marr 3.4, …
+    /// ```
+    ///
+    /// Nothing for a run with no army kept.
+    pub fn line(&self) -> String {
+        match self.lines.as_slice() {
+            _ if self.from.is_empty() => String::new(),
+            [] => format!("army · {}", self.from),
+            [one] => format!("army · {} · {}", self.from, one.text()),
+            lines => {
+                let n = lines.len();
+                let mut out = format!(
+                    "army · {} · {n} lines: try N fields line (N − 1) mod {n} + 1",
+                    self.from
+                );
+                for (i, line) in lines.iter().enumerate() {
+                    let _ = write!(
+                        out,
+                        "
+  line {} · {}",
+                        i + 1,
+                        line.text()
+                    );
+                }
+                let _ = write!(
+                    out,
+                    "
+  mean · {}",
+                    mean_levels(lines)
+                );
+                out
+            }
+        }
+    }
+}
+
+/// Each unit's mean level over `lines`, by name, in the first line's order:
+/// `Lead 4.6, Hollis Marr 3.4`. A unit shows as `<name> <class> lv <n>`.
+fn mean_levels(lines: &[ArmyLine]) -> String {
+    let level = |unit: &str| -> Option<(String, f64)> {
+        let (name, lv) = unit.rsplit_once(" lv ")?;
+        let name = name.rsplit_once(' ').map_or(name, |(n, _)| n);
+        Some((name.to_owned(), lv.parse().ok()?))
+    };
+    let mut names: Vec<String> = Vec::new();
+    let mut sums: BTreeMap<String, (f64, f64)> = BTreeMap::new();
+    for line in lines {
+        for (name, lv) in line.units.iter().filter_map(|u| level(u)) {
+            if !names.contains(&name) {
+                names.push(name.clone());
+            }
+            let sum = sums.entry(name).or_default();
+            *sum = (sum.0 + lv, sum.1 + 1.0);
+        }
+    }
+    let means = names.iter().map(|name| {
+        let (sum, count) = sums.get(name).copied().unwrap_or((0.0, 1.0));
+        format!("{name} {:.1}", sum / count)
+    });
+    means.collect::<Vec<_>>().join(", ")
+}
+
+/// A player unit at the battle's start (ticket 0527), in Classic: the
+/// median over the stage's army lines (one per recorded win, ADR-0130).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UnitStart {
+    /// Its name, as its measures name it.
+    pub name: String,
+    /// Its level arriving at the battle: the lower median over the lines.
+    pub level: u32,
+    /// The enemies on the map it can hurt ([`can_hurt`]): the lower median
+    /// over the lines.
+    pub hurt: u32,
+    /// The enemies on the map.
+    pub of: u32,
+}
+
+/// Each player unit of `stage` at the battle's start, in Classic, in line
+/// 1's unit order: its level and the enemies it can hurt, the lower median
+/// over the army lines it fights in.
+pub fn unit_starts(stage: &BattleStage) -> Vec<UnitStart> {
+    let mut order: Vec<String> = Vec::new();
+    let mut seen: BTreeMap<String, (Vec<i64>, Vec<i64>, u32)> = BTreeMap::new();
+    for army in stage.armies() {
+        let battle = BattleState::new(army.classic.clone()).0;
+        let players = battle
+            .units()
+            .iter()
+            .filter(|u| u.faction == Faction::Player);
+        for unit in players {
+            let (hurt, of) = can_hurt(&battle, unit.id);
+            if !order.contains(&unit.name) {
+                order.push(unit.name.clone());
+            }
+            let (levels, hurts, most) = seen.entry(unit.name.clone()).or_default();
+            levels.push(i64::from(unit.level));
+            hurts.push(i64::from(hurt));
+            *most = (*most).max(of);
+        }
+    }
+    order
+        .into_iter()
+        .map(|name| {
+            let (levels, hurts, of) = seen.remove(&name).unwrap_or_default();
+            let at = |values| u32::try_from(median(values)).unwrap_or(0);
+            UnitStart {
+                level: at(levels),
+                hurt: at(hurts),
+                of,
+                name,
+            }
+        })
+        .collect()
 }
 
 /// What a run found: the report's text, and whether the battle is blocked.
@@ -371,6 +505,7 @@ pub fn merge(records: Vec<Record>) -> Result<Record, String> {
             ("tier", part.tier != first.tier),
             ("turn cap", part.turn_cap != first.turn_cap),
             ("army", part.army != first.army),
+            ("units", part.units != first.units),
             ("bots", names(&part) != names(&first)),
             ("checks", part_checks != checks),
         ];
@@ -399,36 +534,43 @@ pub fn merge(records: Vec<Record>) -> Result<Record, String> {
 
 /// The battle `def` as the bots play it, the same for the playtest and
 /// the autobalance. The army: as its `bots_army` says (ticket 0510); else,
-/// in a story chapter after the first, the army the chapters before it
-/// leave, its pack filled in Preparations (`trpg_bots::arrival`, ticket
-/// 0520); else the characters of its player slots, fresh from the
-/// character data (as the debug Quick Battle fields them).
+/// in a story chapter after the first, the armies the chapters before it
+/// leave, one per line of the bots' recorded wins, each pack filled in
+/// Preparations (`trpg_bots::arrival`, tickets 0520 and 0531); else the
+/// characters of its player slots, fresh from the character data (as the
+/// debug Quick Battle fields them).
 pub fn stage(content: &Content, def: &BattleDef) -> Result<BattleStage, String> {
-    let setup = |mode| -> Result<BattleSetup, String> {
-        let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
-        if def.bots_army.is_none()
-            && let Some(setup) = arrival(content, def, mode, lead.clone())?
-        {
-            return Ok(setup);
-        }
-        let mut campaign = battle_campaign(content, def, mode, lead);
+    let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
+    if def.bots_army.is_none()
+        && let Some(classic) = arrival(content, def, GameMode::Classic, &lead)?
+    {
+        let casual = arrival(content, def, GameMode::Casual, &lead)?.unwrap_or_default();
+        let mut armies = classic
+            .into_iter()
+            .zip(casual)
+            .map(|(classic, casual)| StageArmy { classic, casual });
+        let first = armies.next().ok_or("no army")?;
+        return Ok(BattleStage::of_lines(first, armies.collect()));
+    }
+    let setup = |mode| -> BattleSetup {
+        let mut campaign = battle_campaign(content, def, mode, lead.clone());
         let Some(army) = &def.bots_army else {
-            return Ok(campaign.battle_setup(def, &content.tables()));
+            return campaign.battle_setup(def, &content.tables());
         };
         field_army(&mut campaign, content, army);
         let mut setup = campaign.battle_setup(def, &content.tables());
         setup.pack.items = reference_pack(content, army, def.pack_cap);
-        Ok(setup)
+        setup
     };
-    Ok(BattleStage {
-        classic: setup(GameMode::Classic)?,
-        casual: setup(GameMode::Casual)?,
-    })
+    Ok(BattleStage::new(
+        setup(GameMode::Classic),
+        setup(GameMode::Casual),
+    ))
 }
 
 /// The army of `stage`, battle `def`'s, as the report shows it: where it
-/// comes from, and Classic's units, pack and gold (Casual's are the same
-/// but for the mode).
+/// comes from, and each army's Classic units, pack and gold (Casual's are
+/// the same but for the mode).
 pub fn army(content: &Content, def: &BattleDef, stage: &BattleStage) -> Army {
     let before = chapters_before(content, &def.id);
     let from = match (&def.bots_army, before.last()) {
@@ -436,15 +578,20 @@ pub fn army(content: &Content, def: &BattleDef, stage: &BattleStage) -> Army {
         (None, Some(last)) => format!("campaign after {}", last.id),
         (None, None) => "fresh from the character data".to_owned(),
     };
-    let setup = &stage.classic;
-    let players = setup.units.iter().filter(|u| u.faction == Faction::Player);
+    let line = |army: &StageArmy| {
+        let setup = &army.classic;
+        let players = setup.units.iter().filter(|u| u.faction == Faction::Player);
+        ArmyLine {
+            units: players
+                .map(|u| format!("{} {} lv {}", u.name, u.class.0, u.level))
+                .collect(),
+            pack: setup.pack.items.iter().map(|i| i.0.clone()).collect(),
+            gold: setup.gold,
+        }
+    };
     Army {
         from,
-        units: players
-            .map(|u| format!("{} {} lv {}", u.name, u.class.0, u.level))
-            .collect(),
-        pack: setup.pack.items.iter().map(|i| i.0.clone()).collect(),
-        gold: setup.gold,
+        lines: stage.armies().iter().map(line).collect(),
     }
 }
 
@@ -507,6 +654,7 @@ pub fn play(
         turn_cap: options.turn_cap,
         army: army(content, def, &stage),
         played,
+        units: unit_starts(&stage),
         report,
     })
 }
@@ -623,8 +771,88 @@ pub fn render(record: &Record, previous: Option<&Record>) -> String {
             was(&record.report, previous, &played.name),
         );
     }
+    for played in &record.played {
+        if let Some(entrant) = record
+            .report
+            .entrants
+            .iter()
+            .find(|e| e.name == played.name)
+        {
+            out.push_str(&units_table(record, &played.name, &entrant.tries));
+        }
+    }
     if let Some(p) = previous {
         let _ = writeln!(out, "previous  {} · commit {}", p.date, p.commit);
+    }
+    out
+}
+
+/// The units table of entrant `name`'s `tries` (ticket 0527): a line per
+/// player unit at the battle's start, its level, the enemies it can hurt,
+/// the medians of what it did per try, its share of the army's EXP over
+/// every try, and its flags (`trpg_bots::flags`). Nothing for a run kept
+/// without its units.
+fn units_table(record: &Record, name: &str, tries: &[Tried]) -> String {
+    let units = &record.units;
+    if units.is_empty() {
+        return String::new();
+    }
+    let mut out = String::new();
+    let _ = writeln!(
+        out,
+        "
+{} · units ({name}, {} tries)",
+        record.battle,
+        tries.len()
+    );
+    let per_try = |what: &str, unit: &str| -> Vec<i64> {
+        tries
+            .iter()
+            .map(|t| unit_measure(&t.measures, what, unit))
+            .collect()
+    };
+    let total = |unit: &str| -> u64 {
+        let sum: i64 = per_try(UNIT_EXP, unit).iter().sum();
+        u64::try_from(sum).unwrap_or(0)
+    };
+    let army_exp: u64 = units.iter().map(|u| total(&u.name)).sum();
+    let army_level = median(units.iter().map(|u| i64::from(u.level)).collect());
+    let width = units
+        .iter()
+        .map(|u| u.name.chars().count())
+        .max()
+        .unwrap_or(0);
+    for unit in units {
+        let exp = total(&unit.name);
+        let share = (exp * 100 + army_exp / 2)
+            .checked_div(army_exp)
+            .map_or_else(|| "-".to_owned(), |pct| format!("{pct}%"));
+        let standing = Standing {
+            can_hurt: (unit.hurt, unit.of),
+            level: i64::from(unit.level),
+            army_level,
+            exp,
+            army_exp,
+            army_size: u64::try_from(units.len()).unwrap_or(u64::MAX),
+        };
+        let flagged: Vec<&str> = flags(&standing)
+            .into_iter()
+            .map(trpg_bots::Flag::text)
+            .collect();
+        let hurt = format!("{}/{}", unit.hurt, unit.of);
+        let mut line = format!(
+            "{:<width$}  lv {:<2}  can hurt {hurt:<5}  dealt med {:<3}  kills med {:<2}  \
+             levels med +{:<2}  exp share {share:<4}",
+            unit.name,
+            unit.level,
+            median(per_try(UNIT_DEALT, &unit.name)),
+            median(per_try(UNIT_KILLS, &unit.name)),
+            median(per_try(UNIT_LEVELS, &unit.name)),
+        );
+        if !flagged.is_empty() {
+            let _ = write!(line, "  ⚑ {}", flagged.join(" · "));
+        }
+        let _ = writeln!(out, "{}", line.trim_end());
     }
     out
 }

@@ -202,11 +202,19 @@ const fn church_knight(id: &'static str) -> Picture {
     )
 }
 
-/// Every class and named character of the Quick Battle and Chapter 1 with
-/// a bought picture (Nick's choices, ticket 0413). A class's picture is
-/// what the enemy's soldiers of that class look like; a named
-/// character of the player's who shares it has their own row.
-pub const BATTLERS: [Picture; 17] = [
+/// Joss's (ticket 0858, Nick's "F Hound black" in 0070): the blond hair
+/// brown, the red headband, cape lining and trim in the Hounds' black.
+/// The skin and the orange leather (hues 20° to 33°) stay.
+const HOUND_BLACK: [Tint; 2] = [
+    tint((34.0, 60.0), 0.5, 25.0, 0.55, 0.66),
+    tint((0.0, 18.0), 0.45, 250.0, 0.15, 0.4),
+];
+
+/// Every class and named character of the Quick Battle and Chapters 1 to
+/// 3 with a bought picture (Nick's choices, tickets 0413 and 0070). A
+/// class's picture is what the enemy's soldiers of that class look like; a
+/// named character of the player's who shares it has their own row.
+pub const BATTLERS: [Picture; 18] = [
     // The lead, by gender; the Exile class as the male lead.
     tiny(
         "exile",
@@ -261,6 +269,11 @@ pub const BATTLERS: [Picture; 17] = [
     shironejiya("brigand", "shironejiya/monster_s/m_s_bandanna05_b.png"),
     shironejiya("raider", "shironejiya/monster_s/m_s_fighter04_a.png"),
     shironejiya("red_captain", "shironejiya/monster_s/m_s_bandanna05.png"),
+    // Joss: Shironejiya's swordsman with a shield, in the Hounds' black.
+    tinted(
+        shironejiya("defector", "shironejiya/monster_s/m_s_hero07.png"),
+        &HOUND_BLACK,
+    ),
     // The prior of Greywater is the dark priest, his hair white (ticket 0861).
     tinted(
         shironejiya("greywater_prior", "shironejiya/monster_s/m_s_mage_dark_m01.png"),

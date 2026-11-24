@@ -49,6 +49,27 @@ tickets from the same sweep that these answers feed: 0877 (Act 1
 coverage report), 0878 (class art gaps), and the amended 1064, 0606,
 0757, 1067.
 
+**Amended by the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md) (2026-11-24): the top item.** Filed questions
+wait far longer than Nick takes to answer them: from the 11-08 playtest,
+0081 and 0080 waited about 314 h and were answered in 6 min and 1 h 18 m
+once asked; 0079, 0082 and 0084 are still unasked after about 362 h;
+0095–0099 (the 11-22 session) are unasked with 9–10 builds behind them.
+Add to the scope: the session that files a feedback round asks that
+round's decisions in the same sitting or the next; a "decision inbox"
+step opens every session with Nick (everything ready and unasked, oldest
+first, before any build is picked), ordered by how many builds each
+unblocks; no fixed cap on questions per ticket, but don't flood Nick: group
+what belongs together and use judgment (Nick, 2026-11-24); where a
+session fills a small gap itself in a way that changes gameplay, it
+tells Nick plainly what it chose and where, instead of asking (this
+ticket updates AGENTS.md rule 3 and the `ask-nick` skill to say so); 1323–1331 asked together on one listening page; a
+decision goes into 1064's `blocked_by` only with a one-line reason the
+playtest can't run without it; propose to Nick that 0090 (the writer's
+preview following the demo's settings) is decided by an ADR instead
+(he may say no). Fix ROADMAP row 6 (0081 shown open; Lane L's decisions
+missing). Nick, 2026-11-24: ask the waiting ones "later", in a session of
+their own, not right after the retro.
+
 ## Nick input
 
 **Decision** (`ask-nick`), one short message at the end: the reordered
@@ -136,7 +157,8 @@ stays with that ticket.
    the picks are 0070's and 0076's). Facts: 20 speakers placed on screen
    have no portrait; Joss appears in 9 of the 10 scripts. Steps, with a
    time estimate for each (the session times the first and corrects the
-   rest): 0858, buy one pack and build Hendry's face; 0861, build the
+   rest): 0881 (split from 0858), a second look at Hendry's combat picture,
+   then buy one pack and build his face; 0861, build the
    prior's and Ned's faces; 0862, buy one $3 pack and build Gil's face;
    0866, download one free pack and build Hedda's and Ragna's faces. Six
    generator faces in all. Home: the four tickets.
@@ -146,9 +168,10 @@ stays with that ticket.
    **park them** (marked so ticket sessions skip them until Nick reopens
    one; 0181 defines the marker): small, waits: no; or **leave them** as
    now. Home: each ticket, through 0181's marker.
-8. **0042 (the Japanese font, picking a language, the label), after
-   0766.** Facts: 0042 has no blockers and gates 5 open tickets directly
-   (0045, 0236, 0718, 0825, 0907); the Japanese translation (0719) waits
+8. **0042 (the Japanese font, names, the title), after 0766.** Facts:
+   0042 has no blockers and gates 2 open tickets directly (0718, 0907;
+   0045 answered picking a language and the label for every language on
+   2026-11-24, and 0236 and 0825 no longer wait for 0042); the Japanese translation (0719) waits
    on the writer anyway. Options: ask it right after question 1, or
    later. Small; waits: no (not on 1064's chain). Home: 0042.
 9. **Does the Playdate speed work (1057, 1068, 1078) wait for 1170?**

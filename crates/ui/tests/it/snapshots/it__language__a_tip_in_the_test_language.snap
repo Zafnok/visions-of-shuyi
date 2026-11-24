@@ -79,19 +79,19 @@ l = fg:grass bg:grass_bg
 m = fg:forest bg:forest_bg
 n = fg:fort bg:fort_bg
 o = fg:player bg:road_bg
-p = fg:enemy bg:#3f2419
+p = fg:enemy bg:#832719
 q = fg:stone bg:stone_bg
 r = fg:player bg:grass_bg
 s = fg:floor bg:floor_bg
 t = fg:thicket bg:thicket_bg
 u = fg:wood bg:stone_bg
 --- overlays ---
-under 274,256 16x2  #170b08
-under 288,242 2x16  #170b08
-under 272,240 16x1  #855f58
-under 287,240 1x16  #855f58
-under 272,255 16x1  #855f58
-under 272,240 1x16  #855f58
+under 274,256 16x2  #360c08
+under 288,242 2x16  #360c08
+under 272,240 16x1  #e26458
+under 287,240 1x16  #e26458
+under 272,255 16x1  #e26458
+under 272,240 1x16  #e26458
 over  273,270 14x2  hp_high
 over  225,286 14x2  hp_high
 over  193,254 14x2  hp_high

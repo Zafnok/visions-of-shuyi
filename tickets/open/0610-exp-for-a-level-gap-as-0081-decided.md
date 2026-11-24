@@ -1,17 +1,18 @@
 ---
 id: "0610"
-title: "EXP for a level gap, as 0081 decided"
+title: "EXP for a level gap: a steeper slope, the kill bonus never below 7"
 type: feature
 milestone: M5 Progression
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: blocked
+status: todo
 blocked_by: ["0081", "0527", "0531"]
-nick_input: answer-first
+blocks: ["1064"]
+nick_input: none
 completed:
 ---
 
-# 0610 — EXP for a level gap, as 0081 decided
+# 0610 — EXP for a level gap: a steeper slope, the kill bonus never below 7
 
 ## Context
 
@@ -40,34 +41,41 @@ of an equal-level enemy gives 60; 3 levels below the unit, 2 × (9 + 11)
 Lv 8 at Chapter 3 against Lv 6 Hounds (a kill gives her 46) and Lv 12 at
 Chapter 4 against Lv 7 (26) (`docs/playtesting.md` ~:310–330).
 
-**0081** asks Nick for a bigger cut for a level gap; this ticket builds
-it. His one fixed rule: it never goes to 0.
+**Nick's answer (0081, 2026-11-21; `progression.md`, *EXP formulas*):**
+option C, the steeper slope with the kill bonus never below 7, and no
+level offset for a promoted unit. With `d = target level − unit level`
+(shown levels; promotion adds nothing):
+
+- `hit = (31 + 2d) / 3` (`/` toward zero; the gap counts double);
+- no damage: `2` (unchanged);
+- damage: `clamp(2 × hit, 2, 100)`;
+- kill: `clamp(2 × (max(0, hit) + max(7, 20 + 5d)) + 40 if boss, 2, 100)`
+  (`hit` stops at 0 inside the kill formula: the agent's starting rule,
+  so a kill always gives at least 14 before the pace);
+- `paced_exp` then scales it as today.
+
+Worked examples (before the pace; the old value in brackets): hit at
+equal levels 20 (20); hit 5 levels up 26 (24); kill at equal levels 60
+(60); kill 1 up 72 (66); kill 5 up 100 (94); Rue Lv 8 kills a Lv 6
+guard 38 (46), hits it 18 (18); kill 3 below 30 (40); Rue Lv 12 kills a
+Lv 7 guard 28 (26), hits it 14 (16); kill 10 below 20 (14), hit 10
+below 6 (14); boss at equal levels 100 (100); missed 2 (2).
 
 ## Nick input
 
-**Answer first:** ticket 0081. Nothing else is asked here. Verified by
-unit and property tests and the bots; what is left to judge by playing
-goes on the Act 1 playtest's checklist (1064).
+None: 0081 answered it. Verified by unit and property tests and the
+bots; what is left to judge by playing goes on the Act 1 playtest's
+checklist (1064).
 
 ## Scope
 
-**In:** what 0081 decided. Where each likely shape goes:
-
-- **A change inside the formula** (a steeper slope for `d < 0`, a
-  different kill bonus): `exp_for_combat`, its constants at the top of
-  `progression.rs` (~:50–60), with its doc comment.
-- **A multiplier by the gap, applied after the formula** (a table like
-  `exp_pace`: e.g. "unit 3+ levels above: × 1/2"): a new table in
-  `classes.ron` beside `exp_pace`, loaded by `trpg_content::class` into
-  `ClassTable` (as `exp_percent` is, `crates/core/src/class.rs` ~:189),
-  applied where the award is made (`battle.rs` ~:3805 and the Line Pierce
-  kill ~:3832), keeping a floor so no award is 0.
-- **A catch-up bonus for a unit below the army** (if 0081 picks one):
-  the same place as the multiplier, the other way.
-- In every case:
-  - `progression.md` *EXP formulas*: the new rule, its examples table
-    redone (the cases there plus Rue at Chapters 3 and 4 above), and the
-    sentence in *Pace* that says what it does to the per-battle pace.
+**In:** the formula above, inside `exp_for_combat`, with its constants
+at the top of `progression.rs` (~:50–60: the gap's weight in `hit` (2),
+the kill bonus's slope (5) and floor (7)) and its doc comment. No new
+data table and no change where `battle.rs` makes the award (~:3805, the
+Line Pierce kill ~:3832): they already call `exp_for_combat`.
+- `progression.md` already has the rule and its examples (0081); change
+  it only if building finds a number there wrong, and say so in the PR.
   - Whatever shows EXP to the player (the results screen, a level-up
     line) needs no change: it reads the event's amount.
   - **Re-balance:** levels change, so level-up rolls move and the
@@ -104,10 +112,10 @@ goes on the Act 1 playtest's checklist (1064).
 
 ## Acceptance criteria
 
-- [ ] The rule is what 0081 decided, and `progression.md` shows it with
-      this game's numbers (Rue at Chapters 3 and 4).
-- [ ] A unit test: a Lv 8 unit killing a Lv 6 enemy gets the award
-      0081's rule gives.
+- [ ] `exp_for_combat` gives the formula above; every worked example
+      above is an exact unit test.
+- [ ] A unit test: a Lv 8 unit killing a Lv 6 enemy gets **38**, a Lv 12
+      unit killing a Lv 7 enemy **28**.
 - [ ] Property tests (below) pass.
 - [ ] The winnable tests pass with re-recorded playthroughs and the bots
       are in their bands on Chapters 1 to 4 (tables in the PR).
@@ -120,8 +128,8 @@ goes on the Act 1 playtest's checklist (1064).
   is **never 0**; for a fixed target level and result, the award **never
   rises as the unit's level rises** (monotone in the gap); a kill never
   gives less than a hit at the same levels; no award is over
-  `MAX_AWARD`.
-- Unit: the worked examples in the design doc.
+  `MAX_AWARD`; a kill before the pace is never under 14.
+- Unit: the worked examples above (the design doc's table).
 - Integration: the winnable tests of Chapters 1 to 4; the bots' runs.
 
 ## Completion notes

@@ -7,6 +7,7 @@ model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
 blocked_by: []
+blocks: ["1064"]
 nick_input: answer-first
 completed:
 ---
@@ -99,7 +100,7 @@ The Brawler part needs no answer. Verified by the check's test and
 **Out (do not do):**
 - Choosing Swordsman's art, a Shadowblade class picture or the indoor,
   fort and bridge backdrops: Nick's, through 0184.
-- Named characters' art: 0858, 0861, 0862, 0866, 0735.
+- Named characters' art: 0858, 0881, 0861, 0862, 0866, 0735.
 - Promoted classes' art: they are not placed in Act 1, and whether Act 1
   promotes is asked in 0184 (see 0606).
 - One-bit (Playdate) pictures: 1069.

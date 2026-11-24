@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: ["1060"]
+blocks: ["1064"]
 nick_input: decision
 completed:
 ---

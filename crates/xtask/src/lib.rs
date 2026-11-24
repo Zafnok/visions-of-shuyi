@@ -36,6 +36,7 @@ pub const FORWARDED: &[&str] = &[
     "story-import",
     // The bots, the scripts and the voice.
     "playtest",
+    "bot-wins",
     "skirmish",
     "lines",
     "check-script",

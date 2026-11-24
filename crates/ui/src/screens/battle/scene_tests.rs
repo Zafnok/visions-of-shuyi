@@ -757,9 +757,9 @@ fn the_walking_speeds_are_the_map_skins() {
     let own = (own.walk().normal, own.walk().held);
     assert!(near(own, (6.0, 12.0)), "{own:?}");
     let mut s = quick();
-    assert!(near(s.pace, (12.0, 48.0)), "{:?}", s.pace);
+    assert!(near(s.effects.pace, (12.0, 48.0)), "{:?}", s.effects.pace);
     s.begin_frame(&c, 0.0);
-    assert!(near(s.pace, (6.0, 12.0)), "{:?}", s.pace);
+    assert!(near(s.effects.pace, (6.0, 12.0)), "{:?}", s.effects.pace);
     // Fast animations (0805; Nick, 2026-10-04): a sprite walks 8 tiles a
     // second, still 12 at most with Confirm held; the glyph look's walk
     // doesn't change.
@@ -770,9 +770,9 @@ fn the_walking_speeds_are_the_map_skins() {
     };
     let c = fast(sprite_ctx());
     s.begin_frame(&c, 0.0);
-    assert!(near(s.pace, (8.0, 12.0)), "{:?}", s.pace);
+    assert!(near(s.effects.pace, (8.0, 12.0)), "{:?}", s.effects.pace);
     s.begin_frame(&fast(ctx()), 0.0);
-    assert!(near(s.pace, (12.0, 48.0)), "{:?}", s.pace);
+    assert!(near(s.effects.pace, (12.0, 48.0)), "{:?}", s.effects.pace);
     let c = sprite_ctx();
     s.begin_frame(&c, 0.0);
     // The enemy's first action under the sprite skin: its walk, with

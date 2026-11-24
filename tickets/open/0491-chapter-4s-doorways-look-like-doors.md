@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
 blocked_by: []
+blocks: ["1064"]
 nick_input: none
 completed:
 ---
@@ -59,9 +60,9 @@ fits.
 None, if the bundle has a fitting door (it seems to: above). Verified by
 `cargo shuyi frame-png` pictures of the two doors in the glyph look and
 the picture look in the PR; the pick goes on the Act 1 playtest's
-checklist (1064). **If nothing in the bundle fits**, stop: add doors to
-0471's research (Nick buys art there; he offered), and set this ticket
-`blocked_by: ["0471"]`.
+checklist (1064). **If nothing in the bundle fits**, stop: write a
+ticket for door art like 0471 (Nick buys art; he offered) and set this
+ticket `blocked_by` it.
 
 ## Scope
 
@@ -88,9 +89,9 @@ checklist (1064). **If nothing in the bundle fits**, stop: add doors to
 
 **Out (do not do):**
 - Doors in other maps, or turning scene maps' `door` passable.
-- Buying art (only through 0471, above).
+- Buying art (only through a ticket like 0471, above).
 - Doors that open or lock as a rule.
-- The throne and the gate's art (0471; the seize mark is 0488).
+- The throne and the gate's art (0471 chose them, 0460 imports; the seize mark is 0488).
 
 ## Implementation steps
 

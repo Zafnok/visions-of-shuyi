@@ -7,6 +7,7 @@
 mod ai_soak;
 mod all_assets_load;
 mod arts;
+mod layer_files;
 #[cfg(feature = "private-assets")]
 mod private_assets;
 mod private_content;

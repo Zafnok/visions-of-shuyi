@@ -24,31 +24,8 @@ use crate::screen::{Ctx, Lessons};
 /// "Restart with the lessons", so the box shows once per campaign.
 const END_ANSWERED: &str = "lessons_end_answered";
 
-/// An answer to the box at the end of the lessons (0465), in the box's order:
-/// the cursor starts on the first.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum EndAnswer {
-    /// The battle goes on.
-    KeepGoing,
-    /// Back to turn 1; the lessons stay done.
-    Restart,
-    /// Back to turn 1; this battle's lessons show again.
-    RestartWithLessons,
-}
-
-impl EndAnswer {
-    /// Every answer, in the box's order.
-    pub const ALL: [Self; 3] = [Self::KeepGoing, Self::Restart, Self::RestartWithLessons];
-
-    /// Text key of its label.
-    pub fn text_key(self) -> &'static str {
-        match self {
-            Self::KeepGoing => "battle.lessons_end.keep_going",
-            Self::Restart => "battle.lessons_end.restart",
-            Self::RestartWithLessons => "battle.lessons_end.restart_with_lessons",
-        }
-    }
-}
+/// An answer to the box at the end of the lessons: its view's.
+pub use crate::tips::EndAnswer;
 
 /// A lesson waiting or in play.
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -12,10 +12,7 @@ fn stage(content: &Content, def: &BattleDef) -> BattleStage {
         let lead = LeadProfile::new("Bot", LeadGender::Male);
         battle_campaign(content, def, mode, lead).battle_setup(def, &content.tables())
     };
-    BattleStage {
-        classic: setup(GameMode::Classic),
-        casual: setup(GameMode::Casual),
-    }
+    BattleStage::new(setup(GameMode::Classic), setup(GameMode::Casual))
 }
 
 fn baseline(content: &Content, stage: &BattleStage) -> BattleEntrant {

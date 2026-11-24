@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: blocked
 blocked_by: ["0082", "0527", "0531"]
+blocks: ["1064"]
 nick_input: answer-first
 completed:
 ---
@@ -101,7 +102,7 @@ the Act 1 playtest's checklist (1064).
   nothing needs refreshing.
 - **0528** (enemies close in): either order; whichever lands second
   re-runs Chapter 2's bands with the other in.
-- The house's look in the picture look (0471, art Nick buys).
+- The house's look in the picture look (picked in 0471, imported by 0460).
 
 ## Implementation steps
 

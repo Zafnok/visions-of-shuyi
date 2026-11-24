@@ -56,8 +56,13 @@ libm.workspace = true
 # scales.
 shuyi-assets = { workspace = true, features = ["png"] }
 serde.workspace = true
+# Walks each layer's folder and writes its table (ticket 1347): sorted,
+# refusing names that aren't UTF-8 or differ only by case.
+shuyi-embed.workspace = true
 
 [dev-dependencies]
+# The build script's walk, for its unit test (ticket 1347).
+shuyi-embed.workspace = true
 # Turns on `test-fixtures` for this crate's own tests in any profile.
 trpg-content = { path = ".", features = ["test-fixtures"] }
 proptest.workspace = true

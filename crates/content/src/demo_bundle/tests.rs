@@ -25,7 +25,7 @@ fn the_list_leaves_out_folders_and_files_and_keeps_back_what_it_names() {
          + maps/veyne_study.map\nworldmaps/act1.ron\n",
     )
     .unwrap_or_else(|e| panic!("{e}"));
-    let out = plan.left_out(&files(ASSETS));
+    let out = plan.left_out(&files(ASSETS), None);
     assert_eq!(
         out.as_deref(),
         Ok(&files(&["chapters/ch02.ron", "maps/ch02.map", "worldmaps/act1.ron"])[..])
@@ -37,22 +37,22 @@ fn the_list_leaves_out_folders_and_files_and_keeps_back_what_it_names() {
 #[test]
 fn a_line_that_matches_nothing_stops_the_build() {
     let plan = |text: &str| Plan::parse(text).unwrap_or_else(|e| panic!("{e}"));
-    let no_file = plan("chapters/\nsidequests/\n").left_out(&files(ASSETS));
+    let no_file = plan("chapters/\nsidequests/\n").left_out(&files(ASSETS), None);
     assert_eq!(
         no_file,
         Err("line 2: `sidequests/` is no file under assets/ or assets-private/content/".into())
     );
-    let keeps_nothing = plan("chapters/\n+ maps/ch01.map\n").left_out(&files(ASSETS));
+    let keeps_nothing = plan("chapters/\n+ maps/ch01.map\n").left_out(&files(ASSETS), None);
     assert_eq!(
         keeps_nothing,
         Err("line 2: `maps/ch01.map` keeps no file a line above leaves out".into())
     );
-    let cut_gone = plan("chapters/\nkeep chapters/ch02.ron: x\n").left_out(&files(ASSETS));
+    let cut_gone = plan("chapters/\nkeep chapters/ch02.ron: x\n").left_out(&files(ASSETS), None);
     assert_eq!(
         cut_gone,
         Err("`chapters/ch02.ron` is cut, but the demo doesn't hold it".into())
     );
-    let cut_missing = plan("chapters/\nkeep data/nope.ron: x\n").left_out(&files(ASSETS));
+    let cut_missing = plan("chapters/\nkeep data/nope.ron: x\n").left_out(&files(ASSETS), None);
     assert_eq!(
         cut_missing,
         Err("`data/nope.ron` is cut, but the demo doesn't hold it".into())
@@ -64,6 +64,38 @@ fn a_line_that_matches_nothing_stops_the_build() {
     );
     assert!(Plan::parse("keep data/a.ron one two three: x").is_err());
     assert!(Plan::parse("swap data/a.ron: a -> b").is_err());
+}
+
+/// Ticket 0858: `art` lines name files of the bought art, checked against
+/// them in a build that has them and not at all in one without.
+#[test]
+fn art_lines_are_checked_only_where_the_art_is() {
+    let plan =
+        Plan::parse("chapters/\nart portraits/later/\nart swap tilesets/t.ron: \"later\": x, =>\n")
+            .unwrap_or_else(|e| panic!("{e}"));
+    let art = files(&["portraits/later/neutral.png", "tilesets/t.ron"]);
+    let out = plan.left_out(&files(ASSETS), Some(&art));
+    assert_eq!(out, Ok(files(&["chapters/ch01.ron", "chapters/ch02.ron"])));
+    assert!(plan.leaves_out("portraits/later/neutral.png"));
+    assert!(!plan.leaves_out("tilesets/t.ron"));
+    let cut = plan.rewrite("tilesets/t.ron", "{\"later\": x, \"lead\": y}");
+    assert_eq!(cut, Ok(Some("{ \"lead\": y}".to_owned())));
+    // Without the art, nothing to check them against.
+    assert!(plan.left_out(&files(ASSETS), None).is_ok());
+    // With it, a path or a swap that names none of it stops the build.
+    let no_portrait = plan.left_out(&files(ASSETS), Some(&files(&["tilesets/t.ron"])));
+    assert_eq!(
+        no_portrait,
+        Err("line 2: `portraits/later/` is no file under assets-private/game/".into())
+    );
+    let no_tileset = files(&["portraits/later/neutral.png"]);
+    assert_eq!(
+        plan.left_out(&files(ASSETS), Some(&no_tileset)),
+        Err("`tilesets/t.ron` is cut, but the demo's art doesn't hold it".into())
+    );
+    // An art line isn't a `+` or a `keep`.
+    assert!(Plan::parse("art + portraits/later/").is_err());
+    assert!(Plan::parse("art keep tilesets/t.ron: lead").is_err());
 }
 
 #[test]
@@ -209,7 +241,7 @@ fn the_demos_list_keeps_chapter_1_and_cuts_the_shared_files() {
         .filter(|path| crate::bundle::story_only(|| crate::bundle::bytes(path).is_some()))
         .map(str::to_owned)
         .collect();
-    let out = plan.left_out(&all).unwrap_or_else(|e| panic!("{e}"));
+    let out = plan.left_out(&all, None).unwrap_or_else(|e| panic!("{e}"));
     for kept in [
         "chapters/ch01.ron",
         "dialogue/ch01.dlg",
@@ -269,7 +301,7 @@ fn the_writers_preview_leaves_out_every_script_and_nothing_else() {
         .collect();
     let scripts: Vec<&String> = all.iter().filter(|p| p.starts_with("dialogue/")).collect();
     assert!(!scripts.is_empty(), "the test files have scripts");
-    let out = plan.left_out(&all).unwrap_or_else(|e| panic!("{e}"));
+    let out = plan.left_out(&all, None).unwrap_or_else(|e| panic!("{e}"));
     let out: Vec<&String> = out.iter().collect();
     assert_eq!(out, scripts);
     assert!(scripts.iter().all(|p| plan.leaves_out(p)));

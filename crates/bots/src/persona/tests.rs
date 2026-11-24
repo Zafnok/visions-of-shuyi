@@ -1,5 +1,5 @@
 use shuyi_core::play;
-use trpg_core::{BattleSetup, CharacterId, Event, Trigger, TriggerWhen, Turn};
+use trpg_core::{BattleSetup, CharacterId, Event, SimRng, Trigger, TriggerWhen, Turn};
 
 use super::*;
 use crate::BaselineBot;
@@ -594,7 +594,7 @@ fn with_no_enemy_left_order_offers_the_escapes_and_advances_only() {
 /// A boss who can't be killed going down counts as an enemy felled.
 #[test]
 fn an_enemy_that_goes_down_counts_as_fallen() {
-    let mut setup = stage("test_hold").classic;
+    let mut setup = stage("test_hold").setup(GameMode::Classic).clone();
     let rogue = setup
         .units
         .iter_mut()
@@ -1450,6 +1450,40 @@ fn same_seed_same_choice() {
     let picks: Vec<Command> = (1..=8).map(|seed| bot("casual", seed).choose(&s)).collect();
     for (seed, pick) in (1..=8).zip(&picks) {
         assert_eq!(&bot("casual", seed).choose(&s), pick);
+    }
+}
+
+/// A persona's plan draws from the engine's bot seed of its try (engine
+/// ADR-0135): two tries of one seed play the same moves, and the
+/// persona's first draw is never the battle's first roll of that seed.
+#[test]
+fn a_persona_draws_from_the_bot_seed_not_the_battles_luck() {
+    let s = start(vec![player(1, 4), player(2, 3), enemy(3, 7), enemy(4, 8)]);
+    let by_hand = |seed: u64| {
+        let persona = persona("casual");
+        let cap = usize::try_from(persona.settings.candidates).unwrap_or(usize::MAX);
+        let order = PersonaOrder {
+            ai: content().ai,
+            cap,
+        };
+        let plan = TurnPlan::new(order, Scoring(persona.weights), persona.settings, seed);
+        PersonaBot {
+            plan,
+            talked: Vec::new(),
+        }
+    };
+    for seed in 1..=8 {
+        let once = play_out(s.clone(), &mut bot("casual", seed), 3);
+        let again = play_out(s.clone(), &mut bot("casual", seed), 3);
+        assert_eq!(once, again, "seed {seed}");
+        assert_eq!(
+            bot("casual", seed).choose(&s),
+            by_hand(bot_seed(seed)).choose(&s),
+            "seed {seed}"
+        );
+        let persona_first = SimRng::new(bot_seed(seed)).next_u32();
+        let battle_first = SimRng::new(seed).next_u32();
+        assert_ne!(persona_first, battle_first, "seed {seed}");
     }
 }
 

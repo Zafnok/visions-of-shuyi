@@ -613,6 +613,36 @@ fn the_prompt_stands_in_for_the_menu_until_a_key_is_pressed() {
     );
 }
 
+/// A click doesn't end the wait (`docs/design/title-screen.md`: the game
+/// has no mouse controls), though the engine's ends it at a pointer press
+/// (engine PR 521); a key pressed in the same frame still does.
+#[test]
+fn a_click_does_not_end_the_prompt() {
+    use shuyi_ui::input::{Button, Chord, Key, PointerInput};
+    let mut c = ctx();
+    c.key_prompt = KeyPrompt::Waiting;
+    let mut t = TitleScreen::new(&c);
+    let click = || {
+        let mut pointer = PointerInput::at(10, 10);
+        pointer.pressed = true;
+        input(&[]).with_pointer(Some(pointer))
+    };
+    // The engine marks the wait ended at the press.
+    c.key_prompt = KeyPrompt::Pressed;
+    t.update(&mut c, &click());
+    assert_eq!(c.key_prompt, KeyPrompt::Waiting);
+    assert!(t.view(&c).prompt.is_some());
+    // A key or a controller button with the click ends it.
+    let key = click().with_typing(vec![Chord::plain(Key::Z)], vec![]);
+    let button = click().with_buttons(vec![Button::South], vec![]);
+    for (with, press) in [("a key", key), ("a button", button)] {
+        let mut t = TitleScreen::new(&c);
+        c.key_prompt = KeyPrompt::Pressed;
+        t.update(&mut c, &press);
+        assert_eq!(t.view(&c).prompt, None, "{with}");
+    }
+}
+
 /// The logic modules of the converted screens say what they show, never
 /// how it looks (ADR-0054): none of them names a colour, a rectangle, a
 /// box style or a cell.
@@ -1435,4 +1465,62 @@ fn no_fire_no_crackle() {
     song_tick(&mut t, &mut c, 1.0, 1.0);
     assert_eq!(t.crackle, None);
     assert!(c.audio.take().iter().all(|r| r.cue() != Some(FIRE_SOUND)));
+}
+
+/// The lines the title's first frames send to be kept loaded.
+fn kept_sets(t: &mut TitleScreen, c: &mut Ctx) -> Vec<Vec<trpg_content::LineId>> {
+    t.update(c, &FrameInput::new(vec![], 0.0, vec![]));
+    let requests = c.audio.take().into_iter();
+    let sets = requests.filter_map(|r| match r {
+        AudioRequest::KeepVoices { lines } => Some(lines.into_iter().map(|(l, _)| l).collect()),
+        _ => None,
+    });
+    sets.collect()
+}
+
+/// Ticket 1291: with tips and voices on, where saves can be exported, the
+/// title's first frame keeps the lines of the tips its Load Game (with a
+/// save to load) and Profile may show, so their clips are loaded before
+/// the box opens; only the tips not seen yet, and none with tips off or
+/// where nothing can be exported.
+#[test]
+fn the_title_keeps_the_lines_of_the_tips_outside_battle() {
+    use crate::tips::TipScreen;
+    use crate::tips::screen::OUT_OF_BATTLE;
+    use shuyi_ui::StoragePlace;
+    use trpg_content::TipTrigger;
+    use trpg_core::{GameMode, SaveFile};
+    let (mut c, _) = crate::tips::voice::testing::voiced();
+    c.platform.storage_place = StoragePlace::Folder("saves".to_owned());
+    let line = |c: &Ctx, trigger: TipTrigger| {
+        let tip = c.game.content.tips.for_trigger(trigger).unwrap();
+        trpg_content::voice::guide_line(&tip.text)
+    };
+    let [load, profile] = OUT_OF_BATTLE.map(|t| line(&c, t));
+    let has = |sets: &[Vec<trpg_content::LineId>], l: &trpg_content::LineId| {
+        sets.iter().any(|s| s.contains(l))
+    };
+    // Tips off: neither.
+    let sets = kept_sets(&mut TitleScreen::new(&c), &mut c);
+    assert!(!has(&sets, &load) && !has(&sets, &profile), "{sets:?}");
+    // Tips on, no save: the Profile's alone.
+    c.game.tips_enabled = true;
+    let sets = kept_sets(&mut TitleScreen::new(&c), &mut c);
+    assert!(!has(&sets, &load) && has(&sets, &profile), "{sets:?}");
+    // A save to load: both, on the first frame.
+    let army = c.game.lead.clone();
+    let campaign = trpg_content::new_campaign(&c.game.content, GameMode::Classic, army);
+    let file = SaveFile::chapter_cleared(campaign);
+    save::write(&mut c.storage, &save::slot_key(1), &file).unwrap();
+    let sets = kept_sets(&mut TitleScreen::new(&c), &mut c);
+    assert!(has(&sets, &load) && has(&sets, &profile), "{sets:?}");
+    // The Load Game tip seen: only the Profile's.
+    assert!(TipScreen::once(&mut c, TipTrigger::FirstLoadGame).is_some());
+    c.audio.take();
+    let sets = kept_sets(&mut TitleScreen::new(&c), &mut c);
+    assert!(!has(&sets, &load) && has(&sets, &profile), "{sets:?}");
+    // Nowhere to export to: neither.
+    c.platform.storage_place = StoragePlace::Unknown;
+    let sets = kept_sets(&mut TitleScreen::new(&c), &mut c);
+    assert!(!has(&sets, &profile), "{sets:?}");
 }

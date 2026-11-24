@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["0864", "0531", "0527", "0528"]
+blocks: ["1064"]
 nick_input: none
 completed:
 ---
@@ -62,6 +63,13 @@ Nick's (0080, 0081, 0870's own, 0082, 0084), and waiting on them would
 hold this ticket for as long as those take. Each of them re-runs the
 bands itself when it lands.
 
+**Amended by the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md) (2026-11-24).** The roadmap's rule that
+the balance tickets run one at a time is gone (0531 took the bots' armies
+off single recorded wins). Decide in this ticket whether 0528 really has
+to come first, or whether Chapters 3–5 are judged against today's AI and
+0528 re-runs the bands after; if the latter, drop 0528 from
+`blocked_by`.
+
 ## Nick input
 
 None. Verified by the bots' reports in the PR (as 0529 and 0855); what is
@@ -94,7 +102,9 @@ left to judge by playing goes on the Act 1 playtest's checklist (1064).
 
 1. Read `docs/playtesting.md` (*The army*, Chapters 3–5), 0864's, 0529's,
    0524's, 0531's and 0528's Completion notes. Run the five battles
-   first: the table above is from before 0531 and 0528.
+   first: the table above is from before 0531 and 0528. 0531's
+   Completion notes have the numbers with its 24 lines (seeds 1–200),
+   before 0528.
 2. `cargo run --release -q -p xtask -- playtest ch05 --bot hardcore` and
    `… ch04 …`; read the tries that fail.
 3. Fix a bot fault if there is one (with a test in `crates/bots`), then

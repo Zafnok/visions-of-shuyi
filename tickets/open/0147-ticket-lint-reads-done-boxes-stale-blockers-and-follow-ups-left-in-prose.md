@@ -71,6 +71,10 @@ tooling): 0181 ports the engine's `Parked:` and size checks the same
 way; 0188 may move `tickets.rs` into a light crate (either order: the
 port goes wherever the file is).
 
+**Amended by the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md) (2026-11-24).** Do the "status: blocked
+with every blocker done" error next: today it would have caught 0610 and
+1317 (both fixed by hand in the retro's PR).
+
 ## Nick input
 
 None.

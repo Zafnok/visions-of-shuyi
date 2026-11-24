@@ -21,7 +21,8 @@ discipline here is the whole quality system.
 
 - If the user named a ticket, use it.
 - Otherwise list candidates: tickets in `tickets/open/` with `status: todo` whose
-  every `blocked_by` id exists in `tickets/done/`. Prefer the lowest number on
+  every `blocked_by` id exists in `tickets/done/` and that no open ticket
+  names in `blocks` (`tickets/README.md`). Prefer the lowest number on
   the Act 1 critical path in `docs/ROADMAP.md`. Tell the user which one you
   picked and why in one sentence.
 - **An `engine#NNNN` in `blocked_by`** is a Shuyi Engine ticket. It is done
@@ -193,6 +194,50 @@ missed the five sites 1167 had renamed that morning; a loader that skips a
 file silently has no error message to search for). It runs again after
 merging `main` into the branch, before the PR merges (§6).
 
+## 4b. Settle a color or number live with Nick (tuning tickets)
+
+The range colors took three tickets and three PRs (0923, 1319, 1343) to
+reach a strength Nick liked, each round a full CI cycle (retro
+2026-11-24, ticket 1353). For a `tuning` ticket on a look or a number
+Nick judges by eye, **offer** him a live session before the PR; never
+require it (he has to be at the screen, and §5b still holds: no check
+after merge).
+
+```bash
+cargo shuyi run --watch
+```
+
+It runs the game's debug build (debug tools on) over the files on disk
+in place of the embedded ones: `assets/`, `assets-test/` and, when it is
+checked out, `assets-private/content/` (`crates/app/src/main.rs`,
+`bundle::disk_folders`). The engine looks at them once a second.
+What the game **reloads while it runs** (`crates/ui/src/hot.rs`,
+`reloads`; checked at engine pin `7d60a21`):
+
+- the theme palettes: `data/palette.ron` (Earthy, the default),
+  `data/palettes/painterly.ron`, `parchment.ron`, `moonlit.ron`, with the
+  range colors and every other UI color; the theme Options shows repaints
+  on the next frame;
+- the dialogue scenes, every `.dlg` under `dialogue/`.
+
+A file that fails to load keeps the old values and shows its errors, with
+file and line, over the frame until it loads. **Everything else** (the
+Playdate palettes `playdate*.ron`, maps, battles, units, classes, EXP and
+the other data tables, UI text) is read once at start: change it, close
+the window and run the command again; no rebuild is needed, since the
+debug build reads the folders on disk. A value in Rust code needs a
+rebuild and is not for this session.
+
+The session: run the command, open the screen that shows the value (the
+debug Quick Battle for map colors), change the file while Nick watches,
+step a notch at a time (his "more X" is one notch, not a swing), and stop
+when he says it's right. Then put only the settled value in the branch,
+and in the PR body the value, the values tried and a `cargo shuyi
+frame-png` picture at the settled value. A value in
+`assets-private/content/` still lands through the `content-change`
+skill. If Nick can't sit for it, work the ticket as before and say so in
+the PR.
+
 ## 5. Archive the ticket (same PR)
 
 1. Fill in the ticket's `## Completion notes`: what was done, deviations from the
@@ -256,7 +301,10 @@ tickets anymore."
   `sync_with_base_branch` tool in an app worktree) only for a conflict or when
   the PR needs something that landed on `main`. An acceptance grep that
   proves something is gone (§4) needs it: merge, run the grep again, then
-  merge the PR.
+  merge the PR. **Merge `main` only for a real conflict** (or those two
+  needs), never to bring the branch up to date: every merge re-runs every
+  check, and the PR waits on them again (the feedback-latency retro,
+  2026-11-24, ticket 1352).
 
 ## Don'ts
 

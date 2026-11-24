@@ -1,55 +1,23 @@
-//! The army a player brings to a story battle (ticket 0520): the New Game
-//! campaign, each earlier chapter's battle won by its recorded playthrough
-//! and its result applied as the game applies it, and, in a battle with
-//! Preparations, the pack a player fills (`docs/playtesting.md`, *The
-//! army*). On a world map, the fixed skirmishes that guard the way to a
+//! The army a player brings to a story battle (tickets 0520, 0531): the
+//! New Game campaign, each earlier chapter's battle won by a recorded
+//! playthrough and its result applied as the game applies it, and, in a
+//! battle with Preparations, the pack a player fills (`docs/playtesting.md`,
+//! *The army*). On a world map, the fixed skirmishes that guard the way to a
 //! chapter's story battle are won first, as every player wins them (ticket
-//! 1071). Deterministic: the same content gives the same army.
+//! 1071). One army per line of the bots' recorded wins ([`Wins`]), so no
+//! single recording sets it. Deterministic: the same content and wins give
+//! the same armies.
 
 use trpg_content::chapter::{ChapterDef, roster_units};
 use trpg_content::{Content, new_campaign};
 use trpg_core::{
-    BattleDef, BattleSetup, BattleState, Campaign, Command, GameMode, ItemId, LeadGender,
-    LeadProfile, NodeKind, Phase, Shop, WorldMap, next_command,
+    BattleDef, BattleSetup, BattleState, Campaign, GameMode, ItemId, LeadGender, LeadProfile,
+    NodeKind, Shop, WorldMap,
 };
 
 use crate::army::{roster_by, story_chapters};
-
-/// The story battles' recorded winning playthroughs, by battle id: the
-/// player's commands, phase by phase (tickets 0803, 0848 to 0851), and
-/// those of the fixed skirmishes that guard their way (1071).
-/// `trpg-ui`'s `ch01_winnable` to `ch05_winnable` tests play them in the
-/// real game and say how to record a new one.
-const PLAYTHROUGHS: [(&str, &str); 7] = [
-    (
-        "ch01",
-        include_str!("../../ui/tests/it/fixtures/ch01_winning.ron"),
-    ),
-    (
-        "ch02",
-        include_str!("../../ui/tests/it/fixtures/ch02_winning.ron"),
-    ),
-    (
-        "ch03",
-        include_str!("../../ui/tests/it/fixtures/ch03_winning.ron"),
-    ),
-    (
-        "ch04",
-        include_str!("../../ui/tests/it/fixtures/ch04_winning.ron"),
-    ),
-    (
-        "ch05",
-        include_str!("../../ui/tests/it/fixtures/ch05_winning.ron"),
-    ),
-    (
-        "aldwater",
-        include_str!("../../ui/tests/it/fixtures/aldwater_winning.ron"),
-    ),
-    (
-        "salt_road",
-        include_str!("../../ui/tests/it/fixtures/salt_road_winning.ron"),
-    ),
-];
+use crate::record::play;
+use crate::wins::Wins;
 
 /// Where battle `battle` falls in the story: the index of the chapter it
 /// is fought in among `chapters`, and for a guard (1071), its index among
@@ -86,45 +54,136 @@ pub fn chapters_before<'a>(content: &'a Content, battle: &str) -> Vec<&'a Chapte
 }
 
 /// Battle `def` in `mode` as a player arrives at it after the chapters
-/// before it (`lead` the lead's profile): `None` when nothing comes
-/// before it ([`chapters_before`]). The campaign starts as New Game; each
-/// earlier chapter's battle is prepared ([`prepare`]), won by its recorded
-/// playthrough with the enemy playing as in the game, and its result
-/// applied with every rewind charge unused; whoever a scene recruits by
-/// each chapter joins fresh from the character data before its battle; on
-/// a world map, the guards on the way are won first, in the same way
-/// (`guards_by_chapter`). Then `def` is prepared too: a chapter's story
-/// battle, or a guard on its way, after the guards before it.
+/// before it (`lead` the lead's profile), one army per line of the bots'
+/// recorded wins ([`Wins::embedded`]), line 1's first: `None` when nothing
+/// comes before it ([`chapters_before`]). An error when a battle before it
+/// has no recorded wins, or fewer lines than the first.
 pub fn arrival(
     content: &Content,
     def: &BattleDef,
     mode: GameMode,
-    lead: LeadProfile,
-) -> Result<Option<BattleSetup>, String> {
-    let chapters = story_chapters(content);
-    let Some((at, guard)) = place_in_story(content, &chapters, &def.id) else {
+    lead: &LeadProfile,
+) -> Result<Option<Vec<BattleSetup>>, String> {
+    arrival_with(content, def, mode, lead, Wins::embedded()?)
+}
+
+/// [`arrival`], with the lines of `wins`.
+pub fn arrival_with(
+    content: &Content,
+    def: &BattleDef,
+    mode: GameMode,
+    lead: &LeadProfile,
+    wins: &Wins,
+) -> Result<Option<Vec<BattleSetup>>, String> {
+    let Some(steps) = steps(content, &def.id) else {
         return Ok(None);
     };
-    if at == 0 && guard.is_none() {
+    let Some((first, _)) = steps.won.first() else {
         return Ok(None);
+    };
+    let lines = wins.lines(first);
+    if lines == 0 {
+        wins.line(first, 0)?;
     }
+    let armies = (0..lines).map(|line| {
+        let (campaign, chapter) = campaign_before(content, &steps, mode, lead.clone(), wins, line)?;
+        Ok(setup(content, &campaign, def, chapter))
+    });
+    armies.collect::<Result<Vec<_>, String>>().map(Some)
+}
+
+/// Battle `def` as line `line` (from 0) arrives at it in `mode`, the
+/// battle its recorded win is played from ([`record`](crate::record)): the
+/// campaign after that line's wins of the battles before it, prepared.
+/// Chapter 1's is the New Game campaign. `None` for a battle no story
+/// chapter fights.
+pub fn start_of(
+    content: &Content,
+    def: &BattleDef,
+    mode: GameMode,
+    lead: LeadProfile,
+    wins: &Wins,
+    line: usize,
+) -> Result<Option<BattleSetup>, String> {
+    let Some(steps) = steps(content, &def.id) else {
+        return Ok(None);
+    };
+    let (campaign, chapter) = campaign_before(content, &steps, mode, lead, wins, line)?;
+    Ok(Some(setup(content, &campaign, def, chapter)))
+}
+
+/// The battles whose recorded wins a later battle's army plays, in story
+/// order: each chapter's guards (1071), then its story battle; the last
+/// chapter's battle has none after it. Their wins are recorded in this
+/// order, each line from the army its wins before it leave.
+pub fn won_on_the_way(content: &Content) -> Vec<String> {
+    let chapters = story_chapters(content);
     let guards = guards_by_chapter(content, &chapters);
+    let mut battles = Vec::new();
+    for (chapter, guards) in chapters.iter().zip(&guards) {
+        battles.extend(guards.iter().map(|(_, b)| b.clone()));
+        battles.push(chapter.battle.clone());
+    }
+    battles.pop();
+    battles
+}
+
+/// What comes before a battle on its way through the story.
+struct Steps<'a> {
+    /// The chapters up to the battle's own, its own last.
+    chapters: Vec<&'a ChapterDef>,
+    /// The battles won before it (story battles and guards, in order),
+    /// each with the index in `chapters` of the chapter it is fought in.
+    won: Vec<(String, usize)>,
+}
+
+/// The [`Steps`] before battle `battle`: `None` for a battle no story
+/// chapter fights.
+fn steps<'a>(content: &'a Content, battle: &str) -> Option<Steps<'a>> {
+    let mut chapters = story_chapters(content);
+    let (at, guard) = place_in_story(content, &chapters, battle)?;
+    let guards = guards_by_chapter(content, &chapters);
+    chapters.truncate(at + 1);
+    let mut won = Vec::new();
+    for (i, chapter) in chapters.iter().enumerate() {
+        let before = if i == at { guard } else { None };
+        let on_the_way = &guards[i][..before.unwrap_or(guards[i].len())];
+        won.extend(on_the_way.iter().map(|(_, b)| (b.clone(), i)));
+        if i < at {
+            won.push((chapter.battle.clone(), i));
+        }
+    }
+    Some(Steps { chapters, won })
+}
+
+/// The campaign as line `line` brings it to the last of `steps`' chapters:
+/// New Game, each chapter's recruits joining before its battles, each
+/// battle won by that line's recorded win and its result applied with every
+/// rewind charge unused. With that chapter.
+fn campaign_before<'a>(
+    content: &Content,
+    steps: &Steps<'a>,
+    mode: GameMode,
+    lead: LeadProfile,
+    wins: &Wins,
+    line: usize,
+) -> Result<(Campaign, &'a ChapterDef), String> {
     let mut campaign = new_campaign(content, mode, lead);
     // The army's place on the map changes no battle: which guards it
     // fights is the plan's, so only the wins are played here.
-    for (i, chapter) in chapters.iter().enumerate().take(at + 1) {
+    let mut won = steps.won.iter().peekable();
+    for (i, chapter) in steps.chapters.iter().enumerate() {
         recruit(&mut campaign, content, &chapter.id);
-        let before = if i == at { guard } else { None };
-        let on_the_way = &guards[i][..before.unwrap_or(guards[i].len())];
-        for (_, battle) in on_the_way {
-            win(&mut campaign, content, battle, chapter)?;
+        while let Some((battle, _)) = won.next_if(|(_, at)| *at == i) {
+            let commands = wins.line(battle, line)?;
+            win(&mut campaign, content, battle, chapter, commands)
+                .map_err(|e| format!("line {} of {e}", line + 1))?;
         }
-        if i == at {
-            break;
-        }
-        win(&mut campaign, content, &chapter.battle, chapter)?;
     }
-    Ok(Some(setup(content, &campaign, def, chapters[at])))
+    let Some(last) = steps.chapters.last() else {
+        return Err("no chapter".to_owned());
+    };
+    Ok((campaign, last))
 }
 
 /// For each of `chapters`, the fixed skirmishes that guard the way to its
@@ -197,23 +256,23 @@ fn guards_on_the_way(
     won
 }
 
-/// Battle `battle`, fought in `chapter`, won by its recorded playthrough
-/// and its result applied with every rewind charge unused.
+/// Battle `battle`, fought in `chapter`, won by `commands` (a recorded
+/// win) and its result applied with every rewind charge unused.
 fn win(
     campaign: &mut Campaign,
     content: &Content,
     battle: &str,
     chapter: &ChapterDef,
+    commands: &[trpg_core::Command],
 ) -> Result<(), String> {
     let won = content.battles.get(battle);
     let won = won.ok_or_else(|| format!("no battle \"{battle}\""))?;
     let mut state = BattleState::new(setup(content, campaign, won, chapter)).0;
-    play(&mut state, content, &recorded(&won.id)?)
-        .map_err(|e| format!("{}'s recorded playthrough: {e}", won.id))?;
+    play(&mut state, content, commands).map_err(|e| format!("{}'s recorded win: {e}", won.id))?;
     let unused = state.rewind_charges();
     campaign
         .apply_result(won, &state, unused)
-        .map_err(|e| format!("{}'s recorded playthrough: {e}", won.id))?;
+        .map_err(|e| format!("{}'s recorded win: {e}", won.id))?;
     Ok(())
 }
 
@@ -284,44 +343,6 @@ pub fn prepare(setup: &mut BattleSetup, shop: Option<&Shop>) {
             break;
         }
     }
-}
-
-/// The recorded playthrough of `battle`.
-fn recorded(battle: &str) -> Result<Vec<Command>, String> {
-    let (_, text) = PLAYTHROUGHS
-        .iter()
-        .find(|(id, _)| *id == battle)
-        .ok_or_else(|| {
-            format!("no recorded playthrough of \"{battle}\" (trpg-ui's tests record one)")
-        })?;
-    ron::from_str(text).map_err(|e| format!("{battle}'s recorded playthrough: {e}"))
-}
-
-/// Plays `commands`, the player's, from `state` to the battle's end, the
-/// other phases as the game plays them: the enemy AI's command, else the
-/// phase's end.
-fn play(state: &mut BattleState, content: &Content, commands: &[Command]) -> Result<(), String> {
-    for (i, command) in commands.iter().enumerate() {
-        others(state, content)?;
-        if state.outcome().is_some() {
-            return Err(format!("over before command {i}"));
-        }
-        state
-            .apply(command)
-            .map_err(|e| format!("command {i}, {command:?}, turn {}: {e}", state.turn()))?;
-    }
-    others(state, content)
-}
-
-/// Plays the phases that aren't the player's.
-fn others(state: &mut BattleState, content: &Content) -> Result<(), String> {
-    while state.outcome().is_none() && state.phase() != Phase::Player {
-        let command = next_command(state, &content.ai).unwrap_or(Command::EndPhase);
-        state
-            .apply(&command)
-            .map_err(|e| format!("the AI's {command:?} was refused: {e}"))?;
-    }
-    Ok(())
 }
 
 #[cfg(test)]

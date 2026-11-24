@@ -13,17 +13,17 @@ aaddddeeaa
 aaaaaaaaaa
 --- legend ---
 a = fg:#010203 bg:#040506
-b = fg:grass bg:#243240
+b = fg:grass bg:#2d4a7a
 c = fg:forest bg:forest_bg
 d = fg:grass bg:grass_bg
 e = fg:grass bg:grass
 --- overlays ---
-under 18,32 16x2  #0b111a
-under 32,18 2x16  #0b111a
-under 16,16 16x1  #5f738e
-under 31,16 1x16  #5f738e
-under 16,31 16x1  #5f738e
-under 16,16 1x16  #5f738e
+under 18,32 16x2  #0f1c34
+under 32,18 2x16  #0f1c34
+under 16,16 16x1  #6b93dc
+under 31,16 1x16  #6b93dc
+under 16,31 16x1  #6b93dc
+under 16,16 1x16  #6b93dc
 over  sprite 16,9 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player_outline clip=16,16 16x13
 over  sprite 16,11 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player_outline clip=16,16 16x15
 over  sprite 15,10 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player_outline clip=16,16 15x14

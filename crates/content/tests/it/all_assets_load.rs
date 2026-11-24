@@ -9,6 +9,23 @@ fn all_embedded_assets_load() {
     }
 }
 
+/// Every look the game ships that moves by itself names its still for each
+/// graphics tier it doesn't move at (ADR-0131); each still to do is
+/// listed, never failed.
+#[test]
+fn every_moving_look_names_its_stills() {
+    let _content = trpg_content::load_embedded().unwrap_or_else(|errors| panic!("{errors}"));
+    // Nothing moves yet.
+    // TODO(1315): each tileset's rows that loop through frames.
+    // TODO(1316): each map effect of drifting particles.
+    let looks: Vec<(String, &trpg_content::motion::Motion)> = Vec::new();
+    let report = trpg_content::motion::check(looks);
+    assert_eq!(report.problems, Vec::<String>::new());
+    for todo in &report.todo {
+        eprintln!("still to do: {todo}");
+    }
+}
+
 /// The load in parts, as the Playdate runs it (ticket 1086), gives the
 /// same content as the load in one call, each scene checked once, and
 /// finishing at any point checks what is left.

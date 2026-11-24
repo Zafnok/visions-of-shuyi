@@ -127,7 +127,9 @@ pub fn replay(record: &Record) -> Result<ReplayRun, String> {
         ));
     }
     let content = content()?;
-    let mut setup = stage(&content, &played.battle)?.setup(played.mode).clone();
+    // The army the try fielded: its line of the bots' recorded wins (0531).
+    let stage = stage(&content, &played.battle)?;
+    let mut setup = stage.setup_for(played.mode, played.seed).clone();
     setup.seed = played.seed;
     turns(&record.file, BattleState::new(setup).0, &played.commands)
 }

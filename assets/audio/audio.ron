@@ -11,12 +11,24 @@
 // because Nick found them far too loud at 100 (ticket 0222).
 (
     music_fade_ms: 500,
+    // A new player's Music, Sound and Voice volumes start at the top
+    // (ticket 0879, Nick: options.md, Volumes).
+    groups: [
+        (id: "music", volume: 100),
+        (id: "sfx", volume: 100),
+        (id: "voice", volume: 100),
+    ],
     ducks: [
         (when: "voice", lower: "music", to: 90, attack_ms: 150, release_ms: 600),
     ],
     sounds: [
-        (id: "menu_move", files: ["sfx/menu_move.wav"], volume: 40, credit: Own),
-        (id: "cursor_move", files: ["sfx/menu_move.wav"], volume: 24, credit: Own),
+        // Cue rules (engine ADR-0139; ticket 1349): min_gap_ms 30 drops a
+        // second play of a cue in the same frame or the next at 60 frames a
+        // second (a stack), and stays under a held key's repeats (55 ms,
+        // 50 ms apart at the least) and under two frames at 30 a second.
+        // step_foot never plays the same file twice in a row (NoRepeat).
+        (id: "menu_move", files: ["sfx/menu_move.wav"], volume: 40, min_gap_ms: 30, credit: Own),
+        (id: "cursor_move", files: ["sfx/menu_move.wav"], volume: 24, min_gap_ms: 30, credit: Own),
         (id: "menu_select", files: ["sfx/menu_select.wav"], volume: 15, credit: Own),
         (id: "menu_cancel", files: ["sfx/menu_cancel.wav"], volume: 15, credit: Own),
         (id: "miss", files: ["sfx/miss.wav"], volume: 40, credit: Own),
@@ -34,9 +46,10 @@
         (id: "crit_fire", files: ["sfx/fireball_impact.ogg"], volume: 40, credit: Credit("fireball_impact")),
         (id: "crit_ice", files: ["sfx/magic_ice_impact.ogg"], volume: 40, credit: Credit("magic_ice_impact")),
         (id: "step_foot", files: ["sfx/footstep_dirt_00.ogg", "sfx/footstep_dirt_gravel_4.ogg", "sfx/footstep_grass_5.ogg"],
-         volume: 40, credit: Credits(["footstep_dirt_00", "footstep_dirt_gravel_4", "footstep_grass_5"])),
-        (id: "step_armored", files: ["sfx/knight_footstep_gravel_5.ogg"], volume: 40, credit: Credit("knight_footstep_gravel_5")),
-        (id: "step_mounted", files: ["sfx/galloping_horse_step.ogg"], volume: 40, credit: Credit("galloping_horse")),
+         volume: 40, pick: NoRepeat, min_gap_ms: 30,
+         credit: Credits(["footstep_dirt_00", "footstep_dirt_gravel_4", "footstep_grass_5"])),
+        (id: "step_armored", files: ["sfx/knight_footstep_gravel_5.ogg"], volume: 40, min_gap_ms: 30, credit: Credit("knight_footstep_gravel_5")),
+        (id: "step_mounted", files: ["sfx/galloping_horse_step.ogg"], volume: 40, min_gap_ms: 30, credit: Credit("galloping_horse")),
         // The title's campfire (ticket 0922), looped under the title song:
         // 32 puts it about 15 dB under the song, Nick's "in between -12 and
         // -18" (look-and-feel.md, Title screen; TUNABLE).

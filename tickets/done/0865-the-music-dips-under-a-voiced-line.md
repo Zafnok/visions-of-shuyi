@@ -7,6 +7,7 @@ model: sonnet-5 / gpt-6.1-terra
 effort: low
 status: done
 blocked_by: ["engine#2343"]
+blocks: ["1064"]
 nick_input: none
 completed: 2026-11-10
 ---

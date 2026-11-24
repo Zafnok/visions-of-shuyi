@@ -20,6 +20,7 @@ use std::path::Path;
 
 use shuyi_assets::font::FontAtlasDef;
 use shuyi_assets::pack::Bake;
+use shuyi_assets::target::GraphicsTier;
 use shuyi_assets::{ContentError, Formats};
 use shuyi_cli::contract::autobalance::AutobalanceInput;
 use shuyi_cli::contract::playtest::PlaytestInput;
@@ -54,7 +55,7 @@ const PLAYDATE: &str = "playdate";
 const TITLE: &str = "Visions of Shuyi";
 
 /// The game's `frame-png` options.
-const OPTIONS: [GameOption; 10] = [
+const OPTIONS: [GameOption; 11] = [
     GameOption::new("--layout", "the key layout picked before (default right)")
         .with_value(Some("right|left")),
     GameOption::new(
@@ -104,6 +105,12 @@ const OPTIONS: [GameOption; 10] = [
                .dlg files of this folder",
     )
     .with_value(Some("FOLDER")),
+    GameOption::new(
+        "--graphics",
+        "show this graphics tier in place of the target's (ADR-0131):\n\
+               a lesser target's stills on the PC's screen",
+    )
+    .with_value(Some("full|reduced|minimal")),
     // engine-friction: engine#2540
     GameOption::new(
         "--then-pad",
@@ -151,6 +158,8 @@ struct Start {
     tips: bool,
     /// Where the game opens: the title, a battle or a scene.
     opens: Opens,
+    /// The graphics tier shown in place of the target's (`--graphics`).
+    graphics: Option<GraphicsTier>,
     /// What is done after the script's steps, in turn (`--then-pad`).
     /// Ticket 1039 added it beside a `--crank` of the game's own, before
     /// the engine's script had a crank step; the engine's `--crank` now
@@ -190,6 +199,7 @@ impl Start {
             light: None,
             tips: false,
             opens: Opens::Title,
+            graphics: None,
             after: Vec::new(),
         };
         for option in options {
@@ -207,6 +217,12 @@ impl Start {
                 "--prompt" => start.prompt = true,
                 "--tips" => start.tips = true,
                 "--light" => start.light = Some(value),
+                "--graphics" => {
+                    let tier = GraphicsTier::from_name(&value).ok_or_else(|| {
+                        format!("--graphics: full, reduced or minimal, not {value}")
+                    })?;
+                    start.graphics = Some(tier);
+                }
                 "--battle" | "--scene" | "--story-preview" if start.opens != Opens::Title => {
                     return Err("--battle, --scene and --story-preview: one of them, once".into());
                 }
@@ -469,7 +485,14 @@ fn harness(start: &Start) -> Result<Harness, String> {
         .playdate
         .then(|| Ok::<_, String>((playdate_palette()?, playdate_facts()?)))
         .transpose()?;
+    // An unknown `--light`, found by `setup`.
+    let mut unknown_light = None;
     let setup = |ctx: &mut Ctx| {
+        // The light goes in before any start: a battle takes its look as
+        // it opens (`--battle`, ticket 0260).
+        if let Some(light) = &start.light {
+            unknown_light = light_every_battle(&mut ctx.game.content, light).err();
+        }
         if let Some((palette, facts)) = playdate {
             // As `crates/playdate/src/start.rs` starts the game.
             ctx.console = ConsoleSpec::PLAYDATE;
@@ -512,24 +535,38 @@ fn harness(start: &Start) -> Result<Harness, String> {
     // And as `app` shows it: with the idle motion on, and the keys in
     // hints as key caps.
     h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
+    // A lesser target's stills, previewed (`--graphics`, ADR-0131).
+    if let Some(tier) = start.graphics {
+        let ctx = h.ctx_mut();
+        ctx.platform = ctx.platform.clone().with_graphics(tier);
+    }
     h.with_key_caps();
     if start.tips {
         h.with_tips().with_lessons();
     }
-    if let Some(light) = &start.light {
-        let content = &mut h.ctx_mut().game.content;
-        if content.lighting.get(light).is_none() {
-            let known = content.lighting.names();
-            return Err(format!(
-                "--light: no light \"{light}\"; the lights are {known}"
-            ));
-        }
-        let battles: Vec<String> = content.battles.keys().cloned().collect();
-        content
-            .battle_lights
-            .extend(battles.into_iter().map(|id| (id, light.clone())));
+    match unknown_light {
+        Some(e) => Err(e),
+        None => Ok(h),
     }
-    Ok(h)
+}
+
+/// Has every battle of `content` fought in the light `light` (`--light`).
+///
+/// # Errors
+///
+/// When `light` is none of the lights.
+fn light_every_battle(content: &mut trpg_content::Content, light: &str) -> Result<(), String> {
+    if content.lighting.get(light).is_none() {
+        let known = content.lighting.names();
+        return Err(format!(
+            "--light: no light \"{light}\"; the lights are {known}"
+        ));
+    }
+    let battles: Vec<String> = content.battles.keys().cloned().collect();
+    content
+        .battle_lights
+        .extend(battles.into_iter().map(|id| (id, light.to_owned())));
+    Ok(())
 }
 
 /// `h`'s frame painted as `start` says.

@@ -41,13 +41,13 @@ trpg-ui = { path = "../ui" }
 shuyi.workspace = true
 # The window, input devices, audio, storage and the run loop (ticket 1110).
 shuyi-app.workspace = true
-# The log line of a folder `--watch` can't read (`src/main.rs`), as the
-# engine logs, and the test that the window's icon pictures decode.
-macroquad.workspace = true
 
 # The exe's icon and version info (ticket 0902), on a Windows host only.
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"
 
 [dev-dependencies]
+# The test that the window's icon pictures decode as the engine decodes
+# them (`src/tests.rs`).
+macroquad.workspace = true
 tempfile = "3"

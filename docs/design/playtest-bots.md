@@ -240,6 +240,18 @@ try 17 · Normal · lost (lord fell T9) · died: Mira T6, Kael T8 · items 2
 - **Every try** is listed: result, who fell (died or retreated) and on which
   turn, items used, turns (Nick: "statistics on how many units
   died/retreated for each … attempt").
+- **Each unit** (ticket 0527, after Nick's Act 1 playtest found Aske
+  unable to hurt Chapter 2's armoured guards and Rue doing the killing):
+  a line per player unit per battle, with its level arriving, how many
+  of the map's enemies it can hurt at all, what it dealt, killed and
+  levelled per try, its share of the army's EXP, and a flag when it
+  can't hurt enough of them, arrives far below the army or earns too
+  little EXP (`docs/playtesting.md`, *Units that fall behind*). It
+  **proposes, never tunes**: the player's units, classes and growths are
+  Nick's, so a flag is a line to read before he plays, never a failure
+  and never a change the autobalance makes. The flagged units are where
+  the bots' player-side proposals start (*The player's side: proposed,
+  never applied*, ticket 0533).
 - **History across runs** ("each epoch", read as each batch of runs): every
   run of the report is kept, so a change shows as "Normal success 47% → 58%
   after the change". *Claude's reading of "epoch"; Nick may correct it.*
@@ -265,6 +277,26 @@ What it may change (Q11):
 | **Random skirmish** | Anything: enemy levels, count, classes, gear, positions, reinforcements, and the terrain. |
 | **Fixed skirmish, side quest** | Only the enemies' numbers: level, count, gear, and which classes appear. The map, named units (bosses, characters) and objectives stay as authored. |
 | **Story battle** | Same as fixed skirmishes. *Claude's reading: Nick grouped fixed skirmishes with side quests; story battles need their script intact, so they get the same limits. Nick may veto autobalancing story battles at all.* |
+
+### The player's side: proposed, never applied
+
+Decided 2026-11-22, ticket 0080. After Chapters 1–4 Nick suggested "more
+thorough bots automated balancing (i.e. tweaking not just the enemy but
+also the player classes and units and levelups)". Asked whether the bots
+should report player-side changes, also apply small ones inside limits,
+or neither, he picked **"Report only"**.
+
+- The player's classes, units, growths, level-ups and weapons stay
+  Nick's. The autobalancer never changes them; only the battle changes,
+  as above.
+- The bots **try** player-side changes and **report** which ones put each
+  chapter in its band, for example "Aske's Str growth 45 → 55 %: Chapter
+  3 Normal 58 → 66 %". Nick picks, and a ticket makes the change (as 0864
+  asks him about Tamsin).
+- Each report says which unit the change is for and why it was tried: a
+  unit the per-unit report flags (it can't hurt the enemies, falls behind
+  in level or EXP: ticket 0527) is where the bots look first (*the
+  agent's starting rule*).
 
 ## Generating a skirmish to order
 

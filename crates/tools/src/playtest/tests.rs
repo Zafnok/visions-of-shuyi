@@ -263,6 +263,7 @@ fn record() -> Record {
                 seconds_per_try: 0.01,
             },
         ],
+        units: vec![],
         report,
     }
 }
@@ -462,61 +463,77 @@ fn a_battle_with_nothing_before_it_is_played_with_a_fresh_army() {
     }
     let army = army(&CONTENT, &CONTENT.battles["test"], &stage);
     assert_eq!(army.from, "fresh from the character data");
-    assert_eq!(army.pack, ["potion", "potion"]);
+    assert_eq!(army.lines.len(), 1, "one army");
+    assert_eq!(army.lines[0].pack, ["potion", "potion"]);
 }
 
 /// Acceptance: the playtest and the autobalance (the same `stage`) play
-/// Chapter 2 with the army Chapter 1 leaves and a pack of Potions, never
-/// the character data's levels or an empty pack. A test of the content
-/// (ADR-0118 (a)): it plays Chapter 1's recorded playthrough.
+/// Chapter 2 with the armies Chapter 1 leaves, one per line of the bots'
+/// recorded wins (0531), and a pack of Potions, never the character data's
+/// levels or an empty pack; a try fields its seed's line. A test of the
+/// content (ADR-0118 (a)): it plays Chapter 1's recorded wins.
 #[test]
-fn chapter_2_is_played_with_the_army_chapter_1_leaves() {
+fn chapter_2_is_played_with_the_armies_chapter_1_leaves() {
     if trpg_content::bundle::skip_without_the_game() {
         return;
     }
     let def = &CONTENT.battles["ch02"];
     let stage = stage_of("ch02");
+    assert_eq!(stage.armies().len(), trpg_bots::LINES);
     for mode in [GameMode::Classic, GameMode::Casual] {
-        let setup = stage.setup(mode);
         let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
-        let arrived = arrival(&CONTENT, def, mode, lead).unwrap();
-        assert_eq!(Some(setup), arrived.as_ref());
+        let arrived = arrival(&CONTENT, def, mode, &lead).unwrap().unwrap();
+        let fielded: Vec<&BattleSetup> = stage.armies().iter().map(|a| a.setup(mode)).collect();
+        assert_eq!(fielded, arrived.iter().collect::<Vec<_>>());
+        for seed in 1..=9 {
+            let line = trpg_bots::line_of(seed, arrived.len());
+            assert_eq!(stage.setup_for(mode, seed), &arrived[line], "seed {seed}");
+        }
         let fresh = fresh("ch02", mode);
         let players = |s: &BattleSetup| -> Vec<(String, u32, u32)> {
             let units = s.units.iter().filter(|u| u.faction == Faction::Player);
             units.map(|u| (u.name.clone(), u.level, u.exp)).collect()
         };
-        assert_eq!(players(setup).len(), 6);
-        assert_ne!(players(setup), players(&fresh), "not the character data's");
         assert!(fresh.pack.items.is_empty(), "the default pack is empty");
-        assert!(setup.pack.items.iter().all(|i| i.0 == "potion"));
-        assert_ne!(setup.pack.items.len(), 0, "a pack of Potions");
+        for setup in fielded {
+            assert_eq!(players(setup).len(), 6);
+            assert_ne!(players(setup), players(&fresh), "not the character data's");
+            assert!(setup.pack.items.iter().all(|i| i.0 == "potion"));
+            assert_ne!(setup.pack.items.len(), 0, "a pack of Potions");
+        }
     }
     let army = army(&CONTENT, def, &stage);
     assert_eq!(army.from, "campaign after ch01");
-    assert_eq!(army.units.len(), 6);
-    let line = army.line();
-    assert!(
-        line.starts_with("army · campaign after ch01 · Lead "),
-        "{line}"
+    assert_eq!(army.lines.len(), trpg_bots::LINES);
+    assert!(army.lines.iter().all(|l| l.units.len() == 6));
+    let text = army.line();
+    let rows: Vec<&str> = text.lines().collect();
+    assert_eq!(
+        rows[0],
+        "army · campaign after ch01 · 24 lines: try N fields line (N − 1) mod 24 + 1"
     );
-    assert!(
-        line.ends_with(&format!(
-            " · pack potion, potion, potion · gold {}",
-            army.gold
-        )),
-        "{line}"
-    );
+    assert!(rows[1].starts_with("  line 1 · Lead "), "{text}");
+    assert!(rows[1].contains(" · pack potion"), "{text}");
+    assert!(rows[25].starts_with("  mean · Lead "), "{text}");
 }
 
 #[test]
 fn the_report_names_the_army() {
+    // A run kept before 0531 names where its army came from, no units.
+    let old = Army {
+        from: "campaign after ch01".to_owned(),
+        lines: vec![],
+    };
+    assert_eq!(old.line(), "army · campaign after ch01");
+    assert_eq!(Army::default().line(), "", "no army kept");
     let mut record = record();
     record.army = Army {
         from: "campaign after ch01".to_owned(),
-        units: vec!["Lead exile lv 1".to_owned(), "Corin guard lv 5".to_owned()],
-        pack: vec!["potion".to_owned()],
-        gold: 100,
+        lines: vec![ArmyLine {
+            units: vec!["Lead exile lv 1".to_owned(), "Corin guard lv 5".to_owned()],
+            pack: vec!["potion".to_owned()],
+            gold: 100,
+        }],
     };
     let text = render(&record, None);
     let second = text.lines().nth(1).unwrap_or_default();
@@ -524,8 +541,23 @@ fn the_report_names_the_army() {
         second,
         "army · campaign after ch01 · Lead exile lv 1, Corin guard lv 5 · pack potion · gold 100"
     );
-    record.army.pack.clear();
+    record.army.lines[0].pack.clear();
     assert!(render(&record, None).contains(" · pack empty · gold 100\n"));
+    // Two lines: a row each, and each unit's mean level.
+    let mut second = record.army.lines[0].clone();
+    second.units = vec!["Lead exile lv 4".to_owned(), "Corin guard lv 6".to_owned()];
+    record.army.lines.push(second);
+    let text = render(&record, None);
+    let rows: Vec<&str> = text.lines().skip(1).take(4).collect();
+    assert_eq!(
+        rows,
+        [
+            "army · campaign after ch01 · 2 lines: try N fields line (N − 1) mod 2 + 1",
+            "  line 1 · Lead exile lv 1, Corin guard lv 5 · pack empty · gold 100",
+            "  line 2 · Lead exile lv 4, Corin guard lv 6 · pack empty · gold 100",
+            "  mean · Lead 2.5, Corin 5.5",
+        ]
+    );
 }
 
 // ---- Playing ------------------------------------------------------------------
@@ -789,7 +821,7 @@ fn mismatched_parts_are_an_error() {
     other.turn_cap += 1;
     assert!(error(other).contains("turn cap"));
     let mut other = first.clone();
-    other.army.gold += 1;
+    other.army.from.push('!');
     assert!(error(other).contains("army"));
     let mut other = first.clone();
     other.tier = "Hard".to_owned();
@@ -827,4 +859,126 @@ fn merge_files_reads_the_json_reports() {
     std::fs::write(dir.join("bad.json"), "{").unwrap();
     assert!(merge_files(&[dir.join("bad.json")]).is_err());
     std::fs::remove_dir_all(&dir).unwrap();
+}
+
+// ---- Units (ticket 0527) ------------------------------------------------------
+
+/// [`record`] with three units at the start, and per-unit measures in
+/// Normal's tries: Aske can hurt 1 of 3 enemies, arrives 3 levels below
+/// the army and earns 4 of 100 EXP; Rue does the killing.
+fn record_with_units() -> Record {
+    let mut record = record();
+    let unit = |name: &str, level, hurt| UnitStart {
+        name: name.to_owned(),
+        level,
+        hurt,
+        of: 3,
+    };
+    record.units = vec![unit("Aske", 2, 1), unit("Rue", 5, 3), unit("Lead", 5, 2)];
+    for (i, t) in record.report.entrants[0].tries.iter_mut().enumerate() {
+        let i = i64::try_from(i).unwrap();
+        let put = |t: &mut Tried, k: &str, v| {
+            t.measures.insert(k.to_owned(), v);
+        };
+        put(t, "dealt Rue", 20 + i);
+        put(t, "kills Rue", 2);
+        put(t, "exp Rue", 12);
+        put(t, "exp Lead", 7);
+        put(t, "levels Rue", 1);
+        if i < 2 {
+            put(t, "exp Aske", 2);
+            put(t, "dealt Aske", 3);
+        }
+    }
+    record
+}
+
+#[test]
+fn render_has_a_units_table_per_entrant_with_its_flags() {
+    let text = render(&record_with_units(), None);
+    let table = text
+        .split_once("ch01 · units (normal, 5 tries)\n")
+        .unwrap_or_else(|| panic!("{text}"))
+        .1;
+    let lines: Vec<&str> = table.lines().take(3).collect();
+    assert_eq!(
+        lines,
+        [
+            "Aske  lv 2   can hurt 1/3    dealt med 0    kills med 0   levels med +0   \
+             exp share 4%    ⚑ can hurt < 2/3 · lv 3+ below the army · exp < half a share",
+            "Rue   lv 5   can hurt 3/3    dealt med 22   kills med 2   levels med +1   \
+             exp share 61%",
+            "Lead  lv 5   can hurt 2/3    dealt med 0    kills med 0   levels med +0   \
+             exp share 35%",
+        ],
+        "{text}"
+    );
+    // The baseline's table follows, with its own tries.
+    assert!(text.contains("ch01 · units (baseline, 2 tries)"), "{text}");
+}
+
+#[test]
+fn a_run_kept_without_its_units_has_no_units_table() {
+    let text = render(&record(), None);
+    assert!(!text.contains("· units ("), "{text}");
+    // An older record reads with no units.
+    let mut json: serde_json::Value = serde_json::to_value(record()).unwrap();
+    json.as_object_mut().unwrap().remove("units");
+    let old: Record = serde_json::from_value(json).unwrap();
+    assert_eq!(old.units, []);
+}
+
+#[test]
+fn an_army_that_earned_no_exp_shows_no_share_and_no_exp_flag() {
+    let mut record = record_with_units();
+    for t in &mut record.report.entrants[0].tries {
+        t.measures.retain(|k, _| !k.starts_with("exp "));
+    }
+    let text = render(&record, None);
+    let rue = text
+        .lines()
+        .find(|l| l.starts_with("Rue "))
+        .unwrap_or_else(|| panic!("{text}"));
+    assert!(rue.ends_with("exp share -"), "{rue}");
+    assert!(!text.contains("exp < half"), "{text}");
+}
+
+/// A short run of the Quick Battle: a units line per player unit at its
+/// start, in each entrant's table, and the per-unit measures in its tries.
+#[test]
+fn a_playtest_run_reports_each_player_unit() {
+    let record = play_quick(&Options {
+        turn_cap: 6,
+        ..quick(Bot::Normal, 2)
+    });
+    let quick = stage(&CONTENT, &CONTENT.battles["quick"]).unwrap();
+    let state = BattleState::new(quick.setup(GameMode::Classic).clone()).0;
+    let players: Vec<&str> = state
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Player)
+        .map(|u| u.name.as_str())
+        .collect();
+    let names: Vec<&str> = record.units.iter().map(|u| u.name.as_str()).collect();
+    assert_eq!(names, players);
+    assert!(record.units.iter().all(|u| u.of > 0 && u.hurt <= u.of));
+    let text = render(&record, None);
+    let table = text
+        .split_once("quick · units (normal, 2 tries)\n")
+        .unwrap_or_else(|| panic!("{text}"))
+        .1;
+    for (line, name) in table.lines().zip(&players) {
+        assert!(line.starts_with(name), "{name}: {line}");
+        assert!(
+            line.contains("can hurt ") && line.contains("dealt med "),
+            "{line}"
+        );
+    }
+    // Somebody hurt an enemy in six turns, and it is in the try's measures.
+    let tries = &record.report.entrants[0].tries;
+    let dealt = tries
+        .iter()
+        .flat_map(|t| t.measures.keys())
+        .any(|k| k.starts_with("dealt "));
+    assert!(dealt, "{tries:?}");
 }

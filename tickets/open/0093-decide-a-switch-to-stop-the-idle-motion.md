@@ -85,6 +85,17 @@ in a throwaway `zz_` battle file, take `frame-png` at two clock times,
 and revert it before the PR. Never a check after merge: whatever is built
 from his answer is verified by tests and pictures.
 
+
+**Also creatures and small touches** (2026-11-23): 1334's creatures and
+step dust, and 1333's bursts, are looping or passing motion too; this
+answer covers them, either order (1323 shows the switch if this is
+answered first).
+
+**Also moving tiles and drifting effects** (2026-11-22): 1315 (flowing
+water, swaying trees) and 1316 (drifting petals) add more looping motion,
+decided by 0096. Whatever this ticket decides covers them too; either
+order works (they already freeze with `ctx.idle_motion` off).
+
 ## Scope
 
 **In:**

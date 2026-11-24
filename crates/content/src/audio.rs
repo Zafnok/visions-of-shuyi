@@ -135,6 +135,18 @@ mod tests {
         assert_eq!(m.map(|m| m.music_fade_ms), Ok(500));
     }
 
+    /// Ticket 0879 (Nick: `options.md`, *Volumes*): a new player's Music,
+    /// Sound and Voice volumes start at the top. The private manifest is
+    /// laid over the public one, so this reads whichever the build has.
+    #[test]
+    fn the_music_sound_and_voice_volumes_start_at_the_top() {
+        let m = load().unwrap_or_else(|e| panic!("{e:?}"));
+        for group in ["music", "sfx", "voice"] {
+            let start = m.groups.get(group).and_then(|g| g.volume);
+            assert_eq!(start, Some(100), "{group}");
+        }
+    }
+
     /// The PC's bundle checks every sound file; the Playdate's, which
     /// leaves them out (ticket 1036), checks none and still loads.
     #[test]

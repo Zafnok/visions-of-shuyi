@@ -135,9 +135,12 @@ README.md` row; 0332's text updated with what to build.
 - Building it: ticket **0332**.
 - Any new dialogue or a new named character's scenes: they wait for the
   writer (0766).
-- How the army gets through armour in general (0080). Either order: if
-  0080 is answered first, show its pick beside these numbers; if not, say
-  that the axe is one of 0080's answers and note Nick's pick in 0080.
+- How the army gets through armour in general (0080, **answered
+  2026-11-22**: bows and spears pierce, a bow hit deals at least 2 and a
+  spear hit at least 3; built by 0333). Show it beside these numbers:
+  the axe's minimum 5 and Armor Cleave stay the heavy answer (on a Chapter
+  3 guard, Def 15: a bow 2 a hit, a spear 3, this axe 5, with Armor
+  Cleave 13).
 - Promotion and reclass in the between-battle menu (0606). If Nick picks
   a reclass (C) and 0606 isn't done, 0332 gives the class change in data
   or a scene step instead of the menu; say so in 0332's text.

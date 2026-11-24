@@ -11,7 +11,7 @@
 //! as [`BattleScreen::next_scene`] tells it: a fired one for those on the
 //! map when it fired, one to come for those on the map now.
 //!
-//! [`GuideVoice`]: super::guide_voice::GuideVoice
+//! [`GuideVoice`]: crate::tips::voice::GuideVoice
 
 use crate::prelude::*;
 use alloc::collections::BTreeSet;

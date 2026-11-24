@@ -2,19 +2,26 @@
 //! alone, over the screen that opened it, closed by Confirm or Cancel.
 //! The screen asks for it with [`TipScreen::once`] the first time it
 //! opens; the tip is then seen for the profile (ADR-0069), so it shows
-//! once. The battle keeps its own queue of tips (`screens::battle::tips`).
-//! The guide says the tip (ticket 0497): its line is preloaded when the box
-//! is made, asked for on its first frame, and stopped when it closes.
+//! once. The battle keeps its own queue of tips.
+//! The guide says the tip (tickets 0497, 1291) through her
+//! [`GuideVoice`], as in battle: on its first frame the box keeps its line
+//! loaded and asks for it; closing it stops her and lets the line go. The
+//! title keeps the lines of these tips loaded before their screens open.
 
 use crate::prelude::*;
 use trpg_content::{LineId, TipTrigger};
 
+use super::voice::GuideVoice;
 use super::{TipView, TipsSeen, glyph};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::screens::battle::tips::TipState;
+
+/// The tips shown outside battle, by the screens that open them: the
+/// Load Game list's and the Profile screen's (0874).
+pub const OUT_OF_BATTLE: [TipTrigger; 2] =
+    [TipTrigger::FirstLoadGame, TipTrigger::FirstProfileScreen];
 
 /// The tip box over the screen below.
 #[derive(Debug, Clone)]
@@ -22,10 +29,8 @@ pub struct TipScreen {
     trigger: TipTrigger,
     /// The guide's line of the tip ([`trpg_content::voice::guide_line`]).
     line: LineId,
-    /// Whether the first frame has run: she says the line only then.
-    said: bool,
-    /// Whether her clip was asked for: only then is there a voice to stop.
-    speaking: bool,
+    /// Her voice: the line kept loaded and said on the first frame.
+    voice: GuideVoice,
 }
 
 impl TipScreen {
@@ -33,10 +38,10 @@ impl TipScreen {
     pub const NAME: &'static str = "tip";
 
     /// The box of `trigger`'s tip, to push over the screen asking, if it
-    /// should show: tips show in `ctx` ([`TipState::shown_in`]), the game
+    /// should show: tips show in `ctx` ([`super::shown_in`]), the game
     /// has the tip, and the profile hasn't seen it. It is marked seen now.
     pub fn once(ctx: &mut Ctx, trigger: TipTrigger) -> Option<Self> {
-        if !TipState::shown_in(ctx) {
+        if !super::shown_in(ctx) {
             return None;
         }
         let tip = ctx.game.content.tips.for_trigger(trigger)?;
@@ -47,13 +52,27 @@ impl TipScreen {
         let id = tip.id.clone();
         let line = trpg_content::voice::guide_line(&tip.text);
         seen.mark(&id, &mut ctx.storage);
-        ctx.preload_voices(core::slice::from_ref(&line));
         Some(Self {
             trigger,
             line,
-            said: false,
-            speaking: false,
+            voice: GuideVoice::default(),
         })
+    }
+
+    /// The guide's lines of the tips of `triggers` that may still show in
+    /// `ctx`: tips show, the game has them and the profile hasn't seen
+    /// them. A screen that may open their boxes keeps them loaded (1291).
+    pub fn coming_lines(ctx: &Ctx, triggers: &[TipTrigger]) -> Vec<LineId> {
+        if !super::shown_in(ctx) {
+            return Vec::new();
+        }
+        let seen = TipsSeen::load(&ctx.storage);
+        let tips = triggers
+            .iter()
+            .filter_map(|&t| ctx.game.content.tips.for_trigger(t));
+        tips.filter(|tip| !seen.contains(&tip.id))
+            .map(|tip| trpg_content::voice::guide_line(&tip.text))
+            .collect()
     }
 
     /// The tip it shows.
@@ -84,15 +103,14 @@ impl Screen<Shuyi> for TipScreen {
             .any(|a| matches!(a, Action::Confirm | Action::Cancel))
         {
             ctx.audio.menu(MenuSound::Select);
-            if self.speaking {
-                ctx.stop_voice();
-            }
+            self.voice.show(None, None, ctx);
+            self.voice.leave(ctx);
             return Transition::Pop;
         }
-        if !core::mem::replace(&mut self.said, true) && ctx.has_voice(&self.line) {
-            ctx.play_voice(&self.line);
-            self.speaking = true;
-        }
+        let line = self.line.clone();
+        let keep = self.voice.keep_due(Some(&line), ctx);
+        self.voice
+            .show(Some(line.clone()), keep.then(|| vec![line]), ctx);
         Transition::None
     }
 
@@ -128,6 +146,23 @@ mod tests {
         assert!(TipScreen::once(&mut c, TipTrigger::FirstProfileScreen).is_some());
     }
 
+    /// Ticket 1310: a profile's seen tips from before triggers were names
+    /// (the ids, one a line, as it saved them) still read: the tip seen
+    /// then doesn't show again, the other does.
+    #[test]
+    fn a_profiles_seen_tips_from_before_still_read() {
+        use crate::storage::Storage as _;
+        let mut c = ctx();
+        c.game.tips_enabled = true;
+        let saved = c.game.content.tips.for_trigger(TipTrigger::FirstLoadGame);
+        assert_eq!(saved.map(|t| t.id.as_str()), Some("export_save"));
+        c.storage
+            .write(crate::tips::TIPS_SEEN_KEY, "battle_start\nexport_save")
+            .unwrap();
+        assert!(TipScreen::once(&mut c, TipTrigger::FirstLoadGame).is_none());
+        assert!(TipScreen::once(&mut c, TipTrigger::FirstProfileScreen).is_some());
+    }
+
     #[test]
     fn confirm_or_cancel_closes_it() {
         let mut c = ctx();
@@ -144,7 +179,7 @@ mod tests {
     /// A context with tips on and a voice manifest holding a clip for
     /// every line the guide says.
     fn voiced() -> Ctx {
-        let (mut c, _) = crate::screens::battle::guide_voice::tests::voiced();
+        let (mut c, _) = crate::tips::voice::testing::voiced();
         c.game.tips_enabled = true;
         c
     }
@@ -163,43 +198,44 @@ mod tests {
             .filter(|r| {
                 matches!(
                     r,
-                    R::PlayVoice { .. } | R::StopVoice | R::PreloadVoices { .. }
+                    R::PlayVoice { .. }
+                        | R::StopVoice
+                        | R::PreloadVoices { .. }
+                        | R::KeepVoices { .. }
                 )
             })
             .collect()
     }
 
-    /// Acceptance (0497): the box over the Load Game list preloads its
-    /// line when made, asks for it once on its first frame, and stops it
-    /// when Confirm closes it.
+    /// Acceptance (0497, 1291): the box over the Load Game list keeps its
+    /// line loaded and asks for it once, on its first frame; Confirm
+    /// stops it and lets the line go.
     #[test]
-    fn the_tip_box_says_its_line_once_and_stops_it_on_close() {
+    fn the_tip_box_keeps_and_says_its_line_once_then_lets_it_go() {
         use crate::AudioRequest as R;
         use trpg_content::Variant;
         let mut c = voiced();
         let line = line(&c, TipTrigger::FirstLoadGame);
         let mut tip = TipScreen::once(&mut c, TipTrigger::FirstLoadGame).unwrap();
-        assert_eq!(
-            voice_requests(&mut c),
-            [R::PreloadVoices {
-                lines: vec![(line.clone(), Variant::None)]
-            }]
-        );
+        assert_eq!(voice_requests(&mut c), [], "nothing until it is on screen");
         let frame = |a: &[Action]| FrameInput::new(a.to_vec(), 0.0, vec![]);
         assert!(matches!(tip.update(&mut c, &frame(&[])), Transition::None));
-        let play = R::play_voice(line, Variant::None);
-        assert_eq!(voice_requests(&mut c), [play]);
+        let keep = |lines: Vec<LineId>| R::KeepVoices {
+            lines: lines.into_iter().map(|l| (l, Variant::None)).collect(),
+        };
+        let play = R::play_voice(line.clone(), Variant::None);
+        assert_eq!(voice_requests(&mut c), [keep(vec![line]), play]);
         assert!(matches!(tip.update(&mut c, &frame(&[])), Transition::None));
         assert_eq!(voice_requests(&mut c), [], "asked for once");
         assert!(matches!(
             tip.update(&mut c, &frame(&[Action::Confirm])),
             Transition::Pop
         ));
-        assert_eq!(voice_requests(&mut c), [R::StopVoice]);
+        assert_eq!(voice_requests(&mut c), [R::StopVoice, keep(vec![])]);
     }
 
-    /// Acceptance (0497): with voices off nothing is preloaded, asked for
-    /// or stopped.
+    /// Acceptance (0497): with voices off nothing is kept, asked for or
+    /// stopped.
     #[test]
     fn with_voices_off_the_tip_box_asks_for_nothing() {
         let mut c = voiced();

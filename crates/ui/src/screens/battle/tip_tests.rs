@@ -6,11 +6,12 @@ use crate::input::{LEFT_HANDED, RIGHT_HANDED};
 use insta::assert_snapshot;
 use shuyi_ui::text::StyledText;
 use trpg_content::TipTrigger;
-use trpg_core::{Command, Event, Objective, Phase, StatGains, UnitId};
+use trpg_core::{Command, Event, Objective, Phase, StatGains, TerrainRules, UnitId};
 
 use super::banner::PHASE_BANNER_S;
 use super::layout::{MAP_VIEW, SIDE_PANEL, snap};
 use super::testing::{Stacked, battle_with, skirmish, skirmish_charged, through_ai_phases};
+use super::triggers::not_plain;
 use super::*;
 use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
@@ -238,17 +239,17 @@ fn cancel_dismisses_too_and_other_keys_wait() {
 fn a_tip_counts_as_seen_once_it_is_shown() {
     let mut c = tipped();
     let mut s = quick();
-    s.tips.fire(TipTrigger::FirstBattleStart);
-    s.tips.absorb(&mut c);
+    s.guide.tips.fire(TipTrigger::FirstBattleStart);
+    s.guide.tips.absorb(&mut c);
     assert_eq!(
-        s.tips.queued().collect::<Vec<_>>(),
+        s.guide.tips.queued().collect::<Vec<_>>(),
         [TipTrigger::FirstBattleStart]
     );
     assert_eq!(c.storage.read(TIPS_SEEN_KEY).unwrap(), None, "queued only");
     // Firing again doesn't queue it twice.
-    s.tips.fire(TipTrigger::FirstBattleStart);
-    s.tips.absorb(&mut c);
-    assert_eq!(s.tips.queued().count(), 1);
+    s.guide.tips.fire(TipTrigger::FirstBattleStart);
+    s.guide.tips.absorb(&mut c);
+    assert_eq!(s.guide.tips.queued().count(), 1);
     // Left before it showed: the next battle shows it.
     let mut retry = quick();
     assert_eq!(
@@ -261,7 +262,7 @@ fn a_tip_counts_as_seen_once_it_is_shown() {
         Some("battle_start")
     );
     let mut s = quick();
-    s.tips.show(Some(TipTrigger::FirstLowHp), &mut c);
+    s.guide.tips.show(Some(TipTrigger::FirstLowHp), &mut c);
     let seen = c.storage.read(TIPS_SEEN_KEY).unwrap().unwrap();
     assert_eq!(
         seen,
@@ -381,7 +382,7 @@ fn the_forecast_shows_its_tip() {
     // A tip waits out the combat that follows.
     press(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Combat(_)), "{:?}", s.mode());
-    s.tips.fire(TipTrigger::FirstLowHp);
+    s.guide.tips.fire(TipTrigger::FirstLowHp);
     press(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), None);
 }
@@ -462,7 +463,7 @@ fn tips_wait_for_the_player_phase_to_settle() {
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.state().phase(), Phase::Enemy);
     // A unit found badly hurt while the enemy plays: the tip waits.
-    s.tips.fire(TipTrigger::FirstLowHp);
+    s.guide.tips.fire(TipTrigger::FirstLowHp);
     // (The enemy-phase tip is queued behind it and shows first.)
     let shown = dismiss_all(&mut s, &mut c);
     assert_eq!(shown, [TipTrigger::FirstEnemyPhase]);
@@ -489,7 +490,7 @@ fn a_tip_fired_under_the_rewind_screen_waits_for_its_trigger() {
     let mut s = Stacked::new(s);
     s.press(&mut c, &[Action::Rewind]);
     assert!(s.rewind().is_some());
-    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.battle_mut().guide.tips.fire(TipTrigger::FirstLowHp);
     s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), None);
     // Closed: no tip comes up, and the one fired under it is still unseen.
@@ -501,7 +502,7 @@ fn a_tip_fired_under_the_rewind_screen_waits_for_its_trigger() {
     }
     assert!(!seen(&c, "low_hp"), "dropped unseen");
     // Its trigger again, on the map: it comes up at once.
-    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.battle_mut().guide.tips.fire(TipTrigger::FirstLowHp);
     s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
 }
@@ -1058,7 +1059,7 @@ fn a_tip_behind_another_comes_up_as_it_closes() {
     let mut s = quick();
     press(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
-    s.tips.fire(TipTrigger::FirstLevelUp);
+    s.guide.tips.fire(TipTrigger::FirstLevelUp);
     press(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
     press(&mut s, &mut c, &[Action::Confirm]);
@@ -1085,7 +1086,7 @@ fn a_tip_fired_under_a_screen_never_takes_the_menu_key() {
         &[Action::CursorDown, Action::CursorDown, Action::Confirm],
     );
     assert!(s.guides().is_some());
-    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.battle_mut().guide.tips.fire(TipTrigger::FirstLowHp);
     s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), None);
     // Back in the map menu: no tip.
@@ -1102,7 +1103,7 @@ fn a_tip_fired_under_a_screen_never_takes_the_menu_key() {
     assert!(!seen(&c, "low_hp"), "dropped unseen");
     // Its trigger again: it comes up, and a key pressed in the frame it
     // first shows doesn't close it; a fresh Cancel does.
-    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.battle_mut().guide.tips.fire(TipTrigger::FirstLowHp);
     s.press(&mut c, &[Action::Cancel]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
     s.press(&mut c, &[Action::Cancel]);
@@ -1122,12 +1123,12 @@ fn the_unseen_tips_are_those_not_shown_yet_and_none_while_tips_are_off() {
         .shown_tip()
         .and_then(|t| c.game.content.tips.for_trigger(t));
     let shown = shown.map_or_default(|t| t.id.clone());
-    let unseen: Vec<String> = s.tips.unseen(&c).map(|t| t.id.clone()).collect();
+    let unseen: Vec<String> = s.guide.tips.unseen(&c).map(|t| t.id.clone()).collect();
     assert_eq!(unseen.len(), c.game.content.tips.tips.len() - 1);
     assert!(!unseen.contains(&shown), "{shown} was shown");
     c.game.tips_enabled = false;
     press(&mut s, &mut c, &[]);
-    assert_eq!(s.tips.unseen(&c).count(), 0);
+    assert_eq!(s.guide.tips.unseen(&c).count(), 0);
 }
 
 /// Ticket 0463: the lord's forecast with its two swords shows the
@@ -1158,4 +1159,130 @@ fn a_forecast_with_one_weapon_has_no_swap_tip() {
     let seen = attack_raider(&mut s, &mut c);
     assert!(!seen.contains(&TipTrigger::FirstWeaponSwap), "{seen:?}");
     assert!(seen.contains(&TipTrigger::FirstForecast), "{seen:?}");
+}
+
+/// Ticket 1291: the enemy phase's tip, which shows over its banner, still
+/// waits while something busy is over the map (here the battle's notes).
+#[test]
+fn the_enemy_phase_tip_waits_for_the_notes() {
+    let mut c = ctx();
+    c.game.tips_enabled = true;
+    let mut s = BattleScreen::new(quick_battle(&c.game.content).unwrap());
+    s.guide.tips.fire(TipTrigger::FirstEnemyPhase);
+    s.guide.tips.absorb(&mut c);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstEnemyPhase));
+    s.queue.push_front(Queued::Notes);
+    assert!(s.notes_open());
+    assert_eq!(s.shown_tip(), None);
+}
+
+/// The pages and questions of ticket 1312 her boxes step aside for: unit
+/// info, the map menu, its unit list and the objective page.
+fn pages(s: &BattleScreen, c: &Ctx) -> [(&'static str, Mode); 4] {
+    let lord = UnitId(1);
+    [
+        (
+            "info",
+            Mode::Info {
+                unit: lord,
+                back: None,
+            },
+        ),
+        (
+            "map menu",
+            Mode::MapMenu {
+                menu: map_menu::map_menu(&s.state, map_menu::MapEntry::EndTurn),
+            },
+        ),
+        (
+            "unit list",
+            Mode::UnitList {
+                menu: map_menu::unit_list(&s.state, c.words()),
+            },
+        ),
+        ("objective", Mode::Objective),
+    ]
+}
+
+/// Closes the page open with Cancel, back to the map.
+fn close_page(s: &mut BattleScreen, c: &mut Ctx) {
+    for _ in 0..4 {
+        if !s.mode().covers_guide() {
+            return;
+        }
+        press(s, c, &[Action::Cancel]);
+    }
+    panic!("the page never closed: {:?}", s.mode());
+}
+
+/// Ticket 1312: her tip on screen steps aside while a page is open, takes
+/// none of its keys, and is back, the same tip, once it closes.
+#[test]
+fn a_tip_steps_aside_for_a_page_and_comes_back() {
+    for kind in 0..4 {
+        let mut c = tipped();
+        let mut s = quick();
+        press(&mut s, &mut c, &[]);
+        assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
+        let (name, page) = pages(&s, &c)[kind].clone();
+        s.mode = page;
+        press(&mut s, &mut c, &[]);
+        let view = s.view(&c);
+        assert_eq!(view.tip, None, "{name}");
+        assert_eq!(view.lesson, None, "{name}");
+        assert_eq!(s.shown_tip(), None, "{name}");
+        if name == "info" {
+            assert!(view.info.is_some(), "the info screen");
+        }
+        // Its keys reach the page: Cancel closes it, not the tip.
+        close_page(&mut s, &mut c);
+        assert_eq!(s.mode(), &Mode::default(), "{name}");
+        assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart), "{name}");
+        assert_eq!(s.view(&c).tip.unwrap().heading, "Your move", "{name}");
+    }
+}
+
+/// Ticket 1312: a tip that fires while a page is open waits for it to
+/// close.
+#[test]
+fn a_tip_fired_on_a_page_waits_for_it_to_close() {
+    for kind in 0..4 {
+        let mut c = tipped();
+        let mut s = quick();
+        dismiss_all(&mut s, &mut c);
+        let (name, page) = pages(&s, &c)[kind].clone();
+        s.mode = page;
+        press(&mut s, &mut c, &[]);
+        s.guide.fire(TipTrigger::FirstLowHp);
+        s.guide.tips.absorb(&mut c);
+        press(&mut s, &mut c, &[]);
+        assert_eq!(s.shown_tip(), None, "{name}");
+        assert_eq!(s.view(&c).tip, None, "{name}");
+        close_page(&mut s, &mut c);
+        assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp), "{name}");
+    }
+}
+
+/// Ticket 1312: the info screen opened by its key while a tip is queued
+/// takes the info screen's keys (the next unit), and the Playdate's view
+/// has no tip over it either.
+#[test]
+fn unit_info_takes_its_keys_with_a_tip_waiting() {
+    let mut c = tipped();
+    let mut s = quick();
+    dismiss_all(&mut s, &mut c);
+    press(&mut s, &mut c, &[Action::Info]);
+    assert!(matches!(s.mode(), Mode::Info { .. }), "{:?}", s.mode());
+    s.guide.fire(TipTrigger::FirstLowHp);
+    s.guide.tips.absorb(&mut c);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Info { .. }), "{:?}", s.mode());
+    c.game.skin_set = SkinSet::Playdate;
+    let view = s.view(&c);
+    assert!(view.info.is_some());
+    assert_eq!(view.tip, None);
+    c.game.skin_set = SkinSet::Glyph;
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(s.mode(), &Mode::default());
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
 }

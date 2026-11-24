@@ -69,8 +69,9 @@ without asking questions.
 
 ## Check the dependency chain
 
-A ticket is picked up when every id in `blocked_by` is in `tickets/done/`,
-so a missing id means a session starts work it can't finish. For every
+A ticket is picked up when every id in `blocked_by` is in `tickets/done/`
+and no open ticket names it in `blocks` (`tickets/README.md`), so a missing
+id means a session starts work it can't finish. For every
 ticket you write or change:
 
 - **Each open ticket the text names** is one of three things, and the ticket
@@ -93,10 +94,21 @@ ticket you write or change:
   this one is blocked by 1064 (the Act 1 playtest; 0804 and 1050 were
   folded into it on 2026-10-21).
 - If the ticket is needed for Act 1 (its chapters, its systems, the
-  Playdate build Nick plays it on), add it to 1064's `blocked_by` and to
-  *Act 1 critical path* in `docs/ROADMAP.md`. When unsure, add it: the
-  playtest covers all of Act 1, and Nick no longer checks tickets one by
-  one.
+  Playdate build Nick plays it on), give it `blocks: ["1064"]` in its own
+  frontmatter, never an id in 1064's `blocked_by`: that list was one line
+  every filing PR edited, so two of them always conflicted (ticket 1352).
+  Add it to *Act 1 critical path* in `docs/ROADMAP.md` too.
+- **A design decision blocks 1064 only with a reason.** A `00xx` ticket
+  gets `blocks: ["1064"]` only with a one-line reason the playtest can't
+  run without its answer, as a comment on that line
+  (`blocks: ["1064"] # Ch2's map needs the weather rule`). No reason, no
+  line: the playtest can run on the agent's starting rule and Nick
+  decides it after playing (29 of 1064's blockers were open decisions,
+  9 from one request).
+- **A sweep's clean-up ticket blocks a feedback build** (1064, or any
+  build Nick plays) only if the build truly uses its output. Otherwise
+  it waits on nothing and nothing waits on it (0334 waited about 160 hours
+  on the clean-up 0335 after its decision).
 - Run `cargo xtask ticket-lint`.
 
 ## Turning Nick's playtest feedback into tickets
@@ -108,7 +120,9 @@ Nick reports bugs and concerns in plain language after playing. For each item:
   reproduces it before the fix. If the report is ambiguous, ask Nick *one*
   concrete question ("Did this happen after the unit was attacked, or before?").
 - **Feel/balance** ("cursor feels slow", "enemies too strong"): `type: tuning`.
-  Name the data values to change and propose new values.
+  Name the data values to change and propose new values. For a value
+  judged by eye, the work offers Nick a live session with `cargo shuyi
+  run --watch` (`work-ticket` §4b, which lists the files it reloads).
 - **Design change** ("I want magic to work differently"): write a `00xx`
   decision ticket first, then implementation tickets blocked by it.
 

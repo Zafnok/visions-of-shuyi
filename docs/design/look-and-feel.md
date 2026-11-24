@@ -378,6 +378,37 @@ so they aren't in this repository (ADR-0032).
   | Gate | **A stand-in** (0322, until 0471): the Fortress set's open archway, on the grass ("serviceable", Nick) |
   | Throne | **A stand-in** (0322, until 0471): the bundle has no throne, so a cushioned chair (Overworld Interiors), on the floor's slabs |
 
+- **Art bought beside Tiny Tales for the stand-ins above** (decided
+  2026-11-22, ticket 0471; until the packs are bought and imported, the
+  table above still holds). Nick chose over four rounds of mockups: our
+  map's tiles with each candidate pasted in from its store preview,
+  moving where the art moves. Not chosen: Ivess's huts, the World Map
+  house recoloured to straw, MattWalkden's and other packs' tidy houses,
+  TinyWorld's hide huts; Pipoya's, Icarus Studios', Seliel's and
+  16Pixel's thrones; the bundle's own brazier flame and brullov's
+  fire.
+  - **House:** edermunizz, *Castle and Village* ($9), its small
+    **brown thatched cottages**, one tile each. Nick: [round 1, Ivess's
+    huts, the house recoloured, the World Map house:] "dont like any of
+    the options keep looking" … [asked which way to look:] "Thatched
+    cottages" … [after one more search:] "Yes, edermunizz brown".
+  - **Throne:** ArMM1998, *Tile Fantasy: Castle* ($5), its red-and-gold
+    throne, one tile. Nick: [Pipoya's, two tiles tall:] "B looks best
+    but maybe too tall" … [cut to one tile two ways:] "dont like any
+    keep looking" … [ArMM1998 against 16Pixel:] "ArMM1998".
+  - **Burning:** Krishna Palacio, *Minifantasy: Raided Village* ($4.99):
+    its animated flames on the burnt trees, in place of the orange-tinted
+    forest. Nick: "B and C look best, with C looking better. But can I
+    see it on the houses too?" … "is it possible to see each in motion"
+    … [on burning cottages:] "try to make the fire cover the whole house
+    if possible" … "Minifantasy". Its credit must name Krishna Palacio
+    (the pack's licence). The pack is drawn on an 8-pixel grid; its
+    flames are used at their own size.
+  - **Gate:** no better one-tile gate turned up; the archway stays.
+  - **Burning houses** (the mockups set the flames over cottages too):
+    not a terrain today. Whether a raided village shows houses on fire
+    is its own question (ticket 0094).
+
   A map **indoors** (its file says so: `look: (tiles: "indoor")`) is the
   Fortress set: slabs for the floor, brick for the walls, the door, and
   water as a dark pool with a stone rim. Terrains that set lacks (grass,
@@ -2248,12 +2279,20 @@ Overlays and cursor, as `move / attack / cursor / hp_high / hp_low`:
 
 | Theme | Values |
 | ----- | ------ |
-| C | `#1a5a78 #7a2c14 #f0c850 #8cd050 #e8582a` |
-| E | `#a8c0e0 #e8a898 #2a2218 #3a7a2a #b01e10` |
-| G | `#1c3a6a #5a1a1a #ffc860 #70d080 #ff5030` |
+| C | `#3a6fd0 #d83020 #f0c850 #8cd050 #e8582a` |
+| E | `#3a6fd0 #d83020 #2a2218 #3a7a2a #b01e10` |
+| G | `#3a6fd0 #d83020 #ffc860 #70d080 #ff5030` |
 
 E is a light theme: "acted" dimming must fade toward the background, not toward
 black.
+
+The move and attack colours were brightened in ticket 1319 (a new player
+found the two hard to tell apart over grass), and Nick decided there
+(2026-11-23) that the move, attack and heal ranges are **the same in every
+theme**: a theme doesn't change them, so a washed-out theme such as
+Parchment doesn't wash them out too. A test in `crates/ui`
+(`map_view/range_contrast_tests.rs`) keeps them equal and a minimum
+contrast apart over every theme's ground.
 
 ## Open sub-questions
 

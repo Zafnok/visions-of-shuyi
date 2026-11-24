@@ -12,10 +12,11 @@
 pub mod glyph;
 pub mod screen;
 pub mod view;
+pub mod voice;
 
 use crate::prelude::*;
 pub use screen::TipScreen;
-pub use view::{FaceView, LessonItemView, LessonView, LessonsEndView, TipView};
+pub use view::{EndAnswer, FaceView, LessonItemView, LessonView, LessonsEndView, TipView};
 
 use crate::words::SOURCE_LANG;
 use shuyi_ui::text::Args;
@@ -25,6 +26,16 @@ use trpg_content::tip::CURSOR_PLACEHOLDER;
 use crate::input::Action;
 use crate::screens::battle::split_keys::help_select_action;
 use crate::widgets::help::{HelpKeys, cursor_keys_name, key_name};
+
+/// Whether tips show in `ctx`: they are on, and the campaign's tutorial
+/// level (if any) shows them (0835). In battle and out of it.
+pub fn shown_in(ctx: &crate::screen::Ctx) -> bool {
+    ctx.game.tips_enabled
+        && ctx
+            .game
+            .campaign_tutorial
+            .is_none_or(trpg_core::TutorialLevel::shows_tips)
+}
 
 /// Which tips have been shown and forgetting them: Shuyi Engine's
 /// (`shuyi_ui::tips`, ticket 1112).

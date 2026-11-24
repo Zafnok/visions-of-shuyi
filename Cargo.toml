@@ -26,13 +26,14 @@ insta = "1"
 # `shuyi-engine.rev`: `cargo xtask engine-pin <commit>` moves both. The
 # crates the Playdate builds without `std` have their default features off
 # here; a crate that needs `std` turns it on.
-shuyi-core = { git = "https://github.com/Zafnok/shuyi-engine", rev = "50472bbcd3084555a61728a5d07518f720bd6514", default-features = false }
-shuyi-assets = { git = "https://github.com/Zafnok/shuyi-engine", rev = "50472bbcd3084555a61728a5d07518f720bd6514", default-features = false }
-shuyi-ui = { git = "https://github.com/Zafnok/shuyi-engine", rev = "50472bbcd3084555a61728a5d07518f720bd6514", default-features = false }
-shuyi-platform = { git = "https://github.com/Zafnok/shuyi-engine", rev = "50472bbcd3084555a61728a5d07518f720bd6514", default-features = false }
-shuyi = { git = "https://github.com/Zafnok/shuyi-engine", rev = "50472bbcd3084555a61728a5d07518f720bd6514" }
-shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "50472bbcd3084555a61728a5d07518f720bd6514" }
-shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "50472bbcd3084555a61728a5d07518f720bd6514" }
+shuyi-core = { git = "https://github.com/Zafnok/shuyi-engine", rev = "f2b46cd57d30e36cf0d44f7e290a3aa44a416997", default-features = false }
+shuyi-assets = { git = "https://github.com/Zafnok/shuyi-engine", rev = "f2b46cd57d30e36cf0d44f7e290a3aa44a416997", default-features = false }
+shuyi-ui = { git = "https://github.com/Zafnok/shuyi-engine", rev = "f2b46cd57d30e36cf0d44f7e290a3aa44a416997", default-features = false }
+shuyi-platform = { git = "https://github.com/Zafnok/shuyi-engine", rev = "f2b46cd57d30e36cf0d44f7e290a3aa44a416997", default-features = false }
+shuyi = { git = "https://github.com/Zafnok/shuyi-engine", rev = "f2b46cd57d30e36cf0d44f7e290a3aa44a416997" }
+shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "f2b46cd57d30e36cf0d44f7e290a3aa44a416997" }
+shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "f2b46cd57d30e36cf0d44f7e290a3aa44a416997" }
+shuyi-embed = { git = "https://github.com/Zafnok/shuyi-engine", rev = "f2b46cd57d30e36cf0d44f7e290a3aa44a416997" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

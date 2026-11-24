@@ -5,7 +5,6 @@ use crate::prelude::*;
 use alloc::collections::VecDeque;
 
 use trpg_content::{Tip, TipTrigger};
-use trpg_core::TutorialLevel;
 
 use crate::screen::Ctx;
 use crate::tips::TipsSeen;
@@ -52,16 +51,6 @@ impl TipState {
         }
     }
 
-    /// Whether tips show in `ctx`: they are on, and the campaign's
-    /// tutorial level (if any) shows them (0835).
-    pub fn shown_in(ctx: &Ctx) -> bool {
-        ctx.game.tips_enabled
-            && ctx
-                .game
-                .campaign_tutorial
-                .is_none_or(TutorialLevel::shows_tips)
-    }
-
     /// Queues the fired triggers whose tip exists and hasn't been seen
     /// (nor is queued already). With tips off, or a campaign whose tutorial
     /// level shows none, they are just forgotten, and the tips already
@@ -69,7 +58,7 @@ impl TipState {
     /// mid-battle in Options, 0841).
     pub fn absorb(&mut self, ctx: &mut Ctx) {
         let fired = core::mem::take(&mut self.fired);
-        self.off = !Self::shown_in(ctx);
+        self.off = !crate::tips::shown_in(ctx);
         if self.off {
             return;
         }

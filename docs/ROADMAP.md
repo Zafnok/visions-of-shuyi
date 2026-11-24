@@ -138,6 +138,32 @@ was never played; 0804 and 1050 closed into **1064**, which waits for
 every round 4 ticket above, and none of them waits for 1118 or 1050 any
 more (Lane G of *Act 1 critical path*).
 
+**A new player's Chapter 1 session** (Nick, 2026-11-22, watching a
+player new to games play Chapter 1; all on the Act 1 critical path, by
+Nick's pick, except the terrain rules, which wait for their decisions):
+**1311** the low-HP tip shows whenever its moment comes · **1312** Vix's
+tip steps aside while unit info or another full page is open · **1319**
+stronger move and attack range colours · **1320** the game fills a
+1280×720 window · **0095** how the lead stands out on the map → **1313**
+· **0098** a mode easier than Casual → **0880** the mode → **0536** a
+newcomer bot · **0096** the tileset overhaul, moving tiles and drifting
+effects, and **1314** a graphics tier per target with a still fallback
+for every moving look (Nick: the Playdate and a future GBA come later
+but are never forgotten) → **1315** flowing water and swaying trees ·
+**1316** drifting petals · **1318** the tileset overhaul · **More life,
+chapter by chapter** (Nick, 2026-11-23, after Stardew Valley's small
+touches): **1322** ambient sound and **1323** hit particles and map
+touches (with 0096, the palette) → **1332** the ambience player ·
+**1333** hit bursts in the fight · **1334** dust, splashes and creatures
+(both after 1316) → **1324–1331** each chapter's picks (Chapters 6–8
+after their battles) → **1335–1342** each chapter's data → **1344**
+passing calls asked again (Nick: not "for now"); **1317** every
+ticket says what the lesser targets get (after 1314) · **1321** Vix's
+tips show a small moving picture (after **0469**, widened to the tip
+box). Not yet on the critical path: **0099** deep water and who swims →
+**0336**; **0097** breakable barricades and one-way doors → **0337**,
+**0338** (their decisions say which battles use them).
+
 **Replaceable graphics** (Nick, 2026-10-01: swapping the map's glyphs for
 sprites from image files must be a small job; ADR-0038): **0231** pictures
 in the frame as sprite items (no open dependencies; 0711 and 0413 now draw
@@ -173,17 +199,23 @@ options (Chinese added 2026-10-04), and a
 script a hired writer can take over; **not** a blocker for Chapter 1 or
 Act 1). Shared first step: **0717** every dialogue line gets an id (no
 open dependencies).
-*Japanese* (ADR-0045): **0042** Nick picks the font and how a language is
-chosen → **0233** screen text by key (no open dependencies) → **0234** the
+*Japanese* (ADR-0045): **0042** Nick picks the Japanese font, names and
+title (how a language is chosen and labelled was 0045's, for every
+language) → **0233** screen text by key (no open dependencies) → **0234** the
 rest of the screens (the battle and class change screens: **0243**) and **0235** data names, tips and dialogue (also needs
-0717); **0236** wide glyphs (after 0042 and engine#2301) → **0237**
-Japanese line breaking (after engine#2302); **0825** the Options row (after 0805); **0718** the translation
+0717); **0236** wide glyphs (the first wide font: Chinese's, since
+0042 is open; engine#2301 done) → **0237**
+line breaking for Chinese and Japanese (after engine#2302); **0825** the Options row (after 0805); **0718** the translation
 pipeline → **0719** Chapter 1 and the screens in Japanese (after 0716).
-*Chinese (Simplified)*, on the same engine work: **0045** Nick gives the
-characters for "Shuyi", the Chinese title and font, and says who checks
-it (after 0042) → **0239** a wide font per language and Chinese line
-breaking (after 0236, 0237 and engine#2303); **0725** the translation pipeline (after
-0235) → **0726** Chapter 1 and the screens in Chinese (after 0716, 0825).
+*Chinese (Simplified)*, on the same engine work: **0045** done
+(2026-11-24, Chinese first: 姝怡, the title 姝怡的魔幻之境, Fusion Pixel
+12px, Nick's wife checks the lists and plays Chapter 1) → **0239** a
+wide font per language and Chinese line breaking (after 0236, 0237;
+engine#2303 done) → **0261** Unifont 16px as a second font in Options
+(after 0825); **0262** typing Chinese names with the system's input
+method (after 0068; not Chapter 1); **0725** the translation pipeline
+(after 0235) → **0726** Chapter 1 and the screens in Chinese (after
+0716, 0825, and Nick's wife's review of the lists).
 *Voices* (ADR-0046, ADR-0107): **0043** done, Nick picked the tools, what is
 voiced and each voice by ear; **0238** playback plumbing (after 0717) →
 **0754** the voice's word for the player's name, **0720** the dialogue screen
@@ -322,7 +354,8 @@ recruit joins outside battle.
 
 - **A. World map:** **0322** the house, gate and throne tiles (after
   0037) → **0313** save the village · **0471** a tileset for poor
-  houses and a throne (after 0322; Nick buys) · **0409** the shop
+  houses and a throne (after 0322) → **0460** import the cottages,
+  throne and moving fire (Nick buys) · **0094** houses on fire? · **0409** the shop
   screen → **0473** its music (after 0028) · **0443** the Preparations shop tab (after
   0044) → **0474** a negative bonus reads `Res -3` · **0606** promote and reclass · **1003** supports and camp
   screens (after 0027) → **1007** the world map (after 0409, 0025,
@@ -418,13 +451,16 @@ recruit joins outside battle.
   explains wading · **0078** → **0484** stats easy to see in battle ·
   **0609** a spell learned in battle comes with its uses · **0762**
   voiced lines without long pauses (→ **0757**) · **0763** the dialogue
-  box at the bottom · ~~**0864** the sergeant a little stronger~~ done → **0531** the bots' armies don't hang on one recorded win → **0876** Chapters 3–5 back in their bands (also after 0527 and 0528, Lane I) ·
+  box at the bottom · ~~**0864** the sergeant a little stronger~~ done → ~~**0531** the bots' armies don't hang on one recorded win~~ done (8 lines of the bots' own wins; **0535** one table-driven replay test and `record-wins` after it, off the path) → **0876** Chapters 3–5 back in their bands (also after 0527 and 0528, Lane I) ·
   **0865** the music dips under a voiced line (after engine#2511 →
   engine#2342 → engine#2343).
 - **I. Nick's playtest of the Act 1 build** (2026-11-08). Decisions
   first, each building in its own ticket: **0079** who wields the
-  Houndmaster's Axe → **0332** · **0080** how the army gets through
-  armour → **0333** · **0081** a bigger EXP cut for a level gap →
+  Houndmaster's Axe → **0332** · ~~**0080** how the army gets through
+  armour~~ ✅ decided 2026-11-22 (bows and spears pierce: a hit does at
+  least 2 and 3; the bots report player-side changes, **0533**, after
+  0527) → **0333** (after **0534** the bots' army repairs its worn
+  weapons, found by 0080) · **0081** a bigger EXP cut for a level gap →
   **0610** · **0082** Chapter 2's houses within reach → **0867** ·
   ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 →
   **0335** one list of what a unit can do → **0334** (its look, not blocking: **0089**, ~~**0499**~~ done) · **0084**
@@ -442,10 +478,11 @@ recruit joins outside battle.
   the roads · **1089** a town's world-map picture cut right ·
   **0453** (Lane G) gives Cinder Oath its "no counter" note. The
   balance tickets (0332, 0333, 0610, 0870, 0528, 0867, 0868) and 0876
-  each re-record the bots' winning playthroughs, so they run one at a
-  time, after **0527** and **0531**: **0528** first (it waits on no
-  decision), then **0876**, then 0333 → 0610 → 0870 → 0867 → 0868 as
-  Nick's decisions arrive, 0332 after 0079. **0532** (band reports show
+  re-record the bots' winning playthroughs; since **0531** they may run
+  side by side (whichever lands second re-records with the first in;
+  rule dropped by the feedback-latency retro, 2026-11-24): **0528** and
+  **0610** now (no decision waits), **0876**, and 0333 · 0870 · 0867 ·
+  0868 as Nick's decisions arrive, 0332 after 0079. **0532** (band reports show
   a 95% interval) may go any time.
 - **J. A human writer** (Nick, 2026-11-08: the dialogue reads robotic
   after three or four rewrites; AI writing of dialogue is paused until
@@ -482,6 +519,20 @@ recruit joins outside battle.
   0766's test audit of the demo (2026-11-19): **1303** unnamed enemies
   show the soldier face in unit info. All before **0766** sends the demo
   out.
+- **L. A new player's Chapter 1 session** (Nick, 2026-11-22; all before
+  1064 by Nick's pick): **1311** the low-HP tip · **1312** the tip steps
+  aside for unit info · **1319** range colours · **1320** the window
+  filled · **0095** → **1313** the lead on the map · **0098** → **0880**
+  a mode easier than Casual → **0536** its newcomer bot · **1314**
+  graphics tiers and fallbacks → **1317** the lesser-targets checklist;
+  **0096** → **1315** moving tiles · **1316** drifting petals (both also
+  after 1314) · **1318** the tileset overhaul · **1322**, **1323** →
+  **1332**, **1333**, **1334** → **1324–1331** → **1335–1342** ambience,
+  particles and sounds chapter by chapter → **1344** passing calls
+  asked again · **0469** → **1321**
+  pictures in Vix's tips. After their decisions say which battles:
+  **0099** → **0336** deep water; **0097** → **0337** barricades ·
+  **0338** one-way doors.
 
 **Phase 3: content.** **0743** the new cast's character sheets (after
 0736) → the scripts, one chapter at a time because the ledger makes
@@ -549,10 +600,11 @@ Design answers unblock most of the rules work. Suggested order:
 4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** the red captain's combat picture (done: Shironejiya's bearded axe bandit) · **0040** more packs for fighters with no fitting art (done) · **0413** how the combat scene looks · **0022** victory sting (done: Fupi's Win Jingle, a random version each win) · **0023** defeat sting (done: no sting; The Fallen plays from the banner through Game Over) · **0024** Game Over music (done: The Fallen loops, with a pause between rounds) · **0810** how battle rewards are shown
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0812** chapter card · **0813** transitions
    · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
-   · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
+   · **0042** Japanese: font, naming the lead, names, title · **0043** AI voices: the tool, what is voiced, each voice by ear · ~~**0045** Chinese~~ ✅ decided 2026-11-24 (the characters for "Shuyi", the Chinese title, the fonts, who checks it, and for every language how one is picked and labelled)
 6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · ~~**0018** higher-rank Combat Arts & special weapons~~ ✅ decided 2026-10-26 (built by 0325–0329) · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces → **0076** the shieldbearer's and the Hound lieutenant's · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · From a friend's playtest (2026-11-07): **0078** stats easy to see in battle; asked inside their tickets: **0479**, **0480**, **0481**, **0864**
-   · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · **0080** how the army gets through armour · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 (how a rider on foot looks: **0089**) · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870** (**0184** puts these first, in the order the balance tickets need them). Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick
+   · From Nick's playtest (2026-11-08, Lane I): **0079** who wields the Houndmaster's Axe · ~~**0080** how the army gets through armour~~ ✅ decided 2026-11-22 (bows and spears pierce) · **0081** a bigger EXP cut for a level gap · **0082** Chapter 2's houses within reach · ~~**0083** getting off and back on a horse~~ ✅ decided 2026-11-17 (how a rider on foot looks: **0089**) · **0084** Chapter 3's throne and its guards; asked inside its ticket: **0870** (**0184** puts these first, in the order the balance tickets need them). Lane J's setup: ~~**0153**~~ ✅ (picked B+: the story and the content to the private assets repository), **0156** a Dependabot secret, **0158** the restricted itch.io page, **0152** the scripts repository, **0766** the ad and the pick
+   · From a new player's Chapter 1 session (2026-11-22): **0095** the lead on the map · **0096** tilesets, moving tiles, drifting effects · **1322** ambient sound · **1323** hit particles and map touches → **1324–1331** each chapter's ambience · **0098** a mode easier than Casual · **0099** deep water and swimmers · **0097** barricades and one-way doors
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)

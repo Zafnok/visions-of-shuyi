@@ -6,7 +6,8 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0070", "1042", "1041", "0076", "0858", "0861", "0862", "0866", "0852", "0853", "0854"]
+blocked_by: ["0070", "1042", "1041", "0076", "0858", "0881", "0861", "0862", "0866", "0852", "0853", "0854"]
+blocks: ["1064"]
 nick_input: none
 completed:
 ---

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Prints one sha256 of everything a playtest report can depend on (ticket
 # 0173): the toolchain and the lock file, the engine pin, the rules, the
-# content and the bots, the playtest command, the public and test files,
-# the recorded playthroughs, the private content's tree (assets-private/
+# content and the bots (their recorded wins too, crates/bots/wins/), the
+# playtest command, the public and test files, the private content's tree (assets-private/
 # must be checked out) and the workflow and its scripts. The same hash
 # gives the same reports (the seeds are fixed), so the Playtest workflow
 # reuses a report whose inputs hash the same.

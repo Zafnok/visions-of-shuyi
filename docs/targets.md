@@ -17,6 +17,26 @@ budget (ticket 1244).
 | web | 20,000,000 | 256 MB | 25 MB |
 | playdate | 2,000,000 | 10 MB | 40 MB |
 
+## The graphics tiers
+
+Each profile also says its **graphics tier** (engine ticket 3347,
+[ADR-0131](adr/0131-each-target-has-a-graphics-tier-and-every-moving-look-names-its-stills.md)):
+how much the game moves and draws there beyond its stills. Every look
+that moves by itself (a tile that loops through frames, petals drifting
+over the map) names its still for each tier below the one it moves from,
+and the skins draw that still there.
+
+| Target | Tier | What it shows |
+| --- | --- | --- |
+| desktop | `Full` | every moving look |
+| web | `Full` | every moving look |
+| playdate | `Reduced` | stills, and at most a few cheap moving tiles; no particles, no effects over the screen |
+| (a GBA) | `Minimal` | stills only. `TODO(gba)`: no target yet (engine ticket 3022 measures one); every moving look names its `Minimal` still now, so a port later is not a big job |
+
+To see a lesser tier on the PC: `cargo shuyi frame-png --graphics reduced`
+for a picture, or `SHUYI_GRAPHICS=reduced` before `cargo run -p trpg-app`
+for a debug build of the game.
+
 ## The scenarios
 
 `cargo shuyi bench` (engine ADR-0081) plays the scenarios in `bench/`

@@ -22,6 +22,18 @@ Why Terminus:
 - Clean, even strokes designed for long reading sessions at small sizes.
 - OFL-1.1 is allowed for fonts by ADR-0013 and permits commercial bundling.
 
+## Chinese (Simplified): chosen, not yet in the atlas
+
+Nick picked these by eye in ticket 0045 (`docs/design/voices-languages-and-script.md`,
+*Chinese (Simplified)*; mockups `docs/screenshots/0045-*.png`). Ticket
+0239 adds the default to the atlas, and 0261 the second one with the
+Options row. The full list of fonts checked is in the design doc.
+
+| Candidate | Licence (checked at source, 2026-11-24) | GB 2312 coverage (counted from the files) | Verdict |
+| --------- | ---------------------------------------- | ----------------------------------------- | ------- |
+| **Fusion Pixel 12px** 2026.11.10, `fusion-pixel-12px-monospaced-zh_hans.bdf` | SIL OFL-1.1 (`OFL.txt` and `LICENSES/` in the [release](https://github.com/TakWolf/fusion-pixel-font/releases/tag/2026.11.10)); parts Ark Pixel, Galmuri, Cubic 11, all OFL-1.1 | level 1: 3,755 / 3,755; level 2: 2,972 / 3,008 | **Chosen**, the default (12×12, drawn in the 16×16 space of two cells) |
+| **GNU Unifont** 18.0.01, `unifont-18.0.01.hex` / `.bdf` | SIL OFL-1.1 or GPL-2+ with the font exception ([`LICENSE.txt`](https://unifoundry.com/LICENSE.txt)); we take the OFL | level 1: 3,755; level 2: 3,008 | **Chosen**, the Options alternative |
+
 ## Files
 
 | File | What |
