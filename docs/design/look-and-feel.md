@@ -532,6 +532,84 @@ so they aren't in this repository (ADR-0032).
   The glyph look keeps its tinted background.
 - Cursor, path line, HP bar and range tints keep their rules below.
 
+### Moving tiles and effects
+
+Ticket 0096, asked 2026-11-23 over several rounds of moving mockups (the
+game's own frames of Chapter 1, and each candidate pack's store previews
+with our Tiny Tales units placed on them; kept in the session, never
+committed: they show bought art). **The tileset itself is still being
+chosen** (see *Which tileset* below); what is settled:
+
+- **Motion is drawn by an artist, not made by the game.** Round 1 showed
+  the game faking it: tree rows shifted one pixel to sway, the water's
+  blues cycling, white glints, and stand-in specks for petals. Nick: "the
+  rest is bad … everything but not the way you made it pref an animated
+  tileset". So moving tiles come from a tileset (or add-on) whose frames
+  are drawn, and drifting effects from effect art.
+- **What should move on the battle map** (Nick: "everything"): rivers and
+  the sea, shore foam or waves, trees or grass swaying, torches and
+  braziers, chimney smoke. How fast is the art's own timing. What a pack
+  actually animates limits this: no pack found animates trees at our
+  scale, so a sway may come later or not at all.
+- **Drifting effects, as kinds a chapter can name** (the palette that
+  1324–1331 pick from): **petals, leaves (green and autumn), snow, ash,
+  fireflies**. Nick on the leaves: "a good idea but looks poorly
+  implemented … we can also look if this kind of effect is an asset too".
+  Art: **Elthen's Weather and Ambient Effects** ($5: falling leaves, wind,
+  fireflies, snow, rain, fog), with an overlay pack to fill what it lacks
+  (petals, ash). Overlay packs Nick kept: ByteWright's *Weather Overlays*
+  (38 loops, petals, embers and ash among them), Arrie's *Pixel
+  Environment FX*, Mana Seed's *Weather Effects* (rain, snow). Which
+  overlay fills which kind is decided with the tileset, after the packs'
+  files are seen.
+- **Where: the battle map only.** Talk scenes and the world map stay as
+  they are. Nick: "battle map only and probably we decide density later".
+  How many particles is decided later, per chapter (1324–1331).
+- **The Playdate** (and any weaker target, 1314) shows the map still: no
+  moving tiles, no drifting effects. Not contested; the default from
+  1314.
+- **Licences:** each candidate's licence was read and allows a sold
+  Steam game. Elthen's base licence is non-commercial with a written
+  permission for commercial games on top; get that permission in writing
+  at purchase. Nothing is bought until Nick says.
+
+#### Which tileset
+
+What the search found (four rounds, about 40 packs): flowing water and
+waterfalls are common; drawn tree sway at 16 pixels is not; no single pack
+has every terrain with water, trees, torches and smoke all moving. Tiny
+Tales' own sets barely move: their Tiled files list frame loops for
+coasts, hills and woods whose frames are all the same picture; only its
+Beach sets (surf), waterfalls and objects (braziers, torches, smoke, doors)
+truly move, and its RPG Maker water sheets are still too.
+
+- **Round 1** (Tiny Tales' World Map set with a ground per terrain):
+  "bad … search for other packs and even bought is ok as long as it has a
+  lot of value and a good style and pref hand made". The 48-pixel sets in
+  the bundle are three times our tile and were ruled out.
+- **Round 2–3** (ten packs from their stores; then our units on two):
+  - *The Fantasy Tileset* (Ventilatore): "I like fantasy tileset more than
+    I thought", but "a little bright like for a cozy game" and "has a
+    problem with scaling, everything is huge next to our chars".
+  - *Mana Seed* (Seliel the Shaper): "while absolutely beautiful clashes
+    heavily with the tiny tales characters".
+  - Heroic Overworld (IKnowKingRabbit) and Puny World: "would work for our
+    world map but not for the battle maps" (a note for the world map,
+    1007, not taken further here). The rest: "not particularly good".
+- **Round 4**:
+  - Packs at Advance Wars scale (Clean Tactics, Franuka's Tactical RPG
+    Overworld): "more overworldy not really battle tileset".
+  - *Sunnyside World* (Daniel Diggle): "looks closest but not enough
+    animated I think and a bit bright id rather it be more muted".
+  - **Kept in the pocket:** Mana Seed's tiles with **Time Fantasy's**
+    characters (finalbossblues: about 80 characters two tiles tall, 104
+    portraits, side-view battlers), replacing every Tiny Tales picture.
+    Nick: "mana seed and time fantasy is ok to keep in our pocket".
+- **Still looking for:** a hand-made 16-pixel set at a battlefield's scale
+  (trees one or two tiles, cottages two to four tiles wide) that sits
+  with Tiny Tales' characters, in a **muted** palette, with drawn
+  animation; or a muted set plus small animated add-ons.
+
 ### Units on the map (the glyph look)
 
 - A unit is drawn as **two letters: an initial pair from its name** (`Al`,

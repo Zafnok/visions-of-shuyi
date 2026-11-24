@@ -95,6 +95,46 @@ from another seller gets its own row and credit.
     Vol.1*; the Character Generator. Not planned: the Code Ark sci-fi packs
     and UI kit, *Terrains Plus* and the two *Trees* packs (48-pixel tiles
     in another style).
+- **Electric Lemon (Electric Lemon Games), "Pixel Grit" series**: the
+  bundle *Fantasy RPG Characters & Tile Set Bundle (Pixel Grit Series)*,
+  <https://itch.io/s/148198/fantasy-rpg-characters-tile-set-bundle-pixel-grit-series>
+  (Lonesome Forest with its extra trees, Grand Forests, Old Town Exteriors
+  and Interiors, Natural Interiors, Dungeons, World Map; Citizens, Guards
+  and Warriors; Warriors, Rogues and Mages; Heavy Knight; Creatures
+  Extended; High Dragon; the Vampire Lord), and *Fantasy RPG Tileset:
+  Stronghold* with its *Ballista and Catapult*,
+  <https://electriclemon.itch.io/fantasy-rpg-tileset-fortress> ($4.49).
+  Bought by Nick on **2026-11-24** for ticket 0096. *Private*: sorted in
+  `library/electric-lemon/`, the downloads untouched in
+  `originals/electric-lemon/`, each pack's licence in
+  `library/electric-lemon/licences/`.
+  - **Licence**, in every pack's licence file: "You may not publicly
+    distribute the contents of this zip file in whole or in part, unless
+    as part of a digital game or application product." Attribution "is
+    NOT necessary" (some packs: "appreciated but NOT necessary"); "Feel
+    free to use in any for profit / not for profit product". We credit
+    Electric Lemon anyway.
+  - **AI-assisted:** no (the store pages say no generative AI was used).
+  - **In the game:** nothing yet; candidates for the battle map's
+    tileset (0096).
+- **ByteWright, "Everything So Far :)"** (all 33 ByteWright packs),
+  <https://itch.io/s/216178/everything-so-far->, <https://bytewrightstudio.itch.io/>.
+  Bought by Nick on **2026-11-24** for **$8.59** for ticket 0096.
+  *Private*: every download as bought in the private repository's release
+  `originals-bytewright` (too big for git); the packs the game can use,
+  lean, in `library/bytewright/`; every pack's licence in
+  `library/bytewright/licences/`.
+  - **Licence**, in every pack: use in any number of games, commercial or
+    not; edit, recolour, cut up and combine; "Credit is appreciated but not
+    required"; never resell, share or re-upload the assets themselves; no
+    NFTs; the newer wording also forbids training AI on them. We credit
+    ByteWright anyway.
+  - **AI-assisted:** no ("No generative AI was used" on every pack; the
+    licence: "hand-crafted pixel art and sound made by us, never produced
+    by an AI tool").
+  - **In the game:** nothing yet; candidates: Weather Overlays for the
+    drifting effects (0096), Ambient Critters (1323), the VFX & SFX mega
+    pack and the sound effects pack (1322, 1323).
 
 - **ELV Games, "Game Assets Mega Bundle"** (293 products),
   <https://itch.io/s/79053/game-assets-mega-bundle>, store
