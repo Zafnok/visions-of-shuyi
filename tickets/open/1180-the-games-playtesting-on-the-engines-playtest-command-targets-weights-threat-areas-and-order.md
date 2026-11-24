@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: high
 status: todo
-blocked_by: ["0506", "engine#2129", "engine#2130", "engine#2131", "engine#2132", "engine#2532", "engine#2533", "engine#2021"]
+blocked_by: ["0506", "engine#2129", "engine#2130", "engine#2131", "engine#2132", "engine#2532", "engine#2533", "engine#2021", "engine#2148"]
 nick_input: none
 completed:
 ---
@@ -19,7 +19,8 @@ The 0506 sweep (`docs/engine/friction.md`, ADR-0095) found seven generic
 pieces in the game's bots/tooling. Nick asked that other games get them
 too. All seven named engine tickets are done and the game pin has passed
 them (the 2026-10-25 move to `b4591a81`, and subsequent pins). Keep their
-ids as minimum-revision requirements; there is no remaining engine wait.
+ids as minimum-revision requirements. One engine wait was added since:
+engine#2148 (below).
 
 The 2026-11-01 audit found this adoption still outstanding. The original
 combined ticket planned roughly 300 production lines added and 1,000
@@ -44,7 +45,8 @@ Those three PRs added about 350 lines to `crates/core/src/movement.rs`
 
 The game/engine boundary audit of 2026-11-03 checked again: game 0506
 and all seven engine tickets are in `done/`, and the pin (`96e97bf`) is
-past them, so this ticket is ready now. It found two more things here:
+past them. (Engine#2148 was added later, below.) It found two more
+things here:
 
 - `crates/core/src/movement.rs` keeps three more copies of
   `shuyi_core::threat` beside `threat_area` (`attack_tiles`, `danger_zone`
@@ -56,6 +58,43 @@ past them, so this ticket is ready now. It found two more things here:
   `crates/core/src/ai.rs`, where stepping onto a target's tile is free)
   is `GoalDistance`'s rule. The escape exit and `raid_flow` charge
   terrain on the goal tile, so they stay on `path::flow_field`.
+
+**Blocked again by engine#2148** (2026-11-24, the session that started
+this ticket). The game's `order` gained steps after engine#2132 built
+`TacticsOrder` from it, and two can't be said with that ticket's
+`Kind`s, so traces could not stay equal:
+- 0523: one strike per unit first, its other targets after the
+  advances and holds, before its other ways;
+- 0517: no wandering once no foe is left, while advances, holds and the
+  AI's pick are still tried.
+
+The targets also have kinds of stage the engine lacked:
+- `skirmish_bands` (0510) and `hold_bands` (0851);
+- no median check on a hold.
+
+Nick asked for one engine ticket with every such gap, the open tickets'
+included: engine#2148 (A–C are this ticket's; D is 0532's, E is 1276's).
+Use them so:
+- `TacticsOrder::with_targets_after_steps(true)`;
+- with no foe of the player left, a `Wait` is `Kind::Spare { step }` and
+  every other `Act` of the rest is `Kind::Spare { step: None }` (a
+  `MoveAfter` stays `Other`);
+- escape and seize are `Extra` group 1, once per unit and action;
+- a survive's cover is `Extra` group 2, valued `(kept off, −distance to
+  the lord)`;
+- with no goals, the `distance` hook answers the walk from where the
+  unit stands, for a unit in reach only (0529's hold);
+- the targets' skirmish and hold bands are `Targets::kinds`, passed to
+  `checks_of` as `[hold, skirmish]`, so a skirmish's own bands win. The
+  game's reader checks that `skirmish_bands` lists every entrant of a
+  tier it has, as the overlay is entrant by entrant.
+
+A cover is never a hold, because a hold's tile is safe. It can only be a
+unit's advance in a survive with goals (houses), where the game drops
+that unit's advance and `TacticsOrder` takes its next one. The seeded
+traces show whether any battle has that case. Moving the pin past
+engine#2148 is this ticket's first step (`engine-change` §7, with the
+`engine-pin` skill's review).
 
 **Either order with 0527:** 0527 adds per-unit measures to the bots'
 report (damage dealt, kills, EXP and level for each playable unit, and a
@@ -174,8 +213,8 @@ not an optional split based only on added production lines.
 
 ## Acceptance criteria
 
-- [ ] Pin is past the seven named engine tickets; `ticket-lint
-      --check-engine` passes. No pin move is required on today's main.
+- [ ] Pin is past the eight named engine tickets (engine#2148 included);
+      `ticket-lint --check-engine` passes.
 - [ ] Seeded command traces, per-try measures and verdicts agree with the
       pre-migration baseline, including retreat/escape and stationary
       enemies. Existing AI and `crates/bots/tests/baseline.rs` tests pass.

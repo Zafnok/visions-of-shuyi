@@ -129,9 +129,15 @@ merge: verified by tests and the bots' reports in the PR.
    `grinder_margin(report, targets) -> Vec<MarginVerdict>` computed from
    the report's tries with each persona's success conditions. A miss is
    what 0087 says; if it is silent, report only (✗), like a missed band.
-   A generic "gap between two entrants' rates" is an engine-feature
-   candidate: run `engine-friction`, and file it only by `engine-change`
-   (which asks Nick first); the game never waits for it.
+   The generic "gap between two entrants' rates" is engine#2148's part E
+   (`Check::Gap`, `Targets::gaps`; Nick asked for it, 2026-11-24). The
+   turns margin stays the game's: engine#2148 leaves a median gap out.
+   **Either order with engine#2148:** if the pin is past it, each
+   persona's rate points are a `GapTarget` (`<persona>+grind` against
+   `<persona>`, the persona's success conditions) and `grinder_margin`
+   reads its `Found::Gap`; if not, `grinder_margin` computes the rate gap
+   here, marked `// engine-friction: engine#2148`, and the game never
+   waits for it.
 7. The report: an `army · grinder …` line (what was forged, for whom) and
    one margin line per persona; `--grinder` on the playtest command (off
    by default), and CI's playtest job passes it for story battles.
