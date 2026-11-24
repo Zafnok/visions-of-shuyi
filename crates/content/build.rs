@@ -224,7 +224,7 @@ fn write_file_tables(private: bool, content: bool, demo: bool) {
     both.sort_unstable();
     both.dedup();
     if let (Some(plan), true) = (LEFT_OUT.get(), content) {
-        plan.left_out(&both)
+        plan.left_out(&both, None)
             .unwrap_or_else(|e| panic!("the edition's list of what it leaves out: {e}"));
     }
     let list = std::fs::read_to_string(PLAYDATE_LIST)
@@ -320,7 +320,12 @@ fn write_demo(files: &[String], content: &[String], private: bool) {
     let list =
         std::fs::read_to_string(DEMO_LIST).unwrap_or_else(|e| panic!("reading {DEMO_LIST}: {e}"));
     let plan = demo_bundle::Plan::parse(&list).unwrap_or_else(|e| panic!("{DEMO_LIST}: {e}"));
-    plan.left_out(files)
+    let mut art = if private {
+        files_of(PRIVATE)
+    } else {
+        Vec::new()
+    };
+    plan.left_out(files, private.then_some(&art[..]))
         .unwrap_or_else(|e| panic!("{DEMO_LIST}: {e}"));
     let edition = edition::EDITION_FILE.to_owned();
     let mut kept: Vec<String> = files
@@ -341,11 +346,6 @@ fn write_demo(files: &[String], content: &[String], private: bool) {
         }
     };
     write_out("demo_files.rs", &table(kept.iter(), source));
-    let mut art = if private {
-        files_of(PRIVATE)
-    } else {
-        Vec::new()
-    };
     art.retain(|f| !plan.leaves_out(f));
     let source = |path: &String| demo_copy(&plan, PRIVATE, "demo-private", path);
     write_out("demo_private_files.rs", &table(art.iter(), source));

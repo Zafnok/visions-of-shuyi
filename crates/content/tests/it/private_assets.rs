@@ -116,6 +116,46 @@ fn the_bought_map_sprites_are_standing_frames_of_whole_sheets() {
     );
 }
 
+/// The named characters with art of their own beyond Chapter 1 (ticket
+/// 0858): each speaks with a bought face, and the map and the combat scene
+/// pick their own picture, not their class's. A class default or a missing
+/// portrait fails here, though either would still fill the frame.
+#[test]
+fn named_characters_resolve_their_own_face_map_sprite_and_battler() {
+    use trpg_content::bundle::{display_path, is_private};
+    use trpg_content::portrait::REQUIRED_EXPRESSIONS;
+    use trpg_core::{CharacterId, ClassId};
+
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    let tileset = &content.tilesets["tiny_tales"];
+    // (character, its class, its map sheet)
+    for (id, class, sheet) in [("defector", "swordsman", "units/thief.png")] {
+        let portrait = content.portraits.get(id);
+        let portrait = portrait.unwrap_or_else(|| panic!("{id} has no portrait"));
+        for name in REQUIRED_EXPRESSIONS {
+            let found = portrait.expressions.iter().find(|e| e.name == name);
+            let found = found.unwrap_or_else(|| panic!("{id} has no {name} face"));
+            let shown = display_path(found.image.path());
+            assert!(is_private(&shown), "{id} {name}: {shown}");
+        }
+
+        let character = CharacterId(id.into());
+        let class = ClassId(class.into());
+        let picture = tileset.unit_picture([&character], &class);
+        assert_eq!(picture.image.path(), sheet, "{id}'s map sprite");
+        assert_ne!(Some(picture), tileset.classes.get(&class).copied(), "{id}");
+
+        let battler = content.battlers.pick([id, class.0.as_str()]);
+        let battler = battler.unwrap_or_else(|| panic!("{id} has no battler"));
+        assert_eq!(battler.id, id, "{id}'s combat picture");
+        let shown = display_path(battler.image.path());
+        assert!(is_private(&shown), "{id}'s battler: {shown}");
+    }
+}
+
 /// The bought terrain tiles (`cargo xtask tileset-import`, ADR-0052): the
 /// game's tileset paints the ground with 16×16 tiles of its packed image,
 /// in layers, and has every look a map can name: its own (a map outdoors)
