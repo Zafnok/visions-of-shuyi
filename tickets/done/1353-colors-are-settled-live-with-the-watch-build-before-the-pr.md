@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-24
 ---
 
 # 1353 — Colors and numbers are settled live with the watch build before the PR
@@ -48,9 +48,10 @@ and record the settled value and the pictures in the PR. Which files
 
 ## Acceptance criteria
 
-- [ ] The skill names the command and the files it reloads.
-- [ ] `scripts/sync-agent-skills.ps1 -Check` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The skill names the command and the files it reloads.
+- [x] `scripts/sync-agent-skills.ps1 -Check` passes.
+- [x] All gates in the `run-gates` skill pass (the skill and ticket
+  checks locally; no code changed, so the Rust gates run in CI).
 
 ## Tests required
 
@@ -61,4 +62,19 @@ and record the settled value and the pictures in the PR. Which files
 None (process).
 
 ## Completion notes
+
+- `work-ticket` has a new §4b: for a `tuning` ticket on a value Nick
+  judges by eye, offer him a live session with `cargo shuyi run --watch`
+  before the PR, then put only the settled value in the branch, with the
+  values tried and a `frame-png` picture in the PR. `write-ticket`'s
+  tuning line points at it.
+- Checked at engine pin `7d60a21`: `run --watch` reads `assets/`,
+  `assets-test/` and `assets-private/content/` from disk and polls them
+  once a second (engine `crates/app/src/watch.rs`), but the game reloads
+  only the four theme palettes and `.dlg` scenes (`crates/ui/src/hot.rs`,
+  `reloads`). Everything else, including the Playdate palettes, maps,
+  battles and EXP and the other data tables, is read at start: the
+  section says to restart the command (no rebuild) for those. So the
+  title's "numbers" are a restart away, not live.
+- No gameplay rules decided. No follow-up tickets.
 

@@ -16,7 +16,7 @@ completed: 2026-11-24
 ## Context
 
 From the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md)
-(2026-11-24), bucket *Process and CI* (siblings: 1351; amended 0182,
+(2026-11-24), bucket *Process and CI* (amended 0182,
 0184). 1064 (the Act 1 playtest) has 218 blockers on one line of
 frontmatter (130 on 11-08). Every PR that files tickets for Act 1 edits
 that line, so two open filing PRs always conflict: #798 needed two merges

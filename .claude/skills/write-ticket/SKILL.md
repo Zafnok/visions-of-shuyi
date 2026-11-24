@@ -120,7 +120,9 @@ Nick reports bugs and concerns in plain language after playing. For each item:
   reproduces it before the fix. If the report is ambiguous, ask Nick *one*
   concrete question ("Did this happen after the unit was attacked, or before?").
 - **Feel/balance** ("cursor feels slow", "enemies too strong"): `type: tuning`.
-  Name the data values to change and propose new values.
+  Name the data values to change and propose new values. For a value
+  judged by eye, the work offers Nick a live session with `cargo shuyi
+  run --watch` (`work-ticket` §4b, which lists the files it reloads).
 - **Design change** ("I want magic to work differently"): write a `00xx`
   decision ticket first, then implementation tickets blocked by it.
 
