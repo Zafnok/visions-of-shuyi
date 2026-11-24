@@ -38,6 +38,13 @@ empty (`Output::dry_callbacks`, `Output::raised_priority`): the check of
 the loops below reads that count, so a gap heard in the game's build is
 known to be the output's or not.
 
+Engine PR #554 (3320), in the pin since the pin move of 2026-11-24,
+counts each music and voice track's underruns, the frames the mix waited
+on its decoder (`Source::stalled`), and runs the Windows `sound-feed`
+thread that decodes them at its class's highest priority. The check of
+the loops below reads those counts too, so a gap is known to be the
+output's (dry callbacks) or a track's decoder (stalled frames).
+
 ## Nick input
 
 None. His sign-off on the backend's sound is the engine's, given on
@@ -52,7 +59,8 @@ None. His sign-off on the backend's sound is the engine's, given on
 - Check the game's music loops play gaplessly: the title's and a
   battle's tracks, recorded with the engine's sound-parity tools or
   listened to in a build, with the output's dry callbacks counted
-  (engine #380) and zero on Windows. Check its sounds, fades and volumes play as
+  (engine #380) and each track's stalled frames (engine #554), all zero
+  on Windows. Check its sounds, fades and volumes play as
   before.
 - Note in the completion notes any game sound that the voice limit now
   skips, which quad-snd would have stolen a voice for.

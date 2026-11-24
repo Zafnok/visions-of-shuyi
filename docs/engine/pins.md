@@ -518,3 +518,15 @@ Nothing for the game: 0 PRs.
 | #545 | 3243 | A range tint's strength a game sets for each skin (`RangeShow::with_strength`) | adopt → 1319 (its open PR #801 files 1343, which sets the picture look's tints to 150%; this move is 1343's pin step) |
 
 Nothing for the game: 7 PRs (#517, #518, #531, #532, #533, #543, #544). #518 gives the template's private-files action `ssh` in the sniper image; the game's `release.yml` already installs `openssh-client` there itself. #517 and #531 are the engine's API check; #532 is research; #533 and #543 hold tickets only; #544 fixes a test of the engine's.
+
+## 2026-11-24: 7d60a21a → f2b46cd5 (7 engine PRs), #816
+
+| Engine PR | Ticket | What | Decision |
+| --- | --- | --- | --- |
+| #548 | 2610 | The hosted preview's quotas, each on by default (`shuyi preview`'s `--per-address`, `--actions`, `--rate` and the rest) | fixed: nothing to change (the game runs no `shuyi preview`: searched `.github/`, `scripts/`, `shuyi.ron` and `crates/` for `preview` and `preview-worker`, only the writer's script preview, an export; takes the engine's quotas, which 1350's hosted preview gets) |
+| #554 | 3320 | The in-house sound's tracks count their underruns (`Source::stalled`); its Windows `sound-feed` thread at its class's highest priority | fixed: nothing to change (the game doesn't turn on `in-house-sound`: searched the `Cargo.toml`s, it plays on quad-snd as before; no source of the game implements `shuyi_sound`'s `Source`); adopt → 1241 (its check of the loops reads each track's stalled frames beside the output's dry callbacks) |
+| #551 | 2114 | RNG helpers on `RandomSource` (`range`, `chance`, `index`, `pick`, `shuffle`, `pick_weighted`, `Bag`) and `SimRng::stream` and `fork` | adopt → 1354 (the world map's skirmish spawns, `level_up`'s weighted stat pick and the bots' picks on `pick`, `index` and `weighted_index`, draw for draw as before; about 30 to 40 lines removed) |
+| #550 | 2512 | `cargo xtask template-lines` over the engine's templates and examples, and a CI cap on the minimal template | not for the game: it counts the engine's own templates and examples, which the game isn't; the game measures its code with `cargo xtask code-lines` (ADR-0092) |
+| #549 | 3420 | A running MCP server moves its program aside again under Rust 1.100's build layout (`api: none`, in `shuyi-cli`) | fixed: nothing to change (takes the engine's: `cargo shuyi mcp` rebuilds while a server runs again; the game has no workaround of its own, searched `crates/tools/`, `scripts/` and `.mcp.json` for the moved-aside program) |
+
+Nothing for the game: 2 PRs (#553, #555). Both are the engine's agent eval, its grader and its CI job, over the engine's own templates.
