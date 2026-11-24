@@ -5,7 +5,7 @@ type: feature
 milestone: M5 Progression
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: blocked
+status: todo
 blocked_by: ["0081", "0527", "0531"]
 nick_input: none
 completed:

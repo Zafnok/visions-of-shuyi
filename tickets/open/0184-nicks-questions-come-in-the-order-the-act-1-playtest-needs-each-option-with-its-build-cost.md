@@ -49,6 +49,24 @@ tickets from the same sweep that these answers feed: 0877 (Act 1
 coverage report), 0878 (class art gaps), and the amended 1064, 0606,
 0757, 1067.
 
+**Amended by the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md) (2026-11-24): the top item.** Filed questions
+wait far longer than Nick takes to answer them: from the 11-08 playtest,
+0081 and 0080 waited about 314 h and were answered in 6 min and 1 h 18 m
+once asked; 0079, 0082 and 0084 are still unasked after about 362 h;
+0095–0099 (the 11-22 session) are unasked with 9–10 builds behind them.
+Add to the scope: the session that files a feedback round asks that
+round's decisions in the same sitting or the next; a "decision inbox"
+step opens every session with Nick (everything ready and unasked, oldest
+first, before any build is picked), ordered by how many builds each
+unblocks; at most 3 questions per decision ticket (split bigger ones
+before asking); 1323–1331 asked together on one listening page; a
+decision goes into 1064's `blocked_by` only with a one-line reason the
+playtest can't run without it; propose to Nick that 0090 (the writer's
+preview following the demo's settings) is decided by an ADR instead
+(he may say no). Fix ROADMAP row 6 (0081 shown open; Lane L's decisions
+missing). Nick, 2026-11-24: ask the waiting ones "later", in a session of
+their own, not right after the retro.
+
 ## Nick input
 
 **Decision** (`ask-nick`), one short message at the end: the reordered

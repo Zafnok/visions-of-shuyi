@@ -472,10 +472,11 @@ recruit joins outside battle.
   the roads · **1089** a town's world-map picture cut right ·
   **0453** (Lane G) gives Cinder Oath its "no counter" note. The
   balance tickets (0332, 0333, 0610, 0870, 0528, 0867, 0868) and 0876
-  each re-record the bots' winning playthroughs, so they run one at a
-  time, after **0527** and **0531**: **0528** first (it waits on no
-  decision), then **0876**, then 0333 → 0610 → 0870 → 0867 → 0868 as
-  Nick's decisions arrive, 0332 after 0079. **0532** (band reports show
+  re-record the bots' winning playthroughs; since **0531** they may run
+  side by side (whichever lands second re-records with the first in;
+  rule dropped by the feedback-latency retro, 2026-11-24): **0528** and
+  **0610** now (no decision waits), **0876**, and 0333 · 0870 · 0867 ·
+  0868 as Nick's decisions arrive, 0332 after 0079. **0532** (band reports show
   a 95% interval) may go any time.
 - **J. A human writer** (Nick, 2026-11-08: the dialogue reads robotic
   after three or four rewrites; AI writing of dialogue is paused until

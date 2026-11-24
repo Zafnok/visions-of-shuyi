@@ -5,7 +5,7 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: blocked
+status: todo
 blocked_by: ["1314"]
 nick_input: none
 completed:

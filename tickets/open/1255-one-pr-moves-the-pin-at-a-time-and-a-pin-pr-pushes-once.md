@@ -48,6 +48,13 @@ days) and two more costs:
 - **The ledger is 64 KB.** `docs/engine/pins.md` is 442 lines; 60 rows
   say `nothing to change`, and 42 lines run past 400 characters.
 
+**Amended by the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md) (2026-11-24).** When a feedback item's
+engine PR merges, the game PR of that item moves the pin to that merge
+commit at once, ahead of the next batched pin PR: about 30–40 h over
+five items in two weeks went to waiting for the batch (0254 about 14 h,
+0908 about 12 h, 1314 about 7 h, 1343 about 5 h). Reconcile this with
+"one PR moves the pin at a time": the item's own PR is that one.
+
 ## Nick input
 
 None.

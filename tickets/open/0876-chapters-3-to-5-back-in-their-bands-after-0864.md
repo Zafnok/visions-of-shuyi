@@ -62,6 +62,13 @@ Nick's (0080, 0081, 0870's own, 0082, 0084), and waiting on them would
 hold this ticket for as long as those take. Each of them re-runs the
 bands itself when it lands.
 
+**Amended by the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md) (2026-11-24).** The roadmap's rule that
+the balance tickets run one at a time is gone (0531 took the bots' armies
+off single recorded wins). Decide in this ticket whether 0528 really has
+to come first, or whether Chapters 3–5 are judged against today's AI and
+0528 re-runs the bands after; if the latter, drop 0528 from
+`blocked_by`.
+
 ## Nick input
 
 None. Verified by the bots' reports in the PR (as 0529 and 0855); what is
