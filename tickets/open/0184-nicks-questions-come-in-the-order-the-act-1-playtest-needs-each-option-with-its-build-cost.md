@@ -58,8 +58,11 @@ Add to the scope: the session that files a feedback round asks that
 round's decisions in the same sitting or the next; a "decision inbox"
 step opens every session with Nick (everything ready and unasked, oldest
 first, before any build is picked), ordered by how many builds each
-unblocks; at most 3 questions per decision ticket (split bigger ones
-before asking); 1323–1331 asked together on one listening page; a
+unblocks; no fixed cap on questions per ticket, but don't flood Nick: group
+what belongs together and use judgment (Nick, 2026-11-24); where a
+session fills a small gap itself in a way that changes gameplay, it
+tells Nick plainly what it chose and where, instead of asking (this
+ticket updates AGENTS.md rule 3 and the `ask-nick` skill to say so); 1323–1331 asked together on one listening page; a
 decision goes into 1064's `blocked_by` only with a one-line reason the
 playtest can't run without it; propose to Nick that 0090 (the writer's
 preview following the demo's settings) is decided by an ADR instead

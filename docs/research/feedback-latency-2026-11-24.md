@@ -32,7 +32,7 @@ After merging shared root causes, that leaves 7 themes, 14 new action items and 
   - From 11-22: 0095–0099 are unasked, and 9–10 build tickets wait on them.
   - Once asked, Nick answers within minutes to hours. 0081 went from question to merged in 6 minutes, and 0080 in 1 h 18 m.
   - The 11-17 retro already filed the fix (0184). Nobody has worked it.
-- **Second: nothing merges between about 08:00 and 14:00 UTC.** Nick merges every PR himself.
+- **Second: nothing merges between about 08:00 and 14:00 UTC.** Nick merges every PR himself. **This is on purpose** (Nick, 2026-11-24): he merges when he can act on the follow-ups a PR leaves, so it is not a delay to remove. What can still be cut is a PR left red in that window (1351).
   - A PR that goes green, or goes red, just before that window waits about 10 h.
   - That one window is why a fix that takes 1 h shows up the next day. Examples: 1312's PR #800 was green at 07:55 and merged at 18:01; 1319's PR #801 sat on a red mutants check from 08:12 to 18:03.
   - The wait is shared by every open PR. It does not add up per PR.
@@ -52,12 +52,12 @@ After merging shared root causes, that leaves 7 themes, 14 new action items and 
 
 | # | Proposed ticket | Bucket | Priority | Size | Nick? | Verdict | Corrected scope | Ticket |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Merge on green, or a fixed daily merge window, for ticket-scoped PRs: ticket-only, docs-only, tuning and bug PRs with nick_input none. Merge only after every required check reports. | Process / merge | P1 | S | false (Nick's OK as a workflow choice, not a design question) | confirmed | About 10 h per item that misses Nick's session. The wait is shared, not added per PR. Feedback examples: #757, #800, #801, #802. | Declined by Nick (2026-11-24: he keeps merging); 0146 amended to ping on green and red |
+| 1 | Merge on green, or a fixed daily merge window, for ticket-scoped PRs: ticket-only, docs-only, tuning and bug PRs with nick_input none. Merge only after every required check reports. | Process / merge | P1 | S | false (Nick's OK as a workflow choice, not a design question) | confirmed | About 10 h per item that misses Nick's session. The wait is shared, not added per PR. Feedback examples: #757, #800, #801, #802. | Not pursued: the merge timing is deliberate (Nick, 2026-11-24); 0146 notes it |
 | 2 | Drop the "balance tickets one at a time" rule now that 0531 has landed. Batch 0528 and 0610 (and 0870 once answered) into one re-record with a band report. Start 0528. | Balance chain | P1 | M | false | weakened | Real for 0528 and 0876, which need no decision: about 337 h blocked, then about 1 day unstarted. For 0610, 0870 and 0333, the decision wait was the bigger part. Going forward the rule costs about 1 day per ticket. | Done in this PR: the roadmap's one-at-a-time rule dropped, 0610 unblocked; 0876 amended |
 | 3 | A session's last step waits for every required check, mutants included, and pushes the fix before it ends. Turn on the PR monitor when a PR opens. | Process / CI | P2 | S | false | weakened | About 9–10 h each on #801 and #802. This overlaps the merge window in item 1 and does not add to it. | 1351 |
 | 4 | Once a feedback item's engine PR merges, its own game PR moves the pin to that merge commit right away, without waiting for a batched pin PR. Reconcile this with 1255. | Engine split | P2 | S | false | weakened | About 30–40 h saveable over 5 items: 0254 about 14 h, 0908 about 12 h, 1314 about 7 h, 1343 about 5 h, 1301 about 0 h. Not the 49–55 h first claimed. | 1255 amended |
 | 5 | Clean-ups found by a sweep don't become blockers of feedback builds unless the build truly needs them. Unblock 0334 from 0335, or schedule 0335 now. | Ticket hygiene | P2 | S | false | confirmed | About 160 h on 0334 since its decision, and growing. | 0182 amended (0335 ranked next); the rule in 1352 |
-| 6 | Build the part of Nick's words that is fully specified (0099's shallow-water half, 0097's breakable barricade). Keep one trimmed decision for the content questions: who swims, which battles, HP values. | Decisions | P2 | S | false | weakened | Saves days on 2–3 tickets, not 5. New mechanics still go through a decision. | 0184 amended (at most 3 questions, split before asking) |
+| 6 | Build the part of Nick's words that is fully specified (0099's shallow-water half, 0097's breakable barricade). Keep one trimmed decision for the content questions: who swims, which battles, HP values. | Decisions | P2 | S | false | weakened | Saves days on 2–3 tickets, not 5. New mechanics still go through a decision. | 0184 amended (no fixed cap; don't flood Nick; say when a gap is filled in a way that changes gameplay) |
 | 7 | A decision goes into 1064's blocked_by only with a one-line reason why the playtest can't run without it. Ask 1323–1331 on one listening page in one sitting. Remove the done 1322 from 1064. | Decisions | P3 | S | false | confirmed | 1064 has 218 blockers (130 on 11-08). 29 of them are open Nick decisions, 9 from one request (#799). | 1352 (the reason line); 0184 amended (one listening page); 1322 removed from 1064 in this PR |
 | 8 | Engine: when a skin is touched, expose its look constants (OVERLAY_BLEND, SHOWN_BLEND, GLINT_BASE and the like) as values the game sets, with engine defaults. | Engine ergonomics | P3 | S | false | weakened | Only 1343 is a clear case (about 1 h of ceremony; its wall-clock wait is counted in item 4). Engine #545 already fixed the tint. A full sweep of the kits is not justified. | Engine proposal, waits for Nick's OK (engine steps need it) |
 | 9 | Engine tooling: reserve ticket, ADR and pack-format numbers so parallel engine PRs don't clash and get closed and reopened. | Engine split | P3 | S | false | weakened | About 1–2 h over 2 feedback items (#490→#496, #538→#541). | Engine proposal, waits for Nick's OK |
@@ -73,12 +73,12 @@ After merging shared root causes, that leaves 7 themes, 14 new action items and 
   - The session that files a feedback round asks that round's decisions in the same sitting, or the next one.
   - A "decision inbox" step opens every session with Nick: ask everything that is ready and unasked, oldest first, before any build is picked.
   - Order the questions by how many builds each one unblocks.
-  - At most 3 questions per decision; split bigger tickets before asking.
+  - No fixed cap on questions per decision, but don't flood Nick; when a session fills a small gap itself in a way that changes gameplay, it tells him plainly (Nick, 2026-11-24, correcting this retro's first draft, which capped it at 3).
   - Fix ROADMAP row 6, which still shows 0081 as open and doesn't list Lane L's decisions.
   - Ask 0079, 0082, 0084 and 0095–0099 now.
 - **0182** (rank ready work). Rank the current feedback round's ready tickets first. Today that is 1311, 1320, 0528, 0610, 0485, 0488 and 0491. Tag value-only tweaks when filing so they go first, in one PR per round.
 - **0147** (ticket-lint). It already specifies an error for "status: blocked with every blocker done". Do it next. Right now this would catch 0610 and 1317.
-- **0146** (green PRs don't wait unseen). Extend it to red PRs with no commit for 2 h.
+- **0146** (green PRs don't wait unseen). Notes that the merge wait is deliberate (Nick, 2026-11-24) and is not shortened; a red PR is fixed by its own session (1351).
 - **0181** (lighter tickets). Add these:
   - For feedback that states the fix directly, the build PR carries its own new ticket and starts at once, with no separate filing PR.
   - A build blocked on a decision is filed as a stub.
@@ -94,8 +94,9 @@ The 11-17 retro and sweep filed the fixes this run found most needed,
 and none has been worked: **0184** (the decision queue), **0182**
 (ranking ready work), **0147** (stale statuses), **0146** (PRs that wait
 unseen) and **0181** (lighter tickets). All five are amended above
-rather than filed again. Nick, 2026-11-24: keep merging every PR himself;
-ask the waiting decisions later, in a session of their own.
+rather than filed again. Nick, 2026-11-24: he keeps merging every PR himself, on purpose, to act
+on follow-ups; the waiting decisions are asked later, in a session of
+their own, with no fixed cap on questions but without flooding him.
 
 ## 4. What went well
 
@@ -132,6 +133,8 @@ ask the waiting decisions later, in a session of their own.
 - The 11-17 retro (T4) filed 0184 for exactly this. In the 7 days since, 2 of its 5 were asked and 0184 itself is still unworked.
 
 ### T2. The daily window with no merges
+
+*Nick, 2026-11-24: the merge timing is deliberate (he merges when he can act on follow-ups); the numbers below explain the wall clock, not a fix.*
 
 **What happened**
 - Every PR from #746 to #813 was merged by hand by Nick.
