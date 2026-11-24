@@ -1,17 +1,21 @@
 ---
 id: "0858"
-title: "Chapter 2 art: Joss's and Hendry's faces, map sprites and combat pictures"
+title: "Chapter 2 art: Joss's face, map sprite and combat picture"
 type: content
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0848"]
 nick_input: setup
-completed:
+completed: 2026-11-23
 ---
 
-# 0858 — Chapter 2 art: Joss's and Hendry's faces, map sprites and combat pictures
+# 0858 — Chapter 2 art: Joss's face, map sprite and combat picture
+
+*Split on 2026-11-23: Hendry's half is 0881 (Nick wants a second look
+at his combat picture first). The text below is the plan as written for
+both.*
 
 ## Context
 
@@ -112,18 +116,19 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
 
 ## Acceptance criteria
 
-- [ ] With the private assets, Joss and Hendry have faces in every
-      Chapter 2 scene, and their own map sprites and combat pictures.
-- [ ] The private-assets tests resolve the character-specific portrait,
-      map and battler ids for both characters; substituting a class default
-      or omitting a portrait fails. Ordinary gates remain independent of
-      the bought files.
-- [ ] Completion notes link screenshots of the running refusal scene and
-      Hendry's fight from the pinned private build, with neither raw bought
-      files nor extracted sprite sheets committed or attached.
-- [ ] `cargo shuyi private-assets --pin` passes (every new file has a
-      credit).
-- [ ] All gates in the `run-gates` skill pass, the private-assets tests
+- [x] With the private assets, Joss has a face in every Chapter 2 scene,
+      and his own map sprite and combat picture. (Hendry: 0881.)
+- [x] The private-assets tests resolve the character-specific portrait,
+      map and battler ids for Joss; substituting a class default or
+      omitting a portrait fails. Ordinary gates remain independent of the
+      bought files. (Hendry joins the same test in 0881.)
+- [x] Completion notes link screenshots of the running refusal scene and
+      a fight with Joss from the private build, with neither raw bought
+      files nor extracted sprite sheets committed or attached. (Hendry's
+      fight: 0881.)
+- [x] `cargo shuyi private-assets --pin` passes (every new file has a
+      credit), at the private pull request's merge on `main`.
+- [x] All gates in the `run-gates` skill pass, the private-assets tests
       included.
 
 ## Tests required
@@ -133,5 +138,69 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Split.** Shown the picks side by side (a scratch mockup, not
+committed), Nick said "import joss but hendry I wanna double check on
+available options for his battle sprite bc its ugly". Joss's art landed
+here; Hendry's (a new candidate round, then the pack, his generator face,
+map sprite and combat picture) is **0881**, now in 1064's and 1069's
+`blocked_by` and named in 0184 and 0878.
+
+**What was done (Joss, `defector`):**
+
+- Face: the Tiny Tales **Thief** hero's eight busts, cut by `cargo xtask
+  portrait-import` into `assets-private/game/portraits/defector/`; the
+  sidecar maps the dialogue expressions as the other heroes' do
+  (`happy` → smile, `angry` → stern, `surprised` → surprise).
+- Map sprite: the Thief's sheet, `units/thief.png`, a character row in
+  `map_sprite_import.rs`'s `SPRITES`; `tileset-import` named it.
+- Combat picture: Shironejiya's `m_s_hero07` at 1.25×, recoloured on
+  import by two `Tint`s (`HOUND_BLACK` in `battler_import.rs`): the blond
+  hair brown, and the red headband, cape lining and trim black. The
+  skin and the orange leather and shield rim stay. The site served the
+  file to a plain download, so Nick didn't need to save it; it is in
+  the private library beside the other Shironejiya pictures.
+- Credits: Tiny Tales' `private` list gains `portraits/defector` and
+  `units/thief.`, Shironejiya's `battlers/defector.`; both
+  `THIRD_PARTY_ASSETS.md` rows updated.
+- **The Chapter 1 demo leaves Joss out** (the first art of a later
+  character; the demo's export refuses a later id, `defector` among its
+  canaries). Its list, `crates/content/demo/bundle.txt`, swaps his two
+  paths out of its copy of `credits.ron`, and a new `art` line form names
+  bought-art files: his portrait, battler and map sheet are left out of
+  the demo's art table and his tileset entry is cut, checked only by a
+  build that has the art (`demo_bundle.rs`; test
+  `art_lines_are_checked_only_where_the_art_is`). `THIRD_PARTY_ASSETS.md`,
+  which the demo ships, says "a Chapter 2 character" instead of his id.
+  0881 adds Hendry's files the same way. The map-sprite table's test now
+  accepts any character of the game, not only the lead's pictures.
+- Test: `named_characters_resolve_their_own_face_map_sprite_and_battler`
+  (`private_assets.rs`), a table of (character, class, map sheet) that
+  0881 extends with Hendry.
+- Private repository: `Zafnok/visions-of-shuyi-assets` pull request
+  `t0858-joss-art`; the pin moves to its merge on `main`.
+
+**Screenshots** (the running game, private build):
+[the refusal scene](../../docs/screenshots/0858-joss-refusal.png) (Joss's
+face; Hendry's frame still empty until 0881) and
+[Joss in a fight](../../docs/screenshots/0858-joss-fight.png) (a throwaway
+staged battle, the stage only; the Swordsman class has no bought picture
+yet, 0878). Joss isn't on Chapter 2's map (he joins after it), so his map
+sprite was checked in a staged battle and first shows in Chapter 3.
+
+**For the Act 1 playtest (1064):**
+
+- The recolour also turned his olive trousers dark brown (same hues as
+  the hair, so one tint takes both). Nick's "Hound black" was about the
+  cloth; the brown trousers sit well with it, but say if they should be
+  olive.
+- The face (the Thief bust) has a dark headband and brown vest; the combat
+  picture is armoured with a shield. That gap was accepted in 0070
+  ("mostly like the thief hero", then "F Hound black").
+
+**Deviations:** `cargo shuyi private-assets --library` and the importers
+ran from the built tool program while the session's `shuyi` MCP server
+held it; no other change.
+
+**Engine friction:** estimate 40 production lines (two table rows, one
+tint); measured about 75, with the demo list's `art` lines (1.9×, under
+2×).

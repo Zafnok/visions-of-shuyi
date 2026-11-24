@@ -22,6 +22,9 @@
 //!   for one file and field add up.
 //! - `swap chapters/ch01.ron: next: Some("ch02") => next: None` replaces
 //!   text that is in the file once.
+//! - `art portraits/defector/` and `art swap tilesets/tiny_tales.ron: … =>`
+//!   are a path and a swap of the bought art in `assets-private/game/`
+//!   (ticket 0858), checked only by a build that has it.
 //!
 //! A line that matches nothing stops the build, so the list can't go
 //! stale without anyone noticing.
@@ -56,6 +59,8 @@ pub struct Plan {
     keeps: BTreeMap<String, BTreeMap<Option<String>, BTreeSet<String>>>,
     /// By file: the text replaced and its replacement.
     swaps: BTreeMap<String, Vec<(String, String)>>,
+    /// The paths `art` lines name, of `assets-private/game/`.
+    art: BTreeSet<String>,
 }
 
 impl Plan {
@@ -71,6 +76,13 @@ impl Plan {
             let err = |what: &str| format!("line {line_no}: {what}: `{line}`");
             if line.is_empty() || line.starts_with('#') {
                 continue;
+            }
+            let (art, line) = match line.strip_prefix("art ") {
+                Some(rest) => (true, rest.trim()),
+                None => (false, line),
+            };
+            if art && (line.starts_with('+') || line.starts_with("keep ")) {
+                return Err(err("an `art` line is a path or a `swap`"));
             }
             if let Some(path) = line.strip_prefix('+') {
                 let path = path.trim().to_owned();
@@ -92,11 +104,18 @@ impl Plan {
             } else if let Some(rest) = line.strip_prefix("swap ") {
                 let (path, swap) = rest.split_once(':').ok_or_else(|| err("no `:`"))?;
                 let (old, new) = swap.split_once("=>").ok_or_else(|| err("no `=>`"))?;
-                let entry = plan.swaps.entry(path.trim().to_owned()).or_default();
+                let path = path.trim().to_owned();
+                if art {
+                    plan.art.insert(path.clone());
+                }
+                let entry = plan.swaps.entry(path).or_default();
                 entry.push((old.trim().to_owned(), new.trim().to_owned()));
             } else if line.contains(char::is_whitespace) {
                 return Err(err("not a path, `+`, `keep` or `swap`"));
             } else {
+                if art {
+                    plan.art.insert(line.to_owned());
+                }
                 plan.leave_out.push(Rule {
                     line: line_no,
                     path: line.to_owned(),
@@ -107,18 +126,28 @@ impl Plan {
     }
 
     /// The paths of `files` (all of `assets/`, sorted) the demo leaves out,
-    /// sorted.
+    /// sorted. `art` is the bought art's files (`None` in a build without
+    /// it, whose `art` lines go unchecked).
     ///
     /// # Errors
     ///
-    /// A rule that names no file of `files`, a `+` line that keeps no file
-    /// a rule left out, and a `keep` or `swap` of a file the demo doesn't
-    /// hold.
-    pub fn left_out(&self, files: &[String]) -> Result<Vec<String>, String> {
+    /// A rule that names no file of `files` (an `art` line: of `art`), a
+    /// `+` line that keeps no file a rule left out, and a `keep` or `swap`
+    /// of a file the demo doesn't hold.
+    pub fn left_out(
+        &self,
+        files: &[String],
+        art: Option<&[String]>,
+    ) -> Result<Vec<String>, String> {
         let unmatched =
             |rule: &Rule, what: &str| format!("line {}: `{}` {what}", rule.line, rule.path);
         for rule in &self.leave_out {
-            if !files.iter().any(|f| rule.matches(f)) {
+            if self.art.contains(&rule.path) {
+                let found = art.is_none_or(|art| art.iter().any(|f| rule.matches(f)));
+                if !found {
+                    return Err(unmatched(rule, "is no file under assets-private/game/"));
+                }
+            } else if !files.iter().any(|f| rule.matches(f)) {
                 return Err(unmatched(
                     rule,
                     "is no file under assets/ or assets-private/content/",
@@ -140,7 +169,14 @@ impl Plan {
             .collect();
         let named = self.keeps.keys().chain(self.swaps.keys());
         for path in named {
-            if out.contains(path) || !files.contains(path) {
+            if self.art.contains(path) {
+                let held = art.is_none_or(|art| art.contains(path) && !self.leaves_out(path));
+                if !held {
+                    return Err(format!(
+                        "`{path}` is cut, but the demo's art doesn't hold it"
+                    ));
+                }
+            } else if out.contains(path) || !files.contains(path) {
                 return Err(format!("`{path}` is cut, but the demo doesn't hold it"));
             }
         }
