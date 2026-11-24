@@ -122,7 +122,9 @@ code address in the shipped program reads as a function, file and line
 (MSYS2's binutils on Windows: `addr2line`, `objdump`).
 
 **Read a player's report** (`crash-<when>.ron`, from the game's data
-folder; ticket 0918). Its `game` names the version and its `target` the
+folder; ticket 0918), with the `logs/latest.log` they sent beside it
+(`docs/session-records.md`, *The log file*: the panic's line and the
+warnings before it). Its `game` names the version and its `target` the
 package (`windows x86_64 release`). Its `backtrace` names nothing in a
 release, but its `frames` are the stack as offsets into the program
 (engine ticket 2598), innermost first; `offset: None` is a frame in a

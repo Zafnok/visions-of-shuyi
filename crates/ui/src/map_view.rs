@@ -20,6 +20,8 @@ pub mod edges;
 pub mod glyph;
 pub mod place;
 pub mod playdate;
+#[cfg(all(test, feature = "std"))]
+mod range_contrast_tests;
 pub mod scene;
 pub mod skin;
 pub mod sprite;
