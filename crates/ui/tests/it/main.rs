@@ -101,6 +101,7 @@ mod scene_preview;
 mod sessions;
 mod side_quests;
 mod skirmishes;
+mod sound_cues;
 mod split_keys;
 mod sprite_test;
 mod story_preview;
