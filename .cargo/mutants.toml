@@ -30,12 +30,17 @@
 # `ShuyiPreview::rules` (`crates/ui/src/story_preview.rs`) returns
 # `FormatRules`, a unit struct, which is what `Default::default()` is: that
 # mutant changes nothing (ticket 0764).
+#
+# `lab` in `crates/ui/src/map_view/range_contrast_tests.rs` switches from
+# its straight part to the cube root where the two meet, so `>` and `>=`
+# there give the same colour (ticket 1319).
 exclude_re = [
     "Debuffs>::visit_(none|unit)",
     "engine::(gain_problems|check_with_gains)",
     "story_import::gh",
     'FlowScreen>::actions.*Some\(vec!\[\]\)',
     "ShuyiPreview>::rules",
+    'range_contrast_tests\.rs:.*replace > with >= in lab',
 ]
 exclude_globs = [
     "crates/app/**",

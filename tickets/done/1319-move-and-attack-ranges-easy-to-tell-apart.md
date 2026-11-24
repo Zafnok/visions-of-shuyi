@@ -5,10 +5,10 @@ type: tuning
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-23
 ---
 
 # 1319 — Move and attack ranges are stronger and easy to tell apart
@@ -70,9 +70,9 @@ by pattern); new range styles.
 
 ## Acceptance criteria
 
-- [ ] Before/after pictures per theme in the PR.
-- [ ] The contrast test passes for every palette.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Before/after pictures per theme in the PR.
+- [x] The contrast test passes for every palette.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -84,3 +84,37 @@ Playdate: unchanged (patterns). GBA: no target.
 
 ## Completion notes
 
+- **Colours**: move `#3a6fd0`, attack `#d83020`, heal `#3a9a4a`, the
+  same in every theme but the Playdate's (its patterns are out of scope);
+  the danger zone is unchanged. The attack red is a notch redder than the
+  ticket's starting `#d04030`: over the picture look's mint grass the
+  tint blends toward tan, and the purer red keeps it rust instead.
+- **Nick's decision** (2026-11-23, shown animated before / halfway /
+  after renders of Chapter 1 in every theme and look): the range colours
+  don't change with the theme, since a washed-out theme such as Parchment
+  washed them out too. Recorded in `docs/design/look-and-feel.md` (its
+  theme table follows) and in each palette file.
+- **Stronger tints in the picture look**: Nick also picked tints at 150%
+  of today's strength over the bought tiles (attack tiles read red, not
+  rust, over grass). That needs the engine change this ticket named (a
+  tint strength the game sets per skin), so it is its own game ticket
+  after the engine's, as his rule for engine steps says: engine#3243
+  (`Zafnok/shuyi-engine`, a tint strength a game sets for each skin),
+  merged as Zafnok/shuyi-engine#545 and pinned by #808; then 1343 sets
+  the picture look's tints to 150%. The glyph look keeps today's strength.
+- **The tests** (`crates/ui/src/map_view/range_contrast_tests.rs`):
+  every theme has the same range colours; and in every theme, the move
+  and attack tints, over `grass_bg`, `forest_bg`, `road_bg` and the
+  bought grass tile's colour (`#59cf93`, measured from a picture: the
+  gates never read the art), at the weakest strength any range style
+  tints (the shimmer's trough, 0.45), are at least ΔE 30 (CIE76) and 75°
+  of hue apart. The old colours fail it in every theme (the default's
+  were ΔE 16 and 32° apart over the grass picture); the new ones pass
+  with ΔE 42.6 and 111° at the least.
+- **Pictures**: `docs/screenshots/1319-ranges-glyphs.png` and
+  `1319-ranges-pictures.png`, before and after in each theme, on the test
+  Quick Battle (ADR-0118: no tracked picture of a real map). Chapter 1
+  was rendered too, locally, and reads the same way.
+- **Left for the Act 1 playtest (1064)**: whether enemy initials on an
+  attack tile, and player initials on a move tile in Parchment, are
+  still easy to read in the glyph look.
