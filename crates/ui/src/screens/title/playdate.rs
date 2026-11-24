@@ -138,7 +138,7 @@ enum Shown<'a> {
 fn window_of(ctx: &Ctx, buf: &GlyphBuffer, shown: &Shown<'_>) -> Rect {
     let (w, h) = match shown {
         Shown::Menu(menu) => menu_size(ctx, menu),
-        Shown::Prompt(text) => (cells(text) + 4, 3),
+        Shown::Prompt(text) => (cells(text, buf.widths()) + 4, 3),
     };
     let w = w.min(i32::from(buf.width()));
     let bottom = i32::from(buf.height()) - 1;
@@ -175,7 +175,7 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
         (Some(Shown::Prompt(text)), Some(rect)) => {
             pd::window(ctx, buf, rect, "");
             let ink = pd::inks(ctx);
-            let text = pd::cut(text, pd::to_usize(rect.w - 4));
+            let text = pd::cut(text, pd::to_usize(rect.w - 4), buf.widths());
             buf.print(rect.x + 2, rect.y + 1, &text, ink.text, ink.inside);
         }
         _ => {}

@@ -15,6 +15,12 @@ Cinzel
   Version: Google Fonts' Cinzel[wght].ttf, at weights 700 and 500, as pictures of its glyphs
   License: OFL-1.1
 
+Fusion Pixel Font
+  Author: TakWolf, with the authors of the fonts it combines (Ark Pixel, Galmuri, Cubic 11)
+  Source: https://github.com/TakWolf/fusion-pixel-font
+  Version: 2026.11.10, 12px monospaced, Simplified Chinese (zh_hans), as a picture of its glyphs
+  License: OFL-1.1
+
 New Sunrise
   Author: nene
   Source: https://opengameart.org/content/new-sunrise

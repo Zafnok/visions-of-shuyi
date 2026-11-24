@@ -1,0 +1,17 @@
+---
+source: crates/ui/tests/it/title.rs
+expression: "h.snapshot_of(trpg_ui::glyph_buffer::Rect::new(0, y, w, 1))"
+---
+                                   游戏上次意外关闭，已保存报告。                                   
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:text bg:black
+b = fg:text_dim bg:panel_bg
+c = fg:hp_low bg:panel_bg
+--- overlays ---
+under sprite 64,-448 672x496  title/fields_b_day.png 0,0 336x248 clip=64,0 208x16
+under sprite 64,-448 672x496  title/fields_b_day.png 0,0 336x248 clip=528,0 208x16
+under sprite 0,-448 64x496  title/fields_b_day.png 0,0 32x248 flip clip=0,0 64x16
+under sprite 736,-448 64x496  title/fields_b_day.png 304,0 32x248 flip clip=736,0 64x16
+under sprite 40,-160 104x208  title/campfire.png 0,0 26x52 clip=40,0 104x16

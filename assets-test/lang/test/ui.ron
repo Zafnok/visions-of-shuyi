@@ -1,4 +1,5 @@
-// The test pack's screen text: each entry is the English in capitals.
+// The test pack's screen text: each entry is the English in capitals,
+// but `title.crashed`, in Chinese for the wide glyphs' test (ticket 0236).
 // Kept on purpose: `title.continue` is stale (its `source` is not
 // today's English) and `title.credits` is missing, so both show in English.
 // The tag `test` has no plural rules, so a plural's only category is
@@ -24,7 +25,7 @@
     (key: "title.press_any_key", source: "Press any key or button", text: "PRESS ANY KEY OR BUTTON"),
     (key: "title.press_any_button", source: "Press any button", text: "PRESS ANY BUTTON"),
     (key: "title.continue", source: "Resume", text: "RESUME"),
-    (key: "title.crashed", source: "The game closed unexpectedly last time. A report was saved.", text: "THE GAME CLOSED UNEXPECTEDLY LAST TIME. A REPORT WAS SAVED."),
+    (key: "title.crashed", source: "The game closed unexpectedly last time. A report was saved.", text: "游戏上次意外关闭，已保存报告。"),
     (key: "title.new_game", source: "New Game", text: "NEW GAME"),
     (key: "title.load_game", source: "Load Game", text: "LOAD GAME"),
     (key: "title.quick_battle", source: "Quick Battle", text: "QUICK BATTLE"),

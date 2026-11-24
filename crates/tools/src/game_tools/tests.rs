@@ -955,6 +955,13 @@ fn the_notices_name_the_games_works_and_license_texts() {
 /// 0254), relative to the repo root.
 const BOLD: &str = "assets-src/fonts/ter-u16b.bdf";
 
+/// The wide set `zhhans` and its font, Fusion Pixel 12px (ticket 0236),
+/// relative to the repo root.
+const WIDE: (&str, &str) = (
+    "zhhans",
+    "assets-src/fonts/fusion-pixel-12px-monospaced-zh_hans.bdf",
+);
+
 /// The font sources the committed atlas is built from, relative to the
 /// repo root: Terminus, then our own extra glyphs (the controller
 /// buttons, the building tiles).
@@ -1043,8 +1050,11 @@ fn committed_atlas_is_up_to_date() {
     let rules = project.config.font_atlas.as_ref().unwrap();
     let dir = std::env::temp_dir().join(format!("xtask-atlas-check-{}", std::process::id()));
     let fonts = SOURCES.map(|source| root.join(source));
-    let chars =
+    let mut chars =
         AtlasChars::of_lang(&lang().lang, &rules.required_glyphs).with_wide(&rules.wide_glyphs);
+    for (set, glyphs) in &rules.wide_set_glyphs {
+        chars = chars.with_wide_set(Some(set), glyphs);
+    }
     let mut options = shuyi_cli::font_atlas::RunOptions::default();
     options.rules = rules.clone();
     options.command = project.config.command().to_owned();
@@ -1052,10 +1062,16 @@ fn committed_atlas_is_up_to_date() {
     options.out_dir = dir.clone();
     options.chars = chars;
     options.bold = Some(root.join(BOLD));
+    options.wides = vec![shuyi_cli::font_atlas::WideFont {
+        set: Some(WIDE.0.to_owned()),
+        path: root.join(WIDE.1),
+    }];
     let msg = shuyi_cli::font_atlas::run(&options).unwrap();
     assert!(msg.starts_with("font-atlas: "));
     let read = |p: &Path| fs::read_to_string(p).unwrap().replace("\r\n", "\n");
-    let rerun = "rerun `cargo shuyi font-atlas --bold assets-src/fonts/ter-u16b.bdf \
+    let rerun = "rerun `cargo shuyi font-atlas \
+                 --wide zhhans=assets-src/fonts/fusion-pixel-12px-monospaced-zh_hans.bdf \
+                 --bold assets-src/fonts/ter-u16b.bdf \
                  assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf \
                  assets-src/fonts/tile-shapes.bdf assets/fonts`";
     assert_eq!(

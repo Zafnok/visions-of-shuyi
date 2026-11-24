@@ -23,6 +23,7 @@ use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
 use crate::widgets::help::{frame_widths, wrap_styled};
 use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 use shuyi_ui::text::StyledText;
 
 /// The face's area, in cells: 128×128 console pixels, a 64×64 bust at 2×
@@ -90,8 +91,13 @@ fn cells(n: usize) -> i32 {
 /// The size of a box with `title` over its border, `face` or none, text
 /// `widest` cells wide beside it, and `rows` rows of text between its
 /// borders: at least as tall as the face and the borders.
-fn size(title: &str, face: Option<&FaceView>, widest: i32, rows: usize) -> (i32, i32) {
-    let widest = widest.max(cells(title.chars().count()) + 2);
+fn size(
+    title: &str,
+    face: Option<&FaceView>,
+    (widest, rows): (i32, usize),
+    widths: &CellWidths,
+) -> (i32, i32) {
+    let widest = widest.max(cells(text_width(title, widths)) + 2);
     let face_w = if face.is_some() {
         FACE_CELLS.0 + MARGIN
     } else {
@@ -152,7 +158,7 @@ pub fn rect(view: &TipView, widths: &CellWidths) -> Rect {
     let wide = widest(lines.iter().chain([&heading, &view.close]), widths);
     // A blank row, the heading, the lines, a blank row, the close hint.
     let rows = lines.len() + 4;
-    let (w, h) = size(&view.title, view.face.as_ref(), wide, rows);
+    let (w, h) = size(&view.title, view.face.as_ref(), (wide, rows), widths);
     Rect::new(left(w), MAP_VIEW.y + 1, w, h)
 }
 
@@ -168,7 +174,12 @@ pub fn lesson_rect(view: &LessonView, at_bottom: bool, widths: &CellWidths) -> R
     // A blank row, the heading, the lines, a blank row, the items, a blank
     // row, the count.
     let rows = lines.len() + item_rows + 5;
-    let (w, h) = size(&view.title, view.face.as_ref(), text.max(items), rows);
+    let (w, h) = size(
+        &view.title,
+        view.face.as_ref(),
+        (text.max(items), rows),
+        widths,
+    );
     let y = if at_bottom {
         MAP_VIEW.y + MAP_VIEW.h - h
     } else {
@@ -192,7 +203,12 @@ pub fn lessons_end_rect(view: &LessonsEndView, at_bottom: bool, widths: &CellWid
     // A blank row, the heading, the lines, a blank row, the answers, a blank
     // row.
     let rows = lines.len() + view.answers.len() + 4;
-    let (w, h) = size(&view.title, view.face.as_ref(), text.max(answers), rows);
+    let (w, h) = size(
+        &view.title,
+        view.face.as_ref(),
+        (text.max(answers), rows),
+        widths,
+    );
     let y = if at_bottom {
         MAP_VIEW.y + MAP_VIEW.h - h
     } else {

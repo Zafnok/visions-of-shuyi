@@ -14,7 +14,6 @@ use alloc::collections::{BTreeMap, BTreeSet};
 use serde::Deserialize;
 use shuyi_assets::cinematic::{self as frame, CinematicFile, CinematicRon, ShotCheck};
 use shuyi_assets::dialogue::lines_at_longest;
-use shuyi_assets::font::CellWidths;
 use shuyi_assets::format::RegisterError;
 use trpg_core::lead::{LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE};
 use trpg_core::{BattleDef, CharacterId, ClassTable, TerrainTable};
@@ -531,17 +530,12 @@ fn talk_problems(refs: Refs<'_>, scene: &str, first: usize, count: usize) -> Vec
             end - 1
         )];
     }
-    let longest_name = refs.names.longest(&CellWidths::NARROW);
+    let widths = crate::font::widths();
+    let longest_name = refs.names.longest(&widths);
     let numbered = (first..end).zip(&boxes[first..end]);
     numbered
         .filter(|(_, text)| {
-            lines_at_longest(
-                text,
-                &LeadTokens,
-                Some(longest_name),
-                BOX_WIDTH,
-                &CellWidths::NARROW,
-            ) > BOX_LINES
+            lines_at_longest(text, &LeadTokens, Some(longest_name), BOX_WIDTH, &widths) > BOX_LINES
         })
         .map(|(n, _)| {
             format!(

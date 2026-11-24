@@ -26,18 +26,13 @@ use trpg_core::lead::LeadGender;
 use crate::bundle;
 use crate::dialogue::{LIMITS, LeadTokens, Scene};
 use crate::error::ContentError;
+use crate::font::{self, CellWidths};
 
 pub use data::{DataText, Tables, from_tables};
 pub use shuyi_assets::lang::{
     Entry, LangCode, LangFile, LangInfo, LangPack, LangStatus, LineEntry, LineKind, LineText,
     MadeBy, Orphan, PackSources, Source, SourceLine, english_from_source,
 };
-
-/// The cells `text` takes, every character one cell wide: the game's font
-/// has no wide glyphs.
-pub fn text_width(text: &str) -> usize {
-    shuyi_assets::lang::text_width(text, &shuyi_assets::font::CellWidths::NARROW)
-}
 
 /// Directory of the languages inside the asset bundle.
 pub const LANG_DIR: &str = "lang";
@@ -51,16 +46,17 @@ pub const MALE: &str = "m";
 /// The variant of a pack's dialogue line said of a female lead (`text_f`).
 pub const FEMALE: &str = "f";
 
+/// The variants a pack's dialogue line may have: one for each gender of
+/// the lead.
+pub const VARIANTS: &[&str] = &[MALE, FEMALE];
+
 /// What the game's packs keep to besides English: the rules of tips and
-/// lessons, the lead's tokens, the dialogue box, and a line's text for
-/// each gender of the lead.
-pub const RULES: PackRules<'static> = PackRules::new(
-    data::text_problem,
-    &LeadTokens,
-    LIMITS,
-    &shuyi_assets::font::CellWidths::NARROW,
-)
-.with_variants(&[MALE, FEMALE]);
+/// lessons, the lead's tokens, the dialogue box measured with `widths`
+/// (the font's, [`font::widths`](crate::font::widths)), and a line's text
+/// for each gender of the lead.
+pub fn rules(widths: &CellWidths) -> PackRules<'_> {
+    PackRules::new(data::text_problem, &LeadTokens, LIMITS, widths).with_variants(VARIANTS)
+}
 
 /// The variant of a pack's line said of a lead of `gender`.
 pub const fn variant(gender: LeadGender) -> &'static str {
@@ -143,19 +139,19 @@ pub fn pack_from_sources(
     ui: Source<'_>,
     english: &BTreeMap<String, String>,
 ) -> Result<LangPack, Vec<ContentError>> {
-    engine::pack_from_sources(info, ui, english, &RULES)
+    engine::pack_from_sources(info, ui, english, &rules(&font::widths()))
 }
 
 /// Parses and validates the pack made of `sources`, its screen text
 /// checked against `english` and its data and dialogue text against
 /// `data` (left out without it: the data files failed to load), by the
-/// game's [`RULES`]. Reports every problem found.
+/// game's [`rules`]. Reports every problem found.
 pub fn pack_from_files(
     sources: &PackSources<'_>,
     english: &BTreeMap<String, String>,
     data: Option<&DataText>,
 ) -> Result<LangPack, Vec<ContentError>> {
-    engine::pack_from_files(sources, english, data, &RULES)
+    engine::pack_from_files(sources, english, data, &rules(&font::widths()))
 }
 
 /// Loads and validates English and every pack in the embedded bundle.
@@ -178,14 +174,14 @@ pub fn load(data: Option<DataText>) -> Result<Lang, Vec<ContentError>> {
     })
 }
 
-/// Validates the languages made of `files` by the game's [`RULES`]: see
+/// Validates the languages made of `files` by the game's [`rules`]: see
 /// [`engine::from_files`].
 pub fn from_files(
     files: &[LangFile<'_>],
     data: Option<DataText>,
     display: impl Fn(&str) -> String,
 ) -> Result<Lang, Vec<ContentError>> {
-    engine::from_files(files, data, display, &RULES).map(Lang)
+    engine::from_files(files, data, display, &rules(&font::widths())).map(Lang)
 }
 
 #[cfg(test)]
@@ -231,7 +227,7 @@ mod tests {
     fn each_gender_of_the_lead_has_its_variant() {
         assert_eq!(variant(LeadGender::Male), "m");
         assert_eq!(variant(LeadGender::Female), "f");
-        assert_eq!(RULES.variants, ["m", "f"]);
+        assert_eq!(VARIANTS, ["m", "f"]);
     }
 }
 

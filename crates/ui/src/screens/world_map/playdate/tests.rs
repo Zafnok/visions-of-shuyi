@@ -4,6 +4,7 @@
 //! keyboard.
 
 use insta::assert_snapshot;
+use shuyi_assets::font::CellWidths;
 use trpg_content::battle_campaign;
 use trpg_core::{Campaign, GameMode, LeadGender, LeadProfile};
 
@@ -555,10 +556,19 @@ fn the_places_window_is_as_wide_as_it_needs() {
         lines: Vec::new(),
     };
     // The title and its frame: 10 and 6.
-    assert_eq!(place_lines(&panel("Stone Mill", "Town")).0, 16);
+    assert_eq!(
+        place_lines(&panel("Stone Mill", "Town"), &CellWidths::NARROW).0,
+        16
+    );
     // A line and its frame: 13 and 4.
-    assert_eq!(place_lines(&panel("A", "Enemy level 2")).0, 17);
+    assert_eq!(
+        place_lines(&panel("A", "Enemy level 2"), &CellWidths::NARROW).0,
+        17
+    );
     // A line too long: cut to the widest window's inside.
-    let (w, lines) = place_lines(&panel("A", "A very long line of words here"));
+    let (w, lines) = place_lines(
+        &panel("A", "A very long line of words here"),
+        &CellWidths::NARROW,
+    );
     assert_eq!((w, lines[0].as_str()), (PLACE_W, "A very long line …"));
 }

@@ -667,7 +667,8 @@ fn the_objective_banner_snapshot() {
             format!("objective_banner_{i}"),
             crate::harness::snapshot_of(&buf, MAP_VIEW, &ctx.palette)
         );
-        let (width, height) = objective_banner_size("OBJECTIVE", &objective_banner(lines).lines);
+        let (width, height) =
+            objective_banner_size("OBJECTIVE", &objective_banner(lines).lines, &NARROW);
         let (left, top) = (
             MAP_VIEW.x + (MAP_VIEW.w - width) / 2,
             MAP_VIEW.y + (MAP_VIEW.h - height) / 2,

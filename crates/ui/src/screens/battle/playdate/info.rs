@@ -70,13 +70,19 @@ impl Page<'_> {
         };
         let ink = inks(self.ctx);
         let w = w.min(self.width.saturating_sub(to_usize(dx)));
-        self.buf
-            .print(self.x + dx, y, &cut(text, w), ink.text, ink.inside);
+        self.buf.print(
+            self.x + dx,
+            y,
+            &cut(text, w, self.buf.widths()),
+            ink.text,
+            ink.inside,
+        );
     }
 
     /// `text` ending at `right` cells along row `dy`.
     fn right(&mut self, (right, dy): (i32, i32), text: &str) {
-        self.text((right - cells(text), dy), to_usize(cells(text)), text);
+        let w = cells(text, self.buf.widths());
+        self.text((right - w, dy), to_usize(w), text);
     }
 
     /// `text` as the bar at `dx` along row `dy`: white letters on black,
@@ -224,7 +230,11 @@ fn paint_weapon(pen: &mut Page<'_>, view: &InfoView, w: &InfoWeaponView, dy: i32
         .unwrap_or_else(|| format!("{:>2}/{}", w.left, w.max));
     let right = to_i32(pen.width);
     // check-text: not a data name (the view's own)
-    pen.text((2, dy), to_usize(right - cells(&dur) - 3), &w.name);
+    pen.text(
+        (2, dy),
+        to_usize(right - cells(&dur, pen.buf.widths()) - 3),
+        &w.name,
+    );
     pen.right((right, dy), &dur);
     pen.text((2, dy + 1), pen.width, &w.numbers);
 }
@@ -256,7 +266,7 @@ fn paint_skills_and_spells(pen: &mut Page<'_>, view: &InfoView) {
     for skill in &view.skills {
         pen.text((0, dy), 1, &skill.mark);
         let cost = skill.cost.as_deref().unwrap_or_default();
-        let room = right - 2 - cells(cost) - 1;
+        let room = right - 2 - cells(cost, pen.buf.widths()) - 1;
         // check-text: not a data name (the view's own)
         pen.text((2, dy), to_usize(room), &skill.name);
         pen.right((right, dy), cost);
@@ -278,7 +288,7 @@ fn paint_skills_and_spells(pen: &mut Page<'_>, view: &InfoView) {
         // check-text: not a data name (the view's own)
         pen.text(
             (dx + 2, row),
-            to_usize(end - dx - 2 - cells(&uses) - 1),
+            to_usize(end - dx - 2 - cells(&uses, pen.buf.widths()) - 1),
             &spell.name,
         );
         pen.right((end, row), &uses);

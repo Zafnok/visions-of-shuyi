@@ -31,6 +31,7 @@
 //!
 //! Nothing here decides what the screen shows (ADR-0054).
 
+use shuyi_assets::font::CellWidths;
 use trpg_content::WorldMapDef;
 use trpg_core::Pos;
 
@@ -238,7 +239,7 @@ fn paint_place(buf: &mut GlyphBuffer, ink: &Inks, place: &PlaceView, p: Pos) {
         }
     }
     if let Some(level) = &place.level {
-        let x = p.x - (cells(level) - 1) / 2;
+        let x = p.x - (cells(level, buf.widths()) - 1) / 2;
         for (at, ch) in (x..).zip(level.chars()) {
             put(buf, Pos::new(at, p.y - 1), ch, Some(ink.text));
         }
@@ -265,7 +266,7 @@ fn paint_windows(ctx: &Ctx, view: &WorldMapView, origin: (i32, i32), buf: &mut G
     let (screen_w, screen_h) = (i32::from(buf.width()), i32::from(buf.height()));
     let left_half = origin.0 + view.cursor.x < screen_w / 2;
     let x_for = |w: i32| if left_half { screen_w - w } else { 0 };
-    let (w, lines) = place_lines(&view.panel);
+    let (w, lines) = place_lines(&view.panel, buf.widths());
     let h = to_i32(lines.len()) + 2;
     let mut rect = Rect::new(x_for(w), 0, w, h);
     if let Some(list) = &view.list {
@@ -318,13 +319,13 @@ fn paint_list(
 /// The place window's width (room for its lines and for the name and the
 /// act in its frame, at most [`PLACE_W`]) and its lines: the place's kind,
 /// then what the PC's panel says under it, each cut to fit.
-fn place_lines(panel: &PanelView) -> (i32, Vec<String>) {
+fn place_lines(panel: &PanelView, widths: &CellWidths) -> (i32, Vec<String>) {
     let lines: Vec<String> = core::iter::once(&panel.kind)
         .chain(&panel.lines)
-        .map(|l| pd::cut(l, usize::try_from(PLACE_W - 4).unwrap_or(0)))
+        .map(|l| pd::cut(l, usize::try_from(PLACE_W - 4).unwrap_or(0), widths))
         .collect();
-    let widest = lines.iter().map(|l| cells(l) + 4);
-    let frame = [cells(&panel.title), cells(&panel.act)].map(|t| t + 6);
+    let widest = lines.iter().map(|l| cells(l, widths) + 4);
+    let frame = [cells(&panel.title, widths), cells(&panel.act, widths)].map(|t| t + 6);
     let w = widest.chain(frame).max().unwrap_or(0);
     (w.min(PLACE_W), lines)
 }

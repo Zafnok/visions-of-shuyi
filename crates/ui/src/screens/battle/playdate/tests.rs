@@ -3,6 +3,7 @@
 //! through the one-bit renderer in pixels. What is shown is tested on the
 //! view (`battle/view_tests.rs`).
 
+use shuyi_assets::font::CellWidths;
 use trpg_core::{Phase, Pos};
 
 use super::*;
@@ -97,7 +98,9 @@ fn browsing_shows_the_unit_top_left_and_the_terrain_top_right_and_no_help_bar() 
     assert_eq!(find(&buf, 2, &hp), Some(2));
     assert_eq!(cell(&buf, 0, 3).glyph, '╚');
     // The terrain's in the top-right corner: its name, then Def and Avo.
-    let w = cells(&terrain.bonuses).max(cells(&terrain.name)) + 4;
+    let w = cells(&terrain.bonuses, &CellWidths::NARROW)
+        .max(cells(&terrain.name, &CellWidths::NARROW))
+        + 4;
     assert_eq!(cell(&buf, 50 - w, 0).glyph, '╔');
     assert_eq!(cell(&buf, 49, 0).glyph, '╗');
     assert_eq!(find(&buf, 1, &terrain.name), Some(52 - w));
@@ -277,7 +280,10 @@ fn the_objective_page_wraps_its_notes_to_the_screen_under_its_title() {
     let note = "Burn the forest to cut off the ambush quickly, before the riders \
                 reach the ford.";
     let lines = wrap_notes([note], NOTE_WIDTH);
-    assert!(lines.iter().any(|l| cells(l) > 46), "{lines:?}");
+    assert!(
+        lines.iter().any(|l| cells(l, &CellWidths::NARROW) > 46),
+        "{lines:?}"
+    );
     let buf = painted_with(&s, |v| {
         v.dialog = Some(DialogView::Objective(ObjectiveView {
             title: "Objective".into(),
@@ -536,7 +542,7 @@ fn the_map_menu_has_the_turn_in_its_frame_and_the_rewind_charges_under_it() {
     let bottom = row(&buf, y + size.1 - 1);
     assert!(bottom.contains(&format!(" {} ", info.charges)), "{bottom}");
     // Wide enough for both, a frame cell and a space either side.
-    assert!(size.0 >= cells(&info.charges) + 6);
+    assert!(size.0 >= cells(&info.charges, &CellWidths::NARROW) + 6);
 }
 
 #[test]

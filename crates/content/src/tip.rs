@@ -266,7 +266,7 @@ pub fn from_source(
         placeholder: &placeholder,
         face_problem: &face_problem,
         default_face: DEFAULT_FACE,
-        widths: &shuyi_assets::font::CellWidths::NARROW,
+        widths: &crate::font::widths(),
     };
     let table = engine::from_source(file, source, &rules)?;
     let errors: Vec<ContentError> = table

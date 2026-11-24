@@ -85,13 +85,13 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, row: &RowView, y: i32) {
             bar(ctx, buf, VALUE_X - 1, y, to_i32(BOX_W) + 2, &shown);
             return;
         }
-        ValueView::Text { text, adjustable } => (cut(text, room), *adjustable),
+        ValueView::Text { text, adjustable } => (cut(text, room, buf.widths()), *adjustable),
         ValueView::Volume { level, max } => (volume_text(*level, *max), true),
     };
     buf.print(VALUE_X, y, &value, ink.text, ink.inside);
     if row.focused && adjustable {
         buf.print(VALUE_X - 2, y, "◄", ink.text, ink.inside);
-        let after = VALUE_X + cells(&value) + 1;
+        let after = VALUE_X + cells(&value, buf.widths()) + 1;
         buf.print(after, y, "►", ink.text, ink.inside);
     }
 }

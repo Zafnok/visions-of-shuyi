@@ -22,13 +22,11 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::widgets::{MenuView, word_wrap};
+use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 use shuyi_ui::widgets::AskView;
 
-/// `text` cut to `w` cells, every character one cell wide: the game's
-/// font has no wide glyphs.
-pub fn cut(text: &str, w: usize) -> String {
-    shuyi_ui::screens::cut(text, w, &shuyi_assets::font::CellWidths::NARROW)
-}
+pub use shuyi_ui::screens::cut;
 
 /// The mark in a list's frame that more lines are above.
 pub const MORE_ABOVE: &str = "▲";
@@ -77,9 +75,9 @@ pub fn inks(ctx: &Ctx) -> Inks {
     Inks::of(&ctx.palette)
 }
 
-/// Cells `text` takes, as a coordinate.
-pub fn cells(text: &str) -> i32 {
-    i32::try_from(text.chars().count()).unwrap_or(i32::MAX)
+/// Cells `text` takes as `widths` measure them, as a coordinate.
+pub fn cells(text: &str, widths: &CellWidths) -> i32 {
+    to_i32(text_width(text, widths))
 }
 
 /// `n` as a coordinate.
@@ -113,7 +111,7 @@ pub fn window(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, title: &str) {
     buf.draw_box(rect, BoxStyle::Double, ink.frame, ink.inside);
     if !title.is_empty() {
         let room = to_usize(rect.w - 4);
-        let shown = cut(&format!(" {title} "), room);
+        let shown = cut(&format!(" {title} "), room, buf.widths());
         buf.print(rect.x + 2, rect.y, &shown, ink.text, ink.inside);
     }
 }
@@ -125,8 +123,8 @@ pub fn footer(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, text: &str) {
         return;
     }
     let ink = inks(ctx);
-    let shown = cut(&format!(" {text} "), to_usize(rect.w - 4));
-    let x = rect.x + (rect.w - cells(&shown)) / 2;
+    let shown = cut(&format!(" {text} "), to_usize(rect.w - 4), buf.widths());
+    let x = rect.x + (rect.w - cells(&shown, buf.widths())) / 2;
     buf.print(x, rect.y + rect.h - 1, &shown, ink.text, ink.inside);
 }
 
@@ -150,7 +148,7 @@ pub fn bar(ctx: &Ctx, buf: &mut GlyphBuffer, x: i32, y: i32, w: i32, text: &str)
     let w = to_usize(w);
     let shown = format!(
         " {:<w$}",
-        cut(text, w.saturating_sub(1)),
+        cut(text, w.saturating_sub(1), buf.widths()),
         w = w.saturating_sub(1)
     );
     buf.print(x, y, &shown, fg, bg);
@@ -165,10 +163,22 @@ pub fn item(ctx: &Ctx, buf: &mut GlyphBuffer, at: (i32, i32), w: i32, text: &str
     match state {
         Item::Focused => bar(ctx, buf, x - 1, y, w + 2, text),
         Item::Plain => {
-            buf.print(x, y, &cut(text, to_usize(w)), ink.text, ink.inside);
+            buf.print(
+                x,
+                y,
+                &cut(text, to_usize(w), buf.widths()),
+                ink.text,
+                ink.inside,
+            );
         }
         Item::Off => {
-            buf.print(x, y, &cut(text, to_usize(w)), ink.off, ink.inside);
+            buf.print(
+                x,
+                y,
+                &cut(text, to_usize(w), buf.widths()),
+                ink.off,
+                ink.inside,
+            );
         }
     }
 }
@@ -217,7 +227,12 @@ pub fn first_shown(len: usize, room: usize, focus: Option<usize>) -> usize {
 /// either side, inside the frame; a row per item.
 pub fn menu_size(ctx: &Ctx, menu: &MenuView) -> (i32, i32) {
     let text = |item| menu_text(ctx, item);
-    let widest = menu.items.iter().map(text).map(|t| cells(&t)).max();
+    let widest = menu
+        .items
+        .iter()
+        .map(text)
+        .map(|t| cells(&t, ctx.widths()))
+        .max();
     (widest.unwrap_or(0) + 4, to_i32(menu.items.len()) + 2)
 }
 
@@ -245,7 +260,7 @@ pub fn titled_menu_size(ctx: &Ctx, menu: &MenuView, title: &str) -> (i32, i32) {
     let title_w = if title.is_empty() {
         0
     } else {
-        cells(title) + 6
+        cells(title, ctx.widths()) + 6
     };
     (w.max(title_w), h)
 }
@@ -304,7 +319,7 @@ pub fn ask_view<T>(ctx: &Ctx, buf: &mut GlyphBuffer, question: &AskView<T>) -> R
 
 /// The answers' line, each answer with a cell either side and two cells
 /// between them, and where each starts in it.
-fn answers_line(answers: Answers<'_>) -> (String, Vec<i32>) {
+fn answers_line(answers: Answers<'_>, widths: &CellWidths) -> (String, Vec<i32>) {
     match answers {
         Answers::Hint(hint) => (hint.to_owned(), Vec::new()),
         Answers::Choices(choices) => {
@@ -314,7 +329,7 @@ fn answers_line(answers: Answers<'_>) -> (String, Vec<i32>) {
                 if i > 0 {
                     line.push_str("  ");
                 }
-                starts.push(cells(&line));
+                starts.push(cells(&line, widths));
                 line.push(' ');
                 line.push_str(label);
                 line.push(' ');
@@ -329,8 +344,12 @@ fn answers_line(answers: Answers<'_>) -> (String, Vec<i32>) {
 pub fn ask(ctx: &Ctx, buf: &mut GlyphBuffer, text: &str, answers: Answers<'_>) -> Rect {
     let ink = inks(ctx);
     let lines = wrap(text, QUESTION_W);
-    let (line, starts) = answers_line(answers);
-    let widest = lines.iter().map(|l| cells(l)).chain([cells(&line)]).max();
+    let (line, starts) = answers_line(answers, buf.widths());
+    let widest = lines
+        .iter()
+        .map(|l| cells(l, buf.widths()))
+        .chain([cells(&line, buf.widths())])
+        .max();
     let w = (widest.unwrap_or(0) + 4).min(i32::from(buf.width()));
     let h = to_i32(lines.len()) + 4;
     let rect = Rect::new(
@@ -344,17 +363,17 @@ pub fn ask(ctx: &Ctx, buf: &mut GlyphBuffer, text: &str, answers: Answers<'_>) -
         buf.print(rect.x + 2, y, text, ink.text, ink.inside);
     }
     let y = rect.y + h - 2;
-    let x = rect.x + (w - cells(&line)) / 2;
+    let x = rect.x + (w - cells(&line, buf.widths())) / 2;
     match answers {
         Answers::Hint(hint) => {
-            let shown = cut(hint, to_usize(w - 2));
+            let shown = cut(hint, to_usize(w - 2), buf.widths());
             buf.print(x.max(rect.x + 1), y, &shown, ink.text, ink.inside);
         }
         Answers::Choices(choices) => {
             for ((label, focused), start) in choices.iter().zip(starts) {
                 let at = x + start;
                 if *focused {
-                    bar(ctx, buf, at, y, cells(label) + 2, label);
+                    bar(ctx, buf, at, y, cells(label, buf.widths()) + 2, label);
                 } else {
                     buf.print(at + 1, y, label, ink.text, ink.inside);
                 }
@@ -368,8 +387,12 @@ pub fn ask(ctx: &Ctx, buf: &mut GlyphBuffer, text: &str, answers: Answers<'_>) -
 /// window in the middle of `buf`, `title` in its frame: an item a row,
 /// the focused one a bar across the window.
 pub fn list(ctx: &Ctx, buf: &mut GlyphBuffer, title: &str, items: &[(&str, bool)]) -> Rect {
-    let widest = items.iter().map(|(t, _)| cells(t)).max().unwrap_or(0);
-    let w = widest.max(cells(title) + 2) + 6;
+    let widest = items
+        .iter()
+        .map(|(t, _)| cells(t, buf.widths()))
+        .max()
+        .unwrap_or(0);
+    let w = widest.max(cells(title, buf.widths()) + 2) + 6;
     let h = to_i32(items.len()) + 2;
     let rect = Rect::new(
         (i32::from(buf.width()) - w) / 2,

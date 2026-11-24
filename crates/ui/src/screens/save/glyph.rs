@@ -10,9 +10,12 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
+use crate::screens::clip;
 use crate::screens::{centre_x, files, print_centred};
 use crate::widgets::ask::glyph as ask_glyph;
 use crate::widgets::menu::glyph as menu_glyph;
+use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 use shuyi_ui::screens::print_centred_styled;
 
 /// Row of the question.
@@ -41,9 +44,9 @@ const TIME_END_X: i32 = PANEL.x + PANEL.w - 3;
 /// Row of the message under the panel.
 const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
 
-/// Cells `text` takes, as a coordinate.
-fn cells(text: &str) -> i32 {
-    i32::try_from(text.chars().count()).unwrap_or(0)
+/// Cells `text` takes as `widths` measure them, as a coordinate.
+fn cells(text: &str, widths: &CellWidths) -> i32 {
+    i32::try_from(text_width(text, widths)).unwrap_or(0)
 }
 
 /// Paints the save prompt over the whole of `buf`.
@@ -79,7 +82,7 @@ pub fn paint_slots(ctx: &Ctx, view: &SlotPickerView, buf: &mut GlyphBuffer) {
     paint_columns(ctx, &view.columns, buf);
     // Which slots are on show, in the bottom border.
     let range = format!(" {} ", view.range);
-    let range_x = PANEL.x + PANEL.w - 2 - cells(&range);
+    let range_x = PANEL.x + PANEL.w - 2 - cells(&range, buf.widths());
     buf.print(range_x, PANEL.y + PANEL.h - 1, &range, dim, bg);
     for (y, slot) in (FIRST_ROW..).zip(&view.slots) {
         paint_slot(ctx, slot, buf, y);
@@ -112,7 +115,7 @@ fn paint_columns(ctx: &Ctx, columns: &SlotColumnsView, buf: &mut GlyphBuffer) {
     buf.print(CHAPTER_X, HEADING_ROW, &columns.chapter, dim, bg);
     buf.print(MODE_X, HEADING_ROW, &columns.mode, dim, bg);
     buf.print(ARMY_X, HEADING_ROW, &columns.army, dim, bg);
-    let x = TIME_END_X - cells(&columns.time);
+    let x = TIME_END_X - cells(&columns.time, buf.widths());
     buf.print(x, HEADING_ROW, &columns.time, dim, bg);
 }
 
@@ -145,11 +148,17 @@ fn paint_slot(ctx: &Ctx, slot: &SlotView, buf: &mut GlyphBuffer, y: i32) {
             playtime,
             ..
         } => {
-            let title: String = chapter.chars().take(CHAPTER_W).collect();
+            let title: String = clip(chapter, CHAPTER_W, buf.widths());
             buf.print(CHAPTER_X, y, &title, text, bg);
             buf.print(MODE_X, y, mode_name, text, bg);
             buf.print(ARMY_X, y, army, text, bg);
-            buf.print(TIME_END_X - cells(playtime), y, playtime, text, bg);
+            buf.print(
+                TIME_END_X - cells(playtime, buf.widths()),
+                y,
+                playtime,
+                text,
+                bg,
+            );
         }
         SlotEntryView::Unreadable(why) => {
             buf.print(CHAPTER_X, y, why, bad, bg);

@@ -106,6 +106,15 @@
     font_atlas: (
         required_glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬\u{ad}®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬░▒▓█▀▄▌▐■♣♠♥♦≈•ˇ▲▼◄►←↑→↓☺☻♪†╱╲╤╫∩≡◊☖☗⛨⛩♔♕",
         readme: "assets/fonts/README.md",
+        // The wide set `zhhans` (Fusion Pixel 12px, ticket 0236) keeps
+        // these whatever the packs say, so tests don't depend on a
+        // translation: the CJK punctuation block (U+3000–U+3029,
+        // U+3030–U+303F; not its combining tone marks) and the full-width
+        // forms (U+FF01–U+FF60, U+FFE0–U+FFE6). `font-atlas` keeps those
+        // the font has.
+        wide_set_glyphs: {
+            "zhhans": "\u{3000}、。〃〄々〆〇〈〉《》「」『』【】〒〓〔〕〖〗〘〙〚〛〜〝〞〟〠〡〢〣〤〥〦〧〨〩〰〱〲〳〴〵〶〷〸〹〺〻〼〽〾〿！＂＃＄％＆＇（）＊＋，－．／０１２３４５６７８９：；＜＝＞？＠ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺ［＼］＾＿｀ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ｛｜｝～｟｠￠￡￢￣￤￥￦",
+        },
     ),
 
     // The web build (tickets 0206, 0207, 0219): `--debug-tools` for the
@@ -128,6 +137,7 @@
         "assets/NOTICES-game.txt",
         "assets/fonts/Terminus-LICENSE.txt",
         "assets/fonts/Cinzel-LICENSE.txt",
+        "assets/fonts/FusionPixel-LICENSE.txt",
         "assets/audio/licenses/CC0-1.0.txt",
         "assets/audio/licenses/CC-BY-4.0.txt",
         "assets/audio/licenses/CC-BY-3.0.txt",

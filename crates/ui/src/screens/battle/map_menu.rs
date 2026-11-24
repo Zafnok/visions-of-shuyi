@@ -589,7 +589,8 @@ mod tests {
         use crate::screens::battle::layout::MAP_VIEW;
         let pc = MAP_VIEW.w - 4;
         let playdate = i32::from(crate::ConsoleSpec::PLAYDATE.cols) - 4;
-        crate::screens::playdate::cells(line) <= pc.min(playdate)
+        crate::screens::playdate::cells(line, &shuyi_assets::font::CellWidths::NARROW)
+            <= pc.min(playdate)
     }
 
     /// Every battle's objective line fits, in English and every pack.

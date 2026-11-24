@@ -18,6 +18,9 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::glyph::progress as pages_skin;
 use crate::screens::battle::progress;
+use crate::screens::clip;
+use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 
 /// Width of a column's box, in cells.
 const COLUMN_W: i32 = 24;
@@ -51,9 +54,9 @@ fn right_edge() -> i32 {
     COLUMNS_X + COLUMN_W * i32::try_from(COLUMNS).unwrap_or(0)
 }
 
-/// How many cells `text` takes.
-fn width(text: &str) -> i32 {
-    i32::try_from(text.chars().count()).unwrap_or(0)
+/// How many cells `text` takes as `widths` measure them.
+fn width(text: &str, widths: &CellWidths) -> i32 {
+    i32::try_from(text_width(text, widths)).unwrap_or(0)
 }
 
 /// The text of a stat row: `Str   9 → 12  +3` if it grows, else
@@ -128,7 +131,7 @@ fn paint_header(ctx: &Ctx, view: &ColumnsView, buf: &mut GlyphBuffer) {
         UiColor::Text
     };
     buf.print(
-        right_edge() - width(&text),
+        right_edge() - width(&text, buf.widths()),
         UNIT_ROW,
         &text,
         c(color),
@@ -150,7 +153,13 @@ fn paint_columns(ctx: &Ctx, view: &ColumnsView, buf: &mut GlyphBuffer) {
         buf.print(COLUMNS_X, MORE_ROW, more, dim, black);
     }
     if let Some(more) = &view.more_right {
-        buf.print(right_edge() - width(more), MORE_ROW, more, dim, black);
+        buf.print(
+            right_edge() - width(more, buf.widths()),
+            MORE_ROW,
+            more,
+            dim,
+            black,
+        );
     }
 }
 
@@ -175,7 +184,7 @@ fn paint_column(ctx: &Ctx, view: &ColumnsView, column: &ColumnView, buf: &mut Gl
         }
     };
     let pen = |buf: &mut GlyphBuffer, row: i32, text: &str, color: UiColor| {
-        let cut: String = text.chars().take(TEXT_W).collect();
+        let cut: String = clip(text, TEXT_W, buf.widths());
         buf.print(x + 2, COLUMNS_Y + row, &cut, c(shade(color)), bg);
     };
     let title = if column.focused {
@@ -221,7 +230,7 @@ fn paint_column(ctx: &Ctx, view: &ColumnsView, column: &ColumnView, buf: &mut Gl
         buf.print(tx + i32::from(n), ty, &lit, hi, bg);
     }
     if let Some(reason) = &column.refused {
-        let cut: String = reason.chars().take(TEXT_W).collect();
+        let cut: String = clip(reason, TEXT_W, buf.widths());
         buf.print(x + 2, COLUMNS_Y + 23, &cut, c(UiColor::HpLow), bg);
     }
 }
@@ -242,8 +251,8 @@ fn paint_question(ctx: &Ctx, question: &QuestionView, buf: &mut GlyphBuffer) {
         (question.cost.as_str(), UiColor::Text),
         (keys.as_str(), UiColor::TextDim),
     ];
-    let widest = lines.iter().map(|(l, _)| l.chars().count()).max();
-    let w = i32::try_from(widest.unwrap_or(0)).unwrap_or(0) + 4;
+    let widest = lines.iter().map(|(l, _)| buf.text_cells(l)).max();
+    let w = widest.unwrap_or(0) + 4;
     let h = i32::try_from(lines.len()).unwrap_or(0) + 4;
     let (bw, bh) = (i32::from(buf.width()), i32::from(buf.height()));
     let rect = Rect::new((bw - w) / 2, (bh - h) / 2, w, h);
