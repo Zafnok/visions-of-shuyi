@@ -38,6 +38,10 @@ othe = "othe"
 mor = "mor"
 # The Chapter 3 boss's first name (assets-private/story/names.md, ticket 0743).
 ned = "ned"
+# Verbatim quote of Nick on the ambience's volume (docs/design/audio.md,
+# ticket 1322), and the Freesound author Heigh-hoo credited there.
+shoudl = "shoudl"
+heigh = "heigh"
 
 [default]
 # Commit hashes (e.g. the engine pin c1ba9ec8 in docs/engine/pins.md):

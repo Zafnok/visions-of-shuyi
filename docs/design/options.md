@@ -116,6 +116,14 @@ Nick's.
   numbers are steps of loudness (0.6 dB each) rather than a share of full
   volume: the same starting loudness is **97**, which the row shows, and a
   save from before is read where it sounds the same.
+- **Ambience volume** (ticket 1322, Nick 2026-11-23: "its own in game
+  volume slider", "10 ticks under"; `audio.md`, *Ambience*): a third row
+  like the other two, for the places' sound beds. It starts **10 under
+  the music volume's start** (87 while the music starts at 97: 6 dB
+  quieter), and keeps that gap if 0879 moves the music's start. It sits
+  under the Sound volume (*Claude's starting rule*), is kept in the player
+  profile like the others, and `Restore defaults` puts it back. The
+  Playdate shows it only if it plays the beds.
 - **A slider:** left and right move it 5 at a time (*tunable*).
 - **A box for the exact number:** Confirm on the row opens it; type the
   number, Enter keeps it, Backspace deletes, Escape leaves the volume as it

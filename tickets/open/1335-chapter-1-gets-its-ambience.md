@@ -16,7 +16,7 @@ completed:
 ## Context
 
 1324 records Nick's picks for Chapter 1's places (the battle (0803; the green before the chapel, 0741) and the scenes' places (0029, 0732-0734): the letter, the Red Company, after the fight, Veyne Hall): each
-place's sound bed and passing calls, drifting effect, moving tiles,
+place's sound bed (no passing calls, 1322), drifting effect, moving tiles,
 touches and creatures, and any story moment that changes them. The
 systems are built by 1332 (ambience), 1334 (map touches and creatures),
 1315 (moving tiles) and 1316 (drifting effects); this ticket only sets
