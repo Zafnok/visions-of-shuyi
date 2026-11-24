@@ -38,8 +38,7 @@ about 10 h between a PR going green and Nick merging it when it lands
 before his quiet stretch. **That wait is on purpose** (Nick,
 2026-11-24: "I want to ensure I am actioning on followups"): he merges
 when he can act on what a PR leaves. This ticket doesn't try to shorten
-it. A PR left red is still a cost; 1351 has the session fix it before
-it ends.
+it. A PR left red is still a cost; the desktop app's Auto-fix, on by default when a session opens a PR, has the session fix it.
 
 ## Nick input
 
