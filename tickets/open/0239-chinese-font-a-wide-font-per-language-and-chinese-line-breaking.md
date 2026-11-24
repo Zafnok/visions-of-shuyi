@@ -15,8 +15,8 @@ completed:
 
 ## Context
 
-0236 puts one 16×16 font in the atlas for Japanese and 0237 wraps
-Japanese text. Simplified Chinese (Nick, 2026-10-04,
+0236 puts the first 16×16 font in the atlas (this Chinese font, since
+Chinese went first) and 0237 wraps text without spaces. Simplified Chinese (Nick, 2026-10-04,
 `docs/design/voices-languages-and-script.md`) needs three more things
 ([ADR-0045 §4](../../docs/adr/0045-languages-text-by-key-and-line-ids.md)):
 
@@ -59,9 +59,8 @@ longer waits for 0042 (Chinese first).
 characters of GB 2312 level 1 and 2,972 of level 2, 姝怡 included.
 Licence: OFL-1.1 (the design doc's licence notes, read at the source;
 quote them again from the release you download). The second font,
-GNU Unifont 16px in Options, is 0261's. If 0236 already put Fusion Pixel
-in as the first wide font (it does when 0042 is still open), this
-ticket keeps that set and does the rest.
+GNU Unifont 16px in Options, is 0261's. 0236 puts Fusion Pixel in as the
+first wide font; this ticket keeps that set and does the rest.
 
 ## Nick input
 
