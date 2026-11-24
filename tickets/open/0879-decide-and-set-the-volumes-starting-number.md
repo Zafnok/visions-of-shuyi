@@ -56,6 +56,11 @@ full):
 `crates/ui/src/audio/loudness.rs`. The session checks them against
 `loudness()` before asking.)
 
+The Ambience volume (1322, built by 1332) starts **10 under the
+music's start** (Nick, 2026-11-23): whatever start Nick picks here, the
+ambience's moves with it (87 while the music is at 97), and the question
+shows it.
+
 Related: `docs/design/options.md` (*Volumes*), 0805 (the Options menu),
 0826 (voice volume), 0865 (the music dips under a voice: its `ducks`
 entry is a separate number and stays), 0183 (which notes #624's 80 → 97

@@ -16,7 +16,7 @@ completed:
 ## Context
 
 1331 records Nick's picks for Chapter 8's places (Saltmere Docks (0854): a dock held while the ship loads, against Hounds from three streets; the closing scene, where Hollis dies; and the chapter's other scenes): each
-place's sound bed and passing calls, drifting effect, moving tiles,
+place's sound bed (no passing calls, 1322), drifting effect, moving tiles,
 touches and creatures, and any story moment that changes them. The
 systems are built by 1332 (ambience), 1334 (map touches and creatures),
 1315 (moving tiles) and 1316 (drifting effects); this ticket only sets
