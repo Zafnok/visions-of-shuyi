@@ -1347,6 +1347,7 @@ dependencies = [
  "serde",
  "shuyi-assets",
  "shuyi-core",
+ "shuyi-embed",
  "trpg-content",
  "trpg-core",
 ]

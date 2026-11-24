@@ -50,7 +50,6 @@
 //! it holds only Chapter 1's names and characters and no script.
 
 use std::collections::BTreeSet;
-use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
 use shuyi_assets::bitmap::EXTENSION;
@@ -61,6 +60,10 @@ use shuyi_assets::bitmap::convert::png_pixels;
 #[path = "src/playdate_images.rs"]
 #[allow(dead_code)] // the build uses only part of it
 mod playdate_images;
+
+/// The files of a layer's folder, on the engine's walk (ticket 1347).
+#[path = "src/layer_files.rs"]
+mod layer_files;
 
 /// The demo's edition file (ticket 0914).
 #[path = "src/edition.rs"]
@@ -114,10 +117,6 @@ const ASSETS: &str = "../../assets";
 
 /// The test files, relative to this crate (ADR-0057).
 const TEST: &str = "../../assets-test";
-
-/// The name of the notes in an asset folder, which no build embeds
-/// (ADR-0105).
-const README: &str = "README.md";
 
 /// The content's own test data (ADR-0118): what the tests of the real
 /// content check it against, read from disk by them, never embedded.
@@ -208,25 +207,19 @@ fn watch_content(content: bool) {
     }
 }
 
-/// Where a table's entry is read from: the environment variable naming a
-/// folder (`CARGO_MANIFEST_DIR` or `OUT_DIR`) and the file's path in it.
-type Source = (&'static str, String);
-
 /// Writes the tables (see the top of this file). Each is a `&[(path,
 /// bytes)]` expression with one `(path, include_bytes!(…))` per file,
 /// sorted by path (`/`-separated, relative to its folder), so the bundle can
-/// binary-search it. With `private`, the private layers too
+/// binary-search it (`shuyi_embed::table_source`). With `private`, the private layers too
 /// ([`playdate_table`], [`whole_table`]); with `content`, the content's;
 /// without, they are empty.
 fn write_file_tables(private: bool, content: bool, demo: bool) {
-    let mut files = Vec::new();
-    walk(Path::new(ASSETS), "", &mut files);
-    files.sort_unstable();
-    let mut content_files = Vec::new();
-    if content {
-        walk(Path::new(CONTENT), "", &mut content_files);
-        content_files.sort_unstable();
-    }
+    let files = files_of(ASSETS);
+    let content_files = if content {
+        files_of(CONTENT)
+    } else {
+        Vec::new()
+    };
     let mut both: Vec<String> = files.iter().chain(&content_files).cloned().collect();
     both.sort_unstable();
     both.dedup();
@@ -245,9 +238,9 @@ fn write_file_tables(private: bool, content: bool, demo: bool) {
     let read = |path: &str| std::fs::read_to_string(Path::new(ASSETS).join(path)).ok();
     let one_bit = convert_pictures(ASSETS, "onebit", &kept, read);
     let as_is = |path: &String| as_is(ASSETS, path);
-    let playdate = |path: &String| -> Source {
+    let playdate = |path: &String| -> PathBuf {
         if one_bit.contains(path) {
-            ("OUT_DIR", format!("/{}", one_bit_file("onebit", path)))
+            out_dir().join(one_bit_file("onebit", path))
         } else {
             as_is(path)
         }
@@ -286,12 +279,10 @@ fn write_file_tables(private: bool, content: bool, demo: bool) {
     write_out("playdate_private_files.rs", &playdate_private);
     write_out("private_files.rs", &game);
     write_out("private_test_files.rs", &test);
-    let mut paths = String::from("&[\n");
-    for path in &left_out {
-        writeln!(paths, "    {path:?},").unwrap_or_else(|e| panic!("writing to a String: {e}"));
-    }
-    paths.push_str("]\n");
-    write_out("playdate_left_out.rs", &paths);
+    write_out(
+        "playdate_left_out.rs",
+        &shuyi_embed::paths_source(&left_out),
+    );
     if content {
         write_demo(&both, &content_files, private);
     } else {
@@ -329,11 +320,11 @@ fn write_demo(files: &[String], content: &[String], private: bool) {
     let list =
         std::fs::read_to_string(DEMO_LIST).unwrap_or_else(|e| panic!("reading {DEMO_LIST}: {e}"));
     let plan = demo_bundle::Plan::parse(&list).unwrap_or_else(|e| panic!("{DEMO_LIST}: {e}"));
-    let mut art = Vec::new();
-    if private {
-        walk(Path::new(PRIVATE), "", &mut art);
-        art.sort_unstable();
-    }
+    let mut art = if private {
+        files_of(PRIVATE)
+    } else {
+        Vec::new()
+    };
     plan.left_out(files, private.then_some(&art[..]))
         .unwrap_or_else(|e| panic!("{DEMO_LIST}: {e}"));
     let edition = edition::EDITION_FILE.to_owned();
@@ -345,9 +336,9 @@ fn write_demo(files: &[String], content: &[String], private: bool) {
     kept.push(edition.clone());
     kept.sort_unstable();
     write_out(&format!("demo/{edition}"), edition::DEMO);
-    let source = |path: &String| -> Source {
+    let source = |path: &String| -> PathBuf {
         if *path == edition {
-            ("OUT_DIR", format!("/demo/{edition}"))
+            out_dir().join(format!("demo/{edition}"))
         } else if content.binary_search(path).is_ok() {
             demo_copy(&plan, CONTENT, "demo", path)
         } else {
@@ -363,7 +354,7 @@ fn write_demo(files: &[String], content: &[String], private: bool) {
 /// Where the demo's table reads the file at `path` in `folder`: the file,
 /// or its cut copy (`demo_bundle::Plan::rewrite`), written into `OUT_DIR`'s
 /// folder `dir`.
-fn demo_copy(plan: &demo_bundle::Plan, folder: &str, dir: &str, path: &String) -> Source {
+fn demo_copy(plan: &demo_bundle::Plan, folder: &str, dir: &str, path: &String) -> PathBuf {
     let Ok(text) = std::fs::read_to_string(Path::new(folder).join(path)) else {
         return as_is(folder, path);
     };
@@ -371,7 +362,7 @@ fn demo_copy(plan: &demo_bundle::Plan, folder: &str, dir: &str, path: &String) -
     match plan.rewrite(path, &text) {
         Ok(Some(cut)) => {
             write_out(&format!("{dir}/{path}"), &cut);
-            ("OUT_DIR", format!("/{dir}/{path}"))
+            out_dir().join(format!("{dir}/{path}"))
         }
         Ok(None) => as_is(folder, path),
         Err(e) => panic!("{DEMO_LIST}: {shown}/{e}"),
@@ -379,18 +370,18 @@ fn demo_copy(plan: &demo_bundle::Plan, folder: &str, dir: &str, path: &String) -
 }
 
 /// The file at `path` in `folder`, as it is.
-fn as_is(folder: &str, path: &String) -> Source {
-    ("CARGO_MANIFEST_DIR", format!("/{folder}/{path}"))
+fn as_is(folder: &str, path: &String) -> PathBuf {
+    crate_dir().join(folder).join(path)
 }
 
 /// The table of every file in `folder`; empty if it isn't there, as
 /// `assets-private/test/` may not be.
 fn whole_table(folder: &str) -> String {
-    let mut files = Vec::new();
-    if Path::new(folder).is_dir() {
-        walk(Path::new(folder), "", &mut files);
-    }
-    files.sort_unstable();
+    let files = if Path::new(folder).is_dir() {
+        files_of(folder)
+    } else {
+        Vec::new()
+    };
     table(files.iter(), |path| as_is(folder, path))
 }
 
@@ -410,9 +401,7 @@ struct Below<'a> {
 /// (ticket 1042), that file as it is. A fighter's scale is its sidecar's
 /// here, else the one in the layers `below`, as the layered bundle reads it.
 fn playdate_table(layer: &'static str, dir: &str, list: &str, below: &Below<'_>) -> String {
-    let mut files = Vec::new();
-    walk(Path::new(layer), "", &mut files);
-    files.sort_unstable();
+    let mut files = files_of(layer);
     let rules = rules(list);
     files.retain(|path| !rules.iter().any(|rule| matches(rule, path)));
     let touched = playdate_images::touch_ups(&files);
@@ -435,13 +424,13 @@ fn playdate_table(layer: &'static str, dir: &str, list: &str, below: &Below<'_>)
             .find_map(|folder| std::fs::read_to_string(Path::new(folder).join(path)).ok())
     };
     let one_bit = convert_pictures(layer, dir, &to_convert, read);
-    let source = |path: &String| -> Source {
+    let source = |path: &String| -> PathBuf {
         if let Some(file) = touched.get(path) {
-            ("CARGO_MANIFEST_DIR", format!("/{layer}/{file}"))
+            as_is(layer, file)
         } else if one_bit.contains(path) {
-            ("OUT_DIR", format!("/{}", one_bit_file(dir, path)))
+            out_dir().join(one_bit_file(dir, path))
         } else {
-            ("CARGO_MANIFEST_DIR", format!("/{layer}/{path}"))
+            as_is(layer, path)
         }
     };
     table(files.iter(), source)
@@ -460,20 +449,17 @@ fn is_sidecar(path: &str) -> bool {
 /// ([`LEFT_OUT`]).
 fn table<'a>(
     files: impl Iterator<Item = &'a String>,
-    source: impl Fn(&String) -> Source,
+    source: impl Fn(&String) -> PathBuf,
 ) -> String {
-    let mut table = String::from("&[\n");
     let left_out = |path: &str| LEFT_OUT.get().is_some_and(|plan| plan.leaves_out(path));
-    for path in files.filter(|path| !left_out(path)) {
-        let (root, file) = source(path);
-        writeln!(
-            table,
-            "    ({path:?}, include_bytes!(concat!(env!({root:?}), {file:?}))),"
-        )
-        .unwrap_or_else(|e| panic!("writing to a String: {e}"));
-    }
-    table.push_str("]\n");
-    table
+    let entries: Vec<shuyi_embed::Entry> = files
+        .filter(|path| !left_out(path))
+        .map(|path| shuyi_embed::Entry {
+            path: path.clone(),
+            file: source(path),
+        })
+        .collect();
+    shuyi_embed::table_source(&entries)
 }
 
 /// Where in `OUT_DIR`, below its folder `dir`, the one-bit picture of the
@@ -513,6 +499,14 @@ fn convert_pictures(
 /// Cargo's `OUT_DIR`.
 fn out_dir() -> PathBuf {
     PathBuf::from(std::env::var_os("OUT_DIR").unwrap_or_else(|| panic!("cargo sets OUT_DIR")))
+}
+
+/// This crate's folder, absolute, as an `include_bytes!` in `OUT_DIR` needs.
+fn crate_dir() -> PathBuf {
+    PathBuf::from(
+        std::env::var_os("CARGO_MANIFEST_DIR")
+            .unwrap_or_else(|| panic!("cargo sets CARGO_MANIFEST_DIR")),
+    )
 }
 
 /// Writes `contents` to the file `name` in `OUT_DIR`, making its folder.
@@ -566,26 +560,13 @@ fn left_out(list: &str, files: &[String]) -> Result<Vec<String>, String> {
     Ok(out)
 }
 
-/// Adds the path (`prefix` + its name, `/`-separated) of every file in `dir`
-/// and the directories below it to `files`, but the [`README`]s and the
-/// content's [`CONTENT_TESTS`].
-fn walk(dir: &Path, prefix: &str, files: &mut Vec<String>) {
-    let entries =
-        std::fs::read_dir(dir).unwrap_or_else(|e| panic!("reading {}: {e}", dir.display()));
-    for entry in entries {
-        let entry = entry.unwrap_or_else(|e| panic!("reading {}: {e}", dir.display()));
-        let name = entry.file_name();
-        let name = name
-            .to_str()
-            .unwrap_or_else(|| panic!("a file name in {} isn't UTF-8", dir.display()));
-        let path = format!("{prefix}{name}");
-        if entry.path().is_dir() {
-            if dir == Path::new(CONTENT) && name == CONTENT_TESTS {
-                continue;
-            }
-            walk(&entry.path(), &format!("{path}/"), files);
-        } else if name != README {
-            files.push(path);
-        }
-    }
+/// The paths of the files of the layer `folder`, sorted, but the
+/// `README.md`s and the content's [`CONTENT_TESTS`]
+/// ([`layer_files::layer_files`]): the build fails on a name that isn't
+/// UTF-8 or two that differ only by case.
+fn files_of(folder: &str) -> Vec<String> {
+    let tests = format!("{CONTENT_TESTS}/**");
+    let skip: &[&str] = if folder == CONTENT { &[&tests] } else { &[] };
+    layer_files::layer_files(Path::new(folder), skip)
+        .unwrap_or_else(|e| panic!("{}: {e}", folder.trim_start_matches("../../")))
 }
