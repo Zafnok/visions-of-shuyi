@@ -660,14 +660,13 @@ pub(crate) mod tests {
         );
     }
 
-    /// Ticket 0826: the voices are settings, on at the old 80 until
-    /// changed: 97 on the engine's loudness curve (engine #318), which
-    /// sounds the same.
+    /// Ticket 0826: the voices are settings, on until changed, at the
+    /// volume Nick picked: the top (0879, the audio manifest's `groups`).
     #[test]
-    fn the_voice_settings_start_on_at_the_old_volume() {
+    fn the_voice_settings_start_on_at_the_top() {
         let mut c = ctx();
         assert!(c.settings().voices);
-        assert_eq!(c.volume(VOICE), 97);
+        assert_eq!(c.volume(VOICE), 100);
         for volume in [0, 50, 100] {
             c.change_settings(|s| s.volumes.set(VOICE, volume)).unwrap();
             assert_eq!(c.volume(VOICE), volume);

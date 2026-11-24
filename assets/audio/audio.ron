@@ -11,6 +11,13 @@
 // because Nick found them far too loud at 100 (ticket 0222).
 (
     music_fade_ms: 500,
+    // A new player's Music, Sound and Voice volumes start at the top
+    // (ticket 0879, Nick: options.md, Volumes).
+    groups: [
+        (id: "music", volume: 100),
+        (id: "sfx", volume: 100),
+        (id: "voice", volume: 100),
+    ],
     ducks: [
         (when: "voice", lower: "music", to: 90, attack_ms: 150, release_ms: 600),
     ],

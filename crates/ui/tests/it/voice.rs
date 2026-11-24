@@ -211,8 +211,8 @@ fn options_on(row: Row) -> Harness {
 fn the_voice_rows_switch_set_the_volume_and_persist() {
     let mut h = options_on(Row::Voices);
     let line = with_a_voice(&mut h);
-    // The old 80, on the engine's loudness curve (engine #318).
-    assert_eq!(h.gain(VOICE), loudness(97));
+    // Nick's start, the top (0879).
+    assert_eq!(h.gain(VOICE), loudness(100));
     // Off: the voice playing stops, and nothing plays.
     h.ctx_mut().play_voice(&line);
     h.wait(0.0).clear_audio().keys("Left");
@@ -224,7 +224,7 @@ fn the_voice_rows_switch_set_the_volume_and_persist() {
     assert_eq!(voice_requests(&h), [] as [AudioRequest; 0]);
     // The volume: the slider, then 0 by the box.
     h.keys("Down Left Left");
-    assert_eq!(h.gain(VOICE), loudness(87));
+    assert_eq!(h.gain(VOICE), loudness(90));
     h.keys("f").type_text("0").keys("Enter");
     assert_eq!(h.gain(VOICE), Gain::SILENT);
     // Voice on hover in the log, under the volume: off.

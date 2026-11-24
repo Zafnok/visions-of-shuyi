@@ -18,10 +18,10 @@ expression: h.snapshot()
                     │   Intro                      On                          │                    
                     │   Open towns on arrival      On                          │                    
                     │   Colors                     Earthy painterly            │                    
-                    │   Music volume               █████████▒  97              │                    
-                    │   Sound volume               █████████▒  97              │                    
+                    │   Music volume               ██████████ 100              │                    
+                    │   Sound volume               ██████████ 100              │                    
                     │   Voices (AI-generated)      On                          │                    
-                    │   Voice volume               █████████▒  97              │                    
+                    │   Voice volume               ██████████ 100              │                    
                     │   Voice on hover in the log  On                          │                    
                     │   Auto-advance               Off                         │                    
                     │                                                          │                    
