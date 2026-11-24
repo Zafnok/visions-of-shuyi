@@ -1,6 +1,6 @@
 ---
 id: "0042"
-title: "Decide: Japanese — the font, picking a language, the machine-translation label, naming the lead"
+title: "Decide: Japanese — the font, naming the lead, names, the title"
 type: design-decision
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
@@ -11,7 +11,7 @@ nick_input: decision
 completed:
 ---
 
-# 0042 — Decide: Japanese — the font, picking a language, the machine-translation label, naming the lead
+# 0042 — Decide: Japanese — the font, naming the lead, names, the title
 
 ## Context
 
@@ -20,6 +20,18 @@ machine-translated Japanese option, with a human translation later if the
 game earns enough. Not a blocker for Chapter 1 or Act 1. The technical
 plan is [ADR-0045](../../docs/adr/0045-languages-text-by-key-and-line-ids.md);
 this ticket asks Nick the parts a player sees.
+
+**Chinese went first** (Nick, 2026-11-24: "why should chinese be
+blocked by japanese? lets do chinese first."). 0045 asked the two
+questions both languages share, and they are not asked again here: a
+player picks a language on a first-launch list with the computer's
+language highlighted, and in Options; a machine translation says so
+beside the language's name (日本語 (機械翻訳)), on the store page and in
+the credits (`docs/design/voices-languages-and-script.md`, *Picking a
+language and saying it is machine-made*). The Chinese font is Fusion
+Pixel 12px, with Unifont 16px in Options: Fusion Pixel has Japanese
+shapes too (`ja`), the cheapest way to make the two languages look
+alike, so render it among the candidates.
 
 Nobody on the project reads Japanese, Nick included. So he judges the
 *look* from rendered screens, and the wording questions are put to him in
@@ -47,35 +59,33 @@ translating anything (0719). No mockup made with bought art is committed
 1. **Find the font candidates.** 16×16 pixel fonts with kana and kanji
    whose licence ADR-0013 allows (OFL-1.1, public domain, MIT…), read at
    the source on the day. Start from: GNU Unifont (dual GPL / OFL-1.1),
-   Shinonome 16 (public domain), DotGothic16 (OFL-1.1), Ark Pixel 16px
-   (OFL-1.1), M+ bitmap (its own licence: needs ADR-0013's review). Drop
-   any whose licence fails; say so in the ticket.
+   Shinonome 16 (public domain), DotGothic16 (OFL-1.1), Fusion Pixel
+   12px `ja` (OFL-1.1; Ark Pixel 16px was retired, 0045), M+ bitmap (its
+   permissive notice passed ADR-0013's review in 0045, inside Fusion
+   Pixel's Cubic 11 licence). Drop any whose licence fails; say so in
+   the ticket.
 2. **Render mockups**, real pixels at 2×, of the same dialogue box and the
    same unit-info panel in each font, beside Terminus Latin text (stats
-   and numbers stay Latin). A throwaway script outside the game is fine;
-   put the PNGs in `docs/screenshots/0042-*.png`. Use a short Japanese
+   and numbers stay Latin), and beside the Chinese font 0045 chose, so
+   Nick sees the two languages side by side. 0045's throwaway script
+   (paint over a real 2× frame cell by cell) is described in its
+   completion notes; put the PNGs in `docs/screenshots/0042-*.png`. Use a short Japanese
    sample of a Chapter 1 line (machine-translated for the mockup only).
 3. **Ask Nick**, in this order:
    1. **The font**, from the mockups.
-   2. **Picking a language.** Options: asked once on first launch, before
-      the layout picker (most console ports); follows the system language
-      with a row in Options (Steam's usual behaviour); Options only,
-      English until changed.
-   3. **Saying it is machine-translated.** Options: a note beside the
-      language's name where it is picked ("日本語 (機械翻訳)"); a one-time
-      notice when Japanese is first chosen; store page and credits only.
-      Tell him plainly: Japanese players spot machine translation at once
-      and review it harshly when it isn't labelled.
-   4. **Naming the lead in Japanese.** Options: a kana grid picked with
+   2. ~~Picking a language~~ and ~~saying it is machine-translated~~:
+      answered in 0045 for every language (above).
+   3. **Naming the lead in Japanese.** (0045's answer for Chinese was
+      typing with the system's input method, 0262.) Options: a kana grid picked with
       the cursor (Dragon Quest, Pokémon); Latin letters only (the screen
       as it is); a fixed default name with no entry in Japanese.
-   5. **Names.** Katakana for every name (what Fire Emblem's Japanese
+   4. **Names.** Katakana for every name (what Fire Emblem's Japanese
       releases do for Western-style names), or Latin names left as they
       are.
-   6. **The game's title in Japanese:** keep *Visions of Shuyi* in Latin
+   5. **The game's title in Japanese:** keep *Visions of Shuyi* in Latin
       letters, or add a Japanese subtitle. (Feeds 0906's trademark check
       if it changes.)
-   7. **Voices with Japanese text** was answered in 0043: Japanese voices (0755).
+   6. **Voices with Japanese text** was answered in 0043: Japanese voices (0755).
 4. Record each answer verbatim and as a rule. If an answer needs work no
    ticket covers (a kana name-entry grid), write that ticket (`write-ticket`)
    and add it to 0719's `blocked_by` if Chapter 1 in Japanese needs it.

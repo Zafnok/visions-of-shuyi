@@ -28,9 +28,12 @@ themselves when a human replaces something.
 ## Nick input
 
 **Decision** on the wording (`ask-nick`, before merging): the credits
-lines and the store-page paragraph. 0042 (question 3),
-0045 (questions 3 and 7: whether anyone checked the Chinese, and how
-that is credited) and
+lines and the store-page paragraph.
+0045 (who checks the Chinese and the label: Nick's wife checks it,
+the language row says **简体中文 (机器翻译，母语者审校)**, and the credits
+say **中文校对：姝怡** / **Chinese review: Shuyi**, first name only;
+the store pages and the credits say which languages are
+machine-translated and that the Chinese is checked) and
 0043 (question 6) already fixed the in-game labels, and the credits say "Voices generated with AI: Qwen3-TTS, Chatterbox." and "We hope to replace these with a human cast."; this ticket doesn't
 reopen them.
 

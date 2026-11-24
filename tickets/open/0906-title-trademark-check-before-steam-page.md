@@ -47,7 +47,9 @@ money and his call; the session only explains what to ask for.
 
 **In:**
 - Searching public trademark registers and stores for conflicts with
-  "Visions of Shuyi", "Shuyi" and "VoS".
+  "Visions of Shuyi", "Shuyi" and "VoS", and the Chinese title 0045
+  chose (`docs/design/voices-languages-and-script.md`, *Chinese
+  (Simplified)*): **姝怡的魔幻之境**, short **姝怡幻境**.
 - Checking our own player/shopper-facing text against the precautions in
   `docs/design/title.md`.
 - Writing up findings in `docs/release/title-trademark-check.md`.
@@ -66,6 +68,10 @@ money and his call; the session only explains what to ask for.
    and any "VISIONS" mark on its own.
 2. Search the EUIPO (<https://euipo.europa.eu/eSearch>) and WIPO Global Brand
    Database (<https://branddb.wipo.int>) the same way.
+2b. The Chinese titles 姝怡的魔幻之境 and 姝怡幻境, and 姝怡 alone:
+   China's trademark office (CNIPA, <https://sbj.cnipa.gov.cn>) in
+   classes 9 and 41, WIPO's database, and Steam's and TapTap's game
+   lists. Record the hits the same way.
 3. Search Steam, itch.io, GOG and the console stores for games titled
    "Visions of …" or containing "Shuyi". Record for each whether it is
    released and who publishes it. Verify release status on the store page,

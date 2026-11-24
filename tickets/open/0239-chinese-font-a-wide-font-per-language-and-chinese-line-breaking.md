@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["0045", "0236", "0237"]
+blocked_by: ["0236", "0237"]
 nick_input: none
 completed:
 ---
@@ -48,7 +48,20 @@ and ADR-0045.
 ([`docs/research/friction-2026-11-17.md`](../../docs/research/friction-2026-11-17.md),
 bucket B1): engine#2303 is in the engine's `tickets/done/` at the
 game's pin (`e738ffc`), so it is off `blocked_by`. What still blocks
-this is Nick's 0045 (and 0042 through 0236 and 0237); 0184 queues them.
+this is 0236 and 0237. Nick answered 0045 on 2026-11-24, and 0236 no
+longer waits for 0042 (Chinese first).
+
+**The font** (0045, 2026-11-24, `docs/design/voices-languages-and-script.md`,
+*Chinese (Simplified)*): **Fusion Pixel 12px**, the monospaced
+`zh_hans` BDF of release 2026.11.10, each 12×12 character drawn in the
+16×16 space of two cells as mockup C shows
+(`docs/screenshots/0045-font-compare.png`). It covers all 3,755
+characters of GB 2312 level 1 and 2,972 of level 2, 姝怡 included.
+Licence: OFL-1.1 (the design doc's licence notes, read at the source;
+quote them again from the release you download). The second font,
+GNU Unifont 16px in Options, is 0261's. If 0236 already put Fusion Pixel
+in as the first wide font (it does when 0042 is still open), this
+ticket keeps that set and does the rest.
 
 ## Nick input
 
@@ -73,13 +86,21 @@ that, say so in the completion notes, and keep the other steps.
 1. ~~Move the pin to an engine `main` that has engine#2303~~ (done by
    the pin move of 2026-11-07).
 2. Add the font's BDF and licence text (`assets-src/fonts/`,
-   `assets/fonts/<Name>-LICENSE.txt`), a row in `THIRD_PARTY_ASSETS.md`
-   and a section in `assets/fonts/README.md`, as 0236 did for the
-   Japanese font. A TTF-only font is converted to BDF at 16 px the way
-   0236 documented.
+   `assets/fonts/FusionPixel-LICENSE.txt` with the release's
+   `LICENSES/` texts), a row in `THIRD_PARTY_ASSETS.md`, the credit, and
+   move its row in `assets/fonts/README.md` from *chosen, not yet in the
+   atlas* to a section of its own, as 0236 did for the Japanese font.
+   The 12×12 glyphs sit in the 16×16 wide cell with 2 px on each side
+   and the font's baseline on Terminus's (the mockup's placement); pad
+   the BDF or let the atlas tool place it, whichever the engine's
+   `--wide` supports, and document it there. Skip this step if 0236
+   already added it.
 3. `shuyi.ron`'s `font_atlas`: two named sets, `ja` (0236's font and its
    fixed set) and `zhhans` (this font, with the CJK punctuation block and
-   the full-width forms `，。！？；：（）` always in it). Regenerate the
+   the full-width forms `，。！？；：（）` always in it). If 0042 hasn't
+   chosen the Japanese font yet, there is one set, `zhhans`, and the
+   acceptance check on 直 below waits for the `ja` set (say so in the
+   completion notes and in 0042). Regenerate the
    atlas with `cargo shuyi font-atlas` and commit it.
 4. The packs' `lang.ron`: the Japanese pack gets `wide_font: Some("ja")`,
    the Chinese pack `wide_font: Some("zhhans")` and `wide_punctuation:
