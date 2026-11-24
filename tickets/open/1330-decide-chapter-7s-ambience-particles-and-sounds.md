@@ -21,7 +21,7 @@ copying a life sim, "chapter by chapter". His full words are in 1322.
 
 Three palette decisions say *what kinds* of life the game has: **0096**
 (moving tiles; drifting petals, leaves, ash, snow), **1322** (ambient
-sound: a bed and passing calls) and **1323** (hit particles; dust,
+sound: a bed per place and light) and **1323** (hit particles; dust,
 splashes and creatures on the map). This ticket picks, for Chapter 7
 only, which of them each place gets, so the chapters differ from each
 other and each fits its story.
@@ -55,7 +55,12 @@ of two or three options, plus "none". The agent's starting list to show,
 - Pilgrims' Road: birds and a shrine's small bell; The Ossuary Gate: wind at a hillside gate
 - the scenes with Crane: the catacombs' bed only, or silence
 
-Questions, per place: the bed and calls (from 1322's palette), the
+1322's answer (2026-11-23): a bed per place, which may follow the
+map's light; **no passing calls for now, and never in a battle**
+(1344 asks again later). A call in the list above is heard only as
+part of a bed's recording, or waits for 1344.
+
+Questions, per place: the bed (from 1322's palette), the
 drifting effect and moving tiles (0096's), the touches and creatures
 (1323's), and any story moment that changes them mid-battle (a turn, a
 trigger, a death). Plus "describe your own". Every comparison to another

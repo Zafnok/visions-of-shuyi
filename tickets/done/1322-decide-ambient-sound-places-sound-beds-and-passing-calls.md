@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-23
 ---
 
 # 1322 — Decide: ambient sound, a place's sound bed and its passing calls
@@ -96,12 +96,12 @@ particles (1323); changing a music cue.
 
 ## Acceptance criteria
 
-- [ ] `docs/design/audio.md` has an *Ambience* section answering
+- [x] `docs/design/audio.md` has an *Ambience* section answering
       questions 1–6, with Nick's words quoted.
-- [ ] Every sound Nick picked has its author, page and license recorded
+- [x] Every sound Nick picked has its author, page and license recorded
       there (to be credited in `THIRD_PARTY_ASSETS.md` by 1332).
-- [ ] 1332's scope matches the answer.
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] 1332's scope matches the answer.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -112,3 +112,56 @@ None (a decision).
 Question 6 decides the Playdate's ambience; GBA: no target (1314).
 
 ## Completion notes
+
+Three rounds of one listening page
+(https://claude.ai/artifact/T6YeygJ9ubs3apgU1Hmx4e, private): the Chapter 1
+battle frame with `battle_bright`, beds and passing calls from Freesound
+(all CC0), the three levels, the map's light, and, at Nick's request,
+sliders for the music, the bed and the calls. The answer is in
+`docs/design/audio.md` (rule 12 and *Ambience*, Nick's words in the
+appendix) and `options.md` (*Volumes*).
+
+**Nick's answers:**
+
+- **A bed per place, no passing calls** (B, not C). Calls: "not in a
+  battle", and "for now I don't like the randomness and loudness": asked
+  again by **1344** (new) after more of the "life" tickets.
+- **Loudness:** a bed is levelled like the music, and has **its own
+  volume on Options**, starting **10 under the music's** (87 against 97,
+  6 dB).
+- **Where:** the battle map, scenes over their place, the world map,
+  towns and camp, all at the battle's level; **not in the fight** (cut
+  when the combat stage opens, back after).
+- **Conversations:** the bed dips under a voiced line like the music
+  (round 3).
+- **The world map's bed keeps playing** through the quiet between rounds
+  of its track.
+- **The bed follows the map's light.** The **Summer Meadow** (baryy,
+  freesound 409143, CC0) is the day bed he liked.
+- **The Playdate:** the same beds if the bench says they run well, else
+  none.
+
+**Claude's starting rules** (in `audio.md`, *Starting values*, and
+`options.md`): the bed fades 0.5 s with its screen and around a fight,
+and dips by the music's numbers under a voice; a bed is a 30–40 s loop
+crossfaded over 2 s like the crackle; a light with no bed of its own plays
+the place's noon bed; the Ambience row sits under the Sound volume, and
+the Playdate shows it only if it plays the beds; the ambience's start
+keeps its 10-step gap if 0879 moves the music's.
+
+**Also changed:** 1332 rewritten for a bed with its own volume group and
+no calls (title, scope, steps, tests); 1324–1331 and 1335–1342 no longer
+plan passing calls, and 1324 starts from the Summer Meadow; 0879 notes
+that the ambience's start follows the music's; the roadmap names 1344.
+
+**Follow-ups filed:** **1344** (ask again about passing calls) and
+**0260** (`frame-png --battle X --light Y` ignores the light: the battle
+opens before the light is set; found while rendering the page's frames).
+
+**Deviations:** the ticket's question 5 (calls' pace) has no answer:
+"again for now TBD", recorded as 1344's. Octopath Traveler's towns were
+dropped from the comparisons: no source confirmed ambience under their
+music. Stardew Valley's beds and random one-shots were checked on its
+wiki (`Modding:Audio`: `spring_day_ambient`, `spring_night_ambient`,
+`crickets` as "random ambient nighttime noise"; `Options`: an Ambient
+Volume slider).
