@@ -494,7 +494,7 @@ Nothing for the game: 0 PRs.
 
 Nothing for the game: 0 PRs.
 
-## 2026-11-23: 50472bbc → 7d60a21a (25 engine PRs), #PRNUM
+## 2026-11-23: 50472bbc → 7d60a21a (25 engine PRs), #808
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
