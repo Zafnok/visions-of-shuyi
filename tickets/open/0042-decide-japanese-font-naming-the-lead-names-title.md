@@ -89,7 +89,10 @@ translating anything (0719). No mockup made with bought art is committed
 4. Record each answer verbatim and as a rule. If an answer needs work no
    ticket covers (a kana name-entry grid), write that ticket (`write-ticket`)
    and add it to 0719's `blocked_by` if Chapter 1 in Japanese needs it.
-5. Update 0236, 0718 and 0825 where an answer changes their text.
+5. Update 0718 and 0825 where an answer changes their text. The
+   Japanese font goes in the atlas as the set `ja`: in 0236 or 0239 if
+   either is still open (add the step there), otherwise in a ticket of
+   its own (`write-ticket`) that 0719 waits for.
 
 ## Acceptance criteria
 

@@ -1,6 +1,6 @@
 ---
 id: "0237"
-title: Japanese line breaking, and screens whose text must fit
+title: "Line breaking for Chinese and Japanese, and screens whose text must fit"
 type: feature
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
@@ -11,12 +11,12 @@ nick_input: none
 completed:
 ---
 
-# 0237 — Japanese line breaking, and screens whose text must fit
+# 0237 — Line breaking for Chinese and Japanese, and screens whose text must fit
 
 ## Context
 
-After 0236 Japanese glyphs draw, two cells each. But wrapping breaks at
-spaces, which Japanese doesn't have, and some layouts were sized for an
+After 0236 wide glyphs draw, two cells each (Chinese first, then
+Japanese). But wrapping breaks at spaces, which neither language has, and some layouts were sized for an
 English word. [ADR-0045 §4](../../docs/adr/0045-languages-text-by-key-and-line-ids.md)
 sets the rule: break between any two characters, except before closing
 punctuation and after opening brackets.
@@ -25,8 +25,8 @@ punctuation and after opening brackets.
 [Shuyi Engine's tickets](https://github.com/Zafnok/shuyi-engine/tree/main/tickets)).
 Since the carve (1109, 1112) the one wrapping function (`word_wrap`, the
 game's `crate::widgets::word_wrap`), the dialogue text box's paging and
-`lang-status` are the engine's. 2302 gives `word_wrap` the Japanese
-breaking rules (measured in cells), keeps a key name filled into a
+`lang-status` are the engine's. 2302 gives `word_wrap` the breaking
+rules for text without spaces (measured in cells), keeps a key name filled into a
 placeholder in one piece, lets the source language's `ui.ron` give a
 key the width of its place (`max_cells`), and adds an **overflow** list
 to `lang-status`. This ticket is the game's half: the game's own
@@ -52,9 +52,10 @@ length limits for pack text in cells; layouts sized for one English
 word; ~~moving the engine pin to a commit with engine#2302~~ (done by the pin move of 2026-11-05).
 
 **Out (do not do):** the engine's half (engine#2302); translating
-(0719); new layouts for Japanese (if a place can't fit, report it; a
-redesign is its own ticket); furigana; vertical text; Chinese
-punctuation and its wide quotes (0239).
+(0719, 0726); new layouts for either language (if a place can't fit,
+report it; a redesign is its own ticket); furigana; vertical text;
+Chinese punctuation, its wide quotes and its own no-break rules
+(0239).
 
 ## Implementation steps
 
@@ -77,9 +78,9 @@ punctuation and its wide quotes (0239).
 
 ## Acceptance criteria
 
-- [ ] A Japanese line from the test pack pages in the dialogue box at
-      the same 3 lines, with no line starting with `。` or `、` (Harness
-      test reading the view).
+- [ ] A Chinese line from the test pack (in 0236's wide font) pages in
+      the dialogue box at the same 3 lines, with no line starting with
+      `。` or `、` (Harness test reading the view).
 - [ ] English wrapping is unchanged (existing snapshots).
 - [ ] No wrapping routine of the game's own is left in `crates/ui/src`.
 - [ ] `cargo shuyi lang-status test` reports an entry made too long on
@@ -89,7 +90,7 @@ punctuation and its wide quotes (0239).
 ## Tests required
 
 - Unit: the replaced routines keep their indents and line breaks.
-- Snapshot / integration: the dialogue screen showing a Japanese line
+- Snapshot / integration: the dialogue screen showing a Chinese line
   from the test pack.
 
 ## Completion notes

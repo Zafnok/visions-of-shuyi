@@ -205,7 +205,7 @@ language) → **0233** screen text by key (no open dependencies) → **0234** th
 rest of the screens (the battle and class change screens: **0243**) and **0235** data names, tips and dialogue (also needs
 0717); **0236** wide glyphs (the first wide font: Chinese's, since
 0042 is open; engine#2301 done) → **0237**
-Japanese line breaking (after engine#2302); **0825** the Options row (after 0805); **0718** the translation
+line breaking for Chinese and Japanese (after engine#2302); **0825** the Options row (after 0805); **0718** the translation
 pipeline → **0719** Chapter 1 and the screens in Japanese (after 0716).
 *Chinese (Simplified)*, on the same engine work: **0045** done
 (2026-11-24, Chinese first: 姝怡, the title 姝怡的魔幻之境, Fusion Pixel

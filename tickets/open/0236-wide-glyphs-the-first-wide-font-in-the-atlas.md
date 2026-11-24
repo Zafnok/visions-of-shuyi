@@ -1,6 +1,6 @@
 ---
 id: "0236"
-title: "Wide glyphs: the Japanese font in the atlas, two cells per glyph"
+title: "Wide glyphs: the first wide font in the atlas, two cells per glyph"
 type: feature
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
@@ -11,25 +11,25 @@ nick_input: none
 completed:
 ---
 
-# 0236 — Wide glyphs: the Japanese font in the atlas, two cells per glyph
+# 0236 — Wide glyphs: the first wide font in the atlas, two cells per glyph
 
 ## Context
 
 The font is Terminus 8×16 and a cell holds one 8×16 `char` (ADR-0016).
-Japanese glyphs are 16×16. [ADR-0045 §4](../../docs/adr/0045-languages-text-by-key-and-line-ids.md):
-the atlas gains 16×16 glyphs from the font Nick chose in 0042, and a wide
-glyph takes two cells.
+Chinese and Japanese glyphs are 16×16. [ADR-0045 §4](../../docs/adr/0045-languages-text-by-key-and-line-ids.md):
+the atlas gains 16×16 glyphs from a second font, and a wide glyph takes
+two cells. This ticket makes wide text *drawable*, for whichever
+language comes first; 0237 makes it wrap and fit, and 0239 adds what
+only Chinese needs.
 
-**Chinese first** (Nick, 2026-11-24, 0045: "lets do chinese first"):
-this ticket doesn't wait for the Japanese font. If 0042 hasn't chosen
-it when this is worked, the first wide font is the Chinese default
-0045 chose, **Fusion Pixel 12px** (`zh_hans`, its 12×12 glyph drawn in
-the 16×16 space; `docs/design/voices-languages-and-script.md`,
-*Chinese (Simplified)*), as the set `zhhans`, and everything below
-that says "the Japanese font" means it. 0239 then adds the Chinese
-details (punctuation, breaking), and the Japanese set comes with 0042's
-answer (0239 step 3). This ticket makes Japanese text *drawable*; 0237
-makes it wrap and fit.
+**The font** (Nick, 2026-11-24, 0045: "lets do chinese first"): the
+Chinese default, **Fusion Pixel 12px** (the monospaced `zh_hans` BDF of
+release 2026.11.10, its 12×12 glyph drawn in the 16×16 space;
+`docs/design/voices-languages-and-script.md`, *Chinese (Simplified)*),
+as the wide set `zhhans`. Its licence and placement are in 0239's
+context. The Japanese font is 0042's, still open: if 0042 has chosen it
+by the time this is worked, add it too, as the set `ja`; if not, 0239
+or 0042's follow-up adds it.
 
 **The engine does the drawing: engine#2301** (in
 [Shuyi Engine's tickets](https://github.com/Zafnok/shuyi-engine/tree/main/tickets)).
@@ -45,7 +45,7 @@ atlas and the game's own layout code. engine#2301 shipped as engine
 
 ## Nick input
 
-None (the font is 0042's answer, or 0045's while 0042 is open).
+None (the font is 0045's answer; Japanese's is 0042's).
 
 ## Scope
 
@@ -54,10 +54,10 @@ game's atlas regenerated with it; the set of wide glyphs the game always
 needs; the game's layout code measuring with `text_width`.
 
 **Out (do not do):** the engine's half (engine#2301); line breaking and
-length limits (0237); translating (0719); a second wide font for Chinese
-and its own shapes for shared characters (0239); changing any Latin
-glyph. If 0042 chose a font that ships only as TTF, converting it to BDF
-at 16 px is part of this ticket (a one-off, documented in
+length limits (0237); translating (0719, 0726); Chinese punctuation,
+Chinese line breaking and a set per language for shared characters
+(0239); the second Chinese font (0261); changing any Latin glyph. A
+font that ships only as TTF is converted to BDF at 16 px here (a one-off, documented in
 `assets/fonts/README.md`; the BDF is what is committed).
 
 ## Implementation steps
@@ -73,9 +73,9 @@ at 16 px is part of this ticket (a one-off, documented in
    `assets/fonts/<Name>-LICENSE.txt`), a row in `THIRD_PARTY_ASSETS.md`
    and a section in `assets/fonts/README.md`.
 3. `shuyi.ron`'s `font_atlas`: the wide font and the set the game always
-   needs whatever the packs say (hiragana, katakana, the Japanese
-   punctuation block), so name entry and tests don't depend on a
-   translation. Regenerate the atlas with `cargo shuyi font-atlas
+   needs whatever the packs say (the CJK punctuation block and the
+   full-width forms; hiragana and katakana with a Japanese font), so
+   tests don't depend on a translation. Regenerate the atlas with `cargo shuyi font-atlas
    --wide …` and commit it. A test fails when a pack gains a wide
    character the committed atlas lacks (engine#2301's staleness check
    on the game's packs).
@@ -84,17 +84,17 @@ at 16 px is part of this ticket (a one-off, documented in
    `text_width`, and give the game's buffers the atlas's widths where it
    makes them.
 5. Text snapshots: a continuation cell prints as nothing (engine#2301),
-   so a snapshot row with Japanese reads naturally.
-6. A screenshot for the PR: the test pack (0233) with a few Japanese
+   so a snapshot row with wide text reads naturally.
+6. A screenshot for the PR: the test pack (0233) with a few Chinese
    characters on the title screen, via `cargo shuyi frame-png`.
 
 ## Acceptance criteria
 
-- [ ] The title screen shows Japanese text from the test pack, two cells
+- [ ] The title screen shows Chinese text from the test pack, two cells
       per character (a game frame PNG test against a committed
       reference, or a snapshot reading cells).
 - [ ] The committed atlas has exactly the wide characters the packs use
-      plus the game's set, and a test fails when a pack gains a new kanji.
+      plus the game's set, and a test fails when a pack gains a new one.
 - [ ] Every existing snapshot and the narrow atlas cells are unchanged.
 - [ ] The font's licence is shipped and listed.
 - [ ] All gates in the `run-gates` skill pass.
@@ -102,7 +102,7 @@ at 16 px is part of this ticket (a one-off, documented in
 ## Tests required
 
 - Unit: the game's layout helpers with wide text.
-- Snapshot / integration: a frame PNG or snapshot with Japanese text;
+- Snapshot / integration: a frame PNG or snapshot with Chinese text;
   the look test reads cells, as ADR-0038 allows for tests of a look.
 
 ## Completion notes
