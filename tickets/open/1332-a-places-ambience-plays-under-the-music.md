@@ -19,7 +19,7 @@ completed:
 `options.md`, *Volumes*): **a sound bed per place, no passing calls** (Nick
 didn't want them "for now"; 1344 asks again later). A bed is levelled on
 import to the music's loudness and has **its own volume on Options**,
-starting 10 under the music's (87 against 97). It plays on the battle map,
+starting 10 under the music's (90 against 100). It plays on the battle map,
 in a scene over its place, on the world map, in an open town and in camp;
 **not in the fight** (it stops when the combat stage opens and comes back
 after); it **dips under a voiced line** as the music does (rule 11); the

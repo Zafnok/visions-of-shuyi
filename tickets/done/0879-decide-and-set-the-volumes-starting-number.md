@@ -5,10 +5,10 @@ type: tuning
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-23
 ---
 
 # 0879 — Decide and set the number the volumes start at on Options (now 97)
@@ -179,24 +179,24 @@ checklist (1064) through the Completion notes.
 
 ## Acceptance criteria
 
-- [ ] `docs/design/options.md` (*Volumes*) states the starting number(s)
+- [x] `docs/design/options.md` (*Volumes*) states the starting number(s)
       as Nick's decision, with his words and the date, and no longer
       calls 97 or 80 *tunable* or the agent's.
-- [ ] If the number changed: `assets/audio/audio.ron` and the private
+- [x] If the number changed: `assets/audio/audio.ron` and the private
       `content/audio/audio.ron` each have a `groups:` list setting
       `music`, `sfx` and `voice` to it, and `assets-private.rev` points
       at the private commit that has it.
-- [ ] The new `trpg-content` test asserts the three groups' starting
+- [x] The new `trpg-content` test asserts the three groups' starting
       volumes from the real manifest and passes.
-- [ ] Snapshot `it__options__the_title_opens_options_and_cancel_closes_it`
+- [x] Snapshot `it__options__the_title_opens_options_and_cancel_closes_it`
       shows the decided number on Music, Sound and Voice volume, and
       `it__playdate__playdate_options` on its rows. Nothing else in
       either snapshot changes.
-- [ ] A test shows that `Restore defaults` puts each volume back to the
+- [x] A test shows that `Restore defaults` puts each volume back to the
       decided number. An existing one, updated, counts.
-- [ ] `git grep -n -E "\b97\b" -- crates` has no test left that names
+- [x] `git grep -n -E "\b97\b" -- crates` has no test left that names
       97 as the default (each remaining 97 is a value set on purpose).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -210,5 +210,25 @@ checklist (1064) through the Completion notes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Decided: option B, 100.** Nick, 2026-11-23: "do we have a ticket yet
+  for the starting volume being 97 which is super weird and should be
+  100". He answered before the question was asked, so the pop-up wasn't
+  run. Recorded in `docs/design/options.md` (*Volumes*), with the
+  sentence on older saves kept; `docs/design/README.md`'s Options row
+  has the date.
+- Both audio manifests (public `assets/audio/audio.ron`, private
+  `content/audio/audio.ron`) have a `groups:` list starting `music`,
+  `sfx` and `voice` at 100; `assets/audio/README.md` documents it. The
+  engine's `BUILT_IN_DEFAULT`, curve and step are unchanged.
+- 1322 had merged, so the Ambience start it records now reads "90
+  against 100" in `audio.md` (*Ambience*), `options.md` and 1332.
+- Tests: a new `trpg-content` test reads the real manifest's three
+  starting volumes; the Options, voice and settings tests and the two
+  Options snapshots now show 100; the Harness test of `Restore defaults`
+  also checks the music, sound and voice gains come back to the top.
+  The discard test now presses Left twice and Right once on each row, so
+  a volume at the top still changes.
+- For Nick: if the Chapter 1 demo is already on itch.io, run Actions →
+  Demo → Run workflow before sending the writer packets (0766).
+- For the Act 1 playtest (1064): judge how loud the game starts (music,
+  sounds and voices at 100, about 1.8 dB louder than before).

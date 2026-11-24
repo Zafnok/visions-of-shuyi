@@ -275,9 +275,9 @@ Which bed each place gets is each chapter's ticket (1324–1331).
 - **How loud:** a bed is levelled on import like a music track, to the
   music's own loudness (Nick: "ambient should be same volume as music").
   The player sets it with **its own volume on Options**, which starts
-  **10 under the music's** on the 0–100 scale: 87 while the music starts at
-  97, so 6 dB quieter (0.6 dB a step, `options.md`, *Volumes*). If 0879
-  moves the music's start, the ambience's start moves with it, 10 under.
+  **10 under the music's** on the 0–100 scale: 90 against the music's 100
+  (0879), so 6 dB quieter (0.6 dB a step, `options.md`, *Volumes*). If the
+  music's start ever moves, the ambience's start moves with it, 10 under.
   The world map, towns and camp play their beds as loud as a battle does.
 - **In conversations the bed dips under a voiced line**, exactly as the
   music does (rule 11): only while a line's clip plays, and back up after
