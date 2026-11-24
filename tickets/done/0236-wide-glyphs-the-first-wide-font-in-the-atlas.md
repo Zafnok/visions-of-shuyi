@@ -183,16 +183,17 @@ font that ships only as TTF is converted to BDF at 16 px here (a one-off, docume
   the typewriter's reveal and the dialogue's timing, a stored name's
   length (`save_files/import.rs`), the writer's preview's token column.
 
-- **Workaround: the Playdate prints narrow.** With the wide set, the
-  engine's `GlyphBuffer` looks every printed character up in it
-  (`CellWidths::is_wide`, a `BTreeSet`): CI's bench put the Playdate's
-  `battle-cursor-sweep` frame at 2,069,579 instructions, over its
-  2,000,000 budget (1,983,326 on `main`). `game::with_atlas_widths` skips
-  the Playdate's console, which keeps it as it was on `main` (it never got
-  widths: it boots without the platform's `App`). The fix is an engine
-  fast path (`is_wide` answering a character below the set's first at
-  once); its engine ticket waits for Nick's OK. No Chinese is shown on the
-  Playdate yet.
+- **CI's bench is over budget, from the engine.** With wide glyphs in
+  the atlas, the Playdate's `battle-cursor-sweep` frame takes 2,069,579
+  instructions, over its 2,000,000 budget (1,983,326 on `main`); the
+  desktop's frames grow by about 60,000 too. The one-bit renderer looks
+  every non-space cell up in the wide sets before it checks whether the
+  next cell is a continuation (`onebit.rs`'s `cell_rows` →
+  `FontAtlasDef::wide_cell`, a search of the 174 glyphs), and the raster
+  likely does the same; with no wide glyph that lookup was free. Printing
+  the Playdate narrow saved only 7,500 and was reverted. The fix is the
+  engine's (look only for a cell whose next one is a continuation; a
+  fast path in `CellWidths::is_wide`), and waits for Nick's OK.
 
 **Friction:** 2.4× (estimate 200 production lines, measured 477),
 accepted: most of it is rustfmt rewrapping about 90 calls that gained a
