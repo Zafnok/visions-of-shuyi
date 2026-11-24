@@ -713,6 +713,11 @@ impl Screen<Shuyi> for TitleScreen {
             // The key or button that ends the wait does nothing else (a
             // key with no layout chosen yet opens the layout picker over
             // the title first: `Game::step`).
+            if ctx.key_prompt == KeyPrompt::Pressed && clicked_alone(input) {
+                // The game has no mouse controls: a click doesn't end the
+                // wait, though the engine's does (engine PR 521).
+                ctx.key_prompt = KeyPrompt::Waiting;
+            }
             if ctx.key_prompt == KeyPrompt::Pressed {
                 self.prompt_done = true;
                 self.start_song(ctx);
@@ -801,6 +806,15 @@ impl Screen<Shuyi> for TitleScreen {
         self.voices.covered();
         Transition::None
     }
+}
+
+/// Whether this frame's only press was the mouse's (or a touch's): no key
+/// went down, bound or not, and no controller button. The title's "press
+/// any key or button" isn't ended by one (`docs/design/title-screen.md`).
+fn clicked_alone(input: &FrameInput) -> bool {
+    input.pointer().is_some_and(|p| p.pressed)
+        && input.pressed_chords().is_empty()
+        && !input.pad_pressed()
 }
 
 #[cfg(test)]

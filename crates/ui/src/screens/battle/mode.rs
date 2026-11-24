@@ -545,6 +545,23 @@ pub enum Effect {
 }
 
 impl Mode {
+    /// Whether the mode is a page over the map (a unit's info, the map
+    /// menu, its lists and pages) or a question: the guide's tip and
+    /// lesson step aside while it is open and come back as they were
+    /// once it closes (1312).
+    pub fn covers_guide(&self) -> bool {
+        matches!(
+            self,
+            Mode::Info { .. }
+                | Mode::MapMenu { .. }
+                | Mode::UnitList { .. }
+                | Mode::Objective
+                | Mode::EndTurnPrompt { .. }
+                | Mode::RestartPrompt
+                | Mode::SuspendPrompt
+        )
+    }
+
     /// The mode after the battle changed: [`Mode::MoveAfter`] if a unit
     /// waits to move after its attack, else browsing.
     pub fn after_command(state: &BattleState) -> Mode {

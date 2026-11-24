@@ -730,6 +730,7 @@ impl BattleScreen {
             phase: self.state.phase(),
             decided: self.state.outcome().is_some(),
             browsing_clear: matches!(self.mode, Mode::Idle { .. }) && self.queue.is_empty(),
+            paged: self.mode.covers_guide(),
         }
     }
 

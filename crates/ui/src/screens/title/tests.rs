@@ -613,6 +613,36 @@ fn the_prompt_stands_in_for_the_menu_until_a_key_is_pressed() {
     );
 }
 
+/// A click doesn't end the wait (`docs/design/title-screen.md`: the game
+/// has no mouse controls), though the engine's ends it at a pointer press
+/// (engine PR 521); a key pressed in the same frame still does.
+#[test]
+fn a_click_does_not_end_the_prompt() {
+    use shuyi_ui::input::{Button, Chord, Key, PointerInput};
+    let mut c = ctx();
+    c.key_prompt = KeyPrompt::Waiting;
+    let mut t = TitleScreen::new(&c);
+    let click = || {
+        let mut pointer = PointerInput::at(10, 10);
+        pointer.pressed = true;
+        input(&[]).with_pointer(Some(pointer))
+    };
+    // The engine marks the wait ended at the press.
+    c.key_prompt = KeyPrompt::Pressed;
+    t.update(&mut c, &click());
+    assert_eq!(c.key_prompt, KeyPrompt::Waiting);
+    assert!(t.view(&c).prompt.is_some());
+    // A key or a controller button with the click ends it.
+    let key = click().with_typing(vec![Chord::plain(Key::Z)], vec![]);
+    let button = click().with_buttons(vec![Button::South], vec![]);
+    for (with, press) in [("a key", key), ("a button", button)] {
+        let mut t = TitleScreen::new(&c);
+        c.key_prompt = KeyPrompt::Pressed;
+        t.update(&mut c, &press);
+        assert_eq!(t.view(&c).prompt, None, "{with}");
+    }
+}
+
 /// The logic modules of the converted screens say what they show, never
 /// how it looks (ADR-0054): none of them names a colour, a rectangle, a
 /// box style or a cell.

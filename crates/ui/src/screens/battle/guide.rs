@@ -49,6 +49,10 @@ pub struct Moment {
     /// Whether the player is browsing the map ([`Mode::Idle`]) with
     /// nothing waiting in the battle's queue (notes, banners, scenes).
     pub browsing_clear: bool,
+    /// Whether a page or a question of the battle's own is open
+    /// ([`Mode::covers_guide`], 1312): her boxes step aside and take no
+    /// keys until it closes, and the tips queued keep their moment.
+    pub paged: bool,
 }
 
 /// What the mode shows that the lessons watch for (0456, 0457): a unit
@@ -190,7 +194,7 @@ impl Guide {
     /// others in a player phase without a banner. Only a tip still queued
     /// is in its moment ([`take_in_mode`](Self::take_in_mode), 1292).
     fn due_tip(&self, m: Moment) -> Option<TipTrigger> {
-        if m.over == Over::Busy || self.tips.covered() {
+        if m.over == Over::Busy || m.paged || self.tips.covered() {
             return None;
         }
         let clear = m.phase == Phase::Player && m.over == Over::Nothing;
@@ -203,8 +207,13 @@ impl Guide {
     /// `mode` changed, and those not on screen are dropped (1292: they
     /// show the next time their trigger fires). A playback (a combat, an
     /// AI action) ends the moment of none: a level-up's tip, fired as its
-    /// combat starts, shows once the map is back.
+    /// combat starts, shows once the map is back. Nor does a page or a
+    /// question ([`Mode::covers_guide`], 1312): the tips wait it out and
+    /// are judged by the mode it closes to.
     pub(super) fn take_in_mode(&mut self, mode: &Mode) {
+        if mode.covers_guide() {
+            return;
+        }
         let playback = matches!(mode, Mode::Combat(_) | Mode::AiAction(_));
         let now = (core::mem::discriminant(mode), playback);
         if self.tip_mode != Some(now) {
@@ -352,7 +361,11 @@ impl Guide {
     /// over the battle. Lessons wait as tips do; the rewind screen shows
     /// one that needs it ([`rewind_lesson`](Self::rewind_lesson)).
     fn lesson_moment(&self, m: Moment) -> bool {
-        m.over == Over::Nothing && !self.tips.covered() && m.phase == Phase::Player && !m.decided
+        m.over == Over::Nothing
+            && !m.paged
+            && !self.tips.covered()
+            && m.phase == Phase::Player
+            && !m.decided
     }
 
     /// The id of the lesson on screen, if any: the one in play, once its
@@ -621,6 +634,7 @@ mod tests {
             phase: Phase::Player,
             decided: false,
             browsing_clear: true,
+            paged: false,
         };
         let mut guide = Guide::default();
         assert!(guide.keep_due(true, m, &c), "on top, first frame");
