@@ -92,8 +92,7 @@ motion: (
 
 ### 4. A test runs the check over the game's content
 
-`motion::check` reads every moving look (`motion::moving_looks(&content)`)
-and reports:
+`motion::check` reads every moving look it is handed and reports:
 
 - a **problem** for a tier below `lowest` with no still, and for a still
   on a tier where the look moves;
@@ -101,9 +100,10 @@ and reports:
 
 The content crate's integration test `every_moving_look_names_its_stills`
 (`crates/content/tests/it/all_assets_load.rs`) fails on a problem and
-prints each to-do (`--nocapture`). `moving_looks` finds none today; 1315
-adds the tilesets' moving rows to it and 1316 the map effects
-(`TODO(1315)`, `TODO(1316)` in the code).
+prints each to-do (`--nocapture`). It hands `check` the content's moving
+looks: none today, so the list is empty there (`TODO(1315)`,
+`TODO(1316)`). 1315 adds the tilesets' moving rows, with a function of
+the content crate that collects them, and 1316 the map effects.
 
 ### 5. A lesser tier is previewed on the PC
 

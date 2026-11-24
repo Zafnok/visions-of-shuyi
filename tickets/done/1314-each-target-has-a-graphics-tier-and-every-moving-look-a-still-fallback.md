@@ -5,10 +5,10 @@ type: infra
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: in-progress
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-24
 ---
 
 # 1314 — Each target has a graphics tier, and every moving look a still fallback
@@ -90,13 +90,13 @@ target or port; changing the Playdate's look.
 
 ## Acceptance criteria
 
-- [ ] Engine ticket closed and the pin moved past it.
+- [x] Engine ticket closed and the pin moved past it.
 - [x] A test: the Playdate target reports `Reduced` (or the chosen name),
       desktop and web `Full`.
 - [x] A test: an animated tile row with no fallback fails the check; one
       with `fallback: todo` is listed, not failed.
-- [ ] The ADR is merged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The ADR is merged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -126,8 +126,10 @@ say how it uses it.
   `todo` for a picture still to make), `Motion::drawn(tier)` for the
   skins (a still left out draws frame 0, never a crash), and
   `motion::check`. The content test `every_moving_look_names_its_stills`
-  runs it over `motion::moving_looks`, which finds nothing yet
-  (`TODO(1315)`, `TODO(1316)`), fails on a problem and prints each to-do.
+  runs it over the content's moving looks, none yet (an empty list with
+  `TODO(1315)`, `TODO(1316)`), fails on a problem and prints each to-do.
+  A function that collected them would return nothing until 1315, a
+  mutant no test can catch, so 1315 writes it with its data.
 - **The override:** `cargo shuyi frame-png --graphics reduced|minimal`,
   and `SHUYI_GRAPHICS` for a debug build of the game. A test draws the
   test battle at each tier: the same picture today.
@@ -140,14 +142,11 @@ say how it uses it.
   blocked, so engine ticket 3347 is new. The override is a variable and a
   `frame-png` option, not a debug-menu row (ADR-0131, Alternatives).
 - Handoffs written into 1315, 1316 and 1317 ("From 1314 (done)").
-- The pin: the engine PR merges first; moving the pin to it, with its
-  section in `docs/engine/pins.md`, is the last step of this PR, in a
-  session of its own after Nick merges the engine's.
-- The engine's `main` is past the old pin: `crates/app/src/main.rs`'s
-  log line now inlines its arguments (macroquad's logging is the `log`
-  crate since engine #522, and clippy reads it). The move also takes the
-  engine's pack format to version 22 (3347): a pack baked before is
-  refused, and the game bakes no pack in the repository.
+- The pin: Zafnok/shuyi-engine#535 merged, and the engine-pin PR
+  Zafnok/visions-of-shuyi#808 moved the pin past it (to `7d60a21a`), with
+  its ledger section, the Playdate profiles' `graphics: Reduced` and the
+  `crates/app/src/main.rs` log line. This PR merged it and kept its
+  versions of those files, so it moves no pin itself.
 - Friction: estimate 110 production lines (the `frame-png` `--light`
   option and the tileset's optional fields, ticket 1314's own sizes),
   measured 100 (0.9×), under 2×.

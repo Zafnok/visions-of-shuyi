@@ -29,8 +29,10 @@ the look, ADR-0038), so play records and bots are unchanged.
 `ctx.platform.graphics` (`GraphicsTier`; the Playdate is `Reduced`).
 Each effect carries a `trpg_content::motion::Motion`: `lowest: Full` and
 `stills: {Reduced: (show: Nothing), Minimal: (show: Nothing)}`, with
-`todo: "..."` where 0096 wants a lighter Playdate version. Add the
-effects to `motion::moving_looks` (its `TODO(1316)`). The particle cap
+`todo: "..."` where 0096 wants a lighter Playdate version. Hand the
+effects to `motion::check` in the content test
+`every_moving_look_names_its_stills` (its `TODO(1316)`), beside 1315's
+tile rows. The particle cap
 per tier, if one is needed, is a field of the effect's data (ADR-0131
 Consequences), not a fourth tier. Preview with `cargo shuyi frame-png
 --graphics reduced`.

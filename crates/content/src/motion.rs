@@ -6,7 +6,8 @@
 //!
 //! A tier is the engine's ([`GraphicsTier`], a fact of the target's
 //! profile). The skins ask it through `ctx.platform.graphics` and draw
-//! what [`Motion::drawn`] says. [`check`] reads every moving look and
+//! what [`Motion::drawn`] says. [`check`] reads every moving look (the
+//! content test `every_moving_look_names_its_stills` hands it the game's) and
 //! reports a still left out, and lists each still that is still to do
 //! ([`Still::todo`]): a missing picture is never a crash.
 //!
@@ -27,8 +28,6 @@ use crate::prelude::*;
 use alloc::collections::BTreeMap;
 
 use serde::{Deserialize, Deserializer};
-
-use crate::Content;
 
 pub use shuyi_assets::target::GraphicsTier;
 
@@ -91,14 +90,6 @@ impl Motion {
         }
         Drawn::Still(self.stills.get(&tier).map_or(Show::FirstFrame, |s| s.show))
     }
-}
-
-/// Every look `content` ships that moves by itself, named as a message
-/// shows it, with its [`Motion`]: what [`check`] reads. None moves yet.
-// TODO(1315): each tileset's rows that loop through frames.
-// TODO(1316): each map effect of drifting particles.
-pub fn moving_looks(_content: &Content) -> Vec<(String, &Motion)> {
-    Vec::new()
 }
 
 /// What [`check`] found.

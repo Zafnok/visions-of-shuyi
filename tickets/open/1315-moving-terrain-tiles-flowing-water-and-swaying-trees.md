@@ -35,9 +35,10 @@ never read a clock).
 Playdate is `Reduced`). Each moving row carries a
 `trpg_content::motion::Motion` (`lowest`, and a `stills` entry per lower
 tier: `(show: FirstFrame)`, with `todo: "..."` for a picture still to
-make) and the skin draws `motion.drawn(tier)`. Add the rows to
-`motion::moving_looks` (its `TODO(1315)`); the content test
-`every_moving_look_names_its_stills` then checks them. Preview with
+make) and the skin draws `motion.drawn(tier)`. Collect the moving rows
+from the content (a function of `trpg_content`, tested) and hand them to
+`motion::check` in the content test `every_moving_look_names_its_stills`
+(its `TODO(1315)`), which then checks them. Preview with
 `cargo shuyi frame-png --graphics reduced`.
 
 ## Nick input
