@@ -5,8 +5,8 @@ type: bug
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
-blocked_by: ["engine#2333"]
+status: todo
+blocked_by: []
 nick_input: none
 completed:
 ---
@@ -55,10 +55,11 @@ console), 1108, 1030, 1200.
   PRs past the 3,000-line limit. Text stays at 1× on 1280 × 720.
 - **A mix** lost for the same reason.
 
-Engine PR: Zafnok/shuyi-engine#541 (2333, opened 2026-11-23). Nick
-merges it; the pin moves in a session of its own, after he confirms.
+Engine PR: Zafnok/shuyi-engine#541 (2333, merged). ~~The pin moves in a
+session of its own, after he confirms.~~ Done by the pin move of
+2026-11-23 (`docs/engine/pins.md`).
 
-What is left here once the pin has moved past 2333:
+What is left here, now that the pin is past 2333:
 
 1. `impl GameSettings for` the game's settings: `const DEFAULT_SCALE:
    ScaleMode = ScaleMode::Fit;`. The Playdate ignores it.
@@ -102,7 +103,8 @@ lands first, build on the engine's `Viewport`); the zoom key (0439).
 
 1. A test of `layout()` (or the game's wrapper) at 1280×720, 1366×768,
    1920×1080, 1600×900 and 800×600: today's scale and bars.
-2. Decide the approach (ADR), engine PR if needed, pin move.
+2. Decide the approach (ADR), engine PR if needed, ~~pin move~~ (done
+   by the pin move of 2026-11-23).
 3. Make the battle screen's layout (`layout.rs`) and the screens that
    assume 100×32 read the console's size; tests at two sizes.
 4. `frame-png` (or a windowed screenshot) at 1280×720 before and after.
