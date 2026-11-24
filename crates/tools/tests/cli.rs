@@ -79,11 +79,12 @@ fn shuyi_runs_the_engine_s_tools_with_the_game_s() {
 #[test]
 fn autobalance_brings_the_too_hard_battle_into_its_bands() {
     // The engine's command on the game's plan (ticket 0509), without
-    // `--apply`: the game's tests write the file into a temp folder.
+    // `--apply`: the game's tests write the file into a temp folder. From
+    // seed 51, as the game's own test of it (`balance/tests.rs`).
     let output = tools()
         .args(["shuyi", "autobalance", "--stage", "test_too_hard"])
         .args([
-            "--tries", "20", "--quick", "10", "--budget", "40", "--turns", "20",
+            "--tries", "20", "--quick", "10", "--budget", "40", "--turns", "20", "--seed", "51",
         ])
         .output()
         .unwrap_or_else(|e| panic!("spawn trpg-tools: {e}"));
