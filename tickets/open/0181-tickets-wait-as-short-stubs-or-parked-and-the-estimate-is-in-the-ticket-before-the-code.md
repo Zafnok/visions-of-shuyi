@@ -67,6 +67,13 @@ and *Should be engine features*, "Ticket lint and pr-size are forked"):
 Bucket siblings (process and tooling): 0188, 0189, 0190, 0191, 0145,
 0147, and the folded 0151, 1174, 1257, 1239.
 
+**Amended by the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md) (2026-11-24).** For feedback that states
+the fix directly, the build PR carries its own new ticket and starts at
+once, with no separate filing PR (the 11-22 round waited about 7.5 h for
+#798 before any build began). A build blocked on a decision is filed as
+a stub. A "tweak" kind of ticket: 15–30 lines; several tweaks from one
+round in one PR with one before/after picture.
+
 ## Nick input
 
 None.

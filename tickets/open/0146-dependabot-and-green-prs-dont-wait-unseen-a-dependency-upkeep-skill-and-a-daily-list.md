@@ -33,6 +33,14 @@ The retro of 2026-11-08 found PRs that waited with nobody looking:
 
 The engine's twin is engine#2057.
 
+**Amended by the [feedback-latency retro](../../docs/research/feedback-latency-2026-11-24.md) (2026-11-24).** The retro measured
+about 10 h between a PR going green and Nick merging it when it lands
+before his quiet stretch. **That wait is on purpose** (Nick,
+2026-11-24: "I want to ensure I am actioning on followups"): he merges
+when he can act on what a PR leaves. This ticket doesn't try to shorten
+it. A PR left red is still a cost; 1351 has the session fix it before
+it ends.
+
 ## Nick input
 
 None. Whether green PRs merge themselves is engine#2060's question for
