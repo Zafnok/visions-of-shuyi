@@ -126,11 +126,8 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
       a fight with Joss from the private build, with neither raw bought
       files nor extracted sprite sheets committed or attached. (Hendry's
       fight: 0881.)
-- [ ] `cargo shuyi private-assets --pin` passes (every new file has a
-      credit): the private-assets tests pass (every new file has a
-      credit), but `--pin` refuses until the private pull request merges;
-      the pin points at its branch commit meanwhile and moves to `main`
-      before this merges.
+- [x] `cargo shuyi private-assets --pin` passes (every new file has a
+      credit), at the private pull request's merge on `main`.
 - [x] All gates in the `run-gates` skill pass, the private-assets tests
       included.
 
