@@ -77,6 +77,7 @@ model: opus-5.5 / gpt-6.1-sol # choose one complete pair above
 effort: high         # low | medium | high | xhigh | max
 status: todo         # todo | in-progress | blocked | done
 blocked_by: ["0302"] # ticket ids that must be in done/ first; engine#NNNN for the engine's
+blocks: ["1064"]     # optional: tickets that wait on this one (see below)
 nick_input: none     # none | decision | answer-first | setup | sign-off
 completed:           # YYYY-MM-DD when done
 ---
@@ -92,10 +93,26 @@ digits) so the gates never need the network; `cargo xtask ticket-lint
 checkout is there and on GitHub otherwise. How such tickets come about:
 the `engine-change` skill.
 
+The optional `blocks` key is the other side of `blocked_by`: a ticket that
+says `blocks: ["1064"]` is one of 1064's blockers, exactly as if 1064
+listed it. It is how a ticket joins the Act 1 playtest (1064), whose own
+`blocked_by` stays empty: a list of 200 ids on one line made every two PRs
+that filed Act 1 tickets conflict (ticket 1352). A PR that files a blocker
+this way edits only its own ticket's file. Name a pair in one place only;
+`cargo xtask ticket-lint` reports a `blocks` id that isn't a ticket, the
+ticket itself, or a pair also in the other ticket's `blocked_by`. A
+ticket's full list of blockers is its `blocked_by` plus every ticket that
+names it in `blocks`:
+
+```bash
+grep -l '^blocks:.*"1064"' tickets/open/*.md   # 1064's blockers not yet done
+```
+
 ## Picking the next ticket
 
 A ticket is **ready** when `status: todo` and every id in `blocked_by` has a
-file in `done/` (an `engine#NNNN`: as above). Prefer tickets on the Act 1 critical path in
+file in `done/` (an `engine#NNNN`: as above), and no ticket in `open/`
+names it in `blocks`. Prefer tickets on the Act 1 critical path in
 [`docs/ROADMAP.md`](../docs/ROADMAP.md) (*Act 1 critical path*). Tickets without dependencies on each
 other can run in parallel sessions (use separate git worktrees).
 

@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
 blocked_by: ["0527", "0531"]
+blocks: ["1064"]
 nick_input: none
 completed:
 ---

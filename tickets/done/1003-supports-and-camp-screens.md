@@ -7,6 +7,7 @@ model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["1002", "0008", "0408", "0704", "0801", "0027"]
+blocks: ["1064"]
 nick_input: none
 completed: 2026-10-29
 ---

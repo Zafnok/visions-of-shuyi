@@ -7,6 +7,7 @@ model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: done
 blocked_by: ["0801", "0802", "0409", "0805", "1003", "0025", "0026"]
+blocks: ["1064"]
 nick_input: decision
 completed: 2026-10-29
 ---

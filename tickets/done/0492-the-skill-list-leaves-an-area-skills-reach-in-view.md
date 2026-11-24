@@ -7,6 +7,7 @@ model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: done
 blocked_by: ["0482"]
+blocks: ["1064"]
 nick_input: decision
 completed: 2026-11-17
 ---

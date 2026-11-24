@@ -7,6 +7,7 @@ model: fable-5.1 / gpt-6-astra
 effort: high
 status: done
 blocked_by: ["0748", "0749", "0750"]
+blocks: ["1064"]
 nick_input: none
 completed: 2026-11-01
 ---
