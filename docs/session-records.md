@@ -48,18 +48,63 @@ player typed). The newest five are kept, beside the saves:
 The next start says once, under the title's menu, that the game closed
 unexpectedly and a report was saved (`docs/design/crash-reports.md`).
 Nothing is sent anywhere: a player reporting a crash sends the newest
-`crash-*.ron`. Its battle record is the report's `record` field; copied to
-a file of its own, it replays to the crash:
+`crash-*.ron` and `logs/latest.log` (below). Its battle record is the
+report's `record` field; copied to a file of its own, it replays to the
+crash:
 
 ```bash
 cargo shuyi replay <file>
 ```
 
+## The log file
+
+Every desktop build, a shipped one too, writes its **log** to
+`logs/latest.log`, in the folder the crash reports are in (ticket 1345;
+the engine's *The log file* in `docs/targets/desktop.md` and *Logs* in
+`docs/platform-backends.md`):
+
+- **Windows:** `Documents\My Games\Visions of Shuyi\logs\`;
+- **macOS:** `~/Library/Application Support/tactical-rpg/logs/`;
+- **Linux and the Steam Deck:** `~/.local/share/tactical-rpg/logs/`
+  (`$XDG_DATA_HOME/tactical-rpg/logs/` when that is set).
+
+Each start moves the last three runs to `previous-1.log`, `previous-2.log`
+and `previous-3.log` (oldest last), so the folder keeps four runs. The
+first line names the engine's version, the system, debug or release, the
+storage's name and the game's version. Each line after it reads
+
+```text
+    3.214 f182 WARN  storage: settings.ron couldn't be read (…); using the defaults
+```
+
+the seconds since the start, the frame (`f0` before the first), the level,
+what wrote it (`storage`, `audio`, `game`, …) and the text. A panic is
+logged with its message, `file:line` and thread, whether or not a crash
+report was written. A run writes 2 MiB at most, then errors alone.
+
+A build that ships writes warnings and errors alone. A debug build, or
+one with the debug tools, writes `info` and up, and more
+when the `SHUYI_LOG` variable says so, e.g. from a terminal:
+
+```powershell
+$env:SHUYI_LOG = "debug"; cargo run -p trpg-app
+```
+
+`SHUYI_LOG=warn,audio=debug` keeps warnings and errors and the audio's
+lines down to `debug`; the categories and the rest of the filter are in
+the engine's *Logs*. **On the web** there is no file: the same lines go to
+the browser's console (its developer tools), which a tester copies or saves.
+
+A log holds file paths, and a path may hold the player's account name:
+like a crash report, it is sent only to the developers, and the game sends
+nothing by itself.
+
 ## Sending one
 
 A tester sends the `.session.ron` file of the run with the bug, the newest
-in the folder or the one **Save session** made, and says what went wrong and
-about when. The file holds their saves as the game read them at the start,
+in the folder or the one **Save session** made, with `logs/latest.log`
+([The log file](#the-log-file); `previous-1.log` too if they started the
+game again since), and says what went wrong and about when. The file holds their saves as the game read them at the start,
 and everything they pressed: send it only to the developers.
 
 A record plays back only on the build that made it, or one that plays the

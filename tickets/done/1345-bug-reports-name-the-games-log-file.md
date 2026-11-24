@@ -5,10 +5,10 @@ type: infra
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-23
 ---
 
 # 1345 — Bug reports name the game's log file
@@ -67,10 +67,10 @@ Estimate: about 40 lines of docs, no production code.
 
 ## Acceptance criteria
 
-- [ ] `docs/session-records.md` names `logs/latest.log`, its three kept
+- [x] `docs/session-records.md` names `logs/latest.log`, its three kept
       runs and where they are on Windows, macOS and Linux.
-- [ ] Every text that asks for a bug report asks for the log too.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every text that asks for a bug report asks for the log too.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -79,5 +79,23 @@ storage folder's files.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `docs/session-records.md` has *The log file*, beside *Crash reports*:
+  where `logs/` is on Windows, macOS and Linux (the crash reports'
+  folder), the four files, the first line, what a line reads, the
+  2 MiB cap, what a shipped build writes, `SHUYI_LOG` with an example,
+  the web's console, and that a log is sent only to the developers.
+- The texts that ask for a report now ask for the log too: the crash
+  report paragraph and *Sending one* in `docs/session-records.md`, and
+  *Read a player's report* in `docs/releasing.md` (the developer's side).
+  The search found no bug-report ask in `README.md`, `.github/` (the
+  playtest workflow has no page text) or elsewhere in `docs/`.
+- No list of the storage folder's files in `crates/`, so no test.
+- Step 3: a debug build was run once; `Documents\My Games\Visions of
+  Shuyi\logs\latest.log` appeared, its first line `0.000 f0 INFO
+  platform: Shuyi Engine 0.1.0, windows x86_64 debug, storage
+  tactical-rpg, game version 0.3.0`, the format as written.
+- Gates: the docs and ticket gates ran locally (skill sync, ticket-lint,
+  check-mentions, check-leaks, typos, pr-size, the xtask tests); no Rust
+  changed, so the build, clippy and test gates are left to CI.
+- No starting rules: nothing on screen changed (rule 2 of
+  `docs/design/crash-reports.md` kept).
