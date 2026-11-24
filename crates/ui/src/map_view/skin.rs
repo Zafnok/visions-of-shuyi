@@ -17,6 +17,13 @@ use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::screen::Ctx;
 use crate::settings::{MapZoom, RangeStyle, ThreatArrows};
 use shuyi_ui::grid::glyph::GlyphSkin;
+use shuyi_ui::grid::ranges::RangeShow;
+
+/// How strongly the picture look tints ranges, in percent of the glyph
+/// look's strength. Nick picked 150% from renders (ticket 1343,
+/// 2026-11-23): at 100% the red attack tint over the bought tiles' bright
+/// green grass blends to rust; at 150% it reads red.
+pub const SPRITE_RANGE_STRENGTH: u16 = 150;
 
 /// Calls `paint` with what the kit's skins paint with in `ctx`: its
 /// palette, this game's terrains and its lights.
@@ -105,7 +112,7 @@ impl MapSkin {
     /// `arrows` (ticket 0908) and the ranges as `ranges` (ticket 0923).
     #[must_use]
     pub fn with_marks(&self, arrows: ThreatArrows, ranges: RangeStyle) -> Self {
-        let (shape, show) = (arrows.shape(), ranges.show());
+        let (shape, show) = (arrows.shape(), self.range_show(ranges));
         let glyph = |skin: GlyphSkin| skin.with_threat_shape(shape).with_range_show(show);
         let skin = match &self.units {
             Units::Glyph => Self::new(Rc::new(glyph(GLYPH)), Units::Glyph),
@@ -115,6 +122,16 @@ impl MapSkin {
         match self.zoom() {
             Some(zoom) => skin.at_zoom(zoom).unwrap_or(skin),
             None => skin,
+        }
+    }
+
+    /// How this kind of skin shows ranges drawn as `ranges`: the picture
+    /// look tints them [`SPRITE_RANGE_STRENGTH`] percent as strongly as
+    /// the glyph and one-bit looks.
+    fn range_show(&self, ranges: RangeStyle) -> RangeShow {
+        match self.units {
+            Units::Sprite(_) => ranges.show().with_strength(SPRITE_RANGE_STRENGTH),
+            Units::Glyph | Units::OneBit => ranges.show(),
         }
     }
 
@@ -147,6 +164,7 @@ impl core::ops::Deref for MapSkin {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::screen::tests::ctx;
 
     #[test]
     fn only_a_sprite_skin_has_a_tileset_and_only_its_terrain_zooms() {
@@ -158,5 +176,18 @@ mod tests {
         }
         assert_eq!(MapSkin::glyph().name(), "glyph");
         assert_eq!(MapSkin::playdate().name(), "playdate");
+    }
+
+    #[test]
+    fn the_picture_look_tints_ranges_at_150_percent_and_the_others_at_100() {
+        let sprite = MapSkin::sprite(ctx().game.content.tilesets["test"].clone());
+        for ranges in RangeStyle::ALL {
+            let percent = |skin: &MapSkin| skin.range_show(ranges).strength_percent;
+            assert_eq!(percent(&sprite), 150, "{ranges:?}");
+            assert_eq!(percent(&MapSkin::glyph()), 100, "{ranges:?}");
+            assert_eq!(percent(&MapSkin::playdate()), 100, "{ranges:?}");
+            // The rest of the look is the range style's own.
+            assert_eq!(sprite.range_show(ranges).with_strength(100), ranges.show());
+        }
     }
 }
