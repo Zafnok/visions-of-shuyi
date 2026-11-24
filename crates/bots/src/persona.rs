@@ -18,6 +18,7 @@ use std::cmp::Reverse;
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
+use shuyi_core::bots::playtest::bot_seed;
 use shuyi_core::grid::Grid;
 use shuyi_core::path::flow_field;
 use shuyi_core::{Bot, Evaluate, Order, PlanSettings, TurnPlan};
@@ -882,10 +883,6 @@ fn once_per_action(commands: impl Iterator<Item = Command>) -> Vec<Command> {
         .collect()
 }
 
-/// Mixed into a try's seed for the persona's own draws, so they never
-/// follow the battle's own rolls (which start from the same seed).
-const SEED_SALT: u64 = 0x5EED_0506_B075_0000;
-
 /// A persona playing the Player phase: the engine's [`TurnPlan`] with the
 /// persona's order and scoring.
 ///
@@ -905,7 +902,7 @@ impl PersonaBot {
         let order = PersonaOrder { ai, cap };
         let scoring = Scoring(persona.weights);
         PersonaBot {
-            plan: TurnPlan::new(order, scoring, persona.settings, seed ^ SEED_SALT),
+            plan: TurnPlan::new(order, scoring, persona.settings, bot_seed(seed)),
             talked: Vec::new(),
         }
     }
