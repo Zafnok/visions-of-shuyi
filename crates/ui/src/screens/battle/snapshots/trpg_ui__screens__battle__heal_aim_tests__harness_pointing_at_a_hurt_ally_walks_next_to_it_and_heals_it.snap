@@ -80,16 +80,16 @@ m = fg:fort bg:fort_bg
 n = fg:stone bg:stone_bg
 o = fg:player bg:grass_bg
 p = fg:floor bg:floor_bg
-q = fg:player bg:#224024
+q = fg:player bg:#296330
 r = fg:player bg:road_bg
 s = fg:wood bg:stone_bg
 --- overlays ---
-under 178,288 16x2  #0c170d
-under 192,274 2x16  #0c170d
-under 176,272 16x1  #628367
-under 191,272 1x16  #628367
-under 176,287 16x1  #628367
-under 176,272 1x16  #628367
+under 178,288 16x2  #0f2713
+under 192,274 2x16  #0f2713
+under 176,272 16x1  #6bb377
+under 191,272 1x16  #6bb377
+under 176,287 16x1  #6bb377
+under 176,272 1x16  #6bb377
 over  209,270 14x2  hp_high
 over  225,286 14x2  hp_high
 over  177,286 4x2  hp_low

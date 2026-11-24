@@ -223,48 +223,48 @@ under sprite 336,256 16x16  tilesets/test_auto.png 0,80 16x16
 under sprite 208,208 16x16  tilesets/test_auto.png 16,80 16x16
 under sprite 224,208 16x16  tilesets/test_auto.png 16,80 16x16
 under sprite 224,176 16x16  tilesets/test_auto.png 128,0 16x16 opacity=140 solid=attack_range
-under 240,178 2x16  #170b08
-under 224,176 16x1  #b69f9b
-under 239,176 1x16  #b69f9b
-under 224,176 1x16  #b69f9b
+under 240,178 2x16  #360c08
+under 224,176 16x1  #eda29b
+under 239,176 1x16  #eda29b
+under 224,176 1x16  #eda29b
 under sprite 208,192 16x16  tilesets/test_auto.png 128,0 16x16 opacity=140 solid=attack_range
-under 208,192 16x1  #b69f9b
-under 208,192 1x16  #b69f9b
+under 208,192 16x1  #eda29b
+under 208,192 1x16  #eda29b
 under sprite 224,192 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 240,192 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=attack_range
-under 256,194 2x16  #170b08
-under 240,192 16x1  #b69f9b
-under 255,192 1x16  #b69f9b
+under 256,194 2x16  #360c08
+under 240,192 16x1  #eda29b
+under 255,192 1x16  #eda29b
 under sprite 160,208 16x16  tilesets/test_auto.png 144,0 16x16 opacity=140 solid=attack_range
-under 176,210 2x16  #170b08
-under 160,208 16x1  #b69f9b
-under 175,208 1x16  #b69f9b
-under 160,208 1x16  #b69f9b
+under 176,210 2x16  #360c08
+under 160,208 16x1  #eda29b
+under 175,208 1x16  #eda29b
+under 160,208 1x16  #eda29b
 under sprite 192,208 16x16  tilesets/test_auto.png 128,0 16x16 opacity=140 solid=attack_range
-under 192,208 16x1  #b69f9b
-under 192,208 1x16  #b69f9b
+under 192,208 16x1  #eda29b
+under 192,208 1x16  #eda29b
 under sprite 208,208 16x16  tilesets/test_auto.png 32,0 16x16 opacity=140 solid=move_range
 under sprite 224,208 16x16  tilesets/test_auto.png 32,0 16x16 opacity=140 solid=move_range
 under sprite 240,208 16x16  tilesets/test_auto.png 16,0 16x16 opacity=140 solid=move_range
 under sprite 256,208 16x16  tilesets/test_auto.png 16,0 16x16 opacity=140 solid=attack_range
-under 272,210 2x16  #170b08
-under 256,208 16x1  #b69f9b
-under 271,208 1x16  #b69f9b
+under 272,210 2x16  #360c08
+under 256,208 16x1  #eda29b
+under 271,208 1x16  #eda29b
 under sprite 160,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
-under 160,224 1x16  #9fabbb
+under 160,224 1x16  #a6beea
 under sprite 176,224 16x16  tilesets/test_auto.png 128,0 16x16 opacity=140 solid=attack_range
-under 176,224 16x1  #b69f9b
+under 176,224 16x1  #eda29b
 under sprite 192,224 16x16  tilesets/test_auto.png 128,0 16x16 opacity=140 solid=attack_range
 under sprite 208,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 224,224 16x16  tilesets/test_auto.png 16,0 16x16 opacity=140 solid=move_range
 under sprite 240,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 256,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 272,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=attack_range
-under 288,226 2x16  #170b08
-under 272,224 16x1  #b69f9b
-under 287,224 1x16  #b69f9b
+under 288,226 2x16  #360c08
+under 272,224 16x1  #eda29b
+under 287,224 1x16  #eda29b
 under sprite 160,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
-under 160,240 1x16  #9fabbb
+under 160,240 1x16  #a6beea
 under sprite 176,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 192,240 16x16  tilesets/test_auto.png 16,0 16x16 opacity=140 solid=move_range
 under sprite 208,240 16x16  tilesets/test_auto.png 16,0 16x16 opacity=140 solid=move_range
@@ -272,10 +272,10 @@ under sprite 224,240 16x16  tilesets/test_auto.png 16,0 16x16 opacity=140 solid=
 under sprite 240,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 256,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 272,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=attack_range
-under 288,242 2x16  #170b08
-under 287,240 1x16  #b69f9b
+under 288,242 2x16  #360c08
+under 287,240 1x16  #eda29b
 under sprite 160,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
-under 160,256 1x16  #9fabbb
+under 160,256 1x16  #a6beea
 under sprite 176,256 16x16  tilesets/test_auto.png 64,0 16x16 opacity=140 solid=move_range
 under sprite 192,256 16x16  tilesets/test_auto.png 16,0 16x16 opacity=140 solid=move_range
 under sprite 208,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
@@ -284,13 +284,13 @@ under sprite 240,256 16x16  tilesets/test_auto.png 160,0 16x16 opacity=140 solid
 under sprite 256,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 272,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 288,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=attack_range
-under 304,258 2x16  #170b08
-under 288,256 16x1  #b69f9b
-under 303,256 1x16  #b69f9b
+under 304,258 2x16  #360c08
+under 288,256 16x1  #eda29b
+under 303,256 1x16  #eda29b
 under sprite 160,272 16x16  tilesets/test_auto.png 64,0 16x16 opacity=140 solid=attack_range
-under 162,288 16x2  #170b08
-under 160,287 16x1  #b69f9b
-under 160,272 1x16  #b69f9b
+under 162,288 16x2  #360c08
+under 160,287 16x1  #eda29b
+under 160,272 1x16  #eda29b
 under sprite 176,272 16x16  tilesets/test_auto.png 64,0 16x16 opacity=140 solid=move_range
 under sprite 192,272 16x16  tilesets/test_auto.png 16,0 16x16 opacity=140 solid=move_range
 under sprite 208,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
@@ -299,34 +299,34 @@ under sprite 240,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=m
 under sprite 256,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 272,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
 under sprite 288,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=attack_range
-under 290,288 16x2  #170b08
-under 304,274 2x16  #170b08
-under 303,272 1x16  #b69f9b
-under 288,287 16x1  #b69f9b
+under 290,288 16x2  #360c08
+under 304,274 2x16  #360c08
+under 303,272 1x16  #eda29b
+under 288,287 16x1  #eda29b
 under sprite 176,288 16x16  tilesets/test_auto.png 80,0 16x16 opacity=140 solid=attack_range
-under 178,304 16x2  #170b08
-under 176,303 16x1  #b69f9b
-under 176,288 1x16  #b69f9b
+under 178,304 16x2  #360c08
+under 176,303 16x1  #eda29b
+under 176,288 1x16  #eda29b
 under sprite 192,288 16x16  tilesets/test_auto.png 16,0 16x16 opacity=140 solid=move_range
-under 194,304 16x2  #0b111a
-under 192,303 16x1  #9fabbb
+under 194,304 16x2  #0f1c34
+under 192,303 16x1  #a6beea
 under sprite 208,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
-under 210,304 16x2  #0b111a
-under 208,303 16x1  #9fabbb
+under 210,304 16x2  #0f1c34
+under 208,303 16x1  #a6beea
 under sprite 224,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
-under 226,304 16x2  #0b111a
-under 224,303 16x1  #9fabbb
+under 226,304 16x2  #0f1c34
+under 224,303 16x1  #a6beea
 under sprite 240,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
-under 242,304 16x2  #0b111a
-under 240,303 16x1  #9fabbb
+under 242,304 16x2  #0f1c34
+under 240,303 16x1  #a6beea
 under sprite 256,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=move_range
-under 258,304 16x2  #0b111a
-under 256,303 16x1  #9fabbb
+under 258,304 16x2  #0f1c34
+under 256,303 16x1  #a6beea
 under sprite 272,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=140 solid=attack_range
-under 274,304 16x2  #170b08
-under 288,290 2x16  #170b08
-under 287,288 1x16  #b69f9b
-under 272,303 16x1  #b69f9b
+under 274,304 16x2  #360c08
+under 288,290 2x16  #360c08
+under 287,288 1x16  #eda29b
+under 272,303 16x1  #eda29b
 over  sprite 272,185 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
 over  sprite 272,187 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
 over  sprite 271,186 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
