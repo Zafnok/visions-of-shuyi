@@ -61,7 +61,7 @@ pub fn load() -> Result<FontAtlasDef, Vec<ContentError>> {
 /// (loading the content reports that).
 pub fn wide_chars() -> &'static BTreeSet<char> {
     static WIDE: OnceBox<BTreeSet<char>> = OnceBox::new();
-    WIDE.get_or_init(|| Box::new(load().map(|atlas| atlas.wide_chars()).unwrap_or_default()))
+    WIDE.get_or_init(|| Box::new(load().map_or_default(|atlas| atlas.wide_chars())))
 }
 
 /// How many cells each character takes in the game's font, as its text

@@ -52,7 +52,7 @@ pub const VARIANTS: &[&str] = &[MALE, FEMALE];
 
 /// What the game's packs keep to besides English: the rules of tips and
 /// lessons, the lead's tokens, the dialogue box measured with `widths`
-/// (the font's, [`font::widths`](crate::font::widths)), and a line's text
+/// (the font's, [`font::widths`]), and a line's text
 /// for each gender of the lead.
 pub fn rules(widths: &CellWidths) -> PackRules<'_> {
     PackRules::new(data::text_problem, &LeadTokens, LIMITS, widths).with_variants(VARIANTS)

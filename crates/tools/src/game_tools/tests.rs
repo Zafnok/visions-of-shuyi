@@ -1093,7 +1093,8 @@ fn committed_atlas_is_up_to_date() {
 }
 
 /// The committed one-bit atlas has exactly the pixels of the committed
-/// `atlas.png`, glyph by glyph, at the cells of `atlas.ron`.
+/// `atlas.png`, glyph by glyph, at the cells of `atlas.ron`: a wide
+/// glyph's two halves are two cells (ticket 0236).
 #[test]
 fn the_one_bit_atlas_matches_the_png() {
     let fonts = repo_root().join("assets/fonts");
@@ -1103,9 +1104,25 @@ fn the_one_bit_atlas_matches_the_png() {
     let bits = fs::read(fonts.join(ONE_BIT_FILE)).unwrap();
     let to_usize = |v: u32| usize::try_from(v).unwrap();
     let rows = to_usize(def.cell_h);
-    // The regular glyphs and the bold ones (key caps, ticket 0254).
-    assert_eq!(bits.len(), (def.glyphs.len() + def.bold.len()) * rows);
-    for (&c, &index) in def.glyphs.iter().chain(&def.bold) {
+    // Every cell up to the last: the regular glyphs, the wide sets' (two
+    // each, and a row's last cell left empty before one) and the bold ones
+    // (key caps, ticket 0254).
+    assert_eq!(bits.len(), to_usize(def.cell_end()) * rows);
+    let wide = def
+        .all_wide_sets()
+        .flat_map(|(_, set)| set.iter().flat_map(|(&c, &i)| [(c, i), (c, i + 1)]));
+    let cells: Vec<(char, u32)> = def
+        .glyphs
+        .iter()
+        .chain(&def.bold)
+        .map(|(&c, &i)| (c, i))
+        .chain(wide)
+        .collect();
+    assert!(
+        cells.len() > def.glyphs.len() + def.bold.len(),
+        "no wide glyphs"
+    );
+    for (c, index) in cells {
         let cell = def.cell_rect(index);
         for row in 0..cell.h {
             let byte = bits[to_usize(index) * rows + to_usize(row)];
