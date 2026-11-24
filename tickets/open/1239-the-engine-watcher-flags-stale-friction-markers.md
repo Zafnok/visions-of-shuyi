@@ -45,6 +45,12 @@ checks of 0151, 1174 and 1257. What stays here is the check itself:
 `engine-pin --check`, the issue checklist and the skill. Either order with
 0181: the job picks the check up wherever `engine-pin --check` runs.
 
+**Either order with 0193:** if 0193 is done, markers also mark code
+waiting to move (`// engine-friction: engine#NNNN, moves (game MMMM
+deletes it)`). Such a marker passes this check while MMMM is open, since
+MMMM names `engine#NNNN`, so add a test that it does. If not, nothing to
+do (0193's markers parse as today's).
+
 ## Nick input
 
 None.
