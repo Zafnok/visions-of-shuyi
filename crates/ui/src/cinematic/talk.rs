@@ -15,6 +15,7 @@ use crate::screen::SkinSet;
 use crate::screens::dialogue::view::told;
 use crate::screens::dialogue::{PLAYDATE_TEXT_W, SKINS, TEXT_LINES, TEXT_W};
 use crate::widgets::word_wrap;
+use shuyi_assets::font::CellWidths;
 
 /// The part of a box's time, at its end, for which all of its text is
 /// shown: a box that would still be typing by then types faster
@@ -41,12 +42,12 @@ pub struct TalkBox {
 }
 
 impl TalkBox {
-    /// The box `view` shows.
-    fn of(view: &View) -> Self {
+    /// The box `view` shows, its text measured in `widths`.
+    fn of(view: &View, widths: &CellWidths) -> Self {
         let placed =
             |p: Option<Portrait>| p.map(|p| (p.character.clone(), p.expression.to_owned()));
         let text = view.text.as_deref().unwrap_or("");
-        let mut lines = word_wrap(text, TEXT_W, &shuyi_assets::font::CellWidths::NARROW);
+        let mut lines = word_wrap(text, TEXT_W, widths);
         lines.truncate(TEXT_LINES);
         Self {
             left: placed(view.left),
@@ -89,11 +90,7 @@ impl TalkBox {
         };
         let lines = match ctx.game.skin_set {
             SkinSet::Glyph => self.lines.clone(),
-            SkinSet::Playdate => word_wrap(
-                &self.text,
-                PLAYDATE_TEXT_W,
-                &shuyi_assets::font::CellWidths::NARROW,
-            ),
+            SkinSet::Playdate => word_wrap(&self.text, PLAYDATE_TEXT_W, buf.widths()),
         };
         SKINS.paint(ctx, &told(ctx, lead, &view, &lines, shown), buf);
     }
@@ -120,7 +117,7 @@ pub fn boxes(
             break;
         }
         if i >= first {
-            boxes.push(TalkBox::of(&player.current()));
+            boxes.push(TalkBox::of(&player.current(), ctx.widths()));
         }
         player.advance();
     }

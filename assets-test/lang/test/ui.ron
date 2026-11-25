@@ -1,7 +1,8 @@
 // The test pack's screen text: each entry is the English in capitals,
 // but `title.crashed`, in Chinese for the wide glyphs' test (ticket 0236).
 // Kept on purpose: `title.continue` is stale (its `source` is not
-// today's English) and `title.credits` is missing, so both show in English.
+// today's English) and `title.credits` is missing, so both show in English;
+// `results.exp` is too long for its place (`max_cells` 3, ticket 0237).
 // The tag `test` has no plural rules, so a plural's only category is
 // `other` (and `=N`): a `one` branch is refused when the pack loads.
 [
@@ -589,7 +590,7 @@
     (key: "results.rewinds_left", source: "{unused} of {charges}", text: "{unused} OF {charges}"),
     (key: "results.bonus", source: "Bonus EXP for each unit", text: "BONUS EXP FOR EACH UNIT"),
     (key: "results.level", source: "Lv {level}", text: "LV {level}"),
-    (key: "results.exp", source: "EXP", text: "EXP"),
+    (key: "results.exp", source: "EXP", text: "EXPERIENCE"),
     (key: "results.level_up", source: "LEVEL UP", text: "LEVEL UP"),
     (key: "save_prompt.question", source: "Save your progress?", text: "SAVE YOUR PROGRESS?"),
     (key: "save_prompt.yes", source: "Yes", text: "YES"),

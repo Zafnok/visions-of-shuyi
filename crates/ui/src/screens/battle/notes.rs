@@ -9,6 +9,7 @@ use trpg_core::{BattleNote, UnitId};
 
 use crate::widgets::word_wrap;
 use crate::words::Words;
+use shuyi_assets::font::CellWidths;
 
 /// The key of the notes box's title (`BATTLE NOTES`).
 pub const NOTES_TITLE: &str = "battle.notes.title";
@@ -28,24 +29,26 @@ pub const MARKER: &str = "• ";
 pub const BLINK_S: f32 = 0.4;
 
 /// The lines of `notes`: each starts with [`MARKER`] and wraps to
-/// [`NOTE_WIDTH`], its further lines indented under its text.
-pub fn note_lines(notes: &[BattleNote], words: Words<'_>) -> Vec<String> {
+/// [`NOTE_WIDTH`] cells as `widths` measure them, its further lines
+/// indented under its text.
+pub fn note_lines(notes: &[BattleNote], words: Words<'_>, widths: &CellWidths) -> Vec<String> {
     let texts = notes.iter().map(|note| words.battle_note(note));
-    wrap_notes(texts, NOTE_WIDTH)
+    wrap_notes(texts, NOTE_WIDTH, widths)
 }
 
 /// The lines of the notes `texts`: each starts with [`MARKER`] and wraps
-/// to `width`, its further lines indented under its text.
-pub fn wrap_notes<'a>(texts: impl IntoIterator<Item = &'a str>, width: usize) -> Vec<String> {
+/// to `width` cells as `widths` measure them, its further lines indented
+/// under its text.
+pub fn wrap_notes<'a>(
+    texts: impl IntoIterator<Item = &'a str>,
+    width: usize,
+    widths: &CellWidths,
+) -> Vec<String> {
     let indent = MARKER.chars().count();
     texts
         .into_iter()
         .flat_map(|text| {
-            let lines = word_wrap(
-                text,
-                width.saturating_sub(indent),
-                &shuyi_assets::font::CellWidths::NARROW,
-            );
+            let lines = word_wrap(text, width.saturating_sub(indent), widths);
             lines.into_iter().enumerate().map(move |(i, line)| {
                 if i == 0 {
                     format!("{MARKER}{line}")
@@ -59,14 +62,20 @@ pub fn wrap_notes<'a>(texts: impl IntoIterator<Item = &'a str>, width: usize) ->
 
 /// The notes' texts again from their [`wrap_notes`] lines, a note a
 /// string: for a skin that wraps them at its own width (the Playdate's,
-/// ticket 1038).
-pub fn unwrap_notes(lines: &[String]) -> Vec<String> {
+/// ticket 1038). Lines are joined by a space, but not where a line broke
+/// between two characters `widths` has wide (Chinese, ticket 0237), which
+/// had none.
+pub fn unwrap_notes(lines: &[String], widths: &CellWidths) -> Vec<String> {
     let mut texts: Vec<String> = Vec::new();
     for line in lines {
         match (line.strip_prefix(MARKER), texts.last_mut()) {
             (None, Some(text)) => {
-                text.push(' ');
-                text.push_str(line.trim_start());
+                let next = line.trim_start();
+                let wide = |c: Option<char>| c.is_some_and(|c| widths.is_wide(c));
+                if !(wide(text.chars().last()) && wide(next.chars().next())) {
+                    text.push(' ');
+                }
+                text.push_str(next);
             }
             (start, _) => texts.push(start.unwrap_or(line).trim_start().to_owned()),
         }
@@ -89,6 +98,8 @@ pub fn blink_on(t: f32) -> bool {
 mod tests {
     use super::*;
 
+    const N: CellWidths = CellWidths::NARROW;
+
     fn note(text: &str, units: &[u32]) -> BattleNote {
         BattleNote {
             text: text.into(),
@@ -106,22 +117,22 @@ mod tests {
             ),
         ];
         assert_eq!(
-            note_lines(&notes, Words::ENGLISH),
+            note_lines(&notes, Words::ENGLISH, &N),
             [
                 "• Frost Elemental: weak to Fire, absorbs Ice.",
                 "• Burn the forest to cut off the ambush before",
                 "  the riders reach the bridge.",
             ]
         );
-        assert_eq!(note_lines(&[], Words::ENGLISH), Vec::<String>::new());
+        assert_eq!(note_lines(&[], Words::ENGLISH, &N), Vec::<String>::new());
         // A line as wide as it may be isn't wrapped.
         let full = "x".repeat(NOTE_WIDTH - 2);
         assert_eq!(
-            note_lines(&[note(&full, &[])], Words::ENGLISH),
+            note_lines(&[note(&full, &[])], Words::ENGLISH, &N),
             [format!("• {full}")]
         );
         let over = format!("{full} y");
-        assert_eq!(note_lines(&[note(&over, &[])], Words::ENGLISH).len(), 2);
+        assert_eq!(note_lines(&[note(&over, &[])], Words::ENGLISH, &N).len(), 2);
     }
 
     #[test]
@@ -130,10 +141,10 @@ mod tests {
             "Frost Elemental: weak to Fire, absorbs Ice.",
             "Burn the forest to cut off the ambush before the riders reach the bridge.",
         ];
-        let lines = wrap_notes(texts, NOTE_WIDTH);
-        assert_eq!(unwrap_notes(&lines), texts);
+        let lines = wrap_notes(texts, NOTE_WIDTH, &N);
+        assert_eq!(unwrap_notes(&lines, &N), texts);
         assert_eq!(
-            wrap_notes(texts.iter().copied(), 30),
+            wrap_notes(texts.iter().copied(), 30, &N),
             [
                 "• Frost Elemental: weak to",
                 "  Fire, absorbs Ice.",
@@ -142,7 +153,34 @@ mod tests {
                 "  reach the bridge.",
             ]
         );
-        assert_eq!(unwrap_notes(&[]), [] as [std::string::String; 0]);
+        assert_eq!(unwrap_notes(&[], &N), [] as [std::string::String; 0]);
+    }
+
+    #[test]
+    fn chinese_notes_wrap_in_cells_and_unwrap_with_no_space_added() {
+        let text = "冰元素：怕火，吸收冰。烧掉森林，在骑兵到达桥之前切断伏兵。";
+        let wide = CellWidths::wide(text.chars());
+        let lines = wrap_notes([text], 20, &wide);
+        assert!(lines.len() > 1, "{lines:?}");
+        assert!(
+            lines
+                .iter()
+                .all(|l| shuyi_assets::lang::text_width(l, &wide) <= 20),
+            "{lines:?}"
+        );
+        assert!(
+            lines[1..]
+                .iter()
+                .all(|l| !l.trim_start().starts_with(['，', '。', '：'])),
+            "{lines:?}"
+        );
+        assert_eq!(unwrap_notes(&lines, &wide), [text]);
+        // Where only one side of the break is wide, the space stays.
+        let mixed = ["• Fire is", "  冰元素。", "• 冰元素", "  ice"].map(String::from);
+        assert_eq!(
+            unwrap_notes(&mixed, &wide),
+            ["Fire is 冰元素。", "冰元素 ice"]
+        );
     }
 
     #[test]
@@ -172,7 +210,7 @@ mod tests {
         use crate::screens::battle::layout::MAP_VIEW;
         let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
         for (id, battle) in &content.battles {
-            let lines = note_lines(&battle.battle_notes, Words::ENGLISH);
+            let lines = note_lines(&battle.battle_notes, Words::ENGLISH, &N);
             let rows = i32::try_from(lines.len()).unwrap_or(i32::MAX);
             assert!(rows + 4 + 4 <= MAP_VIEW.h, "{id}: {rows} lines");
             assert!(

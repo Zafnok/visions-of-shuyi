@@ -395,7 +395,7 @@ fn paint_panel_preview(ctx: &Ctx, preview: &PanelPreviewView, buf: &mut GlyphBuf
         c(UiColor::TextHighlight),
     );
     let mut y = TERRAIN_ROW + 1;
-    for line in wrap_words(&preview.text, TEXT_W) {
+    for line in wrap_words(&preview.text, TEXT_W, buf.widths()) {
         print_clipped(buf, (TEXT_X, y), TEXT_W, &line, c(UiColor::Text));
         y += 1;
     }
@@ -805,7 +805,7 @@ fn paint_bar(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
 fn paint_note(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let (fg, bg) = (c(UiColor::TextHighlight), c(UiColor::PanelBg));
-    let lines = wrap_words(text, MESSAGE_W);
+    let lines = wrap_words(text, MESSAGE_W, buf.widths());
     let rows = i32::try_from(lines.len()).unwrap_or(1);
     let top = HELP_BAR.y - rows;
     buf.fill_rect(
@@ -822,7 +822,7 @@ fn paint_note(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
 fn paint_warning(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let (fg, bg) = (c(UiColor::TextHighlight), c(UiColor::PanelBg));
-    let lines = wrap_words(text, WARNING_W);
+    let lines = wrap_words(text, WARNING_W, buf.widths());
     let cells = |s: &String| buf.text_cells(s);
     let w = lines.iter().map(cells).max().unwrap_or(0) + 4;
     let h = i32::try_from(lines.len()).unwrap_or(1) + 2;

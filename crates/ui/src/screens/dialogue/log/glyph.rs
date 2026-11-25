@@ -64,11 +64,7 @@ pub fn paint(ctx: &Ctx, view: &LogView, buf: &mut GlyphBuffer) {
             };
             // check-text: not a data name (the view's own)
             let mut lines: Vec<String> = row.name.iter().cloned().collect();
-            lines.extend(word_wrap(
-                &text,
-                text_w,
-                &shuyi_assets::font::CellWidths::NARROW,
-            ));
+            lines.extend(word_wrap(&text, text_w, buf.widths()));
             let lines_h = i32::try_from(lines.len()).unwrap_or(1);
             let height = if row.face.is_some() {
                 lines_h.max(FACE.1)

@@ -29,7 +29,7 @@ pub fn paint(ctx: &Ctx, view: &ModeSelectView, buf: &mut GlyphBuffer) {
     let bottom = i32::from(buf.height()) - 1;
     if let Some(line) = view.lines.iter().find(|l| l.focused) {
         let rows = MENU_ROW + h + 1..bottom - 1;
-        for (y, text) in rows.zip(wrap(&line.text, TEXT_W)) {
+        for (y, text) in rows.zip(wrap(&line.text, TEXT_W, buf.widths())) {
             centred(ctx, buf, y, &text);
         }
     }

@@ -114,11 +114,16 @@ fn a_menu_is_a_window_an_item_a_row_the_focus_a_bar_across_it() {
 
 #[test]
 fn wrap_breaks_by_words_and_keeps_the_texts_own_line_breaks() {
+    let narrow = shuyi_assets::font::CellWidths::NARROW;
     assert_eq!(
-        wrap("one two three\nfour five", 9),
+        wrap("one two three\nfour five", 9, &narrow),
         ["one two", "three", "four five"]
     );
-    assert_eq!(wrap("", 9), [] as [std::string::String; 0]);
+    assert_eq!(wrap("", 9, &narrow), [] as [std::string::String; 0]);
+    // Chinese breaks between characters, two cells each (ticket 0237).
+    let text = "一二三四五。\n六七";
+    let wide = shuyi_assets::font::CellWidths::wide(text.chars());
+    assert_eq!(wrap(text, 6, &wide), ["一二三", "四五。", "六七"]);
 }
 
 #[test]

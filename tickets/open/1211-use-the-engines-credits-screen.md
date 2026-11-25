@@ -30,6 +30,14 @@ the same rolling (Nick, PR 148: it auto-scrolls, and manual scrolling
 can be toggled on). This ticket deletes the game's copy
 (`engine-change` skill §7; ADR-0092).
 
+2026-11-25 (ticket 0237): every other wrap in the game now measures text
+in the language's cells (`Ctx::widths`, the frame's `buf.widths()`), so
+Chinese wraps at two cells a character; the credits list still wraps
+with `CellWidths::NARROW` (`credits.rs`, `rows`), left alone because
+this code moves. engine#3201's Scope doesn't say which widths its
+`word_wrap` gets: the engine screen should take `ctx.widths()`. Check
+that when porting, or add it to 3201.
+
 ## Nick input
 
 None. The screen must look and behave as it does now. The glyph

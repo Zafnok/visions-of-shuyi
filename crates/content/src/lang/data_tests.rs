@@ -301,6 +301,33 @@ fn a_tip_in_a_pack_keeps_to_the_tip_limits_in_cells() {
     assert!(how(&format!("{wide}é")).is_some());
 }
 
+/// Ticket 0237: a battle note in a pack keeps to the battle files' limit,
+/// in cells, and only a note's key (`battles.<id>.note_<n>`) is held to it.
+#[test]
+fn a_battle_note_in_a_pack_keeps_to_the_note_limit_in_cells() {
+    let note = |key: &str, text: &str| super::data::text_problem(key, text);
+    let key = "battles.ambush.note_2";
+    assert_eq!(note(key, &"x".repeat(120)), None);
+    assert_eq!(
+        note(key, &"x".repeat(121)),
+        Some("a battle note is 121 cells, more than 120".to_owned())
+    );
+    // A wide character takes two cells: 61 of them are 122.
+    let wide = crate::font::wide_chars().first().copied().unwrap();
+    assert_eq!(note(key, &wide.to_string().repeat(60)), None);
+    assert!(note(key, &wide.to_string().repeat(61)).is_some());
+    // Not a note's key: no limit here.
+    let long = "x".repeat(121);
+    for other in [
+        "battles.ambush.place",
+        "battles.ambush.note_",
+        "battles.ambush.note_a",
+        "items.ambush.note_1",
+    ] {
+        assert_eq!(note(other, &long), None, "{other}");
+    }
+}
+
 /// Ticket 0456: a lesson's title, text and items keep to the lesson
 /// limits, in cells.
 #[test]

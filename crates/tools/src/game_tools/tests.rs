@@ -483,6 +483,14 @@ fn the_test_pack_has_stale_missing_and_orphaned_text() {
         "{report}"
     );
     assert!(report.contains("stale:\n  title.continue\n"), "{report}");
+    // An entry too long for its place in `en/ui.ron` (ticket 0237).
+    assert!(report.contains(", 1 too long\n"), "{report}");
+    assert!(
+        report.contains(
+            "too long:\n  results.exp\n    10 cells; the place has 3\n    text: \"EXPERIENCE\"\n"
+        ),
+        "{report}"
+    );
     let axe = "  items.iron_axe.name\n    was: \"Old Axe\"\n    now: \"Iron Axe\"\n";
     assert!(report.contains(axe), "{report}");
     // The orphan is paired with the reworded line.

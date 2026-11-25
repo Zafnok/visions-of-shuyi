@@ -176,6 +176,30 @@ fn styled_text_wraps_at_plain_spaces_with_a_key_and_what_follows_it_whole() {
 }
 
 #[test]
+fn styled_chinese_wraps_between_characters_in_cells_with_a_key_whole() {
+    let mut text = StyledText::new();
+    text.push_plain("按")
+        .push_key("f")
+        .push_plain("键确认，然后结束。");
+    let wide = CellWidths::wide("按键确认，然后结束。".chars());
+    let rows = wrap_styled(&text, 6, &wide);
+    let plain: Vec<String> = rows.iter().map(StyledText::plain).collect();
+    // No row starts with `，` or `。`; each is at most 6 cells.
+    assert_eq!(plain, ["按f键", "确认，", "然后结", "束。"]);
+    assert_eq!(keys(&rows[0]), ["f"]);
+    // A key wider than the row has a row of its own.
+    let mut long = StyledText::new();
+    long.push_plain("a ")
+        .push_key("Shift+Space")
+        .push_plain(" b");
+    let plain: Vec<String> = wrap_styled(&long, 5, &wide)
+        .iter()
+        .map(StyledText::plain)
+        .collect();
+    assert_eq!(plain, ["a", "Shift+Space", "b"]);
+}
+
+#[test]
 fn styled_lines_split_at_line_breaks_keeping_roles() {
     let mut text = StyledText::new();
     text.push_plain("a: ")
