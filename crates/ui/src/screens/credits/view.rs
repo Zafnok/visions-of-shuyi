@@ -6,6 +6,7 @@
 use crate::prelude::*;
 use shuyi_ui::text::StyledText;
 
+// engine-friction: engine#3201, moves (game 1211 deletes it)
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreditsView {

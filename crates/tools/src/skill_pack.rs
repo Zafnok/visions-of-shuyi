@@ -1,3 +1,4 @@
+// engine-friction: engine#2578, moves (game 1224 deletes it)
 //! Shuyi Engine's skill pack, copied into `.claude/skills/` at the pinned
 //! engine (ADR-0097, ticket 1192).
 //!

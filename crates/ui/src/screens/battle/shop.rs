@@ -193,6 +193,7 @@ pub enum ShopEffect {
     Close,
 }
 
+// engine-friction: engine#3205, moves (game 1215 deletes it)
 /// A sale being asked about: which Sell line, and how many to sell.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SellConfirm {

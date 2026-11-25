@@ -317,6 +317,7 @@ fn framed_size(
     (w.max(framed).min(area.w), h)
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// An item's line: its label in the player's language and what follows.
 fn item_text(ctx: &Ctx, item: &MenuItemView) -> String {
     let label = ctx.label(&item.label);
@@ -326,11 +327,13 @@ fn item_text(ctx: &Ctx, item: &MenuItemView) -> String {
     }
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// Whether some item of `menu` has a note (the menu then has a note row).
 fn has_notes(menu: &MenuView) -> bool {
     menu.items.iter().any(|i| i.note.is_some())
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// The items `menu`'s window shows in `area`, from the first: the menu's
 /// own, or, if they don't fit the screen, as many as do around the focus.
 fn shown(menu: &MenuView, area: Rect) -> (usize, usize) {
@@ -343,6 +346,7 @@ fn shown(menu: &MenuView, area: Rect) -> (usize, usize) {
     (pd::first_shown(menu.items.len(), room, focus), room)
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// The size, in cells, of `menu`'s window in `area`: its longest line or
 /// note with a cell either side, inside the frame (no wider than `area`);
 /// a row per item shown, and a rule and a row for the focused item's note
@@ -360,6 +364,7 @@ pub fn menu_size(ctx: &Ctx, menu: &MenuView, area: Rect) -> (i32, i32) {
     ((widest + 4).min(area.w), to_i32(count) + 2 + note_rows)
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// Paints the menu `m` in a window from `at`: an item a row (the focused
 /// one the bar, one that can't be chosen in grey dots), the header in the
 /// top of the frame, the focused item's note under a rule, and marks in
@@ -368,6 +373,7 @@ fn paint_menu(ctx: &Ctx, m: &BattleMenuView, at: (i32, i32), area: Rect, buf: &m
     paint_menu_framed(ctx, m, None, at, area, buf);
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// [`paint_menu`] with the battle's turn in the top of the frame and the
 /// rewind charges in its bottom (the map menu's `info`), for the turn and
 /// charges the PC has room to show elsewhere.

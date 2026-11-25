@@ -1,3 +1,4 @@
+// engine-friction: engine#3203, moves (game 1213 deletes it)
 //! The arrows at the edges of the map's view where the map goes on past it
 //! ([`MapScene::more`], ticket 0449, `docs/design/look-and-feel.md`, *Map
 //! edges*): one on each such edge, on its middle tile, pointing out, fading

@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! The arithmetic of the allocator over the SDK's `realloc` (`pd::alloc`).
 //!
 //! The SDK's `realloc` returns blocks aligned to [`MIN_ALIGN`] bytes. A

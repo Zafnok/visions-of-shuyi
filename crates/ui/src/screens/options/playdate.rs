@@ -1,3 +1,4 @@
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 //! The Playdate's look of the Options screen (ticket 1045): the engine's
 //! [`OptionsView`] in the one-bit look of [`crate::screens::playdate`].
 //! The rows fill a window the screen's width, its title in the top of its

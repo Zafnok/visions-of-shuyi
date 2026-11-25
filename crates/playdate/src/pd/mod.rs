@@ -93,6 +93,7 @@ pub fn crank() -> (f32, bool) {
     (change, docked)
 }
 
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 /// One of the game's entries in the system menu, as the SDK knows it,
 /// with its name as given (kept while the SDK may read it).
 pub struct MenuItem {
@@ -100,6 +101,7 @@ pub struct MenuItem {
     title: Vec<u8>,
 }
 
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 /// Adds the game's entry `entry` (its index, handed back to
 /// `trpg_playdate_menu_chosen` when chosen) to the system menu, named
 /// `title`; `None` if the SDK refused (it takes at most three).
@@ -110,6 +112,7 @@ pub fn add_menu_item(title: &str, entry: usize) -> Option<MenuItem> {
     (!item.is_null()).then_some(MenuItem { item, title })
 }
 
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 /// Renames `item` in the system menu.
 pub fn set_menu_item_title(item: &mut MenuItem, title: &str) {
     let title = text::c_string(title);

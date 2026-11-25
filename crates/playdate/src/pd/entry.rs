@@ -60,6 +60,7 @@ enum Step {
     Running(Box<Running>),
 }
 
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 /// The start, behind the loading card.
 struct Loading {
     card: Card,
@@ -294,6 +295,7 @@ fn update(step: &mut Step) -> bool {
     }
 }
 
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 /// Runs the start's next step behind the card (`crate::boot`), noting
 /// every file it reads: the step after it, or once the game has started,
 /// the game, with how long the start took logged.

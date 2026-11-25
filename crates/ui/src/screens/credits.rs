@@ -66,6 +66,7 @@ fn width(kind: CreditRowKind) -> usize {
     }
 }
 
+// engine-friction: engine#3201, moves (game 1211 deletes it)
 /// The whole list as rows of text, wrapped to the panel: each group that
 /// has credits under its [`heading`], then a blank row, then its entries
 /// (`"Title" by Author`, then `License · link`) with a blank row after
@@ -123,6 +124,7 @@ fn entry(ctx: &Ctx, add: &mut impl FnMut(CreditRowKind, &str), e: &CreditEntry) 
     add(CreditRowKind::Entry, "");
 }
 
+// engine-friction: engine#3201, moves (game 1211 deletes it)
 /// The credits screen. The list rolls up a row at a time by itself, rests
 /// at the bottom and starts again from the top. Confirm stops or restarts
 /// the rolling; cursor up and down stop it and scroll a row at a time;
@@ -141,6 +143,7 @@ pub struct CreditsScreen {
     music_on: bool,
 }
 
+// engine-friction: engine#3201, moves (game 1211 deletes it)
 impl CreditsScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "credits";
@@ -265,6 +268,7 @@ impl CreditsScreen {
     }
 }
 
+// engine-friction: engine#3201, moves (game 1211 deletes it)
 impl Screen<Shuyi> for CreditsScreen {
     fn name(&self) -> &'static str {
         Self::NAME

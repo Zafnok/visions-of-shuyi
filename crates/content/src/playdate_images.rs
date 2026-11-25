@@ -18,6 +18,7 @@ use serde::Deserialize;
 use shuyi_assets::bitmap::convert::{Lines, Method, Rgba, convert};
 use shuyi_assets::bitmap::{Bitmap, encode};
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 /// A kind of picture and how the Playdate's version of it is made.
 #[derive(Debug, PartialEq)]
 pub struct Kind {
@@ -42,6 +43,7 @@ pub struct Kind {
     pub lettering: bool,
 }
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 /// A lightening of a picture before it is converted: each brightness `b`
 /// (0 to 1) becomes `scale × b + floor`, so its darkest is `floor` grey.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -52,6 +54,7 @@ pub struct Lift {
     pub floor: f32,
 }
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 impl Lift {
     /// `rgba`'s pixels lightened: each colour channel the same way, which
     /// lifts their brightness (a sum of the channels) the same way; the
@@ -74,6 +77,7 @@ impl Lift {
     }
 }
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 impl Kind {
     /// Each style's method, in order.
     pub fn methods(&self) -> Vec<Method> {
@@ -81,6 +85,7 @@ impl Kind {
     }
 }
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 /// One way a kind of picture is made.
 #[derive(Debug, PartialEq)]
 pub struct Style {
@@ -90,11 +95,13 @@ pub struct Style {
     pub method: Method,
 }
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 /// A style of `method`, named `file`.
 const fn style(file: &'static str, method: Method) -> Style {
     Style { file, method }
 }
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 /// How much bigger than its PNG a picture is shown.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Scale {
@@ -170,6 +177,7 @@ const SCREEN_WIDE: Scale = Scale::Times(25, 21);
 /// (`docs/design/playdate.md`, *The combat picture*).
 pub const FIGHTER_RIM: u16 = 2;
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 /// Every kind of picture the Playdate draws one-bit, but the title's
 /// letterings ([`LETTERING`]). A PNG of `assets/` outside these folders
 /// stays a PNG in its bundle (the font's atlas, the map's pictures), and
@@ -270,6 +278,7 @@ pub static MARK: Kind = Kind {
     lettering: false,
 };
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 /// The kind of the picture at `path` (relative to `assets/`), or `None`
 /// if the Playdate keeps it as it is.
 pub fn kind_of(path: &str) -> Option<&'static Kind> {
@@ -311,6 +320,7 @@ pub fn touch_ups(files: &[String]) -> BTreeMap<String, String> {
         .collect()
 }
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 /// The one-bit picture file of the `width` × `height` picture of `rgba`
 /// pixels, made as `job` says: lightened if its kind is, converted by its
 /// kind's methods, then given its kind's rim; a lettering by
@@ -327,6 +337,7 @@ pub fn make(width: u32, height: u32, rgba: &[u8], job: &Job<'_>) -> Result<Vec<u
     with_rim(&file, job.kind.rim)
 }
 
+// engine-friction: engine#2245, moves (game 1221 deletes it)
 /// One-bit picture `file` with a white rim `width` pixels wide round what
 /// its mask shows: each see-through pixel that near a shown one (by a
 /// round brush, as 0062's mockups drew it) is shown, white in every

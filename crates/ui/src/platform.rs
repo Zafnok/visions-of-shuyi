@@ -1,3 +1,4 @@
+// engine-friction: engine#3091, moves (game 1227 deletes it)
 //! The facts of the target the game's own Playdate front end runs on
 //! (ticket 1200). The engine's window backend reads its targets' profiles
 //! itself; `crates/playdate` and the tools' Playdate start read this one.

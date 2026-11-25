@@ -228,7 +228,10 @@ done. It is never on the Act 1 critical path.
    carry all of a sweep's tickets, titled `Game NNNN: …`), and a game
    ticket per engine ticket that deletes the workaround,
    `blocked_by: ["engine#NNNN"]`. Game-side structures get game tickets
-   with no engine blocker.
+   with no engine blocker. **Each filed row marks its code** in the
+   sweep's PR: `// engine-friction: engine#NNNN, moves (game MMMM deletes
+   it)` above every item the engine ticket replaces (`engine-change` §2,
+   step 3), so an edit to it warns in `pr-size` (ticket 0193).
 
 ## Worked example 1: a dialogue box that needed hacks
 

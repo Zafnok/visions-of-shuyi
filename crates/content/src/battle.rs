@@ -255,6 +255,7 @@ pub fn load_all(refs: &BattleRefs<'_>) -> Result<BTreeMap<String, BattleDef>, Ve
     })
 }
 
+// engine-friction: engine#2233, moves (game 1186 deletes it)
 /// The light each battle file of the bundle names instead of its map's
 /// (ticket 0438), by battle id (the file stem), checked against
 /// `lighting`. A file that doesn't parse names none here: [`load_all`]
@@ -285,6 +286,7 @@ pub fn load_lights(lighting: &Lighting) -> Result<BTreeMap<String, String>, Vec<
     }
 }
 
+// engine-friction: engine#2247, moves (game 1223 deletes it)
 /// The light battle file `source` names (`light: "dusk"`), if it names
 /// one; an error at the name (attributed to `file`) if it isn't one of
 /// `lighting`'s. `None` for a file that doesn't parse.

@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! The game's own stack (ADR-0070 §4): its size, and how much of it was
 //! used.
 //!

@@ -213,6 +213,7 @@ pub fn first_shown(len: usize, room: usize, focus: Option<usize>) -> usize {
     focus.unwrap_or(0).saturating_sub(room / 2).min(len - room)
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// The size, in cells, of `menu`'s window: its longest item with a cell
 /// either side, inside the frame; a row per item.
 pub fn menu_size(ctx: &Ctx, menu: &MenuView) -> (i32, i32) {
@@ -221,6 +222,7 @@ pub fn menu_size(ctx: &Ctx, menu: &MenuView) -> (i32, i32) {
     (widest.unwrap_or(0) + 4, to_i32(menu.items.len()) + 2)
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// An item's text, in the player's language: its label and what follows
 /// it.
 fn menu_text(ctx: &Ctx, item: &crate::widgets::MenuItemView) -> String {
@@ -231,6 +233,7 @@ fn menu_text(ctx: &Ctx, item: &crate::widgets::MenuItemView) -> String {
     }
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// `menu` in a window from `(x, y)`, [`menu_size`] big: an item a row, the
 /// focused one a bar across the window, one that can't be chosen in grey
 /// dots.
@@ -364,6 +367,7 @@ pub fn ask(ctx: &Ctx, buf: &mut GlyphBuffer, text: &str, answers: Answers<'_>) -
     rect
 }
 
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 /// A list of `items` (each its text and whether it is focused) in a
 /// window in the middle of `buf`, `title` in its frame: an item a row,
 /// the focused one a bar across the window.

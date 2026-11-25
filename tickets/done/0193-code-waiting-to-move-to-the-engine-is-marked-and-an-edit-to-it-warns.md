@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-24
 ---
 
 # 0193 — Code waiting to move to the engine is marked, and an edit to it warns
@@ -145,21 +145,21 @@ skills, the backfill markers (about 40 lines) and this ticket: under 600.
 
 ## Acceptance criteria
 
-- [ ] `marker_spans` covers a marked `fn`, `struct`, `impl` and a
+- [x] `marker_spans` covers a marked `fn`, `struct`, `impl` and a
       one-line item, and nothing past the item's end (unit tests).
-- [ ] `changed_lines` reads hunks with and without counts, and a
+- [x] `changed_lines` reads hunks with and without counts, and a
       deletion (`+c,0`) (unit tests).
-- [ ] `cargo xtask pr-size` and `--hook` print the marker line for a diff
+- [x] `cargo xtask pr-size` and `--hook` print the marker line for a diff
       inside a marked item, and nothing for a diff outside one or one
       that only adds a marker (tests on fixture diffs).
-- [ ] Every open ticket that waits on an `engine#` ticket to delete game
+- [x] Every open ticket that waits on an `engine#` ticket to delete game
       code has its code marked. The completion notes list them, with
       1180's and 1207's.
-- [ ] `engine-change`, `engine-friction` and `work-ticket` carry the
+- [x] `engine-change`, `engine-friction` and `work-ticket` carry the
       steps above; `scripts/sync-agent-skills.ps1 -Check` passes.
-- [ ] The engine watcher's tests still pass: a "moves" marker parses as
+- [x] The engine watcher's tests still pass: a "moves" marker parses as
       today's.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -171,5 +171,118 @@ skills, the backfill markers (about 40 lines) and this ticket: under 600.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: the markers added,
-deviations, follow-ups.)*
+Done 2026-11-24.
+
+**What was built.**
+- `trpg_engine_watch::marker_spans` (`crates/engine-watch/src/lib.rs`),
+  returning a `MarkerSpan` (first and last line, engine id, and the
+  game ticket of a "moves" marker), not the plain tuple the step named:
+  the warning needs MMMM.
+- `pr_size::changed_lines`, `moved_warnings` and `moved_markers`, and
+  `output` gets the warnings: one line each in the hook's answer (same
+  JSON, the lines after the size warning), `warning:` lines in the
+  report, and a `::warning title=Moves to the engine::` line each in CI
+  (`ci.yml`'s `pr-size` step, unchanged).
+
+**Deviations and the agent's rules (technical, no gameplay).**
+- Only a "moves" marker warns; a workaround's marker (no
+  `moves (game MMMM deletes it)`) doesn't, since the warning's text
+  needs MMMM and a workaround is edited as part of normal work.
+- A marker on a file's **first line covers the whole file**, for
+  modules that go whole (a `mod x;` line covers only itself). The
+  skills and `docs/engine/README.md` say so.
+- A comment line never ends an item; a marker after code on its own
+  line covers that line when the code ends there.
+- The diff is the merge base to the working tree (as the size count
+  is), so the hook sees uncommitted edits too; in CI that is
+  `<base>...HEAD`.
+- `crates/engine-watch/` is left out of the check: its tests hold
+  markers as fixtures (as `added_markers` already does).
+- The ticket estimated about 40 marker lines; the backfill is 183,
+  because 30-odd open tickets wait on an engine ticket to replace
+  code. The PR is still about 900 lines.
+
+**Markers added** (183, `moves (game MMMM deletes it)`; "file" is a
+first-line marker over the whole file). None of the items had a marker
+before.
+- **1180**: `persona.rs`: `order`, `split_attacks` (engine#2148, which
+  now holds the gaps 2132 missed); `covers`, `hold`, `advance`,
+  `once_per_action` (2132); `Tally::score` (2130); `Goals`, `Danger`,
+  `danger`, `Threat`, `threats`, `seize_distance` (2131).
+  `playtest.rs`: `Targets`, `checks`, `checks_of`, `checks_with`
+  (2148), `Faster` (2129). `movement.rs`: `attack_tiles`,
+  `threat_area`, `threat_tiles`, `area_of`, `danger_zone`,
+  `ai_danger_zone`, `zone_of`, the free `threats_at` (2131; the
+  planner's cached `threats_at` stays). `ai.rs`: `flow_field`, and the
+  planner's `flow` and `danger` caches (2131).
+- **1207**: `crates/tools/src/playtest.rs`, file (engine#2532).
+- **1168**: `options.rs`'s `Named` and its eight impls, `choice`
+  (engine#2314).
+- **1170** (engine#3097): files `pd/allocator.rs`, `pd/game_stack.rs`,
+  `pd/panic.rs`, `heap.rs`, `menu.rs`, `pads.rs`, `screen.rs`,
+  `stack.rs`, `text.rs`, `ui/src/game/system_menu.rs`; `pd/mod.rs`'s
+  `MenuItem`, `add_menu_item`, `set_menu_item_title`; `pd/entry.rs`'s
+  `Loading` and `load`.
+- **1182**: `game_tools.rs`'s `After` (engine#2540; its option, field
+  and loop were already marked).
+- **1184** (engine#2371): the one-bit skin files of options,
+  key bindings, profile and name entry; `screens/playdate.rs`'s
+  `menu_size`, `menu_text`, `menu`, `list`; `battle/playdate.rs`'s
+  `item_text`, `has_notes`, `shown`, `menu_size`, `paint_menu`,
+  `paint_menu_framed`.
+- **1186** (engine#2233): `bundle::parsed`, the `load_all` of `map.rs`
+  and `cinematic.rs`, `ScriptsLoad::start`, `battle::load_lights`.
+- **1211** (engine#3201): `credits.rs`'s `rows`, `CreditsScreen` and
+  its two impls, `CreditsView`, the glyph `paint`, `actions::CREDITS`.
+- **1212** (engine#3202): `debug/sprite_test.rs` file,
+  `actions::SPRITE_TEST`.
+- **1213** (engine#3203): `map_view/edges.rs` file; the glyph and
+  sprite `paint_over`, `edge_arrow`, `EDGE_GAP`, `edge_src`,
+  `edge_dest`, the one-bit `paint_under`, `marks::danger_edges`.
+- **1214** (engine#3204): the harness's ten input helpers
+  (`music_load_delay` … `clear_audio`), `turn_tests::assert_in_font`.
+- **1215** (engine#3205): `SellConfirm`, `SellConfirmView`, both
+  `paint_sell`.
+- **1217** (engine#3206): `follow`, `camera_in`, `fit_camera`,
+  `cursor::dir`, `walk_steps`, `walk_done`, `walk_pos`.
+- **1218** (engine#3207): the sixteen dialogue tests and first
+  `proptest!` block it deletes (`crates/ui/src/dialogue/tests.rs`).
+- **1219** (engine#2243): `tileset/look.rs` file; `Checker::inside`,
+  `grid_rect`, the free `inside`.
+- **1220** (engine#2244): `tune.rs`'s `code`, `In`, `field_at`,
+  `is_name`, `enemy_spans`, `add_to_list`, `set_field`.
+- **1221** (engine#2245): `playdate_images.rs`'s `Kind`, `Lift` and
+  its impl, `impl Kind`, `Style`, `style`, `Scale`, `KINDS`,
+  `kind_of`, `make`, `with_rim`.
+- **1222** (engine#2246): `Portrait`, `Expression`, `Sidecar`,
+  `parse_portrait`, `check_image`, `STANDARD_EXPRESSIONS`,
+  `expression_problem`.
+- **1223** (engine#2247): `battle::light_of`, `item`'s `err_at_item`.
+- **1224** (engine#2578): `tools/src/skill_pack.rs` file;
+  `skill_pack`, `skill_pack_in`.
+- **1225** (engine#2579): the title tests' fence test, `names_word`
+  and its test.
+- **1226** (engine#2580): `Canvas` and its impl, `blend`.
+- **1227** (engine#3091): `ui/src/platform.rs` file;
+  `the_playdates_facts_are_the_engines`.
+- **1228** (engine#2109): `ease_out`, `ease_in`, `AiAction::camera`.
+- **1229** (engine#3049): `icon.rs`'s `ICO_SIZES`, `ico` and its
+  test; both `embed_windows_resources` of `crates/app/build.rs` and
+  `crates/story-preview/build.rs`.
+
+**Nothing to mark**: 0141, 0142, 0532, 0759 (the code that goes is an
+expression inside a test helper that stays), 1012, 1014, 1017, 1078,
+1241, 1276 (its code isn't written yet), 1350: they add code or change
+tests and docs, and replace no game code. Not Rust, so no marker:
+`crates/ui/src/playdate_target.ron` (1227), `assets/icon/icon.ico` and
+`crates/content/playdate-bundle.txt` (1229), the playtest workflow
+(1207, engine#2021).
+
+**Checked.** A scratch edit inside `split_attacks` made `cargo xtask
+pr-size` and `--hook` print the marker's line; dropped after. This
+branch itself, which only adds markers, gets no warning.
+
+**Follow-ups.** None filed. 0181's `check-pr` (with 1257's diff
+warning folded in) should reuse `moved_warnings` rather than build a
+second check: 1257's "a PR that changes a file an open ticket names"
+is this, by marker.

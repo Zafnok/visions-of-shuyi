@@ -192,6 +192,7 @@ impl Tally {
         }
     }
 
+    // engine-friction: engine#2130, moves (game 1180 deletes it)
     /// The counts weighed by `weights`, in whole points.
     pub fn score(&self, weights: &Weights) -> i32 {
         let terms = [
@@ -263,6 +264,7 @@ fn approach(start: &BattleState, end: &BattleState) -> i64 {
         .sum()
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// How far, walking, each tile is from the objective's goals (an enemy in
 /// a rout, the boss, the tile to seize, the exit area's tiles; and a village's
 /// standing houses), worked out once per movement type:
@@ -325,6 +327,7 @@ impl<'a> Goals<'a> {
     }
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// [`Tally::exposed`] and the rest, apart and for the lords.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 struct Danger {
@@ -335,6 +338,7 @@ struct Danger {
     counter: i64,
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// The danger the player's units stand in, in `state` ([`Tally::exposed`]).
 fn danger(state: &BattleState) -> Danger {
     let threats = threats(state);
@@ -386,9 +390,11 @@ fn danger(state: &BattleState) -> Danger {
     out
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// An enemy, and whether it can strike a tile in its next phase.
 type Threat<'a> = (UnitId, Box<dyn Fn(Pos) -> bool + 'a>);
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// Each enemy of the player, and whether it can strike a tile in its next
 /// phase: the danger zone, one enemy at a time, as the player sees it (one
 /// that never moves only from its own tile).
@@ -432,6 +438,7 @@ fn hp_of(state: &BattleState, id: UnitId) -> i64 {
     state.unit(id).map_or(0, |u| i64::from(u.hp))
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// How far the nearest player unit that may seize stands from `pos`,
 /// walking (the flow field, as [`Tally::approach`] measures): as the crow
 /// flies, a lord on `ch03`'s shore came "closer" to the scriptorium by
@@ -478,6 +485,7 @@ impl Order<BattleState> for PersonaOrder {
     }
 }
 
+// engine-friction: engine#2148, moves (game 1180 deletes it)
 /// `commands` (the legal commands of `state`) as a persona tries them:
 ///
 /// 1. each unit's best attack (the most expected damage dealt, then the
@@ -629,6 +637,7 @@ pub fn order(
     out
 }
 
+// engine-friction: engine#2148, moves (game 1180 deletes it)
 /// `attacks`, best first, as [`order`] tries them: each unit's best
 /// attack; each unit's best attack on each of its other targets; each
 /// other way of striking, once.
@@ -657,6 +666,7 @@ fn split_attacks(
     (best, targets, others)
 }
 
+// engine-friction: engine#2132, moves (game 1180 deletes it)
 /// Each ready unit's cover, the most covering first: of `waits` (each
 /// unit waiting on each tile it can reach), the one that keeps the most
 /// enemies off the lords they can strike now, their reach worked out again
@@ -743,6 +753,7 @@ fn covers(
     best.into_iter().map(|(_, _, _, c)| c).collect()
 }
 
+// engine-friction: engine#2132, moves (game 1180 deletes it)
 /// Keeps `command` (unit `id` waiting on `dest`, a tile out of every
 /// enemy's reach) in `holds` if it is the unit's nearest yet to the
 /// goals. With no goals (a survive), nearest where the unit stands, and
@@ -801,6 +812,7 @@ fn attack_key(command: &Command) -> (UnitId, Option<UnitId>) {
     }
 }
 
+// engine-friction: engine#2132, moves (game 1180 deletes it)
 /// Keeps `command` (unit `id` waiting on `dest`) in `advances` if it is
 /// the unit's nearest yet to the goals and nearer than its own tile.
 fn advance(
@@ -865,6 +877,7 @@ fn heal_need(
     (missing > 0).then_some((missing, heal))
 }
 
+// engine-friction: engine#2132, moves (game 1180 deletes it)
 /// `commands` with only the first `Act` of each unit and action kept.
 fn once_per_action(commands: impl Iterator<Item = Command>) -> Vec<Command> {
     let mut seen: Vec<(UnitId, UnitAction)> = Vec::new();

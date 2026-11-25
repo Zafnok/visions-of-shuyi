@@ -1,3 +1,4 @@
+// engine-friction: engine#3202, moves (game 1212 deletes it)
 //! The sprite test (debug builds, ticket 0231): the test card
 //! (`assets-test/images/test_card.png`) drawn as sprite items in each way a
 //! [`Sprite`] can be, for checking that a renderer draws them right

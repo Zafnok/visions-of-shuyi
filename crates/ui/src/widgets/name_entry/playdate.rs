@@ -1,3 +1,4 @@
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 //! The Playdate's look of the name boxes (ticket 1045): the letter grid
 //! and the typing box, each a window of the one-bit look
 //! ([`crate::screens::playdate`]) with its title in the top of its frame

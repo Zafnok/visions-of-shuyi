@@ -514,6 +514,7 @@ pub fn value(ctx: &Ctx, row: Row) -> ValueView {
     OptionsScreen::value(ctx, &row.option())
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 /// A setting of the game's that is one of a few named values, stepped in
 /// the order of [`ALL`](Self::ALL).
 trait Named: Copy + PartialEq + 'static {
@@ -527,6 +528,7 @@ trait Named: Copy + PartialEq + 'static {
     fn put(self, s: &mut Settings);
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 impl Named for AnimSpeed {
     const ALL: &'static [Self] = &AnimSpeed::ALL;
     fn key(self) -> &'static str {
@@ -540,6 +542,7 @@ impl Named for AnimSpeed {
     }
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 impl Named for EnemyPhaseSpeed {
     const ALL: &'static [Self] = &EnemyPhaseSpeed::ALL;
     fn key(self) -> &'static str {
@@ -553,6 +556,7 @@ impl Named for EnemyPhaseSpeed {
     }
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 impl Named for MapLook {
     const ALL: &'static [Self] = &MapLook::ALL;
     fn key(self) -> &'static str {
@@ -566,6 +570,7 @@ impl Named for MapLook {
     }
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 impl Named for MapZoom {
     const ALL: &'static [Self] = &MapZoom::ALL;
     fn key(self) -> &'static str {
@@ -579,6 +584,7 @@ impl Named for MapZoom {
     }
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 impl Named for ThreatArrows {
     const ALL: &'static [Self] = &ThreatArrows::ALL;
     fn key(self) -> &'static str {
@@ -592,6 +598,7 @@ impl Named for ThreatArrows {
     }
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 impl Named for RangeStyle {
     const ALL: &'static [Self] = &RangeStyle::ALL;
     fn key(self) -> &'static str {
@@ -605,6 +612,7 @@ impl Named for RangeStyle {
     }
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 impl Named for PortraitStyle {
     const ALL: &'static [Self] = &PortraitStyle::ALL;
     fn key(self) -> &'static str {
@@ -618,6 +626,7 @@ impl Named for PortraitStyle {
     }
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 impl Named for Theme {
     const ALL: &'static [Self] = &Theme::ALL;
     fn key(self) -> &'static str {
@@ -631,6 +640,7 @@ impl Named for Theme {
     }
 }
 
+// engine-friction: engine#2314, moves (game 1168 deletes it)
 /// The row of `row`'s setting `T`, one of its named values.
 fn choice<T: Named>(row: Row) -> OptionRow {
     OptionRow::new(

@@ -6,6 +6,8 @@
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
+use trpg_engine_watch::{MarkerSpan, marker_spans};
+
 use crate::code_lines::git;
 
 pub const USAGE: &str = "usage: cargo xtask pr-size [--base <ref>] [--branch <name>] [--hook]\n\n\
@@ -160,26 +162,45 @@ fn hook_json(message: &str) -> String {
 /// What the command prints: the hook's answer if there is a warning with
 /// `hook`, else the report, with a warning annotation on the pull request
 /// past the limit when `github_actions` (the variable of that name) says
-/// this is CI. The job stays green (ADR-0101).
+/// this is CI. `moved` are the warnings for marked code the branch edits
+/// ([`moved_markers`]): each is a line of the hook's answer, of the report
+/// and an annotation of its own. The job stays green (ADR-0101).
 pub fn output(
     files: &[(String, usize)],
     branch: &str,
     from: &str,
     hook: bool,
     github_actions: Option<&str>,
+    moved: &[String],
 ) -> String {
-    let (total, report) = report(files, branch, from);
+    let (total, mut report) = report(files, branch, from);
     let verdict = Verdict::of(total, branch);
     let warning = verdict.warning(total);
     if hook {
-        return warning.map_or_else(String::new, |w| hook_json(&w) + "\n");
+        let all: Vec<&str> = warning.iter().chain(moved).map(String::as_str).collect();
+        return if all.is_empty() {
+            String::new()
+        } else {
+            hook_json(&all.join(
+                "
+",
+            )) + "
+"
+        };
     }
-    match warning {
-        Some(warning) if verdict == Verdict::OverTheLimit && github_actions == Some("true") => {
-            format!("{report}::warning title=PR size::{warning}\n")
+    for line in moved {
+        let _ = writeln!(report, "warning: {line}");
+    }
+    let ci = github_actions == Some("true");
+    if let Some(warning) = warning.filter(|_| verdict == Verdict::OverTheLimit && ci) {
+        let _ = writeln!(report, "::warning title=PR size::{warning}");
+    }
+    if ci {
+        for line in moved {
+            let _ = writeln!(report, "::warning title=Moves to the engine::{line}");
         }
-        _ => report,
     }
+    report
 }
 
 /// The changed files of `repo_root`'s working tree against `base`'s merge
@@ -227,6 +248,120 @@ pub fn changed_files(
         }
     }
     Ok((files, from.chars().take(10).collect()))
+}
+
+/// The lines a hunk of `git diff -U0` gives the new side: `count` lines
+/// from `first`, or, with `count` 0, a deletion just after line `first`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Change {
+    pub first: usize,
+    pub count: usize,
+}
+
+/// Each file's changes from `git diff -U0` output, on the new side: the
+/// `+c,d` of every `@@ -a,b +c,d @@` (`+c` alone is one line). A deleted
+/// file has none.
+pub fn changed_lines(diff_u0: &str) -> Vec<(String, Vec<Change>)> {
+    let mut files: Vec<(String, Vec<Change>)> = Vec::new();
+    // Whether the hunks being read are a kept file's (not a deleted one's).
+    let mut kept = false;
+    for line in diff_u0.lines() {
+        if let Some(path) = line.strip_prefix("+++ ") {
+            kept = path.starts_with("b/");
+            if let Some(path) = path.strip_prefix("b/") {
+                files.push((path.to_owned(), Vec::new()));
+            }
+        } else if let Some(hunk) = line.strip_prefix("@@ ").filter(|_| kept) {
+            let new_side = hunk.split(' ').find_map(|part| part.strip_prefix('+'));
+            let change = new_side.and_then(|side| {
+                let (first, count) = side.split_once(',').unwrap_or((side, "1"));
+                Some(Change {
+                    first: first.parse().ok()?,
+                    count: count.parse().ok()?,
+                })
+            });
+            if let (Some(change), Some((_, changes))) = (change, files.last_mut()) {
+                changes.push(change);
+            }
+        }
+    }
+    files
+}
+
+/// Whether a change touches the code a marker covers, past the marker's
+/// own line (adding or editing a marker alone touches nothing).
+fn touches(span: &MarkerSpan, change: Change) -> bool {
+    if change.count == 0 {
+        span.first <= change.first && change.first < span.last
+    } else {
+        change.first <= span.last && change.first + change.count > span.first + 1
+    }
+}
+
+/// One warning per "moves" marker whose code a change touches, in path
+/// and line order (ticket 0193).
+pub fn moved_warnings(
+    spans: &[(String, Vec<MarkerSpan>)],
+    changed: &[(String, Vec<Change>)],
+) -> Vec<String> {
+    let mut hits: Vec<(&str, &MarkerSpan, &str)> = Vec::new();
+    for (path, spans) in spans {
+        let Some((_, edits)) = changed.iter().find(|(p, _)| p == path) else {
+            continue;
+        };
+        for span in spans {
+            if let Some(game) = &span.game
+                && edits.iter().any(|&c| touches(span, c))
+            {
+                hits.push((path, span, game));
+            }
+        }
+    }
+    hits.sort_by_key(|&(path, span, _)| (path, span.first));
+    hits.into_iter()
+        .map(|(path, span, game)| {
+            let engine = &span.engine;
+            format!(
+                "{path}:{} moves to the engine with engine#{engine} (game {game} deletes it): \
+                 does engine#{engine} still cover this change? If not, add it to the engine \
+                 ticket now (engine-change), and add a dated line to {game}",
+                span.first
+            )
+        })
+        .collect()
+}
+
+/// The warnings for the "moves" markers whose code `repo_root`'s working
+/// tree changes against `base`'s merge base with `HEAD`. The engine
+/// watcher's own sources are left out: its tests write markers as
+/// fixtures.
+pub fn moved_markers(repo_root: &Path, base: &str) -> Result<Vec<String>, String> {
+    let from = git(repo_root, &["merge-base", base, "HEAD"])?
+        .trim()
+        .to_owned();
+    let diff = git(
+        repo_root,
+        &[
+            "diff",
+            "-U0",
+            "-M",
+            "--no-ext-diff",
+            "--no-color",
+            &from,
+            "--",
+            "*.rs",
+        ],
+    )?;
+    let changed = changed_lines(&diff);
+    let spans: Vec<_> = changed
+        .iter()
+        .filter(|(path, _)| !path.starts_with("crates/engine-watch/"))
+        .filter_map(|(path, _)| {
+            let source = std::fs::read_to_string(repo_root.join(path)).ok()?;
+            Some((path.clone(), marker_spans(&source)))
+        })
+        .collect();
+    Ok(moved_warnings(&spans, &changed))
 }
 
 /// What a Claude Code `PreToolUse` hook is given on stdin, as far as
@@ -293,11 +428,12 @@ pub fn hook_answer(stdin: &str, fallback: &Path, base: &str, branch: Option<&str
         .and_then(|root| {
             let (files, from) = changed_files(&root, base)?;
             let branch = branch.map_or_else(|| current_branch(&root), |b| Ok(b.to_owned()))?;
-            Ok((files, from, branch))
+            let moved = moved_markers(&root, base)?;
+            Ok((files, from, branch, moved))
         });
     measured.map_or_else(
         |_| String::new(),
-        |(files, from, branch)| output(&files, &branch, &from, true, None),
+        |(files, from, branch, moved)| output(&files, &branch, &from, true, None, &moved),
     )
 }
 
@@ -414,7 +550,7 @@ mod tests {
     fn the_output_is_the_report_the_hook_answer_or_the_annotation() {
         const NOTE: &str = "::warning title=PR size::";
         let size = |lines| vec![("x".to_owned(), lines)];
-        let output = |lines, branch, hook, ci| output(&size(lines), branch, "abc", hook, ci);
+        let output = |lines, branch, hook, ci| output(&size(lines), branch, "abc", hook, ci, &[]);
 
         // The hook speaks only with a warning, and always without the report.
         assert_eq!(output(2_000, "t1", true, None), "");
@@ -440,6 +576,188 @@ mod tests {
         assert!(!output(3_500, "sonar/a", false, Some("true")).contains(NOTE));
         assert!(!output(3_500, "t1", false, Some("false")).contains(NOTE));
         assert!(!output(3_500, "t1", false, None).contains(NOTE));
+    }
+
+    /// The marker, split so this file's own source holds none.
+    const MARK: &str = concat!("// engine-", "friction: engine#");
+
+    fn change(first: usize, count: usize) -> Change {
+        Change { first, count }
+    }
+
+    #[test]
+    fn changed_lines_read_hunks_with_and_without_counts_and_deletions() {
+        let diff = "diff --git a/a.rs b/a.rs\n\
+                    --- a/a.rs\n\
+                    +++ b/a.rs\n\
+                    @@ -3 +3 @@ fn a() {\n\
+                    -x\n\
+                    +y\n\
+                    @@ -10,2 +10,3 @@\n\
+                    @@ -20,4 +21,0 @@ impl B {\n\
+                    diff --git a/gone.rs b/gone.rs\n\
+                    --- a/gone.rs\n\
+                    +++ /dev/null\n\
+                    @@ -1,2 +0,0 @@\n\
+                    --- a/b.rs\n\
+                    +++ b/b.rs\n\
+                    @@ -0,0 +1,2 @@\n";
+        assert_eq!(
+            changed_lines(diff),
+            [
+                (
+                    "a.rs".to_owned(),
+                    vec![change(3, 1), change(10, 3), change(21, 0)]
+                ),
+                ("b.rs".to_owned(), vec![change(1, 2)]),
+            ]
+        );
+        assert_eq!(changed_lines(""), []);
+    }
+
+    /// A source with one "moves" marker over lines 2–6 and a workaround's
+    /// marker over 8–10.
+    fn marked_source() -> String {
+        format!(
+            "use x;\n\
+             {MARK}2132, moves (game 1180 deletes it)\n\
+             pub fn order() {{\n\
+             \x20   a();\n\
+             \x20   b();\n\
+             }}\n\
+             fn free() {{}}\n\
+             {MARK}2540 (a workaround)\n\
+             fn crank() {{\n\
+             }}\n"
+        )
+    }
+
+    fn warnings_for(edits: &[Change]) -> Vec<String> {
+        let spans = vec![(
+            "crates/bots/src/persona.rs".to_owned(),
+            marker_spans(&marked_source()),
+        )];
+        let changed = vec![("crates/bots/src/persona.rs".to_owned(), edits.to_vec())];
+        moved_warnings(&spans, &changed)
+    }
+
+    #[test]
+    fn moved_warnings_name_each_marker_whose_code_changed() {
+        let warning = "crates/bots/src/persona.rs:2 moves to the engine with engine#2132 \
+                       (game 1180 deletes it): does engine#2132 still cover this change? \
+                       If not, add it to the engine ticket now (engine-change), and add a \
+                       dated line to 1180";
+        for inside in [
+            change(4, 1),
+            change(1, 3),
+            change(6, 2),
+            change(3, 0),
+            change(2, 0),
+        ] {
+            assert_eq!(warnings_for(&[inside]), [warning], "{inside:?}");
+        }
+        // Outside the item, the marker line alone, a deletion after the
+        // item's end, and a workaround's marker: nothing.
+        for outside in [
+            change(1, 1),
+            change(7, 1),
+            change(2, 1),
+            change(6, 0),
+            change(9, 1),
+        ] {
+            assert_eq!(
+                warnings_for(&[outside]),
+                Vec::<String>::new(),
+                "{outside:?}"
+            );
+        }
+        // One line per marker, in path and line order.
+        let source = format!("{MARK}2131, moves (game 1180 deletes it)\nconst A: u8 = 1;\n");
+        let spans = vec![
+            ("b.rs".to_owned(), marker_spans(&source)),
+            ("a.rs".to_owned(), marker_spans(&format!("\n\n{source}"))),
+        ];
+        let changed = vec![
+            ("a.rs".to_owned(), vec![change(4, 1), change(4, 0)]),
+            ("b.rs".to_owned(), vec![change(2, 1)]),
+        ];
+        let lines = moved_warnings(&spans, &changed);
+        assert_eq!(lines.len(), 2, "{lines:?}");
+        assert!(lines[0].starts_with("a.rs:3 moves"), "{lines:?}");
+        assert!(lines[1].starts_with("b.rs:1 moves"), "{lines:?}");
+    }
+
+    #[test]
+    fn the_report_the_hook_and_ci_carry_the_moved_warnings() {
+        let small = [("x".to_owned(), 10)];
+        let moved = ["a.rs:2 moves to the engine".to_owned()];
+        let hook = output(&small, "t1", "abc", true, None, &moved);
+        let json: serde_json::Value = serde_json::from_str(hook.trim_end()).unwrap();
+        assert_eq!(
+            json["hookSpecificOutput"]["additionalContext"],
+            "pr-size: a.rs:2 moves to the engine"
+        );
+        let both = output(&[("x".to_owned(), 2_500)], "t1", "abc", true, None, &moved);
+        let json: serde_json::Value = serde_json::from_str(both.trim_end()).unwrap();
+        let context = json["hookSpecificOutput"]["additionalContext"]
+            .as_str()
+            .unwrap();
+        assert!(context.contains("2,500") && context.ends_with("\na.rs:2 moves to the engine"));
+
+        let report = output(&small, "t1", "abc", false, None, &moved);
+        assert!(
+            report.ends_with("planned at\nwarning: a.rs:2 moves to the engine\n"),
+            "{report}"
+        );
+        let ci = output(&small, "t1", "abc", false, Some("true"), &moved);
+        assert!(
+            ci.ends_with("::warning title=Moves to the engine::a.rs:2 moves to the engine\n"),
+            "{ci}"
+        );
+        assert!(!ci.contains("title=PR size"));
+        assert_eq!(output(&small, "t1", "abc", true, None, &[]), "");
+    }
+
+    /// A throwaway repository: an edit inside a marked item warns, one
+    /// outside it or one that only adds a marker doesn't.
+    #[test]
+    fn moved_markers_read_a_real_diff() {
+        let root = std::env::temp_dir().join(format!("trpg-pr-size-moves-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("crates/engine-watch")).unwrap();
+        let write = |path: &str, text: &str| std::fs::write(root.join(path), text).unwrap();
+        let run = |args: &[&str]| git(&root, args).unwrap();
+        run(&["init", "-q", "-b", "trunk"]);
+        run(&["config", "user.email", "test@example.com"]);
+        run(&["config", "user.name", "Test"]);
+        let source = marked_source();
+        write("persona.rs", &source.replace(MARK, "// plain: "));
+        write("crates/engine-watch/fixture.rs", &source);
+        run(&["add", "."]);
+        run(&["commit", "-q", "-m", "first"]);
+
+        // Only the markers are added: no warning.
+        write("persona.rs", &source);
+        run(&["commit", "-q", "-am", "markers"]);
+        assert_eq!(
+            moved_markers(&root, "HEAD~1").unwrap(),
+            Vec::<String>::new()
+        );
+        // An edit outside the item, and in the watcher's fixtures: none.
+        write(
+            "persona.rs",
+            &source.replace("fn free() {}", "fn free() { 1 }"),
+        );
+        let fixture = source.replace("a();", "c();");
+        write("crates/engine-watch/fixture.rs", &fixture);
+        assert_eq!(moved_markers(&root, "HEAD").unwrap(), Vec::<String>::new());
+        // An edit inside it, uncommitted: one warning.
+        write("persona.rs", &source.replace("b();", "c();"));
+        let warned = moved_markers(&root, "HEAD").unwrap();
+        assert_eq!(warned.len(), 1, "{warned:?}");
+        assert!(warned[0].starts_with("persona.rs:2 moves to the engine with engine#2132"));
+        assert!(moved_markers(&root, "no-such-ref-0193").is_err());
+        std::fs::remove_dir_all(&root).unwrap();
     }
 
     fn is_snapshot(path: &str) -> bool {

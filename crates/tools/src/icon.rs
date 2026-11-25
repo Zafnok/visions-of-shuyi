@@ -49,6 +49,7 @@ const OPTIONS: &[Option_] = &[
     },
 ];
 
+// engine-friction: engine#3049, moves (game 1229 deletes it)
 /// Sizes of the pictures in the `.ico`.
 const ICO_SIZES: [u32; 4] = [16, 32, 48, 256];
 /// The side of `shuyi.ron`'s `icon`. 64 is a whole fraction of it, so the
@@ -110,6 +111,7 @@ pub fn run(args: &[String], root: &Path) -> Result<String, String> {
     }
 }
 
+// engine-friction: engine#3049, moves (game 1229 deletes it)
 /// An `.ico` file holding PNG-encoded pictures (Windows Vista and later).
 fn ico(pictures: &[(u32, Vec<u8>)]) -> Vec<u8> {
     let mut out = vec![0, 0, 1, 0];
@@ -209,6 +211,7 @@ mod tests {
         }
     }
 
+    // engine-friction: engine#3049, moves (game 1229 deletes it)
     #[test]
     fn ico_header_points_at_the_pictures() {
         let bytes = ico(&[(16, vec![1, 2, 3]), (256, vec![4, 5])]);

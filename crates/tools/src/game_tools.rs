@@ -181,6 +181,7 @@ enum Opens {
     Preview(String),
 }
 
+// engine-friction: engine#2540, moves (game 1182 deletes it)
 /// A step played after the script's.
 #[derive(Debug, Clone, PartialEq)]
 enum After {

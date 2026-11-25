@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! Text handed to the SDK, which takes C strings (`NUL`-terminated).
 
 use alloc::vec::Vec;

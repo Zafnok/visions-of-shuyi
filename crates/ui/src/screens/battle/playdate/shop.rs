@@ -112,6 +112,7 @@ fn rule(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, y: i32, mark: Option<&str>
     }
 }
 
+// engine-friction: engine#3205, moves (game 1215 deletes it)
 /// The sale `sell` asked about, in a window in the middle of `buf`.
 fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, buf: &mut GlyphBuffer) {
     let ink = inks(ctx);

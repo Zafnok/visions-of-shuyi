@@ -17,6 +17,7 @@ fn main() {
     }
 }
 
+// engine-friction: engine#3049, moves (game 1229 deletes it)
 /// The exe's icon and version info (ticket 0902). The GNU target's resource
 /// compiler is `windres`, in MSYS2's mingw-w64 binutils. Without a compiler
 /// the step is skipped with a warning; `release.yml` refuses such a package
@@ -40,5 +41,6 @@ fn embed_windows_resources() {
     }
 }
 
+// engine-friction: engine#3049, moves (game 1229 deletes it)
 #[cfg(not(windows))]
 fn embed_windows_resources() {}

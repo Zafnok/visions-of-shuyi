@@ -246,6 +246,7 @@ impl AiAction {
         self.t >= self.pan_len() && !self.walking()
     }
 
+    // engine-friction: engine#2109, moves (game 1228 deletes it)
     /// The camera's origin during the pan (it slides a tile at a time, in
     /// a straight line); where it ends up afterwards.
     pub fn camera(&self) -> Pos {

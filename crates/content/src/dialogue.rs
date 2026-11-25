@@ -61,6 +61,7 @@ pub const MAX_REACTION_TEXTS: usize = 4;
 /// Longest line the lead may speak outside reply choices
 /// (`assets-private/story/design/setting-and-tone.md`, "Rules for writing the lead").
 pub const MAX_LEAD_LINE_LEN: usize = 40;
+// engine-friction: engine#2246, moves (game 1222 deletes it)
 /// The expressions every portrait has: the ones a script may use for a
 /// character without a portrait. A character with one may use exactly its
 /// portrait's expressions.
@@ -455,6 +456,7 @@ pub struct ScriptsLoad {
 }
 
 impl ScriptsLoad {
+    // engine-friction: engine#2233, moves (game 1186 deletes it)
     /// Reads and parses every `*.dlg` file in the bundle.
     pub fn start() -> Self {
         let mut files = Vec::new();

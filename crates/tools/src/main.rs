@@ -186,11 +186,13 @@ fn readme_pictures(args: &[String]) -> u8 {
     })
 }
 
+// engine-friction: engine#2578, moves (game 1224 deletes it)
 /// `skill-pack [--check]`: the pinned engine's skill pack in `.claude/skills/`.
 fn skill_pack(args: &[String]) -> u8 {
     skill_pack_in(&repo_root(), args)
 }
 
+// engine-friction: engine#2578, moves (game 1224 deletes it)
 /// `skill-pack` with the repo at `root`.
 fn skill_pack_in(root: &Path, args: &[String]) -> u8 {
     let pack = shuyi_cli::skills::Pack::embedded();

@@ -56,6 +56,7 @@ fn shows(buf: &GlyphBuffer, text: &str) -> bool {
     (0..i32::from(ConsoleSpec::PC.rows)).any(|y| row(buf, y).contains(text))
 }
 
+// engine-friction: engine#3204, moves (game 1214 deletes it)
 /// Every glyph of `buf` is in the game's font.
 fn assert_in_font(buf: &GlyphBuffer) {
     let font = trpg_content::font::load().unwrap_or_default();

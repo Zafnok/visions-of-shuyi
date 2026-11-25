@@ -14,6 +14,7 @@ fn main() {
     }
 }
 
+// engine-friction: engine#3049, moves (game 1229 deletes it)
 #[cfg(windows)]
 fn embed_windows_resources() {
     if std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default() != "windows" {
@@ -31,5 +32,6 @@ fn embed_windows_resources() {
     }
 }
 
+// engine-friction: engine#3049, moves (game 1229 deletes it)
 #[cfg(not(windows))]
 fn embed_windows_resources() {}

@@ -29,6 +29,7 @@ pub const REQUIRED_EXPRESSIONS: [&str; 5] = ["neutral", "happy", "angry", "sad",
 /// Portraits by character id.
 pub type PortraitTable = BTreeMap<String, Portrait>;
 
+// engine-friction: engine#2246, moves (game 1222 deletes it)
 /// A validated portrait.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Portrait {
@@ -39,6 +40,7 @@ pub struct Portrait {
     pub expressions: Vec<Expression>,
 }
 
+// engine-friction: engine#2246, moves (game 1222 deletes it)
 /// One expression: an image.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Expression {
@@ -57,6 +59,7 @@ impl Portrait {
     }
 }
 
+// engine-friction: engine#2246, moves (game 1222 deletes it)
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Sidecar {
@@ -75,6 +78,7 @@ pub fn load_all(images: &ImageTable) -> Result<PortraitTable, Vec<ContentError>>
     )
 }
 
+// engine-friction: engine#2246, moves (game 1222 deletes it)
 /// Parses sidecar `source` of the file with stem `stem` (errors attributed
 /// to `file`), checking each image against `images`. Reports every problem.
 pub fn parse_portrait(
@@ -137,6 +141,7 @@ pub fn parse_portrait(
     }
 }
 
+// engine-friction: engine#2246, moves (game 1222 deletes it)
 /// The image at `relative` (to the portraits directory) and its size, or
 /// what is wrong with it in plain words: it must be in `images` and fit
 /// [`FRAME_PX`].

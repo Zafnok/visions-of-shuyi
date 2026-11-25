@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! The game's three entries in the Playdate's system menu (ticket 1035,
 //! `docs/design/playdate.md`): [`SystemMenuEntry::ALL`], added by the front
 //! end with the SDK's `addMenuItem` in that order, each named in the

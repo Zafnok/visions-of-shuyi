@@ -257,6 +257,7 @@ struct Checker<'a> {
 }
 
 impl Checker<'_> {
+    // engine-friction: engine#2243, moves (game 1219 deletes it)
     /// Reports `rect` of `image`, named `what`, if it doesn't lie inside
     /// the image.
     fn inside(&mut self, what: &str, image: ImageId, rect: ImageRect) {
@@ -485,6 +486,7 @@ fn side_problem(name: &str, (w, h): (u32, u32)) -> Option<String> {
         .then(|| format!("{name} is ({w}, {h}); each side must be {lo} to {hi} px"))
 }
 
+// engine-friction: engine#2243, moves (game 1219 deletes it)
 /// The rectangle of cell `(column, row)` of a grid of `size` cells that
 /// starts at pixel `origin`. Saturates rather than overflow (the result
 /// then lies outside any image).
@@ -497,6 +499,7 @@ fn grid_rect((column, row): (u32, u32), (w, h): (u32, u32), (ox, oy): (u32, u32)
     }
 }
 
+// engine-friction: engine#2243, moves (game 1219 deletes it)
 /// Whether `rect` lies inside an image of size `info`.
 fn inside(rect: ImageRect, info: ImageInfo) -> bool {
     let right = u64::from(rect.x) + u64::from(rect.w);

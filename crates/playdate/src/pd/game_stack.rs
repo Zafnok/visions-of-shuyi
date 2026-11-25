@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! The game's own stack (ADR-0070 §4, [`crate::stack`]): [`stack::SIZE`]
 //! bytes from the heap, entered with a few lines of assembly around each
 //! call into the game ([`run`]).

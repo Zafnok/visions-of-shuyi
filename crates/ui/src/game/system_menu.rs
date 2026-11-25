@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! The game's entries in a platform's own menu: the Playdate's system menu,
 //! behind its Menu button, which holds three of a game's own entries
 //! (ticket 1035, `docs/design/playdate.md`, *Buttons and the crank*):

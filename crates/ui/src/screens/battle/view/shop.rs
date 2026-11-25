@@ -36,6 +36,7 @@ pub struct ShopScreenView {
     pub debug_hint: Option<String>,
 }
 
+// engine-friction: engine#3205, moves (game 1215 deletes it)
 /// The confirmation of a sale: what, how many, for how much.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SellConfirmView {
