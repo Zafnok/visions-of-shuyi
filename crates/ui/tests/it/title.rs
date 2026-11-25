@@ -529,6 +529,38 @@ fn the_title_in_the_test_language() {
     assert_eq!(labels, want);
 }
 
+/// Chinese text from the test pack (its `title.crashed`) on the title
+/// screen, drawn from the atlas's wide set `zhhans`: two cells a
+/// character, the second a continuation, and the notice's band centred on
+/// its 30 cells, not its 15 characters (ticket 0236). A test of a look,
+/// so it reads cells (ADR-0038).
+#[test]
+fn chinese_text_takes_two_cells_a_character() {
+    let mut h = title();
+    h.ctx_mut().lang = LangCode::new(TEST).unwrap();
+    let notice = h.game().ctx().text("title.crashed").to_owned();
+    assert_eq!(notice, "游戏上次意外关闭，已保存报告。");
+    h.screen_mut::<TitleScreen>().unwrap().show_notice(notice);
+    h.wait(0.1);
+    let buf = h.game().buffer();
+    let (w, rows) = (i32::from(buf.width()), i32::from(buf.height()));
+    let at = (0..rows)
+        .flat_map(|y| (0..w).map(move |x| (x, y)))
+        .find(|&(x, y)| buf.get(x, y).is_some_and(|c| c.glyph == '游'))
+        .expect("the notice is on screen");
+    let (x, y) = at;
+    let row: Vec<_> = (x..x + 30).map(|x| buf.get(x, y).unwrap()).collect();
+    for (i, pair) in row.chunks(2).enumerate() {
+        assert!(!pair[0].is_continuation(), "cell {i}: a character");
+        assert!(pair[1].is_continuation(), "cell {i}: its second half");
+    }
+    assert_eq!(row[28].glyph, '。');
+    // Centred: as much room left of the band as right of it.
+    let right = w - (x + 30);
+    assert!((x - right).abs() <= 1, "left {x}, right {right}");
+    assert_snapshot!(h.snapshot_of(trpg_ui::glyph_buffer::Rect::new(0, y, w, 1)));
+}
+
 #[test]
 fn the_prompt_in_the_test_language() {
     let mut h = waiting_title();

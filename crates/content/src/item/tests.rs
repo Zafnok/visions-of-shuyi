@@ -183,7 +183,7 @@ fn every_weapon_fits_the_forecasts_line_by_name_or_short_name() {
     let t = items();
     for (key, item) in &t.items {
         let ItemDef::Weapon(w) = item else { continue };
-        let fits = crate::lang::text_width(&w.name) <= short_name_room(w.durability);
+        let fits = crate::font::text_width(&w.name) <= short_name_room(w.durability);
         assert!(
             fits || w.short_name.is_some(),
             "{} needs a short_name",

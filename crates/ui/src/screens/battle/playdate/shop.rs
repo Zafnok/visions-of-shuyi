@@ -45,18 +45,30 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
     pd::window(ctx, buf, rect, &view.shop);
     let ink = inks(ctx);
     let gold = format!(" {} ", view.gold);
-    buf.print(rect.w - 2 - cells(&gold), 0, &gold, ink.text, ink.inside);
+    buf.print(
+        rect.w - 2 - cells(&gold, buf.widths()),
+        0,
+        &gold,
+        ink.text,
+        ink.inside,
+    );
     let inner = rect.w - 4;
-    buf.print(2, TABS, &cut(&view.unit, 20), ink.text, ink.inside);
-    let tabs: i32 = view.tabs.iter().map(|t| cells(t) + 3).sum();
+    buf.print(
+        2,
+        TABS,
+        &cut(&view.unit, 20, buf.widths()),
+        ink.text,
+        ink.inside,
+    );
+    let tabs: i32 = view.tabs.iter().map(|t| cells(t, buf.widths()) + 3).sum();
     let mut x = rect.w - 1 - tabs;
     for (i, tab) in view.tabs.iter().enumerate() {
         if i == view.tab {
-            pd::bar(ctx, buf, x, TABS, cells(tab) + 2, tab);
+            pd::bar(ctx, buf, x, TABS, cells(tab, buf.widths()) + 2, tab);
         } else {
             buf.print(x + 1, TABS, tab, ink.text, ink.inside);
         }
-        x += cells(tab) + 3;
+        x += cells(tab, buf.widths()) + 3;
     }
     let first = pd::first_shown(view.lines.len(), to_usize(LINES), Some(view.focus));
     let more_below = first + to_usize(LINES) < view.lines.len();
@@ -66,7 +78,7 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
         buf.print(
             2,
             FIRST,
-            &cut(&view.empty, to_usize(inner)),
+            &cut(&view.empty, to_usize(inner), buf.widths()),
             ink.off,
             ink.inside,
         );
@@ -77,21 +89,21 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
         // check-text: not a data name (the view's own)
         let text = format!(
             "{:<name_w$} {:>GOLD_W$}",
-            cut(&line.name, name_w),
+            cut(&line.name, name_w, buf.widths()),
             line.gold
         );
         let state = Item::of(i == view.focus, line.enabled);
         pd::item(ctx, buf, (2, y), inner, &text, state);
     }
     if let Some(line) = view.lines.get(view.focus) {
-        let detail = cut(&line.detail, to_usize(inner));
+        let detail = cut(&line.detail, to_usize(inner), buf.widths());
         buf.print(2, DETAIL, &detail, ink.text, ink.inside);
     }
     pd::centred(
         ctx,
         buf,
         bottom,
-        &cut(&view.help.plain(), usize::from(buf.width())),
+        &cut(&view.help.plain(), usize::from(buf.width()), buf.widths()),
     );
     if let Some(sell) = &view.selling {
         paint_sell(ctx, sell, buf);
@@ -130,7 +142,11 @@ fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, buf: &mut GlyphBuffer) {
         ("▼", down),
         (sell.gold.as_str(), ink.text),
     ];
-    let widest = lines.iter().map(|(l, _)| cells(l)).max().unwrap_or(0);
+    let widest = lines
+        .iter()
+        .map(|(l, _)| cells(l, buf.widths()))
+        .max()
+        .unwrap_or(0);
     let w = (widest + 4).min(i32::from(buf.width()));
     let h = to_i32(lines.len()) + 2;
     let rect = Rect::new(
@@ -141,8 +157,8 @@ fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, buf: &mut GlyphBuffer) {
     );
     pd::window(ctx, buf, rect, "");
     for (y, (line, fg)) in (rect.y + 1..).zip(lines) {
-        let shown = cut(line, to_usize(w - 2));
-        let x = rect.x + (w - cells(&shown)) / 2;
+        let shown = cut(line, to_usize(w - 2), buf.widths());
+        let x = rect.x + (w - cells(&shown, buf.widths())) / 2;
         buf.print(x, y, &shown, fg, ink.inside);
     }
 }

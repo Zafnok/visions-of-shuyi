@@ -15,6 +15,7 @@ use crate::screens::battle::layout::MAP_VIEW;
 use crate::screens::battle::progress::stat_row_parts;
 use crate::screens::battle::units::meter_cells;
 use crate::screens::battle::view::{ClassProgressView, ExpView, GainsView, ProgressView};
+use crate::screens::clip;
 
 /// The EXP box: where the combat playback's box was.
 pub const EXP_BOX: Rect = Rect::new(BOX.x, BOX.y, BOX.w, 3);
@@ -93,7 +94,7 @@ fn paint_exp(ctx: &Ctx, page: &ExpView, buf: &mut GlyphBuffer) {
     let y = EXP_BOX.y + 1;
     let x = EXP_BOX.x + 2;
     // check-text: not a data name (the view's own)
-    let name: String = page.name.chars().take(NAME_W).collect();
+    let name: String = clip(&page.name, NAME_W, buf.widths());
     buf.print(x, y, &name, c(UiColor::Player), bg);
     let bar_x = x + NAME_COL;
     buf.print(bar_x, y, &page.exp_name, c(UiColor::TextDim), bg);
@@ -133,7 +134,8 @@ fn paint_gains(ctx: &Ctx, page: &GainsView, buf: &mut GlyphBuffer) {
     let x = LEVEL_TEXT_X;
     let hi = c(UiColor::TextHighlight);
     buf.print(x, LEVEL_BANNER_ROW, &page.banner, hi, bg);
-    let cut = |s: &str| s.chars().take(LEVEL_TEXT_W).collect::<String>();
+    let widths = buf.widths().clone();
+    let cut = |s: &str| clip(s, LEVEL_TEXT_W, &widths);
     // check-text: not a data name (the view's own)
     let name = cut(&page.name);
     buf.print(x, LEVEL_BANNER_ROW + 2, &name, c(UiColor::Player), bg);
@@ -168,9 +170,9 @@ fn paint_class(ctx: &Ctx, page: &ClassProgressView, buf: &mut GlyphBuffer) {
     let x = rect.x + 2;
     let mut y = rect.y + 1;
     // check-text: not a data name (the view's own)
-    let name: String = page.name.chars().take(NAME_W).collect();
+    let name: String = clip(&page.name, NAME_W, buf.widths());
     buf.print(x, y, &name, c(UiColor::Player), bg);
-    let line: String = page.line.chars().take(CLASS_W).collect();
+    let line: String = clip(&page.line, CLASS_W, buf.widths());
     buf.print(x + NAME_COL, y, &line, c(UiColor::Text), bg);
     if let Some(mastered) = &page.mastered {
         y += 1;
@@ -178,7 +180,7 @@ fn paint_class(ctx: &Ctx, page: &ClassProgressView, buf: &mut GlyphBuffer) {
     }
     for line in &page.lines {
         y += 1;
-        let line: String = line.chars().take(LINE_W).collect();
+        let line: String = clip(line, LINE_W, buf.widths());
         buf.print(x, y, &line, c(UiColor::Text), bg);
     }
 }

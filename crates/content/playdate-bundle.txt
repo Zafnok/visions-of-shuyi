@@ -19,6 +19,7 @@ NOTICES-game.txt
 audio/licenses/
 fonts/Terminus-LICENSE.txt
 fonts/Cinzel-LICENSE.txt
+fonts/FusionPixel-LICENSE.txt
 
 # The PC's window and taskbar icons (the Playdate's card and icon are
 # 1052's, in the `.pdx`).

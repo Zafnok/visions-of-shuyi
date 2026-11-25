@@ -17,6 +17,9 @@ use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
 use crate::screens::battle::units::{faction_color, paint_hp_bar};
 use crate::screens::battle::view::{GearView, InfoView, InfoWeaponView};
+use crate::screens::clip;
+use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 
 /// The whole screen above the help bar.
 pub const INFO: Rect = Rect::new(0, 0, 100, MAP_VIEW.h);
@@ -36,9 +39,9 @@ const RANK_X: i32 = 9;
 /// middle column.
 const LEFT_END: i32 = MID_X - 1;
 
-/// How many cells `text` takes.
-fn text_cells(text: &str) -> i32 {
-    i32::try_from(text.chars().count()).unwrap_or(i32::MAX)
+/// How many cells `text` takes as `widths` measure them.
+fn text_cells(text: &str, widths: &CellWidths) -> i32 {
+    i32::try_from(text_width(text, widths)).unwrap_or(i32::MAX)
 }
 
 /// Middle column: name, level, HP, stats, skills.
@@ -91,7 +94,7 @@ impl Pen<'_> {
 
     /// `text`, cut to `width` characters.
     fn cut(&mut self, x: i32, y: i32, text: &str, width: usize, color: UiColor) {
-        let cut: String = text.chars().take(width).collect();
+        let cut: String = clip(text, width, self.buf.widths());
         self.text(x, y, &cut, color);
     }
 }
@@ -155,7 +158,7 @@ fn paint_left(pen: &mut Pen<'_>, view: &InfoView) {
         // After the rank if it fits before the middle column, else on a
         // row of its own under it.
         let at = x + 1;
-        if at + text_cells(trait_) <= LEFT_END {
+        if at + text_cells(trait_, pen.buf.widths()) <= LEFT_END {
             pen.text(at, y, trait_, UiColor::TextDim);
         } else {
             y += 1;

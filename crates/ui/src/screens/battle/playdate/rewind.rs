@@ -55,13 +55,19 @@ pub fn paint_list(ctx: &Ctx, view: &RewindView, rect: Rect, buf: &mut GlyphBuffe
     buf.print(
         x,
         rect.y + 1,
-        &cut(&view.charges, width),
+        &cut(&view.charges, width, buf.widths()),
         ink.text,
         ink.inside,
     );
     let top = rect.y + LIST_DY;
     if let Some(nothing) = &view.nothing {
-        buf.print(x, top, &cut(nothing, width), ink.text, ink.inside);
+        buf.print(
+            x,
+            top,
+            &cut(nothing, width, buf.widths()),
+            ink.text,
+            ink.inside,
+        );
         return;
     }
     let bottom = rect.y + rect.h - 1;
@@ -77,7 +83,7 @@ pub fn paint_list(ctx: &Ctx, view: &RewindView, rect: Rect, buf: &mut GlyphBuffe
             if i == view.focus {
                 pd::bar(ctx, buf, x - 1, y, rect.w - 2, text);
             } else {
-                buf.print(x, y, &cut(text, width), ink.text, ink.inside);
+                buf.print(x, y, &cut(text, width, buf.widths()), ink.text, ink.inside);
             }
             y += 1;
         }

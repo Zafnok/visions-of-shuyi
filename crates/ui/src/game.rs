@@ -50,7 +50,21 @@ pub fn hooks() -> GameHooks<Shuyi> {
 /// A game showing `root`, with this game's [`hooks`]. Debug screens (F2)
 /// are on in debug builds.
 pub fn new(ctx: Ctx, root: Box<dyn Screen<Shuyi>>) -> Game {
-    Game::new(ctx, root, hooks())
+    with_atlas_widths(Game::new(ctx, root, hooks()))
+}
+
+/// `game`, printing wide what its font atlas has wide (ticket 0236), from
+/// the start: a game a test drives has no look for the platform to take
+/// them from (`shuyi_platform::App`, which gives the window
+/// `CellWidths::of` the atlas when the game has loaded), so it would print
+/// every character narrow. The wide characters only, not the atlas's ink
+/// boxes, which place key caps: those stay the platform's to give, as they
+/// were before wide glyphs.
+fn with_atlas_widths(mut game: Game) -> Game {
+    let wide = game.ctx().game.content.font.wide_chars();
+    let widths = shuyi_assets::font::CellWidths::wide(wide);
+    game.set_widths(widths);
+    game
 }
 
 /// Uses the layout saved in `ctx.storage` (the settings') if none is in
@@ -75,7 +89,11 @@ pub fn start(mut ctx: Ctx) -> Game {
     } else {
         TitleScreen::new(&ctx)
     };
-    Game::with_stack(ctx, ScreenStack::new(Box::new(title)), hooks())
+    with_atlas_widths(Game::with_stack(
+        ctx,
+        ScreenStack::new(Box::new(title)),
+        hooks(),
+    ))
 }
 
 /// A game opened straight on the dialogue scene `scene`, for whoever
@@ -112,7 +130,7 @@ pub fn start_on_scene(mut ctx: Ctx, scene: &str, gender: LeadGender) -> Result<G
     if ctx.layout().is_none() && ctx.platform.keyboard == Keyboard::Present {
         stack.push(Box::new(layout_picker::first(&ctx)));
     }
-    Ok(Game::with_stack(ctx, stack, hooks()))
+    Ok(with_atlas_widths(Game::with_stack(ctx, stack, hooks())))
 }
 
 /// A game opened straight on the battle `id` at its start, fought by its

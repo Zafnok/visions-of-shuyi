@@ -25,6 +25,7 @@ pub mod shop;
 pub mod stage;
 
 use crate::prelude::*;
+use shuyi_assets::font::CellWidths;
 
 use super::banner::BannerKind;
 use super::glyph::{self, BANNER_H, BANNER_W, box_top_in, menu_anchor, menu_origin_in};
@@ -224,7 +225,7 @@ fn corner(
     lines: &[String],
     (right, bottom): (bool, bool),
 ) -> Rect {
-    let (w, h) = window_size(lines, area);
+    let (w, h) = window_size(lines, area, buf.widths());
     let x = if right { area.x + area.w - w } else { area.x };
     let y = if bottom { area.y + area.h - h } else { area.y };
     let rect = Rect::new(x, y, w, h);
@@ -234,8 +235,8 @@ fn corner(
 
 /// The size of a window of `lines`: the longest with a cell either side
 /// inside the frame, a row each; no bigger than `area`.
-fn window_size(lines: &[String], area: Rect) -> (i32, i32) {
-    let widest = lines.iter().map(|l| cells(l)).max().unwrap_or(0);
+fn window_size(lines: &[String], area: Rect, widths: &CellWidths) -> (i32, i32) {
+    let widest = lines.iter().map(|l| cells(l, widths)).max().unwrap_or(0);
     let w = (widest + 4).min(area.w);
     let h = (to_i32(lines.len()) + 2).min(area.h);
     (w, h)
@@ -248,7 +249,7 @@ fn window_of(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, title: &str, lines: &
     pd::window(ctx, buf, rect, title);
     let room = to_usize(rect.h - 2);
     for (y, line) in (rect.y + 1..).zip(lines.iter().take(room)) {
-        let shown = cut(line, to_usize(rect.w - 4));
+        let shown = cut(line, to_usize(rect.w - 4), buf.widths());
         buf.print(rect.x + 2, y, &shown, ink.text, ink.inside);
     }
 }
@@ -279,7 +280,7 @@ fn paint_message(
     let tile = cursor.and_then(|pos| tile_cells(ctx, scene, area, pos));
     let bottom = tile.is_some_and(|cells| cells.y < area.y + area.h / 2);
     let lines = [message.text.clone()];
-    let (w, h) = window_size(&lines, area);
+    let (w, h) = window_size(&lines, area, buf.widths());
     let top = if bottom { area.y + area.h - h } else { area.y };
     let rect = Rect::new(area.x + (area.w - w) / 2, top, w, h);
     window_of(ctx, buf, rect, "", &lines);
@@ -313,7 +314,9 @@ fn framed_size(
     area: Rect,
 ) -> (i32, i32) {
     let (w, h) = menu_size(ctx, &m.menu, area);
-    let framed = info.map_or(0, |i| cells(&i.turn).max(cells(&i.charges)) + 6);
+    let framed = info.map_or(0, |i| {
+        cells(&i.turn, ctx.widths()).max(cells(&i.charges, ctx.widths())) + 6
+    });
     (w.max(framed).min(area.w), h)
 }
 
@@ -352,12 +355,15 @@ fn shown(menu: &MenuView, area: Rect) -> (usize, usize) {
 /// a row per item shown, and a rule and a row for the focused item's note
 /// if any item has a note.
 pub fn menu_size(ctx: &Ctx, menu: &MenuView, area: Rect) -> (i32, i32) {
-    let lines = menu.items.iter().map(|i| cells(&item_text(ctx, i)));
+    let lines = menu
+        .items
+        .iter()
+        .map(|i| cells(&item_text(ctx, i), ctx.widths()));
     let notes = menu
         .items
         .iter()
         .filter_map(|i| i.note.as_deref())
-        .map(cells);
+        .map(|note| cells(note, ctx.widths()));
     let widest = lines.chain(notes).max().unwrap_or(0);
     let note_rows = if has_notes(menu) { 2 } else { 0 };
     let (_, count) = shown(menu, area);
@@ -410,7 +416,7 @@ fn paint_menu_framed(
         buf.set(rect.x, rule, Cell::new('╟', ink.frame, ink.inside));
         buf.set(rect.x + w - 1, rule, Cell::new('╢', ink.frame, ink.inside));
         if let Some(note) = menu.focused().and_then(|i| i.note.as_deref()) {
-            let shown = cut(note, to_usize(w - 4));
+            let shown = cut(note, to_usize(w - 4), buf.widths());
             buf.print(rect.x + 2, rule + 1, &shown, ink.text, ink.inside);
         }
         below = rule;
@@ -436,7 +442,7 @@ fn paint_header(ctx: &Ctx, header: &MenuHeader, rect: Rect, buf: &mut GlyphBuffe
         // check-text: not a data name (the view's own)
         None => format!(" {} ", header.name),
     };
-    let shown = cut(&text, to_usize(rect.w - 4));
+    let shown = cut(&text, to_usize(rect.w - 4), buf.widths());
     buf.print(rect.x + 2, rect.y, &shown, ink.text, ink.inside);
 }
 
@@ -450,9 +456,9 @@ fn note_lines(notes: &NotesView, area: Rect) -> Vec<String> {
 /// off the rows of the units the battle notes are about, as on the PC.
 fn paint_box(ctx: &Ctx, view: &BattleView, title: &str, lines: &[String], buf: &mut GlyphBuffer) {
     let area = map_area(ctx);
-    let (w, h) = window_size(lines, area);
+    let (w, h) = window_size(lines, area, buf.widths());
     // Wide enough for the title in the frame too.
-    let w = w.max(cells(title) + 6).min(area.w);
+    let w = w.max(cells(title, buf.widths()) + 6).min(area.w);
     let rows: Vec<i32> = view
         .noted
         .iter()
@@ -490,7 +496,7 @@ fn paint_banner(ctx: &Ctx, banner: &BannerView, area: Rect, buf: &mut GlyphBuffe
 /// is cut.
 fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, area: Rect, buf: &mut GlyphBuffer) {
     let ink = inks(ctx);
-    let (w, h) = glyph::objective_banner_size(&banner.title, &banner.lines);
+    let (w, h) = glyph::objective_banner_size(&banner.title, &banner.lines, buf.widths());
     let (w, h) = (w.min(area.w), h.min(area.h));
     let rect = Rect::new(area.x + (area.w - w) / 2, area.y + (area.h - h) / 2, w, h);
     pd::window(ctx, buf, rect, "");
@@ -502,7 +508,13 @@ fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, area: Rect, buf: &mut 
     let room = to_usize(rect.w - 6);
     let rows = (rect.y + 4..rect.y + rect.h - 2).zip(objective::padded(&banner.lines));
     for (y, line) in rows {
-        buf.print(rect.x + 3, y, &cut(&line, room), ink.text, ink.inside);
+        buf.print(
+            rect.x + 3,
+            y,
+            &cut(&line, room, buf.widths()),
+            ink.text,
+            ink.inside,
+        );
     }
 }
 

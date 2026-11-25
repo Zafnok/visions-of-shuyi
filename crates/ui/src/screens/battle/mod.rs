@@ -71,6 +71,7 @@ pub mod walk;
 
 use crate::prelude::*;
 use alloc::collections::VecDeque;
+use shuyi_assets::lang::text_width;
 use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
@@ -1641,7 +1642,7 @@ impl BattleScreen {
         let name = ctx.words().unit(unit).to_owned();
         let named = ctx.text_styled("battle.hint.info_of", &[("name", &name)]);
         let named = join_hints([line.clone(), named]);
-        let debug = super::debug_hint(ctx).map_or(0, |h| h.chars().count() + 1);
+        let debug = super::debug_hint(ctx).map_or(0, |h| text_width(&h, ctx.widths()) + 1);
         let room = usize::try_from(HELP_BAR.w - 1).unwrap_or(0);
         if named.width(&frame_widths(ctx)) <= room.saturating_sub(debug) {
             return named;

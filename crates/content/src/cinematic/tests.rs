@@ -2,6 +2,7 @@
 
 use super::*;
 use crate::Content;
+use shuyi_assets::font::CellWidths;
 
 mod actions;
 mod combat;

@@ -24,6 +24,9 @@
         // The chapter title card's lettering (0812, ADR-0128).
         (id: "cinzel", group: Fonts, title: "Cinzel", author: "Natanael Gama",
          source: "https://github.com/NDISCOVER/Cinzel", license: "OFL-1.1"),
+        // Chinese text, the atlas's wide set `zhhans` (0236).
+        (id: "fusion_pixel", group: Fonts, title: "Fusion Pixel Font", author: "TakWolf",
+         source: "https://github.com/TakWolf/fusion-pixel-font", license: "OFL-1.1"),
 
         // The bought Tiny Tales bundle (THIRD_PARTY_ASSETS.md): the map
         // sprites (0436), the two test portraits (0711), the terrain tiles

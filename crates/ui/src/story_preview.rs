@@ -373,7 +373,7 @@ pub fn paint(ctx: &Ctx, view: &StoryPreviewView, buf: &mut GlyphBuffer) {
         return paint_reference(ctx, reference, buf);
     }
     if let Some(note) = &view.only_here {
-        let w = i32::try_from(note.chars().count()).unwrap_or(width);
+        let w = buf.text_cells(note);
         buf.print(width - w - 1, 1, note, c(UiColor::TextHighlight), black);
     }
     if let Some(faces) = &view.faces {

@@ -105,7 +105,7 @@ fn paint_tabs(ctx: &Ctx, view: &PreparationsView, buf: &mut GlyphBuffer) {
             (false, _) => (c(UiColor::Text), black),
         };
         buf.print(x, TABS_ROW, &label, fg, bg);
-        x += i32::try_from(label.chars().count()).unwrap_or(0) + 4;
+        x += buf.text_cells(&label) + 4;
     }
 }
 

@@ -86,14 +86,14 @@ fn paint_gender(ctx: &Ctx, buf: &mut GlyphBuffer, gender: &GenderView, focused: 
             false,
         );
     }
-    let label_x = x + (FRAME.0 - cells(&gender.label)) / 2;
+    let label_x = x + (FRAME.0 - cells(&gender.label, buf.widths())) / 2;
     if gender.chosen && focused {
         bar(
             ctx,
             buf,
             label_x - 1,
             LABEL_ROW,
-            cells(&gender.label) + 2,
+            cells(&gender.label, buf.widths()) + 2,
             &gender.label,
         );
     } else {
@@ -106,10 +106,10 @@ fn paint_rows(ctx: &Ctx, view: &LeadSelectView, buf: &mut GlyphBuffer) {
     let ink = inks(ctx);
     let name = &view.name_row;
     let full = format!("{}   {} {}", name.label, name.first, name.family);
-    let x = (i32::from(buf.width()) - cells(&full)) / 2;
+    let x = (i32::from(buf.width()) - cells(&full, buf.widths())) / 2;
     buf.print(x, NAME_ROW, &name.label, ink.text, ink.ground);
-    let first_x = x + cells(&name.label) + 3;
-    let family_x = first_x + cells(&name.first) + 1;
+    let first_x = x + cells(&name.label, buf.widths()) + 3;
+    let family_x = first_x + cells(&name.first, buf.widths()) + 1;
     buf.print(family_x, NAME_ROW, &name.family, ink.text, ink.ground);
     if view.cursor == Some(Row::Name) {
         bar(
@@ -117,16 +117,23 @@ fn paint_rows(ctx: &Ctx, view: &LeadSelectView, buf: &mut GlyphBuffer) {
             buf,
             first_x - 1,
             NAME_ROW,
-            cells(&name.first) + 2,
+            cells(&name.first, buf.widths()) + 2,
             &name.first,
         );
     } else {
         buf.print(first_x, NAME_ROW, &name.first, ink.text, ink.ground);
     }
     let start = format!("[ {} ]", view.start);
-    let x = (i32::from(buf.width()) - cells(&start)) / 2;
+    let x = (i32::from(buf.width()) - cells(&start, buf.widths())) / 2;
     if view.cursor == Some(Row::Start) {
-        bar(ctx, buf, x - 1, START_ROW, cells(&start) + 2, &start);
+        bar(
+            ctx,
+            buf,
+            x - 1,
+            START_ROW,
+            cells(&start, buf.widths()) + 2,
+            &start,
+        );
     } else {
         buf.print(x, START_ROW, &start, ink.text, ink.ground);
     }

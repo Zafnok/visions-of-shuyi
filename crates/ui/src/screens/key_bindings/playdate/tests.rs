@@ -1,6 +1,7 @@
 //! The Playdate's look of the Key bindings screen, on the game's rows and
 //! the Playdate's buttons.
 
+use shuyi_assets::font::CellWidths;
 use shuyi_ui::Screen;
 
 use super::*;
@@ -263,7 +264,10 @@ fn the_switch_names_the_shown_side_plainly_and_the_other_in_grey() {
     assert_eq!(cell(&buf, controller, 1).fg, ink("window_text_off"));
     // Three cells apart.
     let switch = screen(&c).view(&c).switch.unwrap();
-    assert_eq!(controller, keyboard + cells(&switch.keyboard) + 3);
+    assert_eq!(
+        controller,
+        keyboard + cells(&switch.keyboard, &CellWidths::NARROW) + 3
+    );
 }
 
 #[test]

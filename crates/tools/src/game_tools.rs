@@ -312,8 +312,7 @@ impl GameTools for Trpg {
         let content = trpg_content::load_embedded().map_err(|e| e.to_string())?;
         Ok(GameLang::new(
             (**content.lang).clone(),
-            trpg_content::lang::RULES
-                .variants
+            trpg_content::lang::VARIANTS
                 .iter()
                 .map(|&variant| variant.to_owned())
                 .collect(),

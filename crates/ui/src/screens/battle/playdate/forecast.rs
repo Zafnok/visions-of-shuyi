@@ -13,6 +13,7 @@
 //! in the bottom of the frame, as on the PC (0463).
 
 use crate::prelude::*;
+use shuyi_assets::font::CellWidths;
 use trpg_core::{Side, StatValue};
 
 use super::tile_cells;
@@ -180,13 +181,25 @@ impl Pen<'_> {
     /// inside.
     fn text(self, buf: &mut GlyphBuffer, dx: i32, w: usize, text: &str) {
         let ink = inks(self.ctx);
-        buf.print(self.x + dx, self.y, &cut(text, w), ink.text, ink.inside);
+        buf.print(
+            self.x + dx,
+            self.y,
+            &cut(text, w, buf.widths()),
+            ink.text,
+            ink.inside,
+        );
     }
 
     /// [`text`](Self::text) in grey dots.
     fn off(self, buf: &mut GlyphBuffer, dx: i32, w: usize, text: &str) {
         let ink = inks(self.ctx);
-        buf.print(self.x + dx, self.y, &cut(text, w), ink.off, ink.inside);
+        buf.print(
+            self.x + dx,
+            self.y,
+            &cut(text, w, buf.widths()),
+            ink.off,
+            ink.inside,
+        );
     }
 }
 
@@ -201,8 +214,8 @@ fn paint_skill(pen: Pen<'_>, view: &ForecastView, buf: &mut GlyphBuffer) {
 
 /// `side`'s weapon and its uses after it (`Stl Swd 25`), named as
 /// [`weapon_name`] says for a column of [`COLUMN_W`].
-fn arms_text(side: &ForecastSideView, uses: Option<u32>) -> String {
-    let name = weapon_name(side, uses, COLUMN_W);
+fn arms_text(side: &ForecastSideView, uses: Option<u32>, widths: &CellWidths) -> String {
+    let name = weapon_name(side, uses, COLUMN_W, widths);
     match uses {
         Some(uses) => format!("{name} {uses}"),
         None => name,
@@ -252,7 +265,7 @@ fn paint_side_line(
         Line::Names => pen.text(buf, 0, COLUMN_W, &side.name),
         Line::Arms => {
             let uses = uses_after_name(view, side, by);
-            pen.text(buf, 0, COLUMN_W, &arms_text(side, uses));
+            pen.text(buf, 0, COLUMN_W, &arms_text(side, uses, buf.widths()));
         }
         Line::Under => match under(view, side, by) {
             Some(Under::Spends(from, to)) => {

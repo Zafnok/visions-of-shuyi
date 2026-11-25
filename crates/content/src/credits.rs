@@ -128,7 +128,7 @@ mod tests {
             .in_group(CreditGroup::Fonts)
             .map(|e| e.title.as_str())
             .collect();
-        assert_eq!(fonts, ["Terminus Font", "Cinzel"]);
+        assert_eq!(fonts, ["Terminus Font", "Cinzel", "Fusion Pixel Font"]);
         // The bought art is credited in the file, and shown only in a build
         // that has it: never in a gate (ADR-0040).
         let file = file.unwrap_or_default();

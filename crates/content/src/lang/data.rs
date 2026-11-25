@@ -15,9 +15,10 @@ use trpg_core::{
     SkillDef, SkillTable, SpellDef, SpellTable, WeaponDef,
 };
 
-use super::{Lang, LangCode, text_width};
+use super::{Lang, LangCode};
 use crate::chapter::ChapterDef;
 use crate::dialogue::DialogueTable;
+use crate::font::text_width;
 use crate::lesson::{self, Lesson, LessonTable};
 use crate::names::Names;
 use crate::terrain::TerrainDef;

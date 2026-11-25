@@ -109,7 +109,11 @@ pub fn darken(ctx: &Ctx, buf: &mut GlyphBuffer) {
 fn paint_caption(ctx: &Ctx, buf: &mut GlyphBuffer, caption: Option<&str>) {
     if let Some(caption) = caption {
         let ink = inks(ctx);
-        let text = cut(&format!(" {caption} "), usize::from(buf.width()));
+        let text = cut(
+            &format!(" {caption} "),
+            usize::from(buf.width()),
+            buf.widths(),
+        );
         crate::screens::print_centred(buf, 0, &text, ink.text, ink.ground);
     }
 }
@@ -147,8 +151,12 @@ pub fn draw_face(ctx: &Ctx, buf: &mut GlyphBuffer, face: &FaceFrame) {
         draw_portrait_in(buf, at, BUST, art, face.expression, dim, face.mirror);
     }
     // check-text: not a data name (the view's own)
-    let name = cut(&format!(" {} ", face.name), to_usize(FRAME.0 - 2));
-    let name_x = x + (FRAME.0 - cells(&name)) / 2;
+    let name = cut(
+        &format!(" {} ", face.name),
+        to_usize(FRAME.0 - 2),
+        buf.widths(),
+    );
+    let name_x = x + (FRAME.0 - cells(&name, buf.widths())) / 2;
     buf.print(name_x, y + FRAME.1 - 1, &name, ink.text, ink.inside);
 }
 
@@ -216,7 +224,7 @@ fn paint_waiting(ctx: &Ctx, buf: &mut GlyphBuffer, frame: Rect, waiting: &WaitVi
     if let Some(hint) = &waiting.log_hint {
         shown = format!(" {hint} ·{shown}");
     }
-    let x = frame.x + frame.w - 2 - cells(&shown);
+    let x = frame.x + frame.w - 2 - cells(&shown, buf.widths());
     buf.print(x, frame.y + frame.h - 1, &shown, ink.text, ink.inside);
 }
 

@@ -56,7 +56,7 @@ pub fn paint(ctx: &Ctx, view: &WorldMapView, picture: &str, buf: &mut GlyphBuffe
         };
         buf.set(p.x, p.y, Cell::new(symbol, fg, black));
         if let Some(level) = &place.level {
-            let len = i32::try_from(level.chars().count()).unwrap_or(0);
+            let len = buf.text_cells(level);
             let x = p.x - (len - 1) / 2;
             buf.print(x, p.y - 1, level, named(level_ink(place.mark)), black);
         }

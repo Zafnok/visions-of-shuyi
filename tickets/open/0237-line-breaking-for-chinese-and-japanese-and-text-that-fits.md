@@ -65,7 +65,11 @@ Chinese punctuation, its wide quotes and its own no-break rules
    `crates/ui/src` (`screens/battle/glyph/rewind.rs`'s `wrap`,
    `screens/playdate.rs`'s `wrap`, and any other) and replace each with
    `word_wrap`, keeping what it does beyond wrapping (an indent, the
-   text's own line breaks).
+   text's own line breaks). Every `word_wrap` call passes the widths it
+   draws with (`buf.widths()`, or `ctx.widths()` where there is no
+   buffer), not `CellWidths::NARROW`: 0236 left the wrapping calls narrow
+   for this ticket (`grep -rn "CellWidths::NARROW" crates/ui/src`, the
+   tests aside).
 3. The game's length limits for pack text (0235 step 7) in cells, with
    `text_width`: a dialogue line at most 200 cells, a reply 60, a `lead:`
    line 40, tips 3 lines of 60 (the game's `LIMITS` in

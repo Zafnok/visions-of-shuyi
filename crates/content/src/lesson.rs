@@ -13,8 +13,8 @@ use trpg_core::{BattleDef, TutorialLevel};
 
 use crate::bundle;
 use crate::error::ContentError;
+use crate::font::text_width;
 use crate::keymap::Action;
-use crate::lang::text_width;
 use crate::portrait::Portrait;
 use crate::ron_loader::parse_ron;
 use crate::tip::{

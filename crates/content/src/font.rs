@@ -7,8 +7,11 @@
 //! game's files and the glyphs the game draws.
 use crate::prelude::*;
 
-pub use shuyi_assets::font::{AtlasRect, FALLBACK_GLYPH, FontAtlasDef, describe};
+pub use shuyi_assets::font::{AtlasRect, CellWidths, FALLBACK_GLYPH, FontAtlasDef, describe};
 pub use shuyi_assets::image::png_size;
+
+use alloc::collections::BTreeSet;
+use once_cell::race::OnceBox;
 
 use crate::bundle;
 use crate::error::ContentError;
@@ -51,6 +54,30 @@ pub const REQUIRED_GLYPHS: &str = concat!(
 /// Loads and validates the embedded glyph map against the embedded image.
 pub fn load() -> Result<FontAtlasDef, Vec<ContentError>> {
     formats::load(ATLAS_PATH)
+}
+
+/// The characters the embedded atlas draws two cells wide, in any of its
+/// wide sets (ticket 0236), read from it once; none if it doesn't load
+/// (loading the content reports that).
+pub fn wide_chars() -> &'static BTreeSet<char> {
+    static WIDE: OnceBox<BTreeSet<char>> = OnceBox::new();
+    WIDE.get_or_init(|| Box::new(load().map_or_default(|atlas| atlas.wide_chars())))
+}
+
+/// How many cells each character takes in the game's font, as its text
+/// checks measure it: two for one the atlas has wide ([`wide_chars`]).
+pub fn widths() -> CellWidths {
+    CellWidths::wide(wide_chars().iter().copied())
+}
+
+/// The cells `text` takes in the game's font ([`widths`]), as the length
+/// limits of the game's own text count them (a tip's lines, a lesson's, a
+/// weapon's short name).
+pub fn text_width(text: &str) -> usize {
+    let wide = wide_chars();
+    text.chars()
+        .map(|c| if wide.contains(&c) { 2 } else { 1 })
+        .sum()
 }
 
 /// Parses glyph map `source` (errors attributed to `file`) and validates
@@ -111,5 +138,17 @@ mod tests {
         for c in REQUIRED_GLYPHS.chars() {
             assert!(def.glyph_rect(c).is_some(), "missing {}", describe(c));
         }
+    }
+
+    /// The text checks measure with the atlas: a character it has wide
+    /// (the CJK punctuation and the full-width forms are always in its
+    /// set `zhhans`, ticket 0236) takes two cells, the rest one.
+    #[test]
+    fn the_text_checks_count_a_wide_character_as_two_cells() {
+        assert!(wide_chars().contains(&'。') && wide_chars().contains(&'，'));
+        assert!(!wide_chars().contains(&'A'));
+        assert_eq!(text_width("Iron Sword"), 10);
+        assert_eq!(text_width("A，B。"), 6);
+        assert!(widths().is_wide('！'));
     }
 }

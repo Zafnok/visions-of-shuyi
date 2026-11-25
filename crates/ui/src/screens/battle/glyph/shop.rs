@@ -18,6 +18,8 @@ use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
 use crate::screens::battle::view::{SellConfirmView, ShopScreenView};
 use crate::widgets::ListCursor;
 use crate::widgets::ask::glyph as ask_glyph;
+use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 
 /// The box: the map view and the side panel together.
 pub const AREA: Rect = Rect::new(
@@ -111,7 +113,7 @@ pub fn paint_box(ctx: &Ctx, view: &ShopScreenView, area: Rect, buf: &mut GlyphBu
     buf.draw_box(area, BoxStyle::Double, c(UiColor::PanelBorder), bg);
     buf.print(list_x, area.y, &format!(" {} ", view.shop), lit, bg);
     let gold = format!(" {} ", view.gold);
-    let gold_x = area.x + area.w - 3 - cells(&gold);
+    let gold_x = area.x + area.w - 3 - cells(&gold, buf.widths());
     buf.print(gold_x, area.y, &gold, lit, bg);
     buf.print(list_x, tab_row(area), &view.unit, lit, bg);
     let mut x = tabs_x(list_x);
@@ -123,7 +125,7 @@ pub fn paint_box(ctx: &Ctx, view: &ShopScreenView, area: Rect, buf: &mut GlyphBu
             (c(UiColor::TextDim), bg)
         };
         buf.print(x, tab_row(area), &label, fg, tab_bg);
-        x += cells(&label) + 1;
+        x += cells(&label, buf.widths()) + 1;
     }
     if view.lines.is_empty() {
         buf.print(list_x, top_row, &view.empty, c(UiColor::TextDim), bg);
@@ -145,7 +147,7 @@ pub fn paint_box(ctx: &Ctx, view: &ShopScreenView, area: Rect, buf: &mut GlyphBu
         buf.fill_rect(row, Cell::new(' ', fg, row_bg));
         // check-text: not a data name (the view's own)
         buf.print(list_x, y, &line.name, fg, row_bg);
-        let gold_x = list_x + NAME_W + GOLD_W - cells(&line.gold);
+        let gold_x = list_x + NAME_W + GOLD_W - cells(&line.gold, buf.widths());
         buf.print(gold_x, y, &line.gold, fg, row_bg);
         buf.print(detail_x(list_x), y, &line.detail, fg, row_bg);
     }
@@ -194,7 +196,7 @@ fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, sell_box: Rect, buf: &mut Glyph
     buf.fill_rect(sell_box, Cell::new(' ', text, bg));
     buf.draw_box(sell_box, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
     let centred = |buf: &mut GlyphBuffer, y: i32, line: &str, fg| {
-        let x = sell_box.x + (sell_box.w - cells(line)) / 2;
+        let x = sell_box.x + (sell_box.w - cells(line, buf.widths())) / 2;
         buf.print(x, y, line, fg, bg);
     };
     let top = sell_box.y + 2;
@@ -212,9 +214,9 @@ fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, sell_box: Rect, buf: &mut Glyph
     centred(buf, top + 4, &sell.gold, text);
 }
 
-/// How many cells `text` takes.
-fn cells(text: &str) -> i32 {
-    i32::try_from(text.chars().count()).unwrap_or(0)
+/// How many cells `text` takes as `widths` measure them.
+fn cells(text: &str, widths: &CellWidths) -> i32 {
+    i32::try_from(text_width(text, widths)).unwrap_or(0)
 }
 
 /// The first line shown so that `focus` is within `rows` rows.
@@ -399,6 +401,6 @@ mod tests {
         assert_eq!(LIST_ROWS, 24);
         // The widest weapon numbers fit inside the right border.
         let numbers = "Mt 10  Hit 100  Crit 10  Rng 1-2  Wt 10";
-        assert!(DETAIL_X + cells(numbers) < AREA.x + AREA.w - 1);
+        assert!(DETAIL_X + cells(numbers, &CellWidths::NARROW) < AREA.x + AREA.w - 1);
     }
 }

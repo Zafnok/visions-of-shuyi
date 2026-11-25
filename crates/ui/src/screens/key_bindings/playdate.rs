@@ -140,8 +140,8 @@ fn paint_switch(ctx: &Ctx, buf: &mut GlyphBuffer, switch: &SwitchView, y: i32) {
         } else {
             Item::Plain
         };
-        item(ctx, buf, (x, y), cells(name), name, state);
-        x += cells(name) + 3;
+        item(ctx, buf, (x, y), cells(name, buf.widths()), name, state);
+        x += cells(name, buf.widths()) + 3;
     }
 }
 
@@ -152,7 +152,7 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, view: &KeyBindingsView, row: &Row
     if row.lost_key {
         buf.print(HEADING_X, y, LOST, ink.text, ink.inside);
     }
-    let label = cut(&row.label, to_usize(LABEL.1));
+    let label = cut(&row.label, to_usize(LABEL.1), buf.widths());
     buf.print(LABEL.0, y, &label, ink.text, ink.inside);
     for (j, (slot, &(x, w))) in row.slots.iter().zip(&SLOTS).enumerate() {
         if row.focus == Some(j) {
@@ -163,7 +163,13 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, view: &KeyBindingsView, row: &Row
             };
             bar(ctx, buf, x, y, w, shown);
         } else if let SlotView::Bound(name) = slot {
-            buf.print(x + 1, y, &cut(name, to_usize(w - 1)), ink.text, ink.inside);
+            buf.print(
+                x + 1,
+                y,
+                &cut(name, to_usize(w - 1), buf.widths()),
+                ink.text,
+                ink.inside,
+            );
         } else if !row.unmapped {
             buf.print(x + 1, y, EMPTY_SLOT, ink.text, ink.inside);
         }
@@ -175,7 +181,13 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, view: &KeyBindingsView, row: &Row
             _ => SLOTS[0].0 + 1,
         };
         let room = to_usize(i32::from(buf.width()) - 2 - x);
-        buf.print(x, y, &cut(&view.not_mapped, room), ink.text, ink.inside);
+        buf.print(
+            x,
+            y,
+            &cut(&view.not_mapped, room, buf.widths()),
+            ink.text,
+            ink.inside,
+        );
     }
 }
 

@@ -11,6 +11,7 @@
 //! here as on the PC's console.
 
 use crate::prelude::*;
+use shuyi_assets::lang::text_width;
 use trpg_content::Battler;
 use trpg_content::battler::{BACKDROP_PX, Facing};
 use trpg_core::StatKind;
@@ -163,8 +164,8 @@ fn named_ink(ctx: &Ctx, name: &str, fallback: UiColor) -> Rgb {
 /// edge a pixel wide just outside its cells.
 fn label(ctx: &Ctx, buf: &mut GlyphBuffer, scene: Rect, (middle, y): (i32, i32), text: &str) {
     let ink = inks(ctx);
-    let shown = cut(text, to_usize(scene.w - 2));
-    let w = cells(&shown) + 2;
+    let shown = cut(text, to_usize(scene.w - 2), buf.widths());
+    let w = cells(&shown, buf.widths()) + 2;
     let x = (middle / CELL_W - w / 2).clamp(scene.x, scene.x + scene.w - w);
     let rect = Rect::new(x, y, w, 1);
     buf.fill_rect(rect, Cell::new(' ', ink.text, ink.inside));
@@ -199,7 +200,7 @@ fn numbers(ctx: &Ctx, fighter: &FighterView, room: usize) -> String {
         format!("{} {}", words.text("battle.forecast.crit"), n.crit),
     ];
     let wide = parts.join("  ");
-    if wide.chars().count() <= room {
+    if text_width(&wide, ctx.widths()) <= room {
         wide
     } else {
         parts.join(" ")
@@ -220,12 +221,19 @@ fn plate(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, fighter: &FighterView, st
     buf.draw_box(rect, style, ink.frame, ink.inside);
     let hp_name = stat_name(ctx.words(), StatKind::Hp);
     let hp = format!(" {hp_name} {}/{} ", fighter.hp, fighter.max);
-    let hp_x = rect.x + rect.w - 2 - cells(&hp);
+    let hp_x = rect.x + rect.w - 2 - cells(&hp, buf.widths());
     buf.print(hp_x, rect.y, &hp, ink.text, ink.inside);
     // check-text: not a data name (the view's own)
-    let name = cut(&fighter.name, to_usize(hp_x - rect.x - 4));
+    let name = cut(&fighter.name, to_usize(hp_x - rect.x - 4), buf.widths());
     if fighter.lit {
-        pd::bar(ctx, buf, rect.x + 2, rect.y, cells(&name) + 2, &name);
+        pd::bar(
+            ctx,
+            buf,
+            rect.x + 2,
+            rect.y,
+            cells(&name, buf.widths()) + 2,
+            &name,
+        );
     } else {
         buf.print(
             rect.x + 2,
@@ -237,7 +245,7 @@ fn plate(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, fighter: &FighterView, st
     }
     // Up to the frame, if it must.
     let room = to_usize(rect.w - 3);
-    let line = cut(&numbers(ctx, fighter, room - 1), room);
+    let line = cut(&numbers(ctx, fighter, room - 1), room, buf.widths());
     buf.print(rect.x + 2, rect.y + 1, &line, ink.text, ink.inside);
 }
 
