@@ -74,6 +74,10 @@ once, with no separate filing PR (the 11-22 round waited about 7.5 h for
 a stub. A "tweak" kind of ticket: 15–30 lines; several tweaks from one
 round in one PR with one before/after picture.
 
+**Either order with 0193:** if 0193 is done, `pr-size` also prints its
+marker warning, so the PR-checks job keeps it beside the size warning;
+if not, nothing to do (0193 adds it to `pr-size`, which this job runs).
+
 ## Nick input
 
 None.
