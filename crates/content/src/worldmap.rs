@@ -54,6 +54,12 @@ pub struct WorldMapDef {
     /// The music cue of a place, by place id, played while the army is
     /// there.
     pub place_music: BTreeMap<String, String>,
+    /// The ambience the map plays under its music (ticket 1332), an id of
+    /// `data/ambience.ron`, if it has one.
+    pub ambience: Option<String>,
+    /// The ambience of a place, by place id, played while it is open (a
+    /// town).
+    pub place_ambience: BTreeMap<String, String>,
     /// Where each place is drawn, by place id, in cells of the map.
     pub places: BTreeMap<String, Pos>,
     /// Each road's cells where it turns, from one place to the other: the
@@ -157,6 +163,8 @@ struct RawNode {
     #[serde(default)]
     music: Option<String>,
     #[serde(default)]
+    ambience: Option<String>,
+    #[serde(default)]
     opens_when: Vec<RawCondition>,
     #[serde(default)]
     hidden: bool,
@@ -179,6 +187,8 @@ struct RawWorldMap {
     act: u32,
     levels: (u32, u32),
     music: String,
+    #[serde(default)]
+    ambience: Option<String>,
     start: String,
     final_node: String,
     #[serde(default)]
@@ -244,6 +254,7 @@ fn build(
 ) -> WorldMapDef {
     let mut def = WorldMapDef {
         music: raw.music,
+        ambience: raw.ambience,
         size: raw.size,
         ground: raw.ground,
         picture: raw.picture,
@@ -302,9 +313,9 @@ fn build(
             err(format!("place \"{}\" is listed twice", node.id));
         }
         def.names.insert(node.id.clone(), node.name);
-        if let Some(music) = node.music {
-            def.place_music.insert(node.id.clone(), music);
-        }
+        let id = &node.id;
+        (node.music).map(|cue| def.place_music.insert(id.clone(), cue));
+        (node.ambience).map(|bed| def.place_ambience.insert(id.clone(), bed));
         nodes.push(WorldNode {
             id: node.id,
             kind,

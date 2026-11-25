@@ -544,6 +544,7 @@
         // against the bundle). The bought art stays inside the program.
         allowed_pack_entries: [
             "NOTICES-game.txt",
+            "audio/ambience/summer_meadow.ogg",
             "audio/audio.ron",
             "audio/licenses/CC-BY-3.0.txt",
             "audio/licenses/CC-BY-4.0.txt",
@@ -612,6 +613,7 @@
             "chapters/ch05.ron",
             "cinematics/title.ron",
             "data/ai.ron",
+            "data/ambience.ron",
             "data/arts.ron",
             "data/basic_shop.ron",
             "data/camp.ron",
@@ -941,6 +943,7 @@
                 // The demo's pack (ADR-0120): what its cut bundle keeps.
                 allowed_pack_entries: [
                     "NOTICES-game.txt",
+                    "audio/ambience/summer_meadow.ogg",
                     "audio/audio.ron",
                     "audio/licenses/CC-BY-3.0.txt",
                     "audio/licenses/CC-BY-4.0.txt",
@@ -992,6 +995,7 @@
                     "chapters/ch01.ron",
                     "cinematics/title.ron",
                     "data/ai.ron",
+                    "data/ambience.ron",
                     "data/arts.ron",
                     "data/basic_shop.ron",
                     "data/camp.ron",
@@ -1194,6 +1198,7 @@
                 // The game's pack (the project's part) without the scripts.
                 allowed_pack_entries: [
                     "NOTICES-game.txt",
+                    "audio/ambience/summer_meadow.ogg",
                     "audio/audio.ron",
                     "audio/licenses/CC-BY-3.0.txt",
                     "audio/licenses/CC-BY-4.0.txt",
@@ -1262,6 +1267,7 @@
                     "chapters/ch05.ron",
                     "cinematics/title.ron",
                     "data/ai.ron",
+                    "data/ambience.ron",
                     "data/arts.ron",
                     "data/basic_shop.ron",
                     "data/camp.ron",
@@ -1459,6 +1465,7 @@
                 // The demo's pack without its script.
                 allowed_pack_entries: [
                     "NOTICES-game.txt",
+                    "audio/ambience/summer_meadow.ogg",
                     "audio/audio.ron",
                     "audio/licenses/CC-BY-3.0.txt",
                     "audio/licenses/CC-BY-4.0.txt",
@@ -1510,6 +1517,7 @@
                     "chapters/ch01.ron",
                     "cinematics/title.ron",
                     "data/ai.ron",
+                    "data/ambience.ron",
                     "data/arts.ron",
                     "data/basic_shop.ron",
                     "data/camp.ron",

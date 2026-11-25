@@ -311,6 +311,8 @@ pub struct BattleScreen {
     /// ([`in_battle`](Self::in_battle)): a lesson may start only in some
     /// battles. `None` for a battle made any other way.
     battle_id: Option<String>,
+    /// Its battle file's ambience (ticket 1332), once looked up.
+    ambience: Option<String>,
     /// The heal numbers, terrain flashes, event sounds and the walks'
     /// and AI's speeds.
     effects: Effects,
@@ -403,6 +405,7 @@ impl BattleScreen {
             guide: Guide::default(),
             extra_rows: Vec::new(),
             battle_id: None,
+            ambience: None,
             effects: Effects::default(),
             progress: None,
             info_page: 0,
@@ -924,6 +927,7 @@ impl BattleScreen {
             tiles: tiles.clone(),
             look: self.look.clone(),
             units: scene.units,
+            ambience: self.ambience.clone(),
         }
     }
 
@@ -2364,8 +2368,25 @@ impl BattleScreen {
     fn leaving(&mut self, transition: Transition, ctx: &mut Ctx) -> Transition {
         if !matches!(transition, Transition::None | Transition::Push(_)) {
             self.guide.leave(ctx);
+            crate::ambience::leave(ctx, Self::NAME);
         }
         transition
+    }
+
+    /// The place's sound bed this frame (ticket 1332): the battle file's
+    /// ambience in the battle's light, hushed while a fight's stage shows.
+    fn ambience(&mut self, ctx: &mut Ctx, dt: f32) {
+        if self.ambience.is_none() {
+            let battles = &ctx.game.content.ambience.battles;
+            self.ambience = self
+                .battle_id
+                .as_ref()
+                .and_then(|b| battles.get(b))
+                .cloned();
+        }
+        let cue = crate::ambience::bed(ctx, self.ambience.as_deref(), &self.look.light);
+        let fight = matches!(self.mode, Mode::Combat(_)) && self.show_fights;
+        crate::ambience::play(ctx, Self::NAME, cue.as_deref(), fight, dt);
     }
 
     /// [`Screen::update`]'s frame, before its tip is noted as shown.
@@ -2497,6 +2518,7 @@ impl Screen<Shuyi> for BattleScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         let transition = self.update_frame(ctx, input);
+        self.ambience(ctx, input.dt());
         self.note_ranges(ctx);
         // Still on screen: its tip, if any, is seen (0467), and the guide
         // says what its box or the lesson's says (0476). A screen going

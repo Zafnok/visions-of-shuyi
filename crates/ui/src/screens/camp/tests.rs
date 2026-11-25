@@ -200,6 +200,25 @@ fn break_camp_pops_with_the_campaign() {
     assert_eq!(left, Some(bonded(&ctx)));
 }
 
+/// Camp plays its bed (1332), and fades it out as it closes.
+#[test]
+fn camp_plays_its_bed_until_it_closes() {
+    let mut ctx = ctx();
+    let mut s = CampScreen::new(&ctx, bonded(&ctx));
+    update(&mut s, &mut ctx, &[]);
+    assert_eq!(
+        ctx.game.ambience.cue(),
+        None,
+        "the test files' camp has none"
+    );
+    ctx.game.content.ambience.camp = Some("meadow".into());
+    update(&mut s, &mut ctx, &[Action::Cancel]);
+    assert_eq!(ctx.game.ambience.cue(), Some("bed_summer_meadow"));
+    let left = update(&mut s, &mut ctx, &[Action::Confirm]);
+    assert!(popped_with::<Campaign>(left).is_some());
+    assert_eq!(ctx.game.ambience.cue(), None);
+}
+
 /// An empty list can't be entered.
 #[test]
 fn an_empty_list_keeps_the_focus_in_the_sections() {

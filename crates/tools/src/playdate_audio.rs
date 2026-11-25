@@ -4,7 +4,9 @@
 //!
 //! The bake is the engine's (`shuyi_cli::export::playdate::audio`, ticket
 //! 1203). This module holds what is the game's: every file of every sound cue
-//! in `assets/audio/audio.ron` ships, and of the music only
+//! in `assets/audio/audio.ron` ships but the places' sound beds (the
+//! ambience group, which the Playdate doesn't play yet: ticket 1332), and of
+//! the music only
 //! `crates/content/playdate-music.txt`'s. Sounds go under `Source/audio/` and
 //! music under `Source/music/`, the paths
 //! `trpg_content::audio::playdate_sound_path` and `playdate_music_path` give
@@ -16,6 +18,7 @@ use std::path::Path;
 
 use shuyi_cli::export::playdate::audio as bake;
 use shuyi_cli::game::GameAudio;
+use trpg_content::ambience::AMBIENCE;
 use trpg_content::audio::{self, AudioManifest};
 
 /// The files to bake: each sound file of `manifest` once, and the file of
@@ -31,6 +34,8 @@ pub fn jobs(
         return Err(format!("{cue:?} is not a music cue"));
     }
     manifest.music.retain(|cue, _| music.contains(cue));
+    let bed = |s: &trpg_content::SoundCue| s.group.as_deref() == Some(AMBIENCE);
+    manifest.sounds.retain(|_, s| !bed(s));
     bake::jobs(&GameAudio::new(manifest, audio::files(None)), root)
 }
 
@@ -158,14 +163,17 @@ mod tests {
         (manifest, BTreeSet::from(["title".to_owned()]))
     }
 
-    /// The real selection: the paths the front end opens, nothing else.
+    /// The real selection: the paths the front end opens, nothing else; no
+    /// sound bed (1332).
     #[test]
-    fn every_sound_file_and_only_the_listed_music() {
+    fn every_sound_file_but_the_beds_and_only_the_listed_music() {
         let manifest = audio::load().unwrap();
         let music = audio::playdate_music(&manifest).unwrap();
         let jobs = jobs(&repo(), manifest.clone(), &music).unwrap();
         let outs: BTreeSet<&str> = jobs.iter().map(|j| j.out.as_str()).collect();
-        let sounds = manifest.sounds.values().flat_map(|cue| &cue.files);
+        let beds = |cue: &&trpg_content::SoundCue| cue.group.as_deref() == Some(AMBIENCE);
+        let sounds = manifest.sounds.values().filter(|c| !beds(c));
+        let sounds = sounds.flat_map(|cue| &cue.files);
         let sounds = sounds.map(|file| audio::playdate_sound_path(file));
         let tracks = music.iter().map(|cue| &manifest.music[cue].file);
         let tracks = tracks.map(|file| audio::playdate_music_path(file));
@@ -176,6 +184,7 @@ mod tests {
         );
         assert!(outs.contains("audio/sfx/menu_move.wav"));
         assert!(outs.contains("music/new_sunrise_v1.wav"));
+        assert!(!outs.contains("audio/ambience/summer_meadow.wav"));
         // A track that is in the manifest and not on the list stays out.
         let left = manifest.music.iter().find(|(cue, _)| !music.contains(*cue));
         let (_, track) = left.expect("a track the Playdate doesn't ship");

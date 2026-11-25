@@ -16,6 +16,7 @@ mod prelude {
 use prelude::*;
 
 pub mod ai;
+pub mod ambience;
 pub mod art;
 pub mod audio;
 pub mod basic_shop;
@@ -73,6 +74,7 @@ use trpg_core::{
     ItemTable, SkillTable, SpellTable, SupportTable,
 };
 
+pub use ambience::AmbienceTable;
 pub use audio::{AudioManifest, Credit, CreditRef, MusicCue, SoundCue};
 pub use battle::BattleRefs;
 pub use battler::{Battler, BattlerTable};
@@ -195,6 +197,8 @@ pub struct Content {
     pub cinematics: BTreeMap<String, CinematicDef>,
     /// World maps by id (file stem), one an act (ticket 1007, ADR-0099).
     pub worldmaps: BTreeMap<String, WorldMapDef>,
+    /// The places' sound beds and what plays which (ticket 1332).
+    pub ambience: AmbienceTable,
     /// The openings a conversation's script may ask for, by id (file
     /// stem): ticket 0734, ADR-0076.
     pub openings: BTreeMap<String, OpeningDef>,
@@ -559,6 +563,7 @@ impl Early {
             cinematics,
             openings,
             worldmaps: Ok(BTreeMap::new()),
+            ambience: Ok(AmbienceTable::default()),
         };
         load_worldmaps_and_lang(&mut units, terrain.as_ref().ok(), maps.as_ref().ok());
         let themes = palette::load_themes(palette.as_ref().ok());
@@ -584,6 +589,7 @@ fn load_worldmaps_and_lang(
     maps: Option<&BTreeMap<String, MapDef>>,
 ) {
     units.worldmaps = load_worldmaps(units);
+    units.ambience = load_ambience(units, maps);
     units.lang = lang::load(data_text(units, terrain, maps));
 }
 
@@ -606,6 +612,28 @@ fn load_worldmaps(units: &Loaded) -> Result<BTreeMap<String, WorldMapDef>, Vec<C
         characters,
         items,
         audio,
+    })
+}
+
+/// The places' sound beds, checked against what `units` loaded and the
+/// `maps`; none when one of the files they need failed (its errors are
+/// reported already).
+fn load_ambience(
+    units: &Loaded,
+    maps: Option<&BTreeMap<String, MapDef>>,
+) -> Result<AmbienceTable, Vec<ContentError>> {
+    let (Ok(audio), Ok(lighting), Ok(worldmaps), Some(maps)) =
+        (&units.audio, &units.lighting, &units.worldmaps, maps)
+    else {
+        return Ok(AmbienceTable::default());
+    };
+    let battles = battle::ambiences();
+    ambience::load(ambience::AmbienceRefs {
+        audio,
+        lighting,
+        maps,
+        worldmaps,
+        battles: &battles,
     })
 }
 
@@ -1166,6 +1194,7 @@ struct Loaded {
     cinematics: Result<BTreeMap<String, CinematicDef>, Vec<ContentError>>,
     openings: Result<BTreeMap<String, OpeningDef>, Vec<ContentError>>,
     worldmaps: Result<BTreeMap<String, WorldMapDef>, Vec<ContentError>>,
+    ambience: Result<AmbienceTable, Vec<ContentError>>,
 }
 
 /// Takes a loader's value, or moves its errors into `errors` and returns a
@@ -1226,6 +1255,7 @@ fn assemble(
         basic_shop: take(units.basic_shop, &mut errors),
         camp: take(units.camp, &mut errors),
         worldmaps: take(units.worldmaps, &mut errors),
+        ambience: take(units.ambience, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -1497,6 +1527,7 @@ mod tests {
             openings: ok_openings(),
             worldmaps: Ok(BTreeMap::new()),
             camp: ok_camp(),
+            ambience: Ok(AmbienceTable::default()),
         }
     }
 
@@ -1598,9 +1629,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 35] = [
+    const NAMES: [&str; 36] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E", "O", "S", "Q", "W",
+        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E", "O", "S", "Q", "W", "M",
     ];
 
     /// `ok`, or the error of file `name` if `bad`.
@@ -1658,6 +1689,7 @@ mod tests {
                     openings: Err(e("O")),
                     camp: Err(e("Q")),
                     worldmaps: Err(e("W")),
+                    ambience: Err(e("M")),
                 },
             ),
             Err(ContentErrors(NAMES.iter().flat_map(|f| e(f)).collect()))
@@ -1726,6 +1758,7 @@ mod tests {
                     basic_shop: pick(i == 32, "S", basic_shop::load(None)),
                     camp: pick(i == 33, "Q", ok_camp()),
                     worldmaps: pick(i == 34, "W", Ok(BTreeMap::new())),
+                    ambience: pick(i == 35, "M", Ok(AmbienceTable::default())),
                 },
             )
         };

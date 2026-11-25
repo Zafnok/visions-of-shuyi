@@ -5,11 +5,11 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
+status: done
 blocked_by: ["1322", "1314"]
 blocks: ["1064"]
 nick_input: answer-first
-completed:
+completed: 2026-11-25
 ---
 
 # 1332 — A place's ambience plays under the music: its sound bed, with its own volume
@@ -103,16 +103,16 @@ positional or stereo sound.
 
 ## Acceptance criteria
 
-- [ ] A test: the bed starts with the battle and fades out with it.
-- [ ] A test: the bed stops when the fight opens and is back after it.
-- [ ] A test: a map at night plays the place's night bed; a light with no
+- [x] A test: the bed starts with the battle and fades out with it.
+- [x] A test: the bed stops when the fight opens and is back after it.
+- [x] A test: a map at night plays the place's night bed; a light with no
       bed of its own plays the noon bed.
-- [ ] A test: the Ambience volume starts 10 under the music's, and with it
+- [x] A test: the Ambience volume starts 10 under the music's, and with it
       at 0 no bed is started.
-- [ ] A test: the bed dips under a voiced line by the music's numbers.
-- [ ] A test: an ambience naming an unknown cue fails content validation.
-- [ ] `THIRD_PARTY_ASSETS.md` lists every new sound.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A test: the bed dips under a voiced line by the music's numbers.
+- [x] A test: an ambience naming an unknown cue fails content validation.
+- [x] `THIRD_PARTY_ASSETS.md` lists every new sound.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -129,3 +129,58 @@ Ambience row. Unbundled sounds leave the ambience silent, never a crash (as
 the title's crackle does, 0924). GBA: no target.
 
 ## Completion notes
+
+Built as ADR-0132. No engine change: the beds play in the game's own
+sound group `ambience` (volume 90, 10 under the music's 100) with a
+`ducks` rule copying the music's, both the engine's (engine ADR-0091,
+ADR-0099); the Options row is the engine's volume row on that group.
+
+- **Data:** `assets/data/ambience.ron` (new) names each ambience's beds by
+  light and the ambience of the scenes' places (by map id) and camp; a
+  battle file names its own (`ambience: "meadow"`, read on the side like
+  its `light`); a world map names the map's and each town's
+  (`ambience: Some(...)`). Content validation refuses an unknown cue, a
+  cue that isn't looped or isn't in the `ambience` group, an unknown
+  light, an ambience without a `noon` bed, an unknown map and an unknown
+  ambience name.
+- **Player:** `trpg_ui::ambience`, one bed at a time on the context,
+  hooked into the battle screen (hushed while a fight's stage shows), the
+  dialogue screen (its place; `@place battle` plays the battle's), the
+  world map (an open town's, else the map's) and camp.
+- **The bed:** Summer Meadow (baryy, freesound 409143, CC0), the HQ
+  preview, 40 s from 0:20, mono, looped with its next 2 s crossfaded in,
+  imported by `import.py` to the music's loudness (-20.4 LUFS; it needed
+  +31 dB, so a limiter at -1 dBTP keeps its chirps under the ceiling,
+  where the music's import would have stopped 5 dB short). The test
+  files' Quick Battle, test battle and test world map play it (meadow).
+- **Private content:** its `audio.ron` declares the same group, dip, bed
+  cue and credit (content-change PR in the private repository); no
+  chapter names an ambience yet (1335-1342).
+- **Playdate:** no bench was run, so it plays no bed: its skins turn the
+  player off, its build bakes no `ambience`-group cue, its bundle leaves
+  out `audio/ambience/`, and the Ambience row is PC-only. A later ticket
+  runs the bench with a bed to turn them on.
+- **Tests touched:** the kept Quick Battle session was recorded again
+  (a frame's hash counts the sounds asked for, and the battle now asks for
+  its bed); the skin test compares the sounds without the fades' per-frame
+  volume steps, which showed footsteps under the sprite skin falling some
+  frames later than under glyphs: an older difference, ticket **1356**
+  (new).
+- **Size:** estimate 320 production lines, measured 409 (1.3×); PR about
+  1,450 changed lines.
+- **Deviation:** the ticket's step 1 named an engine ticket if the group
+  or the dip needed the engine; neither did.
+
+**Claude's starting rules** (recorded in `audio.md`, *Starting values*;
+for the Act 1 playtest, 1064):
+
+- A town with no bed of its own plays the world map's while it is open.
+- A scene over the battle with no place of its own leaves the battle's bed
+  playing; a scene in black plays none.
+- The Playdate plays no bed and has no Ambience row until the bench is run
+  with them.
+- The stretch of Summer Meadow (40 s from 0:20) is Claude's; Nick heard
+  the recording on 1322's listening page.
+
+To judge by ear in the Act 1 playtest (1064): the bed's level at 90 under
+the music, its fades (0.5 s) around a fight, and the loop's seam.

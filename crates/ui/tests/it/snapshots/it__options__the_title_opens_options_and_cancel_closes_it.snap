@@ -3,7 +3,6 @@ source: crates/ui/tests/it/options.rs
 expression: h.snapshot()
 ---
                                                                                                     
-                                                                                                    
                     ┌─ Options ────────────────────────────────────────────────┐                    
                     │                                                          │                    
                     │   Text speed               ◄ Normal ►                    │                    
@@ -20,6 +19,7 @@ expression: h.snapshot()
                     │   Colors                     Earthy painterly            │                    
                     │   Music volume               ██████████ 100              │                    
                     │   Sound volume               ██████████ 100              │                    
+                    │   Ambience volume            █████████░  90              │                    
                     │   Voices (AI-generated)      On                          │                    
                     │   Voice volume               ██████████ 100              │                    
                     │   Voice on hover in the log  On                          │                    
@@ -35,10 +35,10 @@ expression: h.snapshot()
                                                                                                     
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbcccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddeeeeeeeeeeeeddddddddddddddfdccccccdfddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa

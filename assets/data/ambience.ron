@@ -1,0 +1,22 @@
+// The places' ambience (ticket 1332, ADR-0132; docs/design/audio.md,
+// "Ambience"): the sound bed each place loops under its music. Loaded and
+// checked by trpg_content::ambience. Format: assets/audio/README.md,
+// "Ambience". The public stand-in: the game's own file, if it has one, is
+// in the private repository's content/, laid over this one (ADR-0117).
+//
+// Which bed each chapter's places play is each chapter's ticket (1335-1342).
+(
+    // Each ambience's beds, by light (data/lighting.ron): a sound cue of
+    // the "ambience" group in audio.ron, looped. A light without a bed of
+    // its own plays the "noon" one, which every ambience must have.
+    ambiences: {
+        // The day bed Nick picked (1322): birds and insects in a meadow.
+        "meadow": {"noon": "bed_summer_meadow"},
+    },
+    // The ambience a scene plays over its "@place <map>", by map id
+    // (assets/maps/). "@place battle" plays its battle's own (the battle
+    // file's `ambience`).
+    places: {},
+    // The ambience camp plays, if any: camp: Some("meadow").
+    camp: None,
+)
