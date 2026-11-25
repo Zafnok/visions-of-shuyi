@@ -100,16 +100,16 @@ pub fn play(ctx: &mut Ctx, owner: &'static str, cue: Option<&str>, hushed: bool,
     let Some(bed) = &mut player.playing else {
         return;
     };
-    let target = if hushed { 0.0 } else { 1.0 };
     let step = if dt.is_finite() {
         dt.max(0.0) / FADE_S
     } else {
         0.0
     };
-    let level = if bed.level < target {
-        (bed.level + step).min(target)
+    // Down to silence while hushed, else up to full.
+    let level = if hushed {
+        (bed.level - step).max(0.0)
     } else {
-        (bed.level - step).max(target)
+        (bed.level + step).min(1.0)
     };
     if level.total_cmp(&bed.level).is_ne() {
         bed.level = level;
