@@ -467,6 +467,10 @@ so they aren't in this repository (ADR-0032).
   - **The glyph look keeps its own walking speed**, 12 tiles a second
     (Nick, 2026-10-04: "original glyph version I think should have its
     original walking speed"). Glyph units jump from tile to tile.
+    Nick kept the two speeds when asked again (2026-11-25, ticket 1358:
+    "Keep the two speeds"), knowing a walk's footsteps follow the walk on
+    screen and so fall sooner under glyphs. Nothing else heard changes
+    with the look.
   - **The clip mask always holds** (Nick, 2026-10-04; decided in 0039 and
     0436): no sprite or outline is drawn inside a tile another unit
     stands on above it, walking or standing, not even the 1-pixel edge
