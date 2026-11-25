@@ -17,9 +17,14 @@
         (id: "music", volume: 100),
         (id: "sfx", volume: 100),
         (id: "voice", volume: 100),
+        // The places' sound beds (ticket 1332, audio.md, Ambience): their
+        // own volume, starting 10 under the music's (Nick: "10 ticks under").
+        (id: "ambience", volume: 90),
     ],
     ducks: [
         (when: "voice", lower: "music", to: 90, attack_ms: 150, release_ms: 600),
+        // A bed dips under a voiced line exactly as the music does (1322).
+        (when: "voice", lower: "ambience", to: 90, attack_ms: 150, release_ms: 600),
     ],
     sounds: [
         // Cue rules (engine ADR-0139; ticket 1349): min_gap_ms 30 drops a
@@ -55,6 +60,11 @@
         // -18" (look-and-feel.md, Title screen; TUNABLE).
         (id: "title_campfire", files: ["sfx/campfire_02.ogg"], volume: 32, looped: true,
          credit: Credit("campfire_02")),
+        // The places' sound beds (ticket 1332; data/ambience.ron says which
+        // place plays which), levelled like the music, at full volume: the
+        // Ambience volume sets how loud they are.
+        (id: "bed_summer_meadow", files: ["ambience/summer_meadow.ogg"], volume: 100,
+         looped: true, group: "ambience", credit: Credit("summer_meadow")),
     ],
     music: [
         (id: "title", file: "new_sunrise_v1.ogg", volume: 100, length_ms: 133743, credit: Credit("new_sunrise")),
@@ -297,5 +307,9 @@
          source: "https://freesound.org/s/729396/", license: "CC0-1.0",
          tags: ["sfx", "title_campfire", "fire", "ambience", "loop"],
          note: "HQ preview; 40 s from 1:00, compressed and looped"),
+        (id: "summer_meadow", title: "Summer Meadow", author: "baryy",
+         source: "https://freesound.org/s/409143/", license: "CC0-1.0",
+         tags: ["ambience", "bed", "meadow", "birds", "insects", "day", "loop"],
+         note: "HQ preview; 40 s from 0:20, mono, levelled like the music and looped"),
     ],
 )

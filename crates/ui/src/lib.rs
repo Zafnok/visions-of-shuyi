@@ -19,6 +19,7 @@ mod prelude {
     pub use crate::screen::ShuyiCtx as _;
 }
 
+pub mod ambience;
 pub mod audio;
 pub mod cinema;
 pub mod cinematic;

@@ -44,6 +44,7 @@ plays; later the world map's battles and skirmishes (1007, 1008) will too.
     music: Cue("battle_bright"),        // or Pool("skirmish")
     seed: 12345,
     light: "dusk",                      // optional: not its map's light
+    ambience: "meadow",                 // optional: the place's sound bed
 )
 ```
 
@@ -74,6 +75,7 @@ plays; later the world map's battles and skirmishes (1007, 1008) will too.
 | `kind` | What the autobalance may change (`docs/playtesting.md`, *Autobalancing*; `docs/design/playtest-bots.md`): `Story` (the default), `FixedSkirmish`, `SideQuest` or `RandomSkirmish`. The first three let it change only the unnamed enemies' numbers (level, count, class, weapon); the map, named units and the objective stay as written. No rule of play reads it. |
 | `music` | **Required.** What plays from the battle's start to its end, through both phases (`docs/design/audio.md`): `Cue("battle_bright")`, one music cue of `assets/audio/audio.ron` (a story battle's chosen theme), or `Pool("skirmish")`, one of its pools, from which a track is picked at random each time the battle starts (skirmishes). Restarting or retrying the battle picks again; rewinding never changes the track. |
 | `seed` | Seed of the battle's random numbers. |
+| `ambience` | Optional, written bare (`ambience: "meadow"`): the place's sound bed under the music, an ambience of `assets/data/ambience.ron` (ticket 1332, `assets/audio/README.md`, *Ambience*), played in the battle's light. A look only: no rule reads it. Default: none. |
 | `light` | Optional, written bare (`light: "dusk"`): the light this battle is fought in instead of its map's, one of `assets/data/lighting.ron`, so one map can be fought at two times of day. A look only (ADR-0058): no rule reads it, and it isn't in the battle the rules see. Default: the map's (`assets/maps/README.md`). |
 
 ## Rules checked by the loader

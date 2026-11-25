@@ -296,6 +296,25 @@ fn the_music_dips_under_a_voiced_line_and_comes_back() {
     assert_eq!(h.gain(MUSIC), full);
 }
 
+/// Acceptance (1332): a place's sound bed dips under a voiced line by the
+/// music's numbers: at the music's volume, its gain is the music's at
+/// every frame, down, held and back.
+#[test]
+fn the_ambience_dips_under_a_voiced_line_as_the_music_does() {
+    use trpg_content::ambience::AMBIENCE;
+    let (mut h, line) = ducking_setup(1.0, |s| s.volumes.set(AMBIENCE, MUSIC_VOLUME));
+    assert_eq!(h.gain(AMBIENCE), loudness(MUSIC_VOLUME));
+    h.ctx_mut().play_voice(&line);
+    let mut dipped = false;
+    for _ in 0..150 {
+        h.frame(&[], trpg_ui::harness::FRAME_DT);
+        assert_eq!(h.gain(AMBIENCE), h.gain(MUSIC));
+        dipped |= h.gain(AMBIENCE) < loudness(MUSIC_VOLUME);
+    }
+    assert!(dipped, "it went down under the line");
+    assert_eq!(h.gain(AMBIENCE), loudness(MUSIC_VOLUME), "and came back");
+}
+
 /// The music's gain at every frame of two seconds after the test line is
 /// asked for.
 fn music_gains_after_asking(h: &mut Harness, line: &LineId) -> Vec<Gain> {

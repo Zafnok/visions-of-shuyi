@@ -6,7 +6,8 @@
 
 Downloads every original into assets-src/audio/originals/ (git-ignored, see
 README.md), checks it against the SHA-256 below, then writes the game files:
-music to music/, sounds to assets/audio/sfx/. Needs Python 3 and ffmpeg
+music to music/, sounds to assets/audio/sfx/, the places' beds to
+assets/audio/ambience/. Needs Python 3 and ffmpeg
 (MSYS2: `pacman -S mingw-w64-x86_64-ffmpeg`) on PATH or in C:/msys64/mingw64/bin.
 
 Which cue gets which file, and the credits: assets/audio/audio.ron and
@@ -29,6 +30,7 @@ ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 ORIGINALS = os.path.join(HERE, "originals")
 MUSIC_OUT = os.path.join(ROOT, "music")
 SFX_OUT = os.path.join(ROOT, "assets", "audio", "sfx")
+AMBIENCE_OUT = os.path.join(ROOT, "assets", "audio", "ambience")
 
 OGA = "https://opengameart.org/sites/default/files/"
 FS = "https://cdn.freesound.org/previews/"
@@ -111,6 +113,8 @@ DOWNLOADS = [
     ("freesound/384890_984733-hq.ogg", FS + "384/384890_984733-hq.ogg", "5d20c49236fd1f3cacb3e0408e0a25632a1e98f7836b8cb33d61a6587a48827c"),
     ("freesound/274898_4869300-hq.ogg", FS + "274/274898_4869300-hq.ogg", "d8e6a07ec5f1e9fecbcf2eb17dc66c87ca5b8b8aa6454a0e094ffb716bf7e168"),
     ("freesound/729396_12863902-hq.ogg", FS + "729/729396_12863902-hq.ogg", "6071be52747563d6b7ac515cedce56b589bac4af8421829c20e3559062f10bc1"),
+    # Ticket 1332: the places' sound beds (1322).
+    ("freesound/409143_85211-hq.ogg", FS + "409/409143_85211-hq.ogg", "daeeb9f2c84a860fe840717e5271b54bec022383d42c376ba2d7ac50de6e4d30"),
 ]
 
 # (game file in music/, original, file inside the zip or None)
@@ -232,6 +236,17 @@ SFX = [
 ]
 
 
+# The places' sound beds (ticket 1322, audio.md *Ambience*): each levelled
+# like a music track (MUSIC_LUFS; Nick: "ambient should be same volume as
+# music"), mono, a 30-40 s stretch with its next 2 s faded into its start so
+# it loops without a seam, as the crackle's is. (game file in
+# assets/audio/ambience/, original, the stretch's start and length in s)
+BEDS = [
+    # Summer Meadow (baryy), the day bed Nick picked: 40 s from 0:20.
+    ("summer_meadow.ogg", "freesound/409143_85211-hq.ogg", 20, 40),
+]
+
+
 def ffmpeg_exe(name):
     found = shutil.which(name)
     if found:
@@ -255,7 +270,7 @@ def sha256(path):
 
 def download(only):
     """Fetch the originals (only those `only`'s outputs need, if given)."""
-    needed = {orig for out, orig, _ in MUSIC + SFX if out in only}
+    needed = {orig for out, orig, *_ in MUSIC + SFX + BEDS if out in only}
     for name, url, digest in DOWNLOADS:
         if only and name not in needed:
             continue
@@ -348,6 +363,30 @@ def convert_sfx(only):
         print(f"sfx   {out:32} M {momentary:6.1f} LUFS, peak {peak:5.1f} dBTP, gain {gain:+5.1f} dB")
 
 
+def convert_beds(only):
+    os.makedirs(AMBIENCE_OUT, exist_ok=True)
+    for out, original, start, length in BEDS:
+        if only and out not in only:
+            continue
+        src = source_path(original, None)
+        base = ",".join(f for f in [
+            "pan=mono|c0=0.5*c0+0.5*c1" if channels(src) == 2 else None,
+            "aresample=44100:resampler=soxr",
+            loop_cut(start, length, 2),
+        ] if f)
+        integrated, _, peak = loudness(src, base)
+        # A quiet field recording's chirps reach the peak ceiling long
+        # before the bed reaches the music's loudness: the gain is the
+        # loudness's, and a limiter keeps the chirps under the ceiling.
+        gain = MUSIC_LUFS - integrated
+        limit = 10 ** (PEAK_CEILING_DBTP / 20)
+        dest = os.path.join(AMBIENCE_OUT, out)
+        run(["-y", "-i", src, "-map_metadata", "-1", "-af",
+             f"{base},volume={gain:.2f}dB,alimiter=limit={limit:.3f}:level=0",
+             "-ac", "1", "-ar", "44100", "-c:a", "libvorbis", "-q:a", str(SFX_QUALITY), dest])
+        print(f"bed   {out:32} I {integrated:6.1f} LUFS, peak {peak:5.1f} dBTP, gain {gain:+5.1f} dB")
+
+
 def probe(path, entries):
     ffprobe = FFMPEG.replace("ffmpeg", "ffprobe")
     out = subprocess.run([ffprobe, "-v", "error", "-select_streams", "a:0", "-show_entries",
@@ -365,7 +404,7 @@ def duration(path):
 
 
 def check():
-    for folder, target in [(MUSIC_OUT, "I"), (SFX_OUT, "M")]:
+    for folder, target in [(MUSIC_OUT, "I"), (SFX_OUT, "M"), (AMBIENCE_OUT, "I")]:
         for name in sorted(os.listdir(folder)):
             if name.endswith(".ogg"):
                 i, m, p = loudness(os.path.join(folder, name), None)
@@ -377,12 +416,13 @@ def main():
         check()
         return
     only = {a for a in sys.argv[1:] if not a.startswith("-")}
-    known = {m[0] for m in MUSIC} | {s[0] for s in SFX}
+    known = {m[0] for m in MUSIC} | {s[0] for s in SFX} | {b[0] for b in BEDS}
     if only - known:
         sys.exit(f"unknown output(s): {', '.join(sorted(only - known))}")
     download(only)
     convert_music(only)
     convert_sfx(only)
+    convert_beds(only)
 
 
 if __name__ == "__main__":

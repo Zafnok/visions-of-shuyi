@@ -45,6 +45,10 @@ pub struct Place {
     pub look: MapLook,
     /// The units on it, where they stand.
     pub units: Vec<UnitView>,
+    /// Its ambience (ticket 1332), an id of the content's
+    /// [`AmbienceTable`](trpg_content::AmbienceTable), if it has one: a
+    /// battle's names its own.
+    pub ambience: Option<String>,
 }
 
 impl Place {
@@ -54,6 +58,7 @@ impl Place {
             tiles: def.map.tiles.clone(),
             look: def.look.clone(),
             units: Vec::new(),
+            ambience: None,
         }
     }
 
@@ -65,6 +70,7 @@ impl Place {
             tiles: def.map.tiles.clone(),
             look: content.battle_look(def),
             units: Vec::new(),
+            ambience: content.ambience.battles.get(&def.id).cloned(),
         }
     }
 

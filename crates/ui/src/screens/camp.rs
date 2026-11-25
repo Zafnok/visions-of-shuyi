@@ -32,6 +32,7 @@ use shuyi_ui::text::StyledText;
 pub use view::CampView;
 
 use trpg_content::Present;
+use trpg_content::lighting::NOON;
 use trpg_core::{CampEvent, Campaign, CharacterId, SupportPair, SupportRank, SupportTable};
 
 use crate::glyph_buffer::GlyphBuffer;
@@ -120,6 +121,27 @@ pub struct CampScreen {
     list: Menu<Row>,
     /// The music's rotation, once camp has started it.
     music: Option<CampMusic>,
+}
+
+impl CampScreen {
+    /// [`Screen::update`]'s frame, before the place's sound bed.
+    fn frame(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        self.start_music(ctx);
+        if let Some(cue) = self.music.as_mut().and_then(|m| m.tick(ctx.clock_s)) {
+            ask(ctx, &cue);
+        }
+        for &action in &input.actions {
+            let t = if self.focus == Focus::Sections {
+                self.on_sections(ctx, action)
+            } else {
+                self.on_list(ctx, action)
+            };
+            if !matches!(t, Transition::None) {
+                return t;
+            }
+        }
+        Transition::None
+    }
 }
 
 impl CampScreen {
@@ -503,21 +525,16 @@ impl Screen<Shuyi> for CampScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        self.start_music(ctx);
-        if let Some(cue) = self.music.as_mut().and_then(|m| m.tick(ctx.clock_s)) {
-            ask(ctx, &cue);
+        let transition = self.frame(ctx, input);
+        // Camp's sound bed (ticket 1332), faded out as camp closes.
+        if matches!(transition, Transition::None | Transition::Push(_)) {
+            let camp = ctx.game.content.ambience.camp.clone();
+            let cue = crate::ambience::bed(ctx, camp.as_deref(), NOON);
+            crate::ambience::play(ctx, Self::NAME, cue.as_deref(), false, input.dt());
+        } else {
+            crate::ambience::leave(ctx, Self::NAME);
         }
-        for &action in &input.actions {
-            let t = if self.focus == Focus::Sections {
-                self.on_sections(ctx, action)
-            } else {
-                self.on_list(ctx, action)
-            };
-            if !matches!(t, Transition::None) {
-                return t;
-            }
-        }
-        Transition::None
+        transition
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

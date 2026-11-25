@@ -277,6 +277,7 @@
     "options.row.theme": "Colors",
     "options.row.music_volume": "Music volume",
     "options.row.sound_volume": "Sound volume",
+    "options.row.ambience_volume": "Ambience volume",
     "options.row.voices": "Voices (AI-generated)",
     "options.row.voice_volume": "Voice volume",
     "options.row.log_voice": "Voice on hover in the log",

@@ -5,6 +5,8 @@
     act: 1,
     levels: (1, 6),
     music: "world_map",
+    // The map's sound bed under its music (ticket 1332).
+    ambience: Some("meadow"),
     start: "home",
     final_node: "bridge",
     next: Some("test_world_2"),

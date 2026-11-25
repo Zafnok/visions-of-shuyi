@@ -69,4 +69,6 @@
     difficulty: Normal,
     music: Pool("skirmish"),
     seed: 1,
+    // The place's sound bed under the music (ticket 1332).
+    ambience: "meadow",
 )

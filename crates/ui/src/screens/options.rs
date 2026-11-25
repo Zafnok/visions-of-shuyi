@@ -37,6 +37,7 @@ pub use shuyi_ui::screens::options::*;
 
 use shuyi_ui::screens::options;
 use trpg_content::Theme;
+use trpg_content::ambience::AMBIENCE;
 use trpg_core::{GameMode, TutorialLevel};
 
 use super::{key_bindings, layout_picker};
@@ -89,12 +90,14 @@ fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
 /// `Open towns on arrival`: it has no world map yet (1007; the row comes
 /// with it). The voices' four rows: it plays no voice yet (1048 brings
 /// them back with its clips). (`Intro` is on both since the Playdate's
-/// title has the cinematic, ticket 1044.)
-pub const PC_ONLY: [Row; 8] = [
+/// title has the cinematic, ticket 1044.) `Ambience volume`: it plays no
+/// sound bed until the bench says they run well there (1332).
+pub const PC_ONLY: [Row; 9] = [
     Row::Theme,
     Row::MapLook,
     Row::MapZoom,
     Row::Towns,
+    Row::AmbienceVolume,
     Row::Voices,
     Row::VoiceVolume,
     Row::LogVoice,
@@ -150,6 +153,9 @@ pub enum Row {
     /// The [`SFX`](crate::audio::groups::SFX) group's volume
     /// ([`Settings::volumes`]).
     SoundVolume,
+    /// The ambience group's volume ([`Settings::volumes`]): the places'
+    /// sound beds (ticket 1332).
+    AmbienceVolume,
     /// [`Settings::voices`]: "Voices (AI-generated)".
     Voices,
     /// The [`VOICE`](crate::audio::groups::VOICE) group's volume
@@ -177,7 +183,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 27] = [
+    pub const ALL: [Row; 28] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -195,6 +201,7 @@ impl Row {
         Row::Theme,
         Row::MusicVolume,
         Row::SoundVolume,
+        Row::AmbienceVolume,
         Row::Voices,
         Row::VoiceVolume,
         Row::LogVoice,
@@ -228,6 +235,7 @@ impl Row {
             Row::Theme => "options.row.theme",
             Row::MusicVolume => "options.row.music_volume",
             Row::SoundVolume => "options.row.sound_volume",
+            Row::AmbienceVolume => "options.row.ambience_volume",
             Row::Voices => "options.row.voices",
             Row::VoiceVolume => "options.row.voice_volume",
             Row::LogVoice => "options.row.log_voice",
@@ -262,6 +270,13 @@ impl Row {
             Row::Fullscreen => OptionRow::fullscreen(),
             Row::MusicVolume => OptionRow::music_volume(),
             Row::SoundVolume => OptionRow::sound_volume(),
+            Row::AmbienceVolume => OptionRow::new(
+                self.key(),
+                RowValue::volume(
+                    |ctx| ctx.volume(AMBIENCE),
+                    |ctx, v| ctx.preview_volume(AMBIENCE, v),
+                ),
+            ),
             Row::Voices => OptionRow::voices(),
             Row::VoiceVolume => OptionRow::voice_volume(),
             Row::RestoreDefaults => OptionRow::restore_defaults(),
