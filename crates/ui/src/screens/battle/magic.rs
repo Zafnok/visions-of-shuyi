@@ -21,9 +21,11 @@ use super::info::{range_text, stat_name};
 use super::items::heal_preview;
 use super::mode::{Line, Selection};
 use super::skills::skill_name;
+use crate::screens::pad_cells;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::widgets::wrap_step;
 use crate::words::Words;
+use shuyi_assets::lang::text_width;
 use shuyi_ui::text::ToArg;
 
 /// One line of the spell list.
@@ -248,7 +250,7 @@ pub fn spell_label(
     words.text_with(
         "battle.spell.line",
         &[
-            ("name", &format!("{name:<name_w$}")),
+            ("name", &pad_cells(name, name_w, words.widths())),
             ("left", &format!("{left:>2}")),
             ("uses", &format!("{:<2}", def.uses)),
             ("numbers", &numbers),
@@ -326,7 +328,9 @@ pub fn spell_menu(
             .iter()
             .filter_map(|c| Some((c, state.spells().get(&c.spell)?)))
     };
-    let name_w = defs().map(|(_, d)| words.spell(d).chars().count()).max();
+    let name_w = defs()
+        .map(|(_, d)| text_width(words.spell(d), words.widths()))
+        .max();
     let caster = state.unit(unit);
     let items = defs()
         .map(|(c, def)| {

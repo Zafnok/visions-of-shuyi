@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-25
 ---
 
 # 0263 — Battle menus pad their name columns in cells, not characters
@@ -60,15 +60,38 @@ are).
 
 ## Acceptance criteria
 
-- [ ] `pad_cells` pads by cells: a unit test with `CellWidths::wide`.
-- [ ] Each menu above with a wide name lines its next column up with an
+- [x] `pad_cells` pads by cells: a unit test with `CellWidths::wide`.
+- [x] Each menu above with a wide name lines its next column up with an
       English one's (a unit test per builder, reading the menu's
       lines in cells).
-- [ ] Every existing snapshot is unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every existing snapshot is unchanged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Unit: `pad_cells`; each builder with a wide name.
 
 ## Completion notes
+
+- `pad_cells(text, w, widths)` sits next to `clip` in
+  `crates/ui/src/screens/mod.rs`. The pack, equip, spell, `Skill` and
+  `Units` lists and the objective's labels measure their names with
+  `text_width` and pad with it.
+- **Deviation from step 2:** the battle builds these menus from a kept
+  `Language` (`mode.rs`, during `tick` and `step`), not from a `Ctx`, so
+  a widths argument would have gone through about fifteen functions.
+  Instead `Words` carries the language's cell widths: `Ctx::words()` and
+  `Ctx::language()` set them to `ctx.widths()` (`with_widths`),
+  `Words::widths()` gives them, and `Words::ENGLISH` and a `Words` made
+  without them count one cell a character. The battle refreshes its kept
+  `Language` until it has widths. The objective's `padded` and
+  `label_width` take `&CellWidths` as the ticket says, since their callers
+  are skins with a `Ctx`.
+- Two tests that compared `ctx.language()` with a bare `Language` now
+  compare it with the same language and the context's widths.
+- Tests: `pad_cells_pads_by_cells` (with `CellWidths::wide`), one test
+  per builder with a `姝怡` name, and `words_carry_the_languages_cell_widths`.
+  No snapshot changed.
+- Friction: 2.0× (estimate 40, measured 80), accepted for the widths on
+  `Words` above; a row in `docs/engine/friction.md`.
+- No gameplay rule decided; nothing to check by playing.

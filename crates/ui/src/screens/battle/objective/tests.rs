@@ -175,16 +175,17 @@ fn padded_lines_line_their_texts_up() {
         line("Lose:", "3 of 5 houses burn"),
         line("or", "Ellery falls"),
     ];
-    assert_eq!(label_width(&l), 6);
+    let narrow = CellWidths::NARROW;
+    assert_eq!(label_width(&l, &narrow), 6);
     assert_eq!(
-        padded(&l),
+        padded(&l, &narrow),
         [
             "Win:  Defeat Hendry",
             "Lose: 3 of 5 houses burn",
             "or    Ellery falls"
         ]
     );
-    assert_eq!(label_width(&[]), 0);
+    assert_eq!(label_width(&[], &narrow), 0);
 }
 
 #[test]
@@ -240,4 +241,24 @@ fn the_bonus_message_reads_as_before_for_each_count() {
     assert_eq!(bonus(1).as_deref(), Some("Save 1 houses for a reward"));
     assert_eq!(bonus(2).as_deref(), Some("Save 1 or 2 houses for rewards"));
     assert_eq!(bonus(5).as_deref(), Some("Save 1 to 5 houses for rewards"));
+}
+
+/// A wide label (two cells a character) pads the labels' column in cells
+/// (ticket 0263): the texts start in one column.
+#[test]
+fn a_wide_label_pads_the_objective_column_in_cells() {
+    let line = |label: &str, text: &str| ObjectiveLine {
+        label: label.to_owned(),
+        text: text.to_owned(),
+    };
+    let wide = CellWidths::wide("姝怡".chars());
+    let l = [
+        line("姝怡:", "Defeat Hendry"),
+        line("Lose:", "Ellery falls"),
+    ];
+    assert_eq!(label_width(&l, &wide), 6);
+    assert_eq!(
+        padded(&l, &wide),
+        ["姝怡: Defeat Hendry", "Lose: Ellery falls"]
+    );
 }

@@ -7,6 +7,7 @@
 
 use crate::prelude::*;
 use alloc::sync::Arc;
+use shuyi_assets::font::CellWidths;
 use shuyi_ui::text::Args;
 
 use trpg_content::{ChapterDef, Lang, LangCode, Lesson, Names, Scene, Tip, WorldMapDef};
@@ -23,6 +24,10 @@ pub struct Words<'a> {
     /// The languages and the code of the one in use; `None` for English,
     /// which is what the data holds.
     pack: Option<(&'a Lang, &'a LangCode)>,
+    /// The cells each character takes in this language, for text built
+    /// into columns ([`widths`](Self::widths)); `None` counts every
+    /// character one cell.
+    widths: Option<&'a CellWidths>,
 }
 
 /// [`Words`] to keep: what a screen holds to name things between frames,
@@ -31,13 +36,29 @@ pub struct Words<'a> {
 pub struct Language {
     /// The languages and the code of the one in use; `None` for English.
     pack: Option<(Arc<Lang>, LangCode)>,
+    /// The language's cell widths ([`Words::widths`]); `None` until set.
+    widths: Option<CellWidths>,
 }
 
 impl Language {
     /// The language `code` of `lang`.
     pub fn new(lang: &Arc<Lang>, code: &LangCode) -> Self {
         let pack = lang.pack(code).map(|_| (Arc::clone(lang), code.clone()));
-        Self { pack }
+        Self { pack, widths: None }
+    }
+
+    /// The same language, its text measured with `widths` (ticket 0263).
+    #[must_use]
+    pub fn with_widths(self, widths: &CellWidths) -> Self {
+        Self {
+            widths: Some(widths.clone()),
+            ..self
+        }
+    }
+
+    /// Whether its cell widths are set ([`with_widths`](Self::with_widths)).
+    pub fn has_widths(&self) -> bool {
+        self.widths.is_some()
     }
 
     /// Whether it is the language `code` of `lang`: nothing to change.
@@ -52,6 +73,7 @@ impl Language {
     pub fn words(&self) -> Words<'_> {
         Words {
             pack: self.pack.as_ref().map(|(lang, code)| (&**lang, code)),
+            widths: self.widths.as_ref(),
         }
     }
 }
@@ -60,14 +82,37 @@ impl Language {
 /// [`Words::ENGLISH`] gives, and whose plural rules its messages follow.
 pub const SOURCE_LANG: &str = "en";
 
+/// Every character one cell: the widths of [`Words`] that has none set.
+const NARROW: &CellWidths = &CellWidths::NARROW;
+
 impl<'a> Words<'a> {
     /// English: every text as the data has it.
-    pub const ENGLISH: Words<'static> = Words { pack: None };
+    pub const ENGLISH: Words<'static> = Words {
+        pack: None,
+        widths: None,
+    };
 
     /// The text of `lang` in language `code`.
     pub fn new(lang: &'a Lang, code: &'a LangCode) -> Self {
         let pack = lang.pack(code).map(|_| (lang, code));
-        Self { pack }
+        Self { pack, widths: None }
+    }
+
+    /// The same words, measured with `widths` (ticket 0263): what
+    /// [`Ctx::words`](crate::Ctx::words) gives, with the language's.
+    #[must_use]
+    pub fn with_widths(self, widths: &'a CellWidths) -> Self {
+        Self {
+            widths: Some(widths),
+            ..self
+        }
+    }
+
+    /// The cells each character takes in this language, for a line built
+    /// into columns (padded in cells, ticket 0263): one each
+    /// unless [`with_widths`](Self::with_widths) set them.
+    pub fn widths(self) -> &'a CellWidths {
+        self.widths.unwrap_or(NARROW)
     }
 
     /// Whether this is English: the data's own text.
@@ -577,6 +622,27 @@ mod tests {
         assert_eq!(shouted.unit(&lead), "Ellery");
     }
 
+    /// Words measure text with the widths they were given, a kept
+    /// language's as well, and count one cell a character without
+    /// (ticket 0263).
+    #[test]
+    fn words_carry_the_languages_cell_widths() {
+        let wide = CellWidths::wide(['姝']);
+        assert_eq!(Words::ENGLISH.widths(), &CellWidths::NARROW);
+        assert_eq!(Words::ENGLISH.with_widths(&wide).widths(), &wide);
+        let lang = Arc::new(trpg_content::Lang::default());
+        let kept = Language::new(&lang, &LangCode::default());
+        assert!(!kept.has_widths());
+        assert_eq!(kept.words().widths(), &CellWidths::NARROW);
+        let kept = kept.with_widths(&wide);
+        assert!(kept.has_widths());
+        assert_eq!(kept.words().widths(), &wide);
+        // A context's words and language are measured with its widths.
+        let c = ctx();
+        assert_eq!(c.words().widths(), c.widths());
+        assert!(c.language().has_widths());
+    }
+
     #[test]
     fn a_scene_is_told_in_the_language_for_the_leads_gender() {
         let c = ctx();
@@ -628,7 +694,7 @@ mod tests {
         let mut c = ctx();
         let guard = c.game.content.classes.classes[&ClassId("guard".to_owned())].clone();
         assert!(c.words().is_english());
-        assert_eq!(c.language(), Language::default());
+        assert_eq!(c.language(), Language::default().with_widths(c.widths()));
         assert_eq!(c.effective_lang(), &LangCode::default());
         c.lang = test();
         assert_eq!(c.effective_lang(), &test());
@@ -638,7 +704,7 @@ mod tests {
         c.debug_tools = false;
         assert_eq!(c.effective_lang(), &LangCode::default());
         assert_eq!(c.words().class(&guard), "Guard");
-        assert_eq!(c.language(), Language::default());
+        assert_eq!(c.language(), Language::default().with_widths(c.widths()));
         c.game.lead = LeadProfile::new("Mara", LeadGender::Female);
         assert_eq!(c.text("title.new_game"), "New Game");
     }

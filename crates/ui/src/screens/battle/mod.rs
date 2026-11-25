@@ -1030,9 +1030,10 @@ impl BattleScreen {
     /// them) and the walking speed for the walks that start this frame,
     /// and advances the cursor's pulse.
     fn begin_frame(&mut self, ctx: &Ctx, dt: f32) {
-        if !self
-            .language
-            .is(&ctx.game.content.lang, ctx.effective_lang())
+        if !self.language.has_widths()
+            || !self
+                .language
+                .is(&ctx.game.content.lang, ctx.effective_lang())
         {
             self.language = ctx.language();
         }

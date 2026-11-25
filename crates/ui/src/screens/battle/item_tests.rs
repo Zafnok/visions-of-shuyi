@@ -707,3 +707,31 @@ fn a_potion_aimed_with_another_unit_under_the_cursor_shows_the_block() {
         preview.text
     );
 }
+
+/// A wide item name (two cells a character) pads the pack's name column
+/// in cells: the counts line up under the English names' (ticket 0263).
+#[test]
+fn a_wide_item_name_keeps_the_pack_columns_in_line() {
+    let mut c = ctx();
+    let potion = c.game.content.items.items.get_mut(&ItemId::new("potion"));
+    let Some(trpg_core::ItemDef::Consumable(potion)) = potion else {
+        panic!("no potion");
+    };
+    potion.name = "姝怡".into();
+    let state = hurt_pair(&c, 4, 25, &["potion", "elixir"]);
+    let groups = pack_groups(&state, UnitId(1), p(3, 5));
+    let wide = shuyi_assets::font::CellWidths::wide("姝怡".chars());
+    let words = Words::ENGLISH.with_widths(&wide);
+    let menu = super::items::pack_menu(&state, words, &groups);
+    let lines: Vec<&str> = menu
+        .items()
+        .iter()
+        .map(|i| crate::widgets::menu::text_of(&i.label))
+        .collect();
+    assert!(lines[0].starts_with("姝怡"), "{lines:?}");
+    let counts: Vec<usize> = lines
+        .iter()
+        .map(|l| crate::screens::cells_before(l, "×", &wide))
+        .collect();
+    assert_eq!(counts, ["Elixir ".len(); 2], "{lines:?}");
+}

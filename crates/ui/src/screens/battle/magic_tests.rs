@@ -1937,3 +1937,40 @@ fn a_heal_aimed_at_an_ally_shows_on_its_hp_line_in_the_side_panel() {
     assert!(shows(&buf, "HP 2 → 18/20"));
     assert_eq!(text(&buf, 1, 30, 40), "Heal on Test Knight: HP 2 → 18");
 }
+
+/// A wide spell name (two cells a character) pads the spell and equip
+/// lists' name column in cells: the next column lines up with the English
+/// names' (ticket 0263).
+#[test]
+fn a_wide_spell_name_keeps_the_spell_and_equip_columns_in_line() {
+    let mut c = ctx();
+    let fire = c.game.content.spells.spells.get_mut(&sid("fire")).unwrap();
+    fire.name = "姝怡".into();
+    let s = field(&c, 0);
+    let wide = shuyi_assets::font::CellWidths::wide("姝怡".chars());
+    let words = Words::ENGLISH.with_widths(&wide);
+    let texts = |menu: &crate::widgets::Menu<super::mode::Line>| -> Vec<String> {
+        menu.items()
+            .iter()
+            .map(|i| crate::widgets::menu::text_of(&i.label).to_owned())
+            .collect()
+    };
+    let column = |lines: &[String], marker| -> Vec<usize> {
+        lines
+            .iter()
+            .map(|l| crate::screens::cells_before(l, marker, &wide))
+            .collect()
+    };
+    let spells = texts(&spell_menu(
+        &s,
+        words,
+        MAGE,
+        &plain_choices(&s, MAGE, p(0, 4)),
+    ));
+    assert!(spells[0].starts_with("姝怡"), "{spells:?}");
+    // `Frost` is the widest name: the uses' `/` sits in one column.
+    assert_eq!(column(&spells, "/"), [9, 9, 9], "{spells:?}");
+    let equip = texts(&equip_menu(&s, words, MAGE, &equip_choices(&s, MAGE)));
+    assert!(equip[0].starts_with("* 姝怡"), "{equip:?}");
+    assert_eq!(column(&equip, "Mt"), [9, 9], "{equip:?}");
+}

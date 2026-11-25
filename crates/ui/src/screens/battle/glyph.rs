@@ -543,7 +543,7 @@ fn paint_dialogs(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     }
     match &view.dialog {
         Some(DialogView::Objective(o)) => {
-            let mut lines: Vec<_> = objective::padded(&o.lines)
+            let mut lines: Vec<_> = objective::padded(&o.lines, ctx.widths())
                 .into_iter()
                 .chain(o.village.clone())
                 .chain([o.turn.clone()])
@@ -735,7 +735,7 @@ pub fn objective_banner_size(
     widths: &CellWidths,
 ) -> (i32, i32) {
     let cells = |s: &str| to_i32(text_width(s, widths));
-    let w = objective::padded(lines)
+    let w = objective::padded(lines, widths)
         .iter()
         .map(|l| cells(l))
         .chain([cells(title)])
@@ -765,7 +765,7 @@ fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer)
         &banner.title,
         c(color),
     );
-    let indent = i32::try_from(objective::label_width(&banner.lines)).unwrap_or(0);
+    let indent = i32::try_from(objective::label_width(&banner.lines, ctx.widths())).unwrap_or(0);
     for (y, l) in (rect.y + 4..).zip(&banner.lines) {
         buf.print(rect.x + 3, y, &l.label, c(UiColor::TextHighlight), bg);
         buf.print(rect.x + 3 + indent, y, &l.text, c(UiColor::Text), bg);

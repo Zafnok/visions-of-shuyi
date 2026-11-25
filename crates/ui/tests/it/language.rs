@@ -133,7 +133,8 @@ fn the_test_pack_counts_only_with_the_debug_tools() {
     // The scene was made in the test language; the next one isn't.
     let ctx = h.ctx_mut();
     assert!(ctx.words().is_english());
-    assert_eq!(ctx.language(), trpg_ui::Language::default());
+    let english = trpg_ui::Language::default().with_widths(ctx.widths());
+    assert_eq!(ctx.language(), english);
 }
 
 #[test]

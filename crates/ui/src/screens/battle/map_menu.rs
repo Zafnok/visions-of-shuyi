@@ -20,8 +20,10 @@ use trpg_core::{BattleState, Faction, Objective, Phase, Pos, Turn, UnitId};
 
 use crate::input::{Action, Keymap};
 use crate::screen::Keyboard;
+use crate::screens::pad_cells;
 use crate::widgets::menu::{Menu, MenuItem};
 use crate::words::Words;
+use shuyi_assets::lang::text_width;
 
 /// One entry of the map menu.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -195,7 +197,7 @@ pub fn unit_list(state: &BattleState, words: Words<'_>) -> Menu<UnitId> {
         .collect();
     let name_w = players
         .iter()
-        .map(|u| words.unit(u).chars().count())
+        .map(|u| text_width(words.unit(u), words.widths()))
         .max()
         .unwrap_or(0);
     let items = players
@@ -206,7 +208,7 @@ pub fn unit_list(state: &BattleState, words: Words<'_>) -> Menu<UnitId> {
             } else {
                 "battle.units.ready"
             });
-            let name = format!("{:name_w$}", words.unit(u));
+            let name = pad_cells(words.unit(u), name_w, words.widths());
             let hp = format!("{:>5}", format!("{}/{}", u.hp, u.stats.hp));
             let line = [
                 ("name", &name as &dyn ToArg),
@@ -462,6 +464,26 @@ mod tests {
                 "Test Mage    HP 16/16  ready",
             ]
         );
+    }
+
+    /// A wide unit name (two cells a character) pads the `Units` list's
+    /// name column in cells: the HP lines up with the English names'
+    /// (ticket 0263).
+    #[test]
+    fn a_wide_unit_name_keeps_the_unit_list_in_line() {
+        let c = ctx();
+        let (map, mut units) = crate::screens::battle::testing::quick_units(&c);
+        units[0].name = "姝怡".into();
+        let s = battle_with(&c, map, units, Objective::Rout { turn_limit: None });
+        let wide = shuyi_assets::font::CellWidths::wide("姝怡".chars());
+        let menu = unit_list(&s, Words::ENGLISH.with_widths(&wide));
+        let rows: Vec<&str> = menu.items().iter().map(|i| text_of(&i.label)).collect();
+        assert!(rows[0].starts_with("姝怡"), "{rows:?}");
+        let hp: Vec<usize> = rows
+            .iter()
+            .map(|r| crate::screens::cells_before(r, "HP", &wide))
+            .collect();
+        assert_eq!(hp, [13; 4], "{rows:?}");
     }
 
     #[test]
