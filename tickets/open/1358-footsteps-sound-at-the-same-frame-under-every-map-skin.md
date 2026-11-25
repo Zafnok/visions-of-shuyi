@@ -1,5 +1,5 @@
 ---
-id: "1356"
+id: "1358"
 title: "Footsteps sound at the same frame under every map skin"
 type: bug
 milestone: M3 Battle UI
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1356 — Footsteps sound at the same frame under every map skin
+# 1358 — Footsteps sound at the same frame under every map skin
 
 ## Context
 
