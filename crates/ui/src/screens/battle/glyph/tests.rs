@@ -805,3 +805,22 @@ fn a_long_hp_change_line_keeps_its_bar_inside_the_panel() {
     assert_eq!(panel_row(&buf, hp_row), "Hit Points 999 → 999/9999");
     assert_eq!(cells(&buf, hp_row, edge, 1), " ");
 }
+
+/// A dialog's box is as wide as its widest line or its title with a cell
+/// each side of it, then two columns each side; a wide title counts its
+/// cells (ticket 0236).
+#[test]
+fn a_dialog_box_fits_a_title_wider_than_its_lines() {
+    let lines = [(StyledText::from("Hi"), UiColor::Text)];
+    assert_eq!(
+        dialog_size("Battle notes", &lines, &NARROW),
+        (12 + 2 + 4, 5)
+    );
+    let wide = shuyi_assets::font::CellWidths::wide(['战', '报']);
+    assert_eq!(dialog_size("战报", &lines, &wide), (4 + 2 + 4, 5));
+    let long = [(
+        StyledText::from("A line wider than the title"),
+        UiColor::Text,
+    )];
+    assert_eq!(dialog_size("Notes", &long, &NARROW), (27 + 4, 5));
+}
