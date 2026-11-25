@@ -40,7 +40,7 @@ fn successes(tries: &[Tried]) -> Vec<u32> {
         .iter()
         .filter_map(|j| match j.found {
             Found::Rate { successes, .. } => Some(successes),
-            Found::Median { .. } => None,
+            _ => None,
         })
         .collect()
 }
@@ -70,16 +70,17 @@ fn band_check_flags_too_easy_and_too_hard() {
             Found::Rate {
                 verdict, blocked, ..
             } => (verdict, blocked, report.blocked),
-            Found::Median { .. } => unreachable!(),
+            _ => unreachable!(),
         }
     };
     // The Casual bot's band on a Normal-tier map: 30-55% (Nick,
-    // 2026-10-22).
-    assert_eq!(verdict(29), (RateVerdict::Below, false, false));
+    // 2026-10-22). A share outside the band whose 95% interval still
+    // reaches it is a maybe (engine#2149, 0532).
+    assert_eq!(verdict(29), (RateVerdict::MaybeBelow, false, false));
     assert_eq!(verdict(30), (RateVerdict::Within, false, false));
     assert_eq!(verdict(40), (RateVerdict::Within, false, false));
     assert_eq!(verdict(55), (RateVerdict::Within, false, false));
-    assert_eq!(verdict(60), (RateVerdict::Above, false, false));
+    assert_eq!(verdict(60), (RateVerdict::MaybeAbove, false, false));
     // Under 20%: the change is blocked.
     assert_eq!(verdict(20), (RateVerdict::Below, false, false));
     assert_eq!(verdict(19), (RateVerdict::Below, true, true));
