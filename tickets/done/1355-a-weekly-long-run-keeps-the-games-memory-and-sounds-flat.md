@@ -5,10 +5,10 @@ type: infra
 milestone: Later
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-24
 ---
 
 # 1355 — A weekly long run keeps the game's memory and sounds flat over hours of play
@@ -96,15 +96,15 @@ Expected size: about 150 lines (the scenario about 40, the workflow about
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi bench --long --twice --scenario act-loop` passes
+- [x] `cargo shuyi bench --long --twice --scenario act-loop` passes
       locally, and its header comment gives the frames, the time and the
       heap range measured.
-- [ ] The scenario's steps name actions, not keys (`cargo shuyi
+- [x] The scenario's steps name actions, not keys (`cargo shuyi
       check-keys` passes).
 - [ ] `gh workflow run long-run.yml` after merge passes, and the job
       summary shows the long report's table.
-- [ ] `docs/targets.md` has the *Long runs* section.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `docs/targets.md` has the *Long runs* section.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -113,5 +113,36 @@ Expected size: about 150 lines (the scenario about 40, the workflow about
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `bench/act-loop.long.ron`: one loop goes from the title's debug Quick
+  Battle through Preparations and Fight!, the lead's attack on a brigand
+  (forecast and animation), End Turn and the enemy's turn. In that turn the
+  lead falls, so the loop gets the lead's last line beside the portrait,
+  the defeat and Game Over, then Title. After that it walks the Options
+  menu and moves the title's cursor back to New Game. The Quick Battle's
+  seed is fixed (`seed: 1`), so the lead falls on every loop. The loop is
+  2,856 frames; 350 loops make 999,600 frames.
+- Measured locally (`--twice`, with the private content): about 95 s a
+  run, plus about 4 minutes building the tool program. After the warm-up
+  the heap stayed between 2.91 and 3.00 MB. The last quarter's most is
+  33 KB over the first quarter's (the `draw` and `paint` tags), while the
+  least held still, so it is where in the loop a sample falls, not
+  growth. The engine's default slack (64 KiB) is kept. No sound was left
+  alive, and both runs hashed every sample the same. No leak was found, so
+  there is no ticket for one.
+- `.github/workflows/long-run.yml`, modelled on the engine's. It checks out
+  the private content as the `bench` job does, with no `target/` in the
+  cache. It posts `long-report.md` to the summary, uploads the report and,
+  on a failure, opens an issue labelled `long-run` or comments on the
+  open one. zizmor finds nothing at medium or above. It reports one low:
+  the local `./.github/actions/private-assets`, which every job here uses.
+- Deviation: the workflow guard (`crates/xtask/src/workflow_guard.rs`,
+  ADR-0117 §4) allows a job that has the private files to upload only
+  listed paths. `dist/bench/long-report.*` (numbers, no program) is now
+  listed.
+- Deviation: the dialogue scene is the lead's last line, a Quick Battle
+  trigger (`test_lord_falls`), not a story scene. The title has no way
+  back from a story scene except going through the story's own screens.
+  The lead's fall also adds the defeat and Game Over screens to the loop.
+- The acceptance item `gh workflow run long-run.yml` can only run after
+  merge (a workflow must be on `main` to be dispatched).
+- No gameplay rule was decided.
