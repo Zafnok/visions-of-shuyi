@@ -55,29 +55,38 @@ Japanese pack needs nothing more here once it says how it was made.
 
 ## Implementation steps
 
-1. `Settings` (0805) gains `language: LangCode`, default `en`; bump the
-   settings version and migrate old settings to `en`. Loaded into
-   `Ctx::lang` at start-up.
-2. Options screen: a "Language" row listing English and every pack in
-   `Content::lang` except `test` (which shows only with
-   `Ctx::debug_tools`). Each language is shown by its own name from
-   `lang.ron` (`日本語`), whatever the current language is. Changing it
-   takes effect at once on every screen.
+The engine has the setting, the row and the system's languages since the
+pin move of 2026-11-25 (engine #583, 2349): use them and write none of
+the game's own.
+
+1. The engine's `Settings::language: Option<LangCode>` holds the pick
+   (`None` until the player picks; Restore defaults keeps it). The game's
+   saved form (`crates/ui/src/settings.rs`) writes and reads it with the
+   engine's `language_to_text` and `language_from_text`; bump the
+   settings version so old settings read as `None` (English). `Ctx` sets
+   `Ctx::lang` from it when the settings load and when it changes, so the
+   game sets `Ctx::lang` nowhere itself.
+2. Options screen: the engine's `OptionRow::language`, which lists
+   `Ctx::languages_offered` (the source and every pack, each by its own
+   name from `lang.ron`, `日本語`; `test` only with debug tools) and
+   changes every screen at once, Discard putting it back.
 3. The label beside a pack's name: `made_by: Machine` adds the pack's
    own note, in its own language: `(机器翻译，母语者审校)` for the Chinese
    pack, which a native reader checks, `(機械翻訳)` for Japanese. Keep
    the note's text in the pack (its `lang.ron` or a key of its
-   `ui.ron`), so "checked" is the pack's fact and not code's; if the
-   engine's `lang.ron` can't carry it, follow the `engine-change` skill.
+   `ui.ron`), so "checked" is the pack's fact and not code's. If
+   `OptionRow::language` can't show it, build the row's names with
+   `RowValue::names`; if the engine's `lang.ron` can't carry the note,
+   or neither row can show it, follow the `engine-change` skill.
 4. First launch: a language list, once, before the layout picker, every
-   language by its own name with its label. `app` reads the OS / browser
-   language once and passes it to `Ctx` (only `app` may ask the
-   platform, ADR-0004), and the engine's `best_match` (engine #278,
-   2253) picks the pack that fits the system's languages, by their BCP 47
-   tags (engine #276, 2226): that row starts highlighted. A system
-   language with no pack highlights English (`LangCode::default()`).
-   Write no matching of the game's own. Once picked, the list is not
-   shown again; the Options row changes it.
+   language by its own name with its label. The engine reads the
+   system's languages (`PlatformFacts::languages`: the OS, the
+   browser's `navigator.languages`, the Playdate's `getLanguage`) and,
+   with `GameData::first_language` left at `FirstLanguage::System`, sets
+   `Ctx::lang` to the pack that fits them by `best_match` while the
+   player hasn't picked (English when none fits): that row starts
+   highlighted. Write no matching or platform reading of the game's own.
+   Once picked, the list is not shown again; the Options row changes it.
 5. A pack that names a language whose glyphs the atlas lacks can't
    happen (0236's atlas test), but until 0236 lands the row hides any
    pack whose own name can't be drawn.
