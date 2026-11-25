@@ -4,6 +4,7 @@
 //! target.
 
 use crate::prelude::*;
+use crate::screens::clip;
 use trpg_content::Battler;
 use trpg_content::battler::Facing;
 use trpg_core::StatKind;
@@ -188,8 +189,8 @@ pub fn result_row(view: &StageView, i: usize) -> i32 {
 /// column `middle` (from the scene's left edge), kept inside the scene.
 fn label(buf: &mut GlyphBuffer, middle: i32, y: i32, text: &str, fg: Rgb, bg: Rgb) {
     let width = usize::try_from(SCENE.w - 2).unwrap_or(0);
-    let cut: String = text.chars().take(width).collect();
-    let w = i32::try_from(cut.chars().count()).unwrap_or(0) + 2;
+    let cut: String = clip(text, width, buf.widths());
+    let w = buf.text_cells(&cut) + 2;
     let x = (SCENE.x + middle / CELL_W - w / 2).clamp(SCENE.x, SCENE.x + SCENE.w - w);
     buf.fill_rect(Rect::new(x, y, w, 1), Cell::new(' ', fg, bg));
     buf.print(x + 1, y, &cut, fg, bg);
@@ -211,7 +212,8 @@ fn plate(ctx: &Ctx, buf: &mut GlyphBuffer, slot: i32, fighter: &FighterView) {
     buf.draw_box(rect, BoxStyle::Single, color, bg);
     let (x, y) = (rect.x + 2, rect.y + 1);
     let inner = usize::try_from(rect.w - 4).unwrap_or(0);
-    let cut = |text: &str| -> String { text.chars().take(inner).collect() };
+    let widths = buf.widths().clone();
+    let cut = |text: &str| -> String { clip(text, inner, &widths) };
     let (fg, name_bg) = if fighter.lit {
         (bg, color)
     } else {

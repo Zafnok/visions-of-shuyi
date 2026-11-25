@@ -13,6 +13,7 @@ use crate::screen::Ctx;
 use crate::screens::battle::glyph::progress::{self, EXP_BAR_CELLS};
 use crate::screens::battle::layout::MAP_VIEW;
 use crate::screens::centre_x;
+use crate::screens::clip;
 use shuyi_ui::screens::print_centred_styled;
 
 /// The panel.
@@ -107,8 +108,8 @@ fn paint_unit(ctx: &Ctx, unit: &UnitView, buf: &mut GlyphBuffer, y: i32) {
         c(UiColor::TextHighlight),
     );
     // check-text: not a data name (the view's own)
-    let name: String = unit.name.chars().take(NAME_W).collect();
-    let class: String = unit.class.chars().take(CLASS_W).collect();
+    let name: String = clip(&unit.name, NAME_W, buf.widths());
+    let class: String = clip(&unit.class, CLASS_W, buf.widths());
     buf.print(X, y, &name, c(UiColor::Player), bg);
     buf.print(X + COLS[0], y, &class, dim, bg);
     buf.print(X + COLS[1], y, &unit.level, text, bg);

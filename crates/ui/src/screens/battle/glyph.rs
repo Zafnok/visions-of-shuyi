@@ -17,7 +17,9 @@ pub mod rewind;
 pub mod shop;
 
 use crate::prelude::*;
+use crate::screens::clip;
 use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 use shuyi_ui::text::StyledText;
 use trpg_core::Phase;
 
@@ -331,7 +333,7 @@ fn paint_popups(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
 /// `…` (the panel's and the forecast's tests), which is why this is not
 /// the engine's `print_cut`.
 pub fn print_clipped(buf: &mut GlyphBuffer, (x, y): (i32, i32), width: usize, text: &str, fg: Rgb) {
-    let shown: String = text.chars().take(width).collect();
+    let shown: String = clip(text, width, buf.widths());
     buf.print_fg(x, y, &shown, fg);
 }
 
@@ -467,7 +469,7 @@ fn paint_panel_hp(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer, y: i32
     print_clipped(buf, (TEXT_X, y), TEXT_W, &hp, c(color));
     // The bar where it always is, or after a longer line, kept inside
     // (none when no cell is left: the meter draws no cell then).
-    let text_end = TEXT_X + to_i32(hp.chars().count()) + 1;
+    let text_end = TEXT_X + buf.text_cells(&hp) + 1;
     let x = HP_BAR_X.max(text_end);
     let cells = HP_BAR_CELLS.min(TEXT_X + to_i32(TEXT_W) - x);
     let bar = Rect::new(x, y, cells, 1);
@@ -491,7 +493,7 @@ fn paint_panel_cells(ctx: &Ctx, cells: &[PanelCellView], buf: &mut GlyphBuffer, 
             // check-text: not a data name (the view's own)
             let name = &cell.name;
             print_clipped(buf, (x, y), PANEL_CELL_W, name, c(UiColor::TextDim));
-            let name_w = name.chars().count();
+            let name_w = text_width(name, buf.widths());
             let value = format!(
                 "{:>w$}",
                 cell.value,
@@ -515,7 +517,7 @@ fn paint_panel_cells(ctx: &Ctx, cells: &[PanelCellView], buf: &mut GlyphBuffer, 
 fn paint_panel_weapon(ctx: &Ctx, weapon: &MenuHeader, buf: &mut GlyphBuffer, y: i32) {
     let c = |u| ctx.palette.get(u);
     let uses = weapon.uses.as_ref();
-    let uses_w = uses.map_or(0, |u| u.text.chars().count());
+    let uses_w = uses.map_or(0, |u| text_width(&u.text, buf.widths()));
     let name_w = PANEL_WEAPON_W.saturating_sub(uses_w + 1).min(TEXT_W);
     // check-text: not a data name (the view's own)
     print_clipped(buf, (TEXT_X, y), name_w, &weapon.name, c(UiColor::Text));
@@ -638,7 +640,7 @@ fn dialog_size(title: &str, lines: &[(StyledText, UiColor)], widths: &CellWidths
     let widest = lines
         .iter()
         .map(|(l, _)| l.width(widths))
-        .chain(core::iter::once(title.chars().count() + 2))
+        .chain(core::iter::once(text_width(title, widths) + 2))
         .max()
         .unwrap_or(0);
     let w = i32::try_from(widest).unwrap_or(0) + 4;
@@ -727,8 +729,12 @@ fn paint_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer) {
 /// their labels in a column ([`objective::label_width`]), a border and two
 /// blank columns each side; the title, a blank row, the lines and a blank
 /// row between borders.
-pub fn objective_banner_size(title: &str, lines: &[ObjectiveLine]) -> (i32, i32) {
-    let cells = |s: &str| i32::try_from(s.chars().count()).unwrap_or(0);
+pub fn objective_banner_size(
+    title: &str,
+    lines: &[ObjectiveLine],
+    widths: &CellWidths,
+) -> (i32, i32) {
+    let cells = |s: &str| to_i32(text_width(s, widths));
     let w = objective::padded(lines)
         .iter()
         .map(|l| cells(l))
@@ -744,7 +750,7 @@ pub fn objective_banner_size(title: &str, lines: &[ObjectiveLine]) -> (i32, i32)
 fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    let (w, h) = objective_banner_size(&banner.title, &banner.lines);
+    let (w, h) = objective_banner_size(&banner.title, &banner.lines, buf.widths());
     let rect = Rect::new(
         MAP_VIEW.x + (MAP_VIEW.w - w) / 2,
         MAP_VIEW.y + (MAP_VIEW.h - h) / 2,
@@ -817,7 +823,7 @@ fn paint_warning(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let (fg, bg) = (c(UiColor::TextHighlight), c(UiColor::PanelBg));
     let lines = wrap_words(text, WARNING_W);
-    let cells = |s: &String| i32::try_from(s.chars().count()).unwrap_or(0);
+    let cells = |s: &String| buf.text_cells(s);
     let w = lines.iter().map(cells).max().unwrap_or(0) + 4;
     let h = i32::try_from(lines.len()).unwrap_or(1) + 2;
     let rect = Rect::new(MAP_VIEW.x, HELP_BAR.y - h, w, h);

@@ -84,6 +84,19 @@ impl<V> Skins<V> {
 
 pub(crate) use shuyi_ui::screens::{centre_x, print_centred};
 
+/// The start of `text` that fits in `w` cells as `widths` measure them,
+/// cut with no mark (the engine's `cut` ends with `…`): a wide character
+/// that would end past `w` is left out whole (ticket 0236).
+pub(crate) fn clip(text: &str, w: usize, widths: &shuyi_assets::font::CellWidths) -> String {
+    let mut used = 0;
+    text.chars()
+        .take_while(|&c| {
+            used += widths.of_char(c);
+            used <= w
+        })
+        .collect()
+}
+
 /// A pick-one screen's frame: `input` goes to `menu`, and the item chosen
 /// pops the screen with its value for the screen below; Cancel pops it
 /// with nothing.
@@ -122,3 +135,23 @@ pub(crate) fn debug_hint(ctx: &Ctx) -> Option<String> {
 /// on row `y`, one cell in from the edge, unless those cells or the one
 /// before them already hold text ([`shuyi_ui::debug::glyph::paint_hint`]).
 pub(crate) use shuyi_ui::debug::glyph::paint_hint as paint_debug_hint;
+
+#[cfg(test)]
+mod clip_tests {
+    use super::clip;
+    use shuyi_assets::font::CellWidths;
+
+    /// `clip` keeps what fits in cells: a wide character counts two and is
+    /// never cut in half (ticket 0236).
+    #[test]
+    fn clip_counts_cells_and_keeps_wide_characters_whole() {
+        let narrow = CellWidths::NARROW;
+        assert_eq!(clip("Steel Sword", 5, &narrow), "Steel");
+        assert_eq!(clip("Iron", 10, &narrow), "Iron");
+        let wide = CellWidths::wide(['姝', '怡']);
+        assert_eq!(clip("姝怡A", 4, &wide), "姝怡");
+        assert_eq!(clip("姝怡A", 3, &wide), "姝");
+        assert_eq!(clip("A姝怡", 2, &wide), "A");
+        assert_eq!(clip("姝", 0, &wide), "");
+    }
+}

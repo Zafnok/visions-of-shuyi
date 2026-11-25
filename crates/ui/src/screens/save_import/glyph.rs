@@ -10,8 +10,11 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
+use crate::screens::clip;
 use crate::screens::{centre_x, print_centred};
 use crate::widgets::AskView;
+use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 use shuyi_ui::screens::print_centred_styled;
 
 /// The panel, in cells: Load Game's.
@@ -39,9 +42,9 @@ const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
 /// What is between two answers.
 const ANSWER_GAP: &str = "   ";
 
-/// Cells `text` takes, as a coordinate.
-fn cells(text: &str) -> i32 {
-    i32::try_from(text.chars().count()).unwrap_or(0)
+/// Cells `text` takes as `widths` measure them, as a coordinate.
+fn cells(text: &str, widths: &CellWidths) -> i32 {
+    i32::try_from(text_width(text, widths)).unwrap_or(0)
 }
 
 /// Paints the screen over the whole of `buf`.
@@ -76,7 +79,7 @@ pub fn paint(ctx: &Ctx, view: &ImportView, buf: &mut GlyphBuffer) {
     }
     if let Some(range) = &view.range {
         let range = format!(" {range} ");
-        let x = PANEL.x + PANEL.w - 2 - cells(&range);
+        let x = PANEL.x + PANEL.w - 2 - cells(&range, buf.widths());
         buf.print(x, PANEL.y + PANEL.h - 1, &range, dim, bg);
     }
     if let Some(options) = &view.options {
@@ -111,10 +114,10 @@ fn paint_row(ctx: &Ctx, row: &ImportRowView, buf: &mut GlyphBuffer, y: i32) {
         buf.print(CHAPTER_X, y, &row.verdict, verdict, bg);
         return;
     };
-    let chapter: String = chapter.chars().take(CHAPTER_W).collect();
+    let chapter: String = clip(chapter, CHAPTER_W, buf.widths());
     buf.print(CHAPTER_X, y, &chapter, text, bg);
     if let Some(time) = &row.playtime {
-        buf.print(TIME_END_X - cells(time), y, time, text, bg);
+        buf.print(TIME_END_X - cells(time, buf.widths()), y, time, text, bg);
     }
     buf.print(VERDICT_X, y, &row.verdict, verdict, bg);
 }
@@ -137,7 +140,7 @@ fn paint_question(ctx: &Ctx, question: &AskView<bool>, buf: &mut GlyphBuffer) {
         .map(|a| format!(" {} ", a.label))
         .collect();
     let line = labels.join(ANSWER_GAP);
-    let mut x = centre_x(buf, line.chars().count());
+    let mut x = centre_x(buf, text_width(&line, buf.widths()));
     for (answer, label) in question.answers.iter().zip(&labels) {
         let (fg, back) = if answer.focused {
             (bg, c(UiColor::PanelBorderFocus))
@@ -145,6 +148,6 @@ fn paint_question(ctx: &Ctx, question: &AskView<bool>, buf: &mut GlyphBuffer) {
             (text, bg)
         };
         buf.print(x, QUESTION_ROW + 1, label, fg, back);
-        x += cells(label) + cells(ANSWER_GAP);
+        x += cells(label, buf.widths()) + cells(ANSWER_GAP, buf.widths());
     }
 }

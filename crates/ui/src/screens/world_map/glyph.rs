@@ -224,7 +224,7 @@ fn paint_map(
         };
         put(buf, p, symbol, Some(fg));
         if let Some(level) = &place.level {
-            let len = i32::try_from(level.chars().count()).unwrap_or(0);
+            let len = buf.text_cells(level);
             let x = p.x - (len - 1) / 2;
             for (i, ch) in level.chars().enumerate() {
                 let at = Pos::new(x + i32::try_from(i).unwrap_or(0), p.y - 1);
@@ -353,7 +353,7 @@ pub(super) fn paint_panel(ctx: &Ctx, view: &WorldMapView, buf: &mut GlyphBuffer)
     buf.draw_box(PANEL, BoxStyle::Double, border, bg);
     let panel = &view.panel;
     let title = format!(" {} ", panel.title);
-    let width = i32::try_from(title.chars().count()).unwrap_or(0);
+    let width = buf.text_cells(&title);
     let x = PANEL.x + (PANEL.w - width).max(0) / 2;
     buf.print(x, PANEL.y, &title, c(UiColor::TextHighlight), bg);
     let x = PANEL.x + 2;

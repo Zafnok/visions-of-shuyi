@@ -15,8 +15,8 @@ use trpg_core::{
 use crate::bundle;
 use crate::enums::RawArmourWeight;
 use crate::error::ContentError;
+use crate::font::text_width;
 use crate::formats::{self, DataTable};
-use crate::lang::text_width;
 use crate::ron_loader::parse_ron;
 use crate::terrain::line_of;
 

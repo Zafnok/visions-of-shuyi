@@ -11,10 +11,11 @@ use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::playdate::{bar, cells, inks, to_i32, window};
+use shuyi_assets::font::CellWidths;
 
 /// The x that centres `text` in `rect`.
-fn centred_in(rect: Rect, text: &str) -> i32 {
-    rect.x + (rect.w - cells(text)) / 2
+fn centred_in(rect: Rect, text: &str, widths: &CellWidths) -> i32 {
+    rect.x + (rect.w - cells(text, widths)) / 2
 }
 
 /// The height of the grid's window for `grid`: the frame, the name, a
@@ -32,7 +33,7 @@ pub fn paint_grid(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, grid: &GridView)
     window(ctx, buf, rect, &grid.title);
     let shown = format!("{}_", grid.spelled);
     buf.print(
-        centred_in(rect, &shown),
+        centred_in(rect, &shown, buf.widths()),
         rect.y + 1,
         &shown,
         ink.text,
@@ -40,7 +41,7 @@ pub fn paint_grid(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, grid: &GridView)
     );
     for (r, labels) in grid.rows.iter().enumerate() {
         let y = rect.y + 3 + to_i32(r);
-        let widths: Vec<i32> = labels.iter().map(|l| cells(l) + 2).collect();
+        let widths: Vec<i32> = labels.iter().map(|l| cells(l, buf.widths()) + 2).collect();
         let mut x = rect.x + (rect.w - widths.iter().sum::<i32>()) / 2;
         for (col, (label, &w)) in labels.iter().zip(&widths).enumerate() {
             if grid.focus == (r, col) {
@@ -60,7 +61,7 @@ pub fn paint_typing(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, typing: &Typin
     window(ctx, buf, rect, &typing.title);
     let shown = format!("{}_", typing.typed);
     buf.print(
-        centred_in(rect, &shown),
+        centred_in(rect, &shown, buf.widths()),
         rect.y + 2,
         &shown,
         ink.text,
@@ -68,7 +69,7 @@ pub fn paint_typing(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, typing: &Typin
     );
     let hint = &typing.hint;
     buf.print(
-        centred_in(rect, hint),
+        centred_in(rect, hint, buf.widths()),
         rect.y + 4,
         hint,
         ink.text,

@@ -9,6 +9,7 @@ use crate::screens::battle::testing::skirmish;
 use crate::screens::battle::view::{ForecastHp, TotalView};
 use crate::words::Words;
 use insta::assert_snapshot;
+use shuyi_assets::font::CellWidths;
 
 /// The lord's forecast against the brigand at `brigand_hp`, changed by
 /// `change`.
@@ -395,23 +396,50 @@ fn steel(short: Option<&str>) -> ForecastView {
 fn a_weapon_shows_its_name_or_its_short_name_or_is_cut() {
     // The PC's 13 cells leave 10 for the name before ` 25`.
     let v = steel(Some("Stl Sword"));
-    assert_eq!(weapon_name(&v.sides[0], Some(25), COLUMN_W), "Stl Sword");
+    assert_eq!(
+        weapon_name(&v.sides[0], Some(25), COLUMN_W, &CellWidths::NARROW),
+        "Stl Sword"
+    );
     // With no uses after it, the whole name fits.
-    assert_eq!(weapon_name(&v.sides[0], None, COLUMN_W), "Steel Sword");
+    assert_eq!(
+        weapon_name(&v.sides[0], None, COLUMN_W, &CellWidths::NARROW),
+        "Steel Sword"
+    );
     // A short name too wide too (the Playdate's 10 cells) is cut itself.
-    assert_eq!(weapon_name(&v.sides[0], Some(25), 10), "Stl Sw…");
+    assert_eq!(
+        weapon_name(&v.sides[0], Some(25), 10, &CellWidths::NARROW),
+        "Stl Sw…"
+    );
     // No short name: the name is cut.
     let bare = steel(None);
     assert_eq!(
-        weapon_name(&bare.sides[0], Some(25), COLUMN_W),
+        weapon_name(&bare.sides[0], Some(25), COLUMN_W, &CellWidths::NARROW),
         "Steel Swo…"
     );
     // A name that fits keeps it, short name or not.
     let iron = view(20, |v| v.sides[0].short = Some("Irn Swd".into()));
     assert_eq!(
-        weapon_name(&iron.sides[0], Some(20), COLUMN_W),
+        weapon_name(&iron.sides[0], Some(20), COLUMN_W, &CellWidths::NARROW),
         "Iron Sword"
     );
+}
+
+/// A weapon named in wide characters is measured in cells (ticket 0236):
+/// `铁剑` is 4 cells and fits beside its uses; a name of 6 wide characters
+/// (12 cells) doesn't fit the 10 left, and is cut whole characters at a
+/// time.
+#[test]
+fn a_wide_weapon_name_is_measured_in_cells() {
+    let widths = CellWidths::wide("铁剑钢长".chars());
+    let short = view(20, |v| v.sides[0].weapon = "铁剑".into());
+    assert_eq!(
+        weapon_name(&short.sides[0], Some(20), COLUMN_W, &widths),
+        "铁剑"
+    );
+    let long = view(20, |v| v.sides[0].weapon = "钢长剑钢长剑".into());
+    let shown = weapon_name(&long.sides[0], Some(20), COLUMN_W, &widths);
+    assert_eq!(shown, "钢长剑钢…");
+    assert!(shuyi_assets::lang::text_width(&shown, &widths) <= COLUMN_W - 3);
 }
 
 #[test]

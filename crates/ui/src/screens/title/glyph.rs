@@ -7,6 +7,7 @@
 //! another `paint` of the same view (ADR-0054).
 
 use core::f32::consts::TAU;
+use shuyi_assets::lang::text_width;
 #[cfg(not(feature = "std"))]
 use shuyi_ui::float::Float;
 
@@ -395,8 +396,8 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
     let solid = f32::from(view.menu_opacity) / f32::from(FULL);
     let bottom = i32::from(buf.height()) - 1;
     if let Some(prompt) = &view.prompt {
-        let len = i32::try_from(prompt.chars().count()).unwrap_or(0);
-        let left = centre_x(buf, prompt.chars().count());
+        let len = buf.text_cells(prompt);
+        let left = centre_x(buf, text_width(prompt, buf.widths()));
         let right = left + len + PICTURE_GAP;
         let w = i32::try_from(KEYBOARD_PICTURE[0].chars().count()).unwrap_or(0);
         // A band behind the line and its pictures: readable on any backdrop.
@@ -421,7 +422,7 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
         }
         if let Some(notice) = &view.notice {
             // On a band of its own, a blank cell wider on each side.
-            let len = notice.chars().count();
+            let len = text_width(notice, buf.widths());
             let at = centre_x(buf, len + 2);
             let band = Rect::new(at, MENU_ROW + h + 1, i32::try_from(len).unwrap_or(0) + 2, 1);
             buf.fill_rect(band, Cell::new(' ', dim, panel));
@@ -457,9 +458,9 @@ pub fn note_layout(note: &NoteView, menu: Rect, buf: &GlyphBuffer) -> (Rect, Vec
     let room = usize::try_from(most - MARGIN - face_w - MARGIN).unwrap_or(1);
     let paragraphs = core::iter::once(&note.heading).chain(&note.lines);
     let rows: Vec<String> = paragraphs
-        .flat_map(|p| word_wrap(p, room, &shuyi_assets::font::CellWidths::NARROW))
+        .flat_map(|p| word_wrap(p, room, buf.widths()))
         .collect();
-    let len = |s: &String| i32::try_from(s.chars().count()).unwrap_or(i32::MAX);
+    let len = |s: &String| buf.text_cells(s);
     let text_w = rows.iter().map(len).max().unwrap_or(0);
     let title_w = len(&note.title) + 2;
     let w = MARGIN + face_w + text_w.max(title_w - face_w) + MARGIN;

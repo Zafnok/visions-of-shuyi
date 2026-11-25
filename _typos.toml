@@ -43,6 +43,12 @@ ned = "ned"
 shoudl = "shoudl"
 heigh = "heigh"
 
+[default.extend-identifiers]
+# TakWolf, the author of Fusion Pixel, the Chinese font (ticket 0236):
+# typos splits the name into `Tak` + `Wolf`. The whole name, never `tak`
+# as a word.
+TakWolf = "TakWolf"
+
 [default]
 # Commit hashes (e.g. the engine pin c1ba9ec8 in docs/engine/pins.md):
 # typos splits them into fragments like "ba". A hex run is skipped only when

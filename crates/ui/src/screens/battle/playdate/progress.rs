@@ -53,7 +53,13 @@ fn paint_exp(ctx: &Ctx, page: &ExpView, area: Rect, buf: &mut GlyphBuffer) {
     pd::window(ctx, buf, rect, "");
     let (x, y) = (rect.x + 2, rect.y + 1);
     // check-text: not a data name (the view's own)
-    buf.print(x, y, &cut(&page.name, NAME_W), ink.text, ink.inside);
+    buf.print(
+        x,
+        y,
+        &cut(&page.name, NAME_W, buf.widths()),
+        ink.text,
+        ink.inside,
+    );
     let bar_x = x + NAME_COL;
     buf.print(bar_x, y, &page.exp_name, ink.text, ink.inside);
     let bar = Rect::new(bar_x + 4, y, EXP_BAR_CELLS, 1);
@@ -75,13 +81,19 @@ fn paint_class(ctx: &Ctx, page: &ClassProgressView, area: Rect, buf: &mut GlyphB
     let room = usize::try_from(rect.w - 4).unwrap_or(0);
     let mut y = rect.y + 1;
     // check-text: not a data name (the view's own)
-    buf.print(x, y, &cut(&page.name, NAME_W), ink.text, ink.inside);
-    let line = cut(&page.line, room.saturating_sub(13));
+    buf.print(
+        x,
+        y,
+        &cut(&page.name, NAME_W, buf.widths()),
+        ink.text,
+        ink.inside,
+    );
+    let line = cut(&page.line, room.saturating_sub(13), buf.widths());
     buf.print(x + NAME_COL, y, &line, ink.text, ink.inside);
     // The box is as tall as its lines.
     for line in page.mastered.iter().chain(&page.lines) {
         y += 1;
-        buf.print(x, y, &cut(line, room), ink.text, ink.inside);
+        buf.print(x, y, &cut(line, room, buf.widths()), ink.text, ink.inside);
     }
 }
 
@@ -117,7 +129,13 @@ fn paint_gains(ctx: &Ctx, page: &GainsView, area: Rect, buf: &mut GlyphBuffer) {
     };
     let room = usize::try_from(rect.x + rect.w - 2 - x).unwrap_or(0);
     let print = |buf: &mut GlyphBuffer, dy: i32, text: &str| {
-        buf.print(x, rect.y + dy, &cut(text, room), ink.text, ink.inside);
+        buf.print(
+            x,
+            rect.y + dy,
+            &cut(text, room, buf.widths()),
+            ink.text,
+            ink.inside,
+        );
     };
     print(buf, 1, &page.banner);
     // check-text: not a data name (the view's own)
@@ -135,7 +153,14 @@ fn paint_gains(ctx: &Ctx, page: &GainsView, area: Rect, buf: &mut GlyphBuffer) {
         let n = buf.print(at.0, at.1, &row, ink.text, ink.inside);
         if let Some(gain) = gain {
             let gx = at.0 + i32::from(n);
-            pd::bar(ctx, buf, gx - 1, at.1, cells(&gain) + 1, &gain);
+            pd::bar(
+                ctx,
+                buf,
+                gx - 1,
+                at.1,
+                cells(&gain, buf.widths()) + 1,
+                &gain,
+            );
         }
     }
 }

@@ -1,7 +1,8 @@
 # Fonts
 
-The game draws every cell with one bitmap font (ADR-0003, ADR-0018). The
-one exception is the chapter title card's lettering, Cinzel, baked into
+The game draws every cell with one bitmap font (ADR-0003, ADR-0018), and
+Chinese text with a second, wide one, each character over two cells
+(Fusion Pixel 12px, below; ADR-0045 §4). The one other exception is the chapter title card's lettering, Cinzel, baked into
 glyph sheets in `assets/title/` (ticket 0812, ADR-0128; its licence is
 `Cinzel-LICENSE.txt` here).
 
@@ -22,37 +23,59 @@ Why Terminus:
 - Clean, even strokes designed for long reading sessions at small sizes.
 - OFL-1.1 is allowed for fonts by ADR-0013 and permits commercial bundling.
 
-## Chinese (Simplified): chosen, not yet in the atlas
+## Chinese (Simplified): Fusion Pixel 12px, the wide set `zhhans`
 
 Nick picked these by eye in ticket 0045 (`docs/design/voices-languages-and-script.md`,
 *Chinese (Simplified)*; mockups `docs/screenshots/0045-*.png`). Ticket
-0239 adds the default to the atlas, and 0261 the second one with the
-Options row. The full list of fonts checked is in the design doc.
+0236 put the default, Fusion Pixel 12px, in the atlas as its first wide
+font; 0261 adds the second one with the Options row. The full list of
+fonts checked is in the design doc.
 
 | Candidate | Licence (checked at source, 2026-11-24) | GB 2312 coverage (counted from the files) | Verdict |
 | --------- | ---------------------------------------- | ----------------------------------------- | ------- |
 | **Fusion Pixel 12px** 2026.11.10, `fusion-pixel-12px-monospaced-zh_hans.bdf` | SIL OFL-1.1 (`OFL.txt` and `LICENSES/` in the [release](https://github.com/TakWolf/fusion-pixel-font/releases/tag/2026.11.10)); parts Ark Pixel, Galmuri, Cubic 11, all OFL-1.1 | level 1: 3,755 / 3,755; level 2: 2,972 / 3,008 | **Chosen**, the default (12×12, drawn in the 16×16 space of two cells) |
-| **GNU Unifont** 18.0.01, `unifont-18.0.01.hex` / `.bdf` | SIL OFL-1.1 or GPL-2+ with the font exception ([`LICENSE.txt`](https://unifoundry.com/LICENSE.txt)); we take the OFL | level 1: 3,755; level 2: 3,008 | **Chosen**, the Options alternative |
+| **GNU Unifont** 18.0.01, `unifont-18.0.01.hex` / `.bdf` | SIL OFL-1.1 or GPL-2+ with the font exception ([`LICENSE.txt`](https://unifoundry.com/LICENSE.txt)); we take the OFL | level 1: 3,755; level 2: 3,008 | **Chosen**, the Options alternative (not yet in the atlas: 0261) |
+
+**In the atlas** (ticket 0236): `assets-src/fonts/fusion-pixel-12px-monospaced-zh_hans.bdf`
+is the release's BDF (the `fusion-pixel-font-12px-monospaced-bdf` zip)
+with one line changed: its `FONTBOUNDINGBOX` is `16 16 -2 -4`, not
+`12 12 0 -2`, so `cargo shuyi font-atlas --wide` reads it with the wide
+cell's size (twice Terminus's 8×16, which the tool requires) and places
+each 12×12 glyph as mockup C did: 2 px from the cell's left, its baseline
+on Terminus's (4 rows from the bottom), so a character has 2 px of space
+above and below it as well. A comment at the top of the file says so; no
+glyph is changed. Its licence, with the texts of the fonts it combines
+(the release's `OFL.txt` and `LICENSES/`), is `FusionPixel-LICENSE.txt`.
+
+The atlas keeps the glyphs of the set `zhhans` that the text uses (the
+packs whose `lang.ron` says `wide_font: Some("zhhans")`; the test pack
+does) and the ones `shuyi.ron`'s `font_atlas.wide_set_glyphs` names
+whatever the packs say: the CJK punctuation block and the full-width
+forms, so tests don't depend on a translation. A pack that gains a
+character the committed atlas lacks fails the stale-atlas test until the
+atlas is regenerated.
 
 ## Files
 
 | File | What |
 | ---- | ---- |
-| `atlas.png` | 557 glyphs, white on transparent, 32 cells of 8×16 per row (256×288 px) |
-| `atlas.ron` | `FontAtlasDef`: cell size, columns and `char → cell index` map |
+| `atlas.png` | 557 narrow glyphs, 174 wide ones (two cells each) and the bold face's, white on transparent, 32 cells of 8×16 per row (256×736 px) |
+| `atlas.ron` | `FontAtlasDef`: cell size, columns, `char → cell index` map, the wide sets (`wide_sets`: each wide glyph's left cell) and the bold glyphs |
 | `atlas_1bit.bin` | The same glyphs packed one bit a pixel for the Playdate (ADR-0074): each glyph in cell index order, 16 bytes (a byte a row, the highest bit the left pixel, a set bit the glyph), so the device never decodes a PNG |
 | `Terminus-LICENSE.txt` | The font's licence (OFL-1.1), shipped with the game |
+| `FusionPixel-LICENSE.txt` | Fusion Pixel's licence (OFL-1.1, with its parts' texts), the Chinese glyphs, shipped with the game |
 | `Cinzel-LICENSE.txt` | Cinzel's licence (OFL-1.1), the chapter card's lettering (`assets/title/README.md`), shipped with the game |
 
 The three atlas files are **generated**; never edit them by hand. The sources are
 in `assets-src/fonts/` (outside `assets/`, so they aren't embedded in the
-game): `ter-u16n.bdf`, the font, `pad-shapes.bdf` and `tile-shapes.bdf`,
+game): `ter-u16n.bdf`, the font, `fusion-pixel-12px-monospaced-zh_hans.bdf`,
+the wide font (above), `pad-shapes.bdf` and `tile-shapes.bdf`,
 our own extra glyphs (below), and `ter-u16b.bdf`, Terminus's bold face
 from the same release, which key caps draw a key's name with (ticket 0254,
 `docs/design/look-and-feel.md`, *Key names in hints*). To regenerate:
 
 ```bash
-cargo shuyi font-atlas --bold assets-src/fonts/ter-u16b.bdf assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf assets-src/fonts/tile-shapes.bdf assets/fonts
+cargo shuyi font-atlas --wide zhhans=assets-src/fonts/fusion-pixel-12px-monospaced-zh_hans.bdf --bold assets-src/fonts/ter-u16b.bdf assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf assets-src/fonts/tile-shapes.bdf assets/fonts
 ```
 
 A test in `xtask` fails if the committed atlas differs from what the tool
@@ -105,3 +128,9 @@ building, so no text uses them.
   under the name "Terminus Font"; mentions here are acknowledgement only,
   as the OFL allows. `ter-u16n.bdf` itself is unmodified.
 - The font is never sold on its own, only bundled with the game.
+- **Fusion Pixel** (Copyright (c) 2022, TakWolf): OFL-1.1 with no Reserved
+  Font Name; its parts Ark Pixel and Galmuri are OFL-1.1 too, and Cubic
+  11's notice grants "unlimited permission" for the M+ and JF Dot fonts it
+  grew from (`FusionPixel-LICENSE.txt` holds every text). The BDF in
+  `assets-src/fonts/` with its bounding box widened, and the atlas made
+  from it, are a Modified Version, which the OFL allows under the OFL.

@@ -33,9 +33,16 @@ pub fn paint(ctx: &Ctx, view: &FightBoxView, area: Rect, buf: &mut GlyphBuffer) 
     let room = to_usize(rect.w / 2 - 3);
     for (f, x) in view.sides.iter().zip(columns(rect)) {
         // check-text: not a data name (the view's own)
-        let name = cut(&f.name, room);
+        let name = cut(&f.name, room, buf.widths());
         if f.flashing {
-            pd::bar(ctx, buf, x - 1, rect.y + 1, cells(&name) + 2, &name);
+            pd::bar(
+                ctx,
+                buf,
+                x - 1,
+                rect.y + 1,
+                cells(&name, buf.widths()) + 2,
+                &name,
+            );
         } else {
             buf.print(x, rect.y + 1, &name, ink.text, ink.inside);
         }
@@ -44,7 +51,13 @@ pub fn paint(ctx: &Ctx, view: &FightBoxView, area: Rect, buf: &mut GlyphBuffer) 
         let bar = (x + 6, rect.y + 2);
         hp_bar(ctx, buf, bar, BOX_BAR_CELLS, (f.hp, f.hp, f.max));
         if let Some(result) = &f.result {
-            buf.print(x, rect.y + 3, &cut(result, room), ink.text, ink.inside);
+            buf.print(
+                x,
+                rect.y + 3,
+                &cut(result, room, buf.widths()),
+                ink.text,
+                ink.inside,
+            );
         }
     }
 }

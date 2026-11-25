@@ -101,10 +101,39 @@ fn only_a_folder_is_a_place_to_show() {
 
 #[test]
 fn a_long_path_loses_its_start() {
-    assert_eq!(place_line("In", "C:\\a\\b", 20), "In C:\\a\\b");
-    let line = place_line("In", "C:\\Users\\Someone\\tactical-rpg", 20);
+    assert_eq!(
+        place_line(
+            "In",
+            "C:\\a\\b",
+            20,
+            &shuyi_assets::font::CellWidths::NARROW
+        ),
+        "In C:\\a\\b"
+    );
+    let line = place_line(
+        "In",
+        "C:\\Users\\Someone\\tactical-rpg",
+        20,
+        &shuyi_assets::font::CellWidths::NARROW,
+    );
     assert_eq!(line, "In …one\\tactical-rpg");
     assert_eq!(line.chars().count(), 20);
+}
+
+/// A path with wide characters (a Chinese user name) is measured in cells
+/// (ticket 0236): it fits or loses its start by cells, and a wide
+/// character is never cut in half.
+#[test]
+fn a_path_is_measured_in_cells() {
+    let widths = shuyi_assets::font::CellWidths::wide(['姝', '怡']);
+    assert_eq!(place_line("In", "D:\\姝怡", 10, &widths), "In D:\\姝怡");
+    // 7 cells for the path: `…` and the last 6 cells, `U\姝怡`.
+    let line = place_line("In", "D:\\U\\姝怡", 10, &widths);
+    assert_eq!(line, "In …U\\姝怡");
+    // 6 for the path: `…` and 5, which `U\姝怡` passes by one, so `U` goes.
+    let line = place_line("I", "D:\\U\\姝怡", 8, &widths);
+    assert_eq!(line, "I …\\姝怡");
+    assert!(shuyi_assets::lang::text_width(&line, &widths) <= 10);
 }
 
 #[test]

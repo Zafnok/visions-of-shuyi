@@ -11,6 +11,8 @@
 //! weapon` in the bottom border (Nick, 0463).
 
 use crate::prelude::*;
+use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 use shuyi_ui::text::StyledText;
 use trpg_content::ImageTable;
 use trpg_content::image::KILL_MARK_PATH;
@@ -229,14 +231,19 @@ pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
 /// after it (ticket 0498): its name if that fits, else its short name if
 /// that fits (`Stl Sword 25`), else the shorter of the two cut with `…`
 /// (the Playdate's `Stl Sw… 25`).
-pub fn weapon_name(side: &ForecastSideView, uses: Option<u32>, column: usize) -> String {
+pub fn weapon_name(
+    side: &ForecastSideView,
+    uses: Option<u32>,
+    column: usize,
+    widths: &CellWidths,
+) -> String {
     let taken = uses.map_or(0, |u| u.to_string().len() + 1);
     let room = column.saturating_sub(taken);
-    if side.weapon.chars().count() <= room {
+    if text_width(&side.weapon, widths) <= room {
         return side.weapon.clone();
     }
     // `cut` leaves a short name that fits as it is.
-    cut(side.short.as_deref().unwrap_or(&side.weapon), room)
+    cut(side.short.as_deref().unwrap_or(&side.weapon), room, widths)
 }
 
 /// `side`'s weapon at `(x, y)`, dimmed, and its uses after it (`Iron
@@ -249,11 +256,11 @@ fn paint_weapon(
     uses: Option<u32>,
 ) {
     let c = |u| ctx.palette.get(u);
-    let shown = weapon_name(side, uses, COLUMN_W);
+    let shown = weapon_name(side, uses, COLUMN_W, buf.widths());
     print_clipped(buf, (x, y), COLUMN_W, &shown, c(UiColor::TextDim));
     if let Some(uses) = uses {
         let uses = uses.to_string();
-        let at = x + i32::try_from(shown.chars().count() + 1).unwrap_or(0);
+        let at = x + buf.text_cells(&shown) + 1;
         print_clipped(buf, (at, y), uses.len(), &uses, c(UiColor::Text));
     }
 }
@@ -268,7 +275,7 @@ fn paint_change(
     after_fg: Rgb,
 ) {
     let c = |u| ctx.palette.get(u);
-    let arrow = x + i32::try_from(before.chars().count()).unwrap_or(0) + 1;
+    let arrow = x + buf.text_cells(before) + 1;
     print_clipped(buf, (x, y), 3, before, c(UiColor::Text));
     print_clipped(buf, (arrow, y), 1, "→", c(UiColor::TextDim));
     print_clipped(buf, (arrow + 2, y), 3, after, after_fg);

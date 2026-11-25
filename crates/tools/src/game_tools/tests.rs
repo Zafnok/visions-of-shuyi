@@ -955,6 +955,13 @@ fn the_notices_name_the_games_works_and_license_texts() {
 /// 0254), relative to the repo root.
 const BOLD: &str = "assets-src/fonts/ter-u16b.bdf";
 
+/// The wide set `zhhans` and its font, Fusion Pixel 12px (ticket 0236),
+/// relative to the repo root.
+const WIDE: (&str, &str) = (
+    "zhhans",
+    "assets-src/fonts/fusion-pixel-12px-monospaced-zh_hans.bdf",
+);
+
 /// The font sources the committed atlas is built from, relative to the
 /// repo root: Terminus, then our own extra glyphs (the controller
 /// buttons, the building tiles).
@@ -1043,8 +1050,11 @@ fn committed_atlas_is_up_to_date() {
     let rules = project.config.font_atlas.as_ref().unwrap();
     let dir = std::env::temp_dir().join(format!("xtask-atlas-check-{}", std::process::id()));
     let fonts = SOURCES.map(|source| root.join(source));
-    let chars =
+    let mut chars =
         AtlasChars::of_lang(&lang().lang, &rules.required_glyphs).with_wide(&rules.wide_glyphs);
+    for (set, glyphs) in &rules.wide_set_glyphs {
+        chars = chars.with_wide_set(Some(set), glyphs);
+    }
     let mut options = shuyi_cli::font_atlas::RunOptions::default();
     options.rules = rules.clone();
     options.command = project.config.command().to_owned();
@@ -1052,10 +1062,16 @@ fn committed_atlas_is_up_to_date() {
     options.out_dir = dir.clone();
     options.chars = chars;
     options.bold = Some(root.join(BOLD));
+    options.wides = vec![shuyi_cli::font_atlas::WideFont {
+        set: Some(WIDE.0.to_owned()),
+        path: root.join(WIDE.1),
+    }];
     let msg = shuyi_cli::font_atlas::run(&options).unwrap();
     assert!(msg.starts_with("font-atlas: "));
     let read = |p: &Path| fs::read_to_string(p).unwrap().replace("\r\n", "\n");
-    let rerun = "rerun `cargo shuyi font-atlas --bold assets-src/fonts/ter-u16b.bdf \
+    let rerun = "rerun `cargo shuyi font-atlas \
+                 --wide zhhans=assets-src/fonts/fusion-pixel-12px-monospaced-zh_hans.bdf \
+                 --bold assets-src/fonts/ter-u16b.bdf \
                  assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf \
                  assets-src/fonts/tile-shapes.bdf assets/fonts`";
     assert_eq!(
@@ -1077,7 +1093,8 @@ fn committed_atlas_is_up_to_date() {
 }
 
 /// The committed one-bit atlas has exactly the pixels of the committed
-/// `atlas.png`, glyph by glyph, at the cells of `atlas.ron`.
+/// `atlas.png`, glyph by glyph, at the cells of `atlas.ron`: a wide
+/// glyph's two halves are two cells (ticket 0236).
 #[test]
 fn the_one_bit_atlas_matches_the_png() {
     let fonts = repo_root().join("assets/fonts");
@@ -1087,9 +1104,25 @@ fn the_one_bit_atlas_matches_the_png() {
     let bits = fs::read(fonts.join(ONE_BIT_FILE)).unwrap();
     let to_usize = |v: u32| usize::try_from(v).unwrap();
     let rows = to_usize(def.cell_h);
-    // The regular glyphs and the bold ones (key caps, ticket 0254).
-    assert_eq!(bits.len(), (def.glyphs.len() + def.bold.len()) * rows);
-    for (&c, &index) in def.glyphs.iter().chain(&def.bold) {
+    // Every cell up to the last: the regular glyphs, the wide sets' (two
+    // each, and a row's last cell left empty before one) and the bold ones
+    // (key caps, ticket 0254).
+    assert_eq!(bits.len(), to_usize(def.cell_end()) * rows);
+    let wide = def
+        .all_wide_sets()
+        .flat_map(|(_, set)| set.iter().flat_map(|(&c, &i)| [(c, i), (c, i + 1)]));
+    let cells: Vec<(char, u32)> = def
+        .glyphs
+        .iter()
+        .chain(&def.bold)
+        .map(|(&c, &i)| (c, i))
+        .chain(wide)
+        .collect();
+    assert!(
+        cells.len() > def.glyphs.len() + def.bold.len(),
+        "no wide glyphs"
+    );
+    for (c, index) in cells {
         let cell = def.cell_rect(index);
         for row in 0..cell.h {
             let byte = bits[to_usize(index) * rows + to_usize(row)];

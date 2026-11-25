@@ -15,6 +15,8 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
 use crate::widgets::name_entry::glyph::{paint_grid, paint_typing};
+use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 use shuyi_ui::screens::print_centred_styled;
 
 /// Row of the heading.
@@ -38,9 +40,9 @@ const TYPE_BOX: Rect = Rect::new(27, 10, 46, 7);
 /// How much the portrait not chosen fades (0 = full colour, 1 = gone).
 const DIM_NOT_CHOSEN: f32 = 0.45;
 
-/// Cells `text` takes, as a coordinate.
-fn cells(text: &str) -> i32 {
-    i32::try_from(text.chars().count()).unwrap_or(0)
+/// Cells `text` takes as `widths` measure them, as a coordinate.
+fn cells(text: &str, widths: &CellWidths) -> i32 {
+    i32::try_from(text_width(text, widths)).unwrap_or(0)
 }
 
 /// Paints the lead screen over the whole of `buf`.
@@ -94,7 +96,7 @@ fn paint_gender(ctx: &Ctx, buf: &mut GlyphBuffer, gender: &GenderView, focused: 
     } else {
         UiColor::TextDim
     };
-    let label_x = x + (FRAME.0 - cells(&gender.label)) / 2;
+    let label_x = x + (FRAME.0 - cells(&gender.label, buf.widths())) / 2;
     let black = c(UiColor::Black);
     buf.print(label_x, LABEL_ROW, &gender.label, c(fg), black);
 }
@@ -116,11 +118,11 @@ fn paint_rows(ctx: &Ctx, view: &LeadSelectView, buf: &mut GlyphBuffer) {
         family,
     } = &view.name_row;
     let full = format!("{label}   {first} {family}");
-    let x = (i32::from(buf.width()) - cells(&full)) / 2;
+    let x = (i32::from(buf.width()) - cells(&full, buf.widths())) / 2;
     buf.print(x, NAME_ROW, label, c(UiColor::TextDim), black);
-    let name_x = x + cells(label) + 3;
+    let name_x = x + cells(label, buf.widths()) + 3;
     buf.print(name_x, NAME_ROW, first, c(lit(Row::Name)), black);
-    let family_x = name_x + cells(first) + 1;
+    let family_x = name_x + cells(first, buf.widths()) + 1;
     buf.print(family_x, NAME_ROW, family, c(UiColor::TextDim), black);
     let start = format!("[ {} ]", view.start);
     print_centred(buf, START_ROW, &start, c(lit(Row::Start)), black);
