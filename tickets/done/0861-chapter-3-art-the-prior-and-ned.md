@@ -106,9 +106,8 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
       portrait and battler ids; substituting a class default or omitting
       a portrait fails. Ordinary gates stay independent of the bought
       files.
-- [ ] `cargo shuyi private-assets --pin` passes (every new file has a
-      credit). Every file has one (`every_bought_file_has_a_credit`);
-      `--pin` itself runs once the private pull request merges.
+- [x] `cargo shuyi private-assets --pin` passes (every new file has a
+      credit).
 - [x] All gates in the `run-gates` skill pass, the private-assets tests
       included.
 
@@ -162,8 +161,7 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
 - No soot smudge on the prior: the generator has none, and it wasn't
   asked for again.
 - The private change went through a pull request there, as 0858's did;
-  the pin is on its branch commit until it merges, then moves to `main`
-  with `--pin`.
+  the pin moved to its merge on `main` with `--pin`.
 
 **Starting looks for the Act 1 playtest (1064)**
 
