@@ -1,0 +1,60 @@
+// The game's long run (`cargo shuyi bench --long`, ticket 1355; the
+// engine's docs/targets/README.md, *Long runs*, and the game's
+// docs/targets.md): the game's loop played from the title and back, over
+// and over, so each part is entered hundreds of times. The live heap and
+// the sounds alive must stay flat after the warm-up, and with `--twice` a
+// second run must hash every sample the same. The steps press the game's
+// actions by name, so they hold for any key layout.
+//
+// One loop: the title's debug Quick Battle (its Preparations, then
+// Fight!), the lead sent beside a brigand to attack it (the forecast and
+// the combat animation), End Turn, the enemy's turn, in which the lead
+// falls (the Quick Battle's seed is fixed, so it falls every loop): the
+// lead's last line beside the lead's portrait, the defeat and Game Over,
+// then Title; the Options menu walked; and the title's cursor back on
+// New Game, where the loop began (the title keeps it where it was left).
+//
+// 2,856 frames a loop, 350 loops: 999,600 frames, about 4.6 hours of play
+// at 60 frames a second. Measured on 2026-11-24 on Nick's Windows desktop
+// (`--twice`, with the private content): each run played in about 95 s,
+// besides about 4 minutes building the tool program. After the warm-up
+// the live heap stayed between 2.91 and 3.00 MB; the last quarter's most
+// was 33 KB over the first's (the `draw` and `paint` tags, by where in
+// the loop a sample falls, while the least held still), inside the
+// engine's default slack of 64 KiB, kept. No sound was left alive, and
+// the second run hashed every sample the same.
+(
+    format_version: 1,
+    about: "the Quick Battle, an attack, the enemy's turn, a dialogue line, Game Over, the options, looped",
+    script: (steps: [
+        // Title → Quick Battle → Preparations → Fight!; the objective.
+        act("CursorDown"), act("Confirm"), wait(0.5),
+        act("CursorLeft"), act("Confirm"), wait(3.0),
+        act("Confirm"), wait(1.0),
+        // The lead, beside the brigand, attacks it.
+        act("Confirm"),
+        act("CursorRight"), act("CursorRight"), act("CursorRight"), act("CursorUp"),
+        act("Confirm"), wait(1.0),
+        act("Confirm"), wait(0.5),
+        act("Confirm"), wait(0.5),
+        act("Confirm"), wait(6.0),
+        // The map menu's End Turn, and yes to the units still ready.
+        act("Cancel"), wait(0.5),
+        act("CursorUp"), act("Confirm"), wait(0.3),
+        act("Confirm"), wait(25.0),
+        // The lead's last line, the defeat, then Game Over's Title.
+        act("Confirm"), wait(2.0),
+        act("Confirm"), wait(3.0),
+        act("CursorDown"), act("CursorDown"), act("Confirm"), wait(2.0),
+        // Options, from the title's cursor on Quick Battle, walked.
+        act("CursorDown"), act("Confirm"), wait(0.3),
+        act("CursorDown"), act("CursorDown"), act("CursorDown"), act("CursorDown"),
+        act("CursorUp"), act("CursorUp"), act("CursorUp"), act("CursorUp"),
+        act("Cancel"), wait(0.5),
+        // Back to New Game, the loop's first line.
+        act("CursorUp"), act("CursorUp"), wait(0.3),
+    ]),
+    repeat: 350,
+    warm_up: 20000,
+    sample_every: 5000,
+)

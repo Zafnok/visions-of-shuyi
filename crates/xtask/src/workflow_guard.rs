@@ -10,13 +10,15 @@
 
 use std::collections::BTreeMap;
 
-/// The one build ADR-0117 §4 lets leave a job as an artifact, and two
+/// The one build ADR-0117 §4 lets leave a job as an artifact, and three
 /// uploads under `dist/` that hold no build: (workflow file, job, path).
 pub const ALLOWED_UPLOADS: &[(&str, &str, &str)] = &[
     // ADR-0117 §4: the playtest's trpg-tools, kept one day.
     ("playtest.yml", "build", "target/release/trpg-tools"),
     // The bench's numbers and table, no program (ticket 1244).
     ("ci.yml", "bench", "dist/bench"),
+    // The weekly long run's report, no program (ticket 1355).
+    ("long-run.yml", "long-run", "dist/bench/long-report.*"),
     // The release's reports and SHA-256; its own step checks no other file
     // and no line of the scripts leaves (ticket 0158).
     ("release.yml", "package", "dist/release/kept/*"),

@@ -80,6 +80,45 @@ with the web package its `export` job made, posts the table as the job's
 summary and fails on a number over its budget, naming the scenario, the
 frame and the target.
 
+## Long runs
+
+The scenarios above measure a few seconds. A slow leak (a cache per
+battle, a sound never stopped, a log of every line, the dialogue log or
+the voice clips kept after a scene) shows only after hours, and the
+Playdate's heap is 10 MB. `cargo shuyi bench --long` (engine ticket 3509,
+engine ADR-0146; the engine's `docs/targets/README.md`, *Long runs*)
+plays `bench/act-loop.long.ron` for about a million frames, about four
+and a half hours of play, in the `shuyi-bench` profile and never under
+Valgrind, so it runs on Windows too.
+
+One loop goes from the title's debug Quick Battle through its
+Preparations, the lead's attack on a brigand (forecast and animation),
+End Turn and the enemy's turn, in which the lead falls (the battle's seed
+is fixed): the lead's last line beside the portrait, the defeat and Game
+Over, then back to the title, the Options menu walked, and the title's
+cursor back on New Game. The steps press actions by name (`cargo shuyi
+check-keys` reads them).
+
+Every 5,000 frames after the first 20,000 it samples the live heap, each
+memory tag, the sounds alive and the frame's hash. It fails when the last
+quarter's most heap is over the first quarter's by more than 64 KiB, or
+its most sounds alive by any, naming both numbers and the three memory
+tags that grew most; with `--twice` a second process plays it again and
+fails at the first sample whose hash differs. It writes
+`dist/bench/long-report.md` and `long-report.json`.
+
+```bash
+cargo shuyi bench --long --twice --scenario act-loop --out dist/bench
+```
+
+The scenario's header comment gives the frames, the time and the heap
+range measured. CI's weekly `long-run.yml` (Mondays, and by hand with
+`gh workflow run long-run.yml`) runs it over the private content, posts
+the report's table as the job's summary and, on a failure, opens an issue
+labelled `long-run` or comments on the open one. A leak it finds gets a
+ticket of its own (`write-ticket`), with the tags the report names. It
+never runs on a pull request: it takes minutes.
+
 ## The numbers
 
 Measured 2026-11-18 by the `bench` job of PR #761 (the engine pin move
