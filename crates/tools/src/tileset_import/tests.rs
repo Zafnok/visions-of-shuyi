@@ -1123,6 +1123,11 @@ fn a_plain_sheets_tiles_are_cut_by_their_place() {
         err.ends_with("a 8×32 px image holds no 16×16 tile"),
         "{err}"
     );
+    // One tile is enough.
+    let one = encode_png(16, 16, &[7; 16 * 16 * 4]).unwrap();
+    temp.write("lib/pack/one.png", &one);
+    let sheet = Sheet::read(&dir, "pack/one.png").unwrap();
+    assert_eq!((sheet.size, sheet.tsx.columns), ((16, 16), 1));
     temp.write("lib/pack/text.png", b"not a png");
     let err = Sheet::read(&dir, "pack/text.png").unwrap_err();
     assert!(err.contains("text.png: "), "{err}");
@@ -1293,13 +1298,18 @@ fn a_plain_sheets_tiles_move_along_its_strip() {
         flat.extend([40, 60, 80, 255]);
     }
     temp.write("lib/pack/flat.png", &encode_png(64, 16, &flat).unwrap());
-    let looks = r#""outdoor": (terrain: { "water": ("pack/flat.png", 0) }, layers: []),"#;
-    let text = mapping_text("", looks);
+    // Its frames are packed after the patch's fifteen pictures, on the
+    // image's second row: each is compared with the frame it is.
+    let looks = r#""outdoor": (terrain: { "water": ("pack/flat.png", 0) }, layers: ["ground"]),"#;
+    let ground =
+        format!("\"ground\": Patch(of: [\"plain\"], sheet: \"{PLAIN}\", patch: 0, inside: 3),");
+    let text = mapping_text(&ground, looks);
     let open = text.trim_end_matches(')');
     let text = format!("{open}, moving: {{ \"pack/flat.png\": (frames: 4, step: 1, ms: 9) }})");
     let map: Mapping = ron::from_str(&text).unwrap();
     let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
     assert_eq!(imported.moving, []);
+    assert_eq!(imported.image.1, 32);
 }
 
 #[test]
