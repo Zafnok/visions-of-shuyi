@@ -5,7 +5,7 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
+status: todo
 blocked_by: ["0096", "1314"]
 blocks: ["1064"]
 nick_input: answer-first
@@ -41,6 +41,27 @@ from the content (a function of `trpg_content`, tested) and hand them to
 `motion::check` in the content test `every_moving_look_names_its_stills`
 (its `TODO(1315)`), which then checks them. Preview with
 `cargo shuyi frame-png --graphics reduced`.
+
+## 0096's answer (2026-11-24)
+
+`docs/design/look-and-feel.md`, *Moving tiles and effects* and *Chapter
+1's map*. For this ticket:
+
+- **Motion is drawn art, never made by the skin** (no code sway, no colour
+  cycling, no stand-in glints). Drop the "skin-made sway" step below.
+- **Chapter 1 is Rogue Adventure** (ELV Games, `assets-private/library/
+  elv-games/tilesets/rogue-adventure/`): its animated water
+  (`RA_Animated_Water.png`, 8 frames), its swaying trees
+  (`animated-trees/`, 12 frames of 64×80, green, blue and autumn), grass
+  tufts and lamps (`RA_Jungle_Animation(s).png`). Not the Tiny Tales
+  `.tsx` loops (their frames are all the same picture).
+- **Trees by footprint:** a big tree's trunk on one forest tile, its crown
+  over the tiles to its left and right and the two above (3×3); big trees
+  wherever a 3×3 of forest is free, then half-size trees (the frames
+  halved: one tile wide, two tall) on what's left, each tree with its own
+  phase. Halving the frames is a change to ELV's art: the credits say it
+  was modified (ELV's licence).
+- The mock that settled it is a throwaway script, not in the repository.
 
 ## Nick input
 

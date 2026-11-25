@@ -532,6 +532,136 @@ so they aren't in this repository (ADR-0032).
   The glyph look keeps its tinted background.
 - Cursor, path line, HP bar and range tints keep their rules below.
 
+### Moving tiles and effects
+
+Ticket 0096, asked 2026-11-23 over several rounds of moving mockups (the
+game's own frames of Chapter 1, and each candidate pack's store previews
+with our Tiny Tales units placed on them; kept in the session, never
+committed: they show bought art). **Chapter 1 is drawn with ELV Games'
+*Rogue Adventure*** (see *Which tileset* and *Chapter 1's map* below);
+what is settled:
+
+- **Motion is drawn by an artist, not made by the game.** Round 1 showed
+  the game faking it: tree rows shifted one pixel to sway, the water's
+  blues cycling, white glints, and stand-in specks for petals. Nick: "the
+  rest is bad … everything but not the way you made it pref an animated
+  tileset". So moving tiles come from a tileset (or add-on) whose frames
+  are drawn, and drifting effects from effect art.
+- **What should move on the battle map** (Nick: "everything"): rivers and
+  the sea, shore foam or waves, trees or grass swaying, torches and
+  braziers, chimney smoke. How fast is the art's own timing. Rogue
+  Adventure's trees sway (12 drawn frames each); its grass tufts and lamps
+  move too.
+- **Small creatures on open ground** (rabbits, birds, a snail: ByteWright's
+  *Ambient Critters*), idling and wandering. Nick: "I like the animals and
+  particles usage". They stand only on open plain, never on a hill, wood,
+  water or a unit's tile ("its weird that there are animals being occluded
+  by hills").
+- **Drifting effects, as kinds a chapter can name** (the palette that
+  1324–1331 pick from): **petals, leaves (green and autumn), snow, ash,
+  fireflies**. Nick on the leaves: "a good idea but looks poorly
+  implemented … we can also look if this kind of effect is an asset too".
+  Art: **ByteWright's *Weather Overlays*** (bought 2026-11-24 in its
+  *Everything So Far* bundle: 38 seamless loops, leaves, petals, snow,
+  embers, ash and fireflies among them), as seen in the Chapter 1 mockups
+  (summer leaves, dusk fireflies, autumn leaves). Elthen's *Weather and
+  Ambient Effects* ($5) stays a possible later buy; its base licence is
+  non-commercial, so it needs written permission for a sold game.
+- **Where: the battle map only.** Talk scenes and the world map stay as
+  they are. Nick: "battle map only and probably we decide density later".
+  How many particles is decided later, per chapter (1324–1331).
+- **The Playdate** (and any weaker target, 1314) shows the map still: no
+  moving tiles, no drifting effects. Not contested; the default from
+  1314.
+- **Licences:** every bought pack's licence was read and allows a sold
+  Steam game; each is recorded in `THIRD_PARTY_ASSETS.md` with its
+  creator. Every creator is credited, even where the licence says credit
+  is optional (Nick: "I wanna credit everyone artists, musicians, etc
+  unless they explicitly dont wanna be credited").
+
+#### Which tileset
+
+What the search found (four rounds, about 40 packs): flowing water and
+waterfalls are common; drawn tree sway at 16 pixels is not; no single pack
+has every terrain with water, trees, torches and smoke all moving. Tiny
+Tales' own sets barely move: their Tiled files list frame loops for
+coasts, hills and woods whose frames are all the same picture; only its
+Beach sets (surf), waterfalls and objects (braziers, torches, smoke, doors)
+truly move, and its RPG Maker water sheets are still too.
+
+- **Round 1** (Tiny Tales' World Map set with a ground per terrain):
+  "bad … search for other packs and even bought is ok as long as it has a
+  lot of value and a good style and pref hand made". The 48-pixel sets in
+  the bundle are three times our tile and were ruled out.
+- **Round 2–3** (ten packs from their stores; then our units on two):
+  - *The Fantasy Tileset* (Ventilatore): "I like fantasy tileset more than
+    I thought", but "a little bright like for a cozy game" and "has a
+    problem with scaling, everything is huge next to our chars".
+  - *Mana Seed* (Seliel the Shaper): "while absolutely beautiful clashes
+    heavily with the tiny tales characters".
+  - Heroic Overworld (IKnowKingRabbit) and Puny World: "would work for our
+    world map but not for the battle maps" (a note for the world map,
+    1007, not taken further here). The rest: "not particularly good".
+- **Round 4**:
+  - Packs at Advance Wars scale (Clean Tactics, Franuka's Tactical RPG
+    Overworld): "more overworldy not really battle tileset".
+  - *Sunnyside World* (Daniel Diggle): "looks closest but not enough
+    animated I think and a bit bright id rather it be more muted".
+  - **Kept in the pocket:** Mana Seed's tiles with **Time Fantasy's**
+    characters (finalbossblues: about 80 characters two tiles tall, 104
+    portraits, side-view battlers), replacing every Tiny Tales picture.
+    Nick: "mana seed and time fantasy is ok to keep in our pocket".
+- **Round 5:** Nick liked **Rogue Adventure** (ELV Games) and **Pixel
+  Grit** (Electric Lemon) most, and bought both lines: ELV's whole *Game
+  Assets Mega Bundle*, Electric Lemon's bundle with *Stronghold*, and
+  ByteWright's *Everything So Far* (effects, critters, sounds).
+- **Chapter 1 in both:** "lets stick to rogue adventure for ch1". Pixel
+  Grit's trees don't move. Mana Seed with Time Fantasy stays in the pocket.
+
+#### Chapter 1's map
+
+Settled over ten more rounds of mockups of Chapter 1's own map, units and
+starting places (2026-11-24):
+
+- **Water:** Rogue Adventure's animated river (8 frames), joined at its
+  banks; plank bridges.
+- **Roads** are whole dirt tiles that keep their full width through every
+  bend and junction. Nick: "I don't want them to taper".
+- **Woods: trees by footprint.** A big swaying tree stands with its trunk
+  on one forest tile and its crown over the tiles to its left and right
+  and the two above (3×3). Nick: "the trunk is 1 cell, to the right and
+  left is also forest, and then up either 1 or 2 tiles is also forest".
+  Big trees go wherever a 3×3 of forest is free; the rest of the forest
+  gets **half-size trees** (one tile wide, two tall: the same tree's frames
+  halved, still swaying), so 2×2 and 1×2 woods have trees of their own
+  ("all need sway"). A darker forest-floor grass under every forest tile
+  shows where the forest is; checked with the forest's tiles drawn over the
+  map: "the forest tiles now better match the pixels so thats good".
+- **Hills are raised ground with rounded edges:** a rim of stones round
+  the hill's top, a rock face below its bottom edge, a soft shadow, and
+  the hill's top is the plain's own grass. Every corner, outside and
+  inside, is drawn round. The art is Electric Lemon's *Lonesome Forest*
+  cliff kit, its stones recoloured from their violet and navy to a
+  **sandy brown**. Nick's path there: Rogue Adventure's hill humps and
+  grass masses had "no elevation"; ELV Farming Game plateaus were "better
+  but the jagged transitions are amateur"; the grass must never meet the
+  rock in a square corner ("make it rounded, smooth"). Of the colours:
+  "lighter brown", then two shades lighter than the first brown.
+- **Peaks** are Rogue Adventure's dark rock mass, inside the same raised
+  ground as the hills next to them.
+- **Harl's fort: the stone keep.** Rogue Adventure's ruins: the wall's top
+  seen from above, round pillars at the corners, and a tall wall face with
+  arrow slits on every side seen from the south (outside under the south
+  wall, inside under the north wall), paving inside. Its gates stay open.
+  Nick's path there: thin rims "doesn't look like it has solid walls";
+  fences, palisades and stone blocks lost to the keep ("the stone keep
+  looks the best so far"); the Farming Game's crenellated castle was
+  tried, then "go w stone keep". Nothing covers the fort: hills and peaks
+  are drawn under it.
+- **Harrowby** is a small round stone tower (no cottage: Chapter 1 has
+  none). **Lamps** burn at the fort's gate and the bridges.
+- **Rocks** are few: "the rocks are too numerous".
+
 ### Units on the map (the glyph look)
 
 - A unit is drawn as **two letters: an initial pair from its name** (`Al`,

@@ -5,7 +5,7 @@ type: content
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
+status: todo
 blocked_by: ["0096"]
 blocks: ["1064"]
 nick_input: answer-first
@@ -30,6 +30,35 @@ houses, a throne, a gate), 0491 (Chapter 4's doorways), 1219 (tileset
 looks on the engine's format, after engine#2243; either order: if 1219
 lands first, write the new rows in its format), 0067 (bought tiles on the
 Playdate's map).
+
+## 0096's answer (2026-11-24)
+
+The direction is **a new tileset, not more of Tiny Tales'**:
+`docs/design/look-and-feel.md`, *Which tileset* and *Chapter 1's map*.
+Chapter 1 is drawn with **ELV Games' Rogue Adventure** (Tiny Tales stays
+for the characters); which set the other chapters use is not decided yet.
+What Chapter 1 needs, as the mockups drew it:
+
+- Ground, forest floor and water joined at their corners (a dual grid:
+  each grid corner takes a piece by the four tiles round it), from
+  `RA_Ground_Tiles.png` and `RA_Animated_Water.png`; roads as whole dirt
+  tiles that never taper; plank bridges.
+- **Hills:** Electric Lemon's *Lonesome Forest* cliff kit
+  (`Lonesome_Forest_WALLS_and_CLIFF_EDGES.png`), its four stone colours
+  recoloured to a sandy brown, built from quarter tiles (outer corner,
+  edge, inside corner, empty) so every corner is round, with the kit's
+  cliff face (row 8) hung below the bottom edge and a soft shadow; peaks
+  in Rogue Adventure's dark rock mass inside the same raised ground.
+  Recolouring is a change: credit it as modified.
+- **Harl's fort:** the stone keep from `RA_Ruins.png` (wall tops, round
+  pillar caps, the tall face with arrow slits under every wall seen from
+  the south); drawn last, over hills and peaks.
+- Harrowby: the ruins' round pillar as a small tower. Few rocks.
+- The moving parts (water, trees) are 1315's; this ticket can draw their
+  frame 0 first.
+
+This is more than one PR: split it with `write-ticket` before coding
+(a likely cut: ground and water; hills; fort and details).
 
 ## Nick input
 

@@ -5,11 +5,11 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 blocks: ["1064"]
 nick_input: decision
-completed:
+completed: 2026-11-24
 ---
 
 # 0096 — Decide: the tileset overhaul, moving tiles and drifting effects
@@ -104,11 +104,11 @@ Chapter 1.
 
 ## Acceptance criteria
 
-- [ ] `look-and-feel.md` records the tileset direction, the moving tiles
+- [x] `look-and-feel.md` records the tileset direction, the moving tiles
       (with speeds), the drifting effects (where, how dense) and the
       Playdate's version.
-- [ ] 1315, 1316 and 1318 match.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] 1315, 1316 and 1318 match.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -116,3 +116,27 @@ Chapter 1.
 
 ## Completion notes
 
+Asked over about sixteen rounds of mockups (2026-11-23 to 2026-11-24):
+store previews with our units on them, then Chapter 1's own map, units
+and starting places drawn from the real sheets by a throwaway script
+(kept out of the repository: it draws bought art). Recorded in
+`docs/design/look-and-feel.md`, *Moving tiles and effects*, *Which
+tileset* and the new *Chapter 1's map*.
+
+- **Direction:** a new tileset, not more Tiny Tales (C). Nick bought
+  ELV Games' *Game Assets Mega Bundle*, Electric Lemon's bundle and
+  ByteWright's *Everything So Far*; filed in the private repository's
+  `library/` with the originals as private releases, and recorded in
+  `THIRD_PARTY_ASSETS.md`. Chapter 1 is **Rogue Adventure**; the other
+  chapters' sets are not decided.
+- **Moving tiles:** drawn art only, never made by the skin (round 1's
+  code sway and colour cycling were rejected). Water, swaying trees by
+  footprint (with half-size trees for small woods), grass tufts, lamps;
+  speeds are the art's own timing.
+- **Drifting effects:** petals, leaves, snow, ash, fireflies, from
+  ByteWright's *Weather Overlays*; battle map only; density per chapter
+  later. Ambient critters on open plain.
+- **Playdate:** still.
+- **Chapter 1's look:** rounded raised hills (Lonesome Forest's cliff kit,
+  recoloured sandy brown), Harl's fort as Rogue Adventure's stone keep.
+- 1315, 1316 and 1318 carry the answer; 1318 must be split before coding.

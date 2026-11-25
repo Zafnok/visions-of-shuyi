@@ -5,7 +5,7 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
+status: todo
 blocked_by: ["0096", "1314"]
 blocks: ["1064"]
 nick_input: answer-first
@@ -37,6 +37,23 @@ tile rows. The particle cap
 per tier, if one is needed, is a field of the effect's data (ADR-0131
 Consequences), not a fourth tier. Preview with `cargo shuyi frame-png
 --graphics reduced`.
+
+## 0096's answer (2026-11-24)
+
+`docs/design/look-and-feel.md`, *Moving tiles and effects*:
+
+- **Kinds:** petals, leaves (green and autumn), snow, ash, fireflies.
+  **Battle map only**; density per chapter later (1335–1342). The
+  Playdate shows none.
+- **Art:** ByteWright's *Weather Overlays* (`assets-private/library/
+  bytewright/effects/weather-overlays/`): seamless looping overlays
+  (`overlays/<group>/<name>_16px.png` with each loop's frames and timing
+  in its `.json`; fireflies add their light). The mockups tiled them over
+  the whole map. These are pre-drawn loops, not emitters: check whether
+  the engine particles in scope are still needed for them, or whether a
+  tiled animated overlay is enough (the engine half shrinks to that).
+- Never drawn per pixel by the game (Nick: "the leaves is a good idea but
+  looks poorly implemented").
 
 ## Nick input
 
