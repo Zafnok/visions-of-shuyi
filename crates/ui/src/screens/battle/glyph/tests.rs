@@ -730,7 +730,7 @@ fn a_long_aimed_preview_wraps_inside_the_panel_over_the_tile_and_unit() {
         text: text.to_owned(),
     };
     let buf = panel_aimed(ellery_panel(true), Some(preview));
-    let lines = wrap_words(text, TEXT_W);
+    let lines = wrap_words(text, TEXT_W, &shuyi_assets::font::CellWidths::NARROW);
     assert!(lines.len() > 2, "{lines:?}");
     // Every line inside the text width, the words all there in order.
     let rows: Vec<String> = (0..lines.len())

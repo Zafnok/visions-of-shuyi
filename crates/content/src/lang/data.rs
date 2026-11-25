@@ -16,6 +16,7 @@ use trpg_core::{
 };
 
 use super::{Lang, LangCode};
+use crate::battle::MAX_NOTE_CHARS;
 use crate::chapter::ChapterDef;
 use crate::dialogue::DialogueTable;
 use crate::font::text_width;
@@ -136,6 +137,13 @@ fn note_key(id: &str, index: usize) -> String {
     format!("{BATTLE_PREFIX}{id}.note_{}", index + 1)
 }
 
+/// Whether `key` is a battle note's ([`note_key`]).
+fn is_note_key(key: &str) -> bool {
+    key.strip_prefix(BATTLE_PREFIX)
+        .and_then(|rest| rest.rsplit_once(".note_"))
+        .is_some_and(|(_, n)| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+}
+
 /// The key of battle `id`'s place name: `battles.<id>.place`.
 fn battle_place_key(id: &str) -> String {
     format!("{BATTLE_PREFIX}{id}.place")
@@ -176,6 +184,11 @@ pub(super) fn text_problem(key: &str, text: &str) -> Option<String> {
     }
     if is_tip_title_key(key) {
         return title_problem(text);
+    }
+    if is_note_key(key) {
+        let cells = text_width(text);
+        return (cells > MAX_NOTE_CHARS)
+            .then(|| format!("a battle note is {cells} cells, more than {MAX_NOTE_CHARS}"));
     }
     let most = if is_tip_text_key(key) {
         MAX_TEXT_LINES

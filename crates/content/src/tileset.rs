@@ -10,6 +10,7 @@
 //! rule.
 use crate::prelude::*;
 
+mod frames;
 mod look;
 
 use alloc::collections::{BTreeMap, BTreeSet};
@@ -27,6 +28,7 @@ use crate::image::{ImageId, ImageInfo, ImageTable};
 use crate::ron_loader::parse_ron;
 use crate::terrain::TerrainDisplayTable;
 
+pub use frames::{MovingTile, TileFrames, moving_rows};
 pub use look::{CornerLayer, Layer, Look, MIXES, TileLayer, mix, mix_name, parse_mix};
 /// Rectangles of images and pictures (ticket 1115: the engine's).
 pub use shuyi_assets::image::{ImageRect, Picture};
@@ -77,6 +79,9 @@ pub struct Tileset {
     /// picture's size from the image's top-left): a unit whose picture is
     /// in one turns and moves its legs. Any other picture only glides.
     pub walking: BTreeSet<ImageId>,
+    /// The cells of its terrain tiles that loop through frames (ticket
+    /// 1315): every row that draws one moves with it.
+    pub frames: TileFrames,
 }
 
 impl Tileset {
@@ -145,6 +150,8 @@ struct TilesetFile {
     layers: Vec<look::LayerFile>,
     #[serde(default)]
     looks: BTreeMap<String, look::LookFile>,
+    #[serde(default)]
+    frames: Vec<frames::FramesFile>,
     unit_px: (u32, u32),
     units: UnitsFile,
     #[serde(default)]
@@ -408,7 +415,17 @@ pub fn parse_tileset(
         }
     }
     let fallback = check.picture("fallback", &def.units.fallback);
-    let sheet = check.sheet;
+    let terrain = own.zip(check.sheet).map(|(look, image)| {
+        let mut tiles = TerrainTiles::new(image, tile_px, look);
+        tiles.looks = looks;
+        tiles
+    });
+    let has_terrain = def.terrain.is_some();
+    let frames = match (&terrain, has_terrain) {
+        // A named image that is missing is reported once, above.
+        (None, true) => TileFrames::default(),
+        _ => frames::read(&mut check, &def.frames, terrain.as_ref(), tile_px),
+    };
     let walking = check.walking;
     let mut problems = check.problems;
     problems.extend(unknown);
@@ -418,11 +435,6 @@ pub fn parse_tileset(
     for (name, file) in &def.looks {
         problems.extend(look::missing(Some(name), &file.terrain, refs));
     }
-    let terrain = own.zip(sheet).map(|(look, image)| {
-        let mut tiles = TerrainTiles::new(image, tile_px, look);
-        tiles.looks = looks;
-        tiles
-    });
     match fallback {
         Some(fallback) if problems.is_empty() => Ok(Tileset {
             id: def.id,
@@ -432,6 +444,7 @@ pub fn parse_tileset(
             fallback,
             on_foot,
             walking,
+            frames,
         }),
         _ => Err(problems
             .into_iter()
@@ -518,13 +531,13 @@ mod tests {
     /// The game's terrain, classes and characters, one 64 × 64 image,
     /// `tilesets/t.png`, a 48 × 80 sheet of one unit, `units/a.png`, and a
     /// 72 × 96 one of 24 × 24 frames, `units/b.png`.
-    struct Fixture {
-        content: crate::Content,
-        images: ImageTable,
+    pub(super) struct Fixture {
+        pub(super) content: crate::Content,
+        pub(super) images: ImageTable,
     }
 
     impl Fixture {
-        fn new() -> Self {
+        pub(super) fn new() -> Self {
             let (header, sheet) = (png_header(64, 64), png_header(48, 80));
             let big = png_header(72, 96);
             let files = [
@@ -548,7 +561,7 @@ mod tests {
         }
 
         /// Every terrain on tile (0, 0) of a 16 px grid, then `extra`.
-        fn terrain(&self, extra: &str) -> String {
+        pub(super) fn terrain(&self, extra: &str) -> String {
             let mut out = String::new();
             for t in &self.content.terrain.display.terrains {
                 let _ = write!(out, "\"{}\": (0, 0), ", t.id);
@@ -557,12 +570,12 @@ mod tests {
             out
         }
 
-        fn parse(&self, source: &str) -> Result<Tileset, Vec<ContentError>> {
+        pub(super) fn parse(&self, source: &str) -> Result<Tileset, Vec<ContentError>> {
             parse_tileset("assets/tilesets/t.ron", "t", source, &self.refs())
         }
 
         /// The messages of the errors `source` gives.
-        fn errors(&self, source: &str) -> Vec<String> {
+        pub(super) fn errors(&self, source: &str) -> Vec<String> {
             let errors = self.parse(source).unwrap_err();
             for e in &errors {
                 assert_eq!(e.file, "assets/tilesets/t.ron");
@@ -574,7 +587,7 @@ mod tests {
     /// A tileset file with `fields` in place of the defaults' (a field
     /// written in `fields` is left out of the defaults; one given as `""`
     /// is left out of the file).
-    fn file(f: &Fixture, fields: &[(&str, &str)]) -> String {
+    pub(super) fn file(f: &Fixture, fields: &[(&str, &str)]) -> String {
         let terrain = format!("{{ {} }}", f.terrain(""));
         let defaults = [
             ("id", "\"t\"".to_owned()),
@@ -583,6 +596,7 @@ mod tests {
             ("terrain", terrain),
             ("layers", String::new()),
             ("looks", String::new()),
+            ("frames", String::new()),
             ("unit_px", "(16, 24)".to_owned()),
             (
                 "units",

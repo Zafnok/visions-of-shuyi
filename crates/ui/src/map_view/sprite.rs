@@ -20,6 +20,7 @@
 //! pictures of [`EDGE_MARKS_PATH`] with terrain tiles, the glyph skin's
 //! arrows on glyph terrain.
 
+pub mod moving;
 pub mod units;
 
 use alloc::rc::Rc;
@@ -57,7 +58,7 @@ impl MapSkin {
     pub(super) fn sprite_on(tileset: Tileset, glyph: GlyphSkin) -> Self {
         let zooms = MapZoom::ALL.map(MapZoom::factor);
         let grid = SpriteSkin::new(tileset.terrain.clone(), glyph, SPRITE_WALK).with_zooms(&zooms);
-        Self::new(Rc::new(grid), Units::Sprite(Rc::new(tileset)))
+        Self::new(Rc::new(grid), Units::Sprite(Rc::new(tileset))).with_sprite_glyph(glyph)
     }
 }
 

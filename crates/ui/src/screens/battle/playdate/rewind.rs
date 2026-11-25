@@ -71,7 +71,11 @@ pub fn paint_list(ctx: &Ctx, view: &RewindView, rect: Rect, buf: &mut GlyphBuffe
         return;
     }
     let bottom = rect.y + rect.h - 1;
-    let blocks: Vec<Vec<String>> = view.entries.iter().map(|e| wrap_to(e, width)).collect();
+    let blocks: Vec<Vec<String>> = view
+        .entries
+        .iter()
+        .map(|e| wrap_to(e, width, buf.widths()))
+        .collect();
     let first = first_shown(&blocks, view.focus, bottom - top);
     let mut y = top;
     let mut last = first;

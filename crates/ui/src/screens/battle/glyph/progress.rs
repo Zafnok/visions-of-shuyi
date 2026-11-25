@@ -16,6 +16,7 @@ use crate::screens::battle::progress::stat_row_parts;
 use crate::screens::battle::units::meter_cells;
 use crate::screens::battle::view::{ClassProgressView, ExpView, GainsView, ProgressView};
 use crate::screens::clip;
+use crate::screens::playdate::cells;
 
 /// The EXP box: where the combat playback's box was.
 pub const EXP_BOX: Rect = Rect::new(BOX.x, BOX.y, BOX.w, 3);
@@ -126,7 +127,7 @@ fn paint_gains(ctx: &Ctx, page: &GainsView, buf: &mut GlyphBuffer) {
     });
     if !drawn {
         let label = &page.placeholder;
-        let w = i32::try_from(label.len()).unwrap_or(0);
+        let w = cells(label, buf.widths());
         let x = PORTRAIT_FRAME.x + (PORTRAIT_FRAME.w - w) / 2;
         let y = PORTRAIT_FRAME.y + PORTRAIT_FRAME.h / 2;
         buf.print(x, y, label, c(UiColor::TextDim), bg);

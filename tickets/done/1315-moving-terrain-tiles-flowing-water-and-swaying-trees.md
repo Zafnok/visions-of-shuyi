@@ -5,11 +5,11 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["0096", "1314"]
 blocks: ["1064"]
 nick_input: answer-first
-completed:
+completed: 2026-11-25
 ---
 
 # 1315 — Moving terrain tiles: flowing water and swaying trees
@@ -102,12 +102,13 @@ moving objects (torches, smoke) unless 0096 asked for them here.
 
 ## Acceptance criteria
 
-- [ ] A test: the sprite skin draws different water cells at 0 ms and at
+- [x] A test: the sprite skin draws different water cells at 0 ms and at
       600 ms, and the same cells with idle motion off.
-- [ ] A test: the Playdate tier draws frame 0 for every moving row.
-- [ ] `cargo shuyi bench` stays within each target's budget.
-- [ ] `frame-png` strips in the PR.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A test: the Playdate tier draws frame 0 for every moving row.
+- [x] `cargo shuyi bench` stays within each target's budget (heap and
+      size locally; instructions are counted by CI, under Valgrind).
+- [x] `frame-png` strips in the PR.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -122,4 +123,64 @@ Playdate: frame 0 (1314). GBA: no target; the `Minimal` tier's row is
 frame 0 too.
 
 ## Completion notes
+
+**Done:**
+
+- **Frames on a tileset** (`frames`, `assets/tilesets/README.md`;
+  `trpg_content::tileset::{TileFrames, MovingTile}` in
+  `crates/content/src/tileset/frames.rs`). A moving cell is written once,
+  with its frames (a cell and its ms each, the first the cell itself)
+  and its `motion`; every row that draws the cell moves with it, in
+  every look (a terrain's tile, a corner piece, a tile layer's picture),
+  so the rows stay as written. The loader checks the cell is drawn,
+  listed once, has two frames or more from itself, none of 0 ms, all
+  inside the image, and that its stills show `FirstFrame` (a tile's
+  `Nothing` would leave a hole).
+- **The 1314 check reads them:** `moving_rows` collects each tileset's
+  moving cells, and `every_moving_look_names_its_stills` hands them to
+  `motion::check` (its `TODO(1315)` gone).
+- **The sprite skin** draws each moving cell's frame for the scene's
+  `clock_ms` (`crates/ui/src/map_view/sprite/moving.rs`), the tint wash
+  included; its first frame below the tier it moves at
+  (`ctx.platform.graphics`) and while idle motion is off.
+- **The importer** (`cargo xtask tileset-import`) reads Tiled's
+  `<animation>` from the `.tsx`, packs the frames of each tile it packs
+  that moves (in the same tint), turns a loop to start on the tile
+  itself, and writes the `frames` with `Minimal`'s still marked `todo`.
+  A loop of one picture is left out, and one that never shows its own
+  tile too.
+- **The test tileset's water flows** (`test_auto`, generated): four
+  frames of 600, 200, 400 and 200 ms, a ripple line lower down in each.
+  The skin's tests and the PR's strips read it.
+
+**Deviations:**
+
+- **No real tile moves yet.** Chapter 1's water and trees are Rogue
+  Adventure's (0096), and its tileset is 1318's, not built yet; Tiny
+  Tales' own loops are all one picture, so the importer finds no moving
+  tile in `tiny_tales`. 1318's water writes the river's 8 frames in this
+  format (a dated line in its Context).
+- **Trees split off** to **1356** (blocked by this and 1318): placing
+  big and half-size trees by footprint, halving ELV's frames (credited
+  as modified), a phase per tree, and their draw order under the
+  ranges. Step 3's "trees per 0096" is there.
+- **Engine half: a marked workaround**, not an engine PR. engine#2359
+  (moving tiles in the grid kit) is exactly the piece, but it is parked
+  behind 2231 (animation clips), two engine PRs' worth: the game ships
+  with `moving.rs` painting each frame with a copy of the kit's skin
+  whose look has the moving cells swapped, marked
+  `engine-friction: engine#2359, moves (game 1357 deletes it)`.
+  **1357** (blocked by engine#2359) moves onto it. Unparking 2359 and
+  2231 is Nick's call. 2359 predates the graphics tiers (engine 3347):
+  1357 keeps the tier rule on the game's side.
+- The strips crop the test map's river at 1× and enlarge it 3×; the
+  times are from the end of the steps, not from the loop's start.
+
+**Friction:** estimate 350, measured 377 (1.1×); signals: workaround yes
+(outcome 1: engine#2359, follow-up 1357), third copy no, budget no. A
+row in `docs/engine/friction.md`.
+
+**Starting rules:** none: no gameplay rule changes. What's left to judge
+in play (the river's motion in Chapter 1) waits for 1318 and goes on
+1064's checklist then.
 

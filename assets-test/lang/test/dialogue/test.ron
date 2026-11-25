@@ -9,6 +9,15 @@
         text: "THE RAIN HAD NOT STOPPED FOR THREE DAYS.",
     ),
     (key: "test_21833604", source: "You're late.", text: "YOU'RE LATE."),
+    // In Chinese (ticket 0237), for the test of wrapping without spaces:
+    // three lines of the box, where cutting at 46 characters would start
+    // the second and third with `。`. Made of the only Chinese characters
+    // the wide font has (`title.crashed`'s), so it reads as nonsense.
+    (
+        key: "test_d7fb4eb3",
+        source: "The knight stamps off into the rain.",
+        text: "报告游戏上次意外关闭，已保存报告。游戏上次意外关闭，已保存报告。游戏上次意外关闭，已保存报告。游戏上次意外关闭，已保存报告。游戏上次意外关闭，已保存报告。游戏上次意外关闭，已保存报告。",
+    ),
     // A translation may name someone English doesn't: the token is filled
     // with the pack's name (data.ron), TEST KNIGHT.
     (

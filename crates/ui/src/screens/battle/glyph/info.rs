@@ -18,6 +18,7 @@ use crate::screens::battle::layout::MAP_VIEW;
 use crate::screens::battle::units::{faction_color, paint_hp_bar};
 use crate::screens::battle::view::{GearView, InfoView, InfoWeaponView};
 use crate::screens::clip;
+use crate::screens::playdate::cells;
 use shuyi_assets::font::CellWidths;
 use shuyi_assets::lang::text_width;
 
@@ -119,7 +120,7 @@ pub fn paint(ctx: &Ctx, view: &InfoView, buf: &mut GlyphBuffer) {
     let mut pen = Pen { buf, palette, bg };
     if !drawn {
         let label = &view.portrait;
-        let w = i32::try_from(label.len()).unwrap_or(0);
+        let w = cells(label, pen.buf.widths());
         pen.text(
             PORTRAIT.x + (PORTRAIT.w - w) / 2,
             PORTRAIT.y + PORTRAIT.h / 2,
@@ -354,7 +355,7 @@ fn paint_spells(pen: &mut Pen<'_>, view: &InfoView, y: i32) {
         // check-text: not a data name (the view's own)
         pen.cut(x + 2, row, &spell.name, 28, UiColor::Text);
         let text = format!("{}/{}", spell.left, spell.uses);
-        let w = i32::try_from(text.len()).unwrap_or(0);
+        let w = cells(&text, pen.buf.widths());
         let right = x + i32::try_from(RIGHT_W).unwrap_or(0);
         pen.text(right - w, row, &text, UiColor::Text);
     }

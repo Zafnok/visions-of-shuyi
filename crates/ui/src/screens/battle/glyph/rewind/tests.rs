@@ -4,9 +4,12 @@
 use super::*;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
+use shuyi_assets::font::CellWidths;
 
 #[test]
 fn wrap_keeps_lines_within_the_panel_and_indents_the_rest() {
+    let n = CellWidths::NARROW;
+    let wrap = |line: &str| wrap(line, &n);
     let lines = wrap("Turn 12 · Test Lord attacked Brigand (2 hits, 14 dmg, defeated)");
     assert_eq!(
         lines,
@@ -21,9 +24,37 @@ fn wrap_keeps_lines_within_the_panel_and_indents_the_rest() {
     // Exactly the panel's width fits on one line.
     let full = format!("{} {}", "a".repeat(12), "b".repeat(TEXT_W - 13));
     assert_eq!(wrap(&full), std::slice::from_ref(&full));
-    // A word longer than the panel isn't preceded by an empty line.
+    // A word longer than the panel is cut at its edge (ticket 0237: the
+    // engine's wrap), the rest indented.
     let long = "c".repeat(TEXT_W + 4);
-    assert_eq!(wrap(&long), std::slice::from_ref(&long));
+    assert_eq!(
+        wrap(&long),
+        ["c".repeat(TEXT_W), format!("{WRAP_INDENT}cccc")]
+    );
+}
+
+#[test]
+fn wrap_breaks_chinese_between_characters_in_cells() {
+    let entry = "第十二回合：测试领主攻击了强盗，造成十四点伤害。";
+    let wide = CellWidths::wide(entry.chars());
+    let lines = wrap(entry, &wide);
+    assert!(lines.len() > 1, "{lines:?}");
+    assert!(
+        lines
+            .iter()
+            .all(|l| shuyi_assets::lang::text_width(l, &wide) <= TEXT_W),
+        "{lines:?}"
+    );
+    assert!(
+        lines[1..].iter().all(|l| l.starts_with(WRAP_INDENT)),
+        "{lines:?}"
+    );
+    let starts = |l: &String| l.trim_start().chars().next();
+    assert!(
+        lines
+            .iter()
+            .all(|l| !matches!(starts(l), Some('，' | '。' | '：')))
+    );
 }
 
 #[test]

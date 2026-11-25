@@ -41,7 +41,7 @@ pub fn paint(ctx: &Ctx, view: &LogView, buf: &mut GlyphBuffer) {
             // check-text: not a data name (the view's own)
             let mut lines: Vec<String> = row.name.iter().cloned().collect();
             let indent = if lines.is_empty() { "" } else { INDENT };
-            let wrapped = wrap(&text, text_w).into_iter();
+            let wrapped = wrap(&text, text_w, buf.widths()).into_iter();
             lines.extend(wrapped.map(|line| format!("{indent}{line}")));
             let height = to_i32(lines.len());
             Laid { lines, height }

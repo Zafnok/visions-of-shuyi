@@ -2011,7 +2011,7 @@ impl BattleScreen {
             .and_then(|p| progress::view(words, faces, p));
         let notes = self.notes_open().then(|| NotesView {
             title: ctx.text(notes::NOTES_TITLE).to_owned(),
-            lines: notes::note_lines(self.state.battle_notes(), words),
+            lines: notes::note_lines(self.state.battle_notes(), words, ctx.widths()),
         });
         let limit = map_menu::shown_limit(&self.state);
         // The Playdate's look has no help bar (ADR-0070 §4): building it
@@ -2186,7 +2186,7 @@ impl BattleScreen {
         };
         match &self.mode {
             Mode::Objective => {
-                let lines = notes::note_lines(self.state.battle_notes(), words);
+                let lines = notes::note_lines(self.state.battle_notes(), words, ctx.widths());
                 let under = (!lines.is_empty()).then(|| NotesView {
                     title: ctx.text(notes::NOTES_HEADING).to_owned(),
                     lines,

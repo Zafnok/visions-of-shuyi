@@ -12,7 +12,8 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
 use crate::screens::battle::view::{RewindScreenView, RewindView};
-use crate::widgets::ListCursor;
+use crate::widgets::{ListCursor, wrap_indented};
+use shuyi_assets::font::CellWidths;
 
 /// Row of the title.
 pub const TITLE_ROW: i32 = SIDE_PANEL.y + 1;
@@ -63,7 +64,7 @@ pub fn paint_list(ctx: &Ctx, view: &RewindView, buf: &mut GlyphBuffer) {
         print(buf, LIST_ROW, nothing, c(UiColor::TextDim), bg);
         return;
     }
-    let blocks: Vec<Vec<String>> = view.entries.iter().map(|e| wrap(e)).collect();
+    let blocks: Vec<Vec<String>> = view.entries.iter().map(|e| wrap(e, buf.widths())).collect();
     let first = first_shown(&blocks, view.focus, PROMPT_ROW - 1 - LIST_ROW);
     let mut y = LIST_ROW;
     for (i, block) in blocks.iter().enumerate().skip(first) {
@@ -91,31 +92,14 @@ pub fn paint_list(ctx: &Ctx, view: &RewindView, buf: &mut GlyphBuffer) {
 }
 
 /// `line` word-wrapped to the panel's text width, wrapped lines indented.
-fn wrap(line: &str) -> Vec<String> {
-    wrap_to(line, TEXT_W)
+fn wrap(line: &str, widths: &CellWidths) -> Vec<String> {
+    wrap_to(line, TEXT_W, widths)
 }
 
-/// `line` word-wrapped to `width` cells, wrapped lines indented (the
-/// Playdate's window too, ticket 1039).
-pub fn wrap_to(line: &str, width: usize) -> Vec<String> {
-    let mut lines = Vec::new();
-    let mut current = String::new();
-    for word in line.split(' ') {
-        let len = current.chars().count();
-        if len > 0 && len + 1 + word.chars().count() > width {
-            lines.push(core::mem::replace(
-                &mut current,
-                format!("{WRAP_INDENT}{word}"),
-            ));
-        } else {
-            if len > 0 {
-                current.push(' ');
-            }
-            current.push_str(word);
-        }
-    }
-    lines.push(current);
-    lines
+/// `line` word-wrapped to `width` cells as `widths` measure them, wrapped
+/// lines indented (the Playdate's window too, ticket 1039).
+pub fn wrap_to(line: &str, width: usize, widths: &CellWidths) -> Vec<String> {
+    wrap_indented(line, width, WRAP_INDENT, widths)
 }
 
 /// The first block to show so that blocks `first..=focus` fit in `rows`.
