@@ -308,6 +308,50 @@ mod tests {
         assert_eq!(frames.picture(cell(1, 0), Minimal, 150), cell(1, 0));
     }
 
+    /// Whether anything shows another frame than its first: what lets the
+    /// skin paint as it is when nothing moves.
+    #[test]
+    fn a_cell_moves_only_on_its_tiers_and_off_its_first_frame() {
+        let f = Fixture::new();
+        let source = moving(
+            &f,
+            &format!("[(at: (1, 0), frames: [((1, 0), 100), ((2, 0), 100)], {STILLS})]"),
+        );
+        let frames = f.parse(&source).unwrap().frames;
+        assert!(!frames.is_empty());
+        assert!(frames.moves_at(Full, 150));
+        // On its first frame, and on a tier where it stands still.
+        assert!(!frames.moves_at(Full, 50));
+        assert!(!frames.moves_at(Full, 200));
+        assert!(!frames.moves_at(Reduced, 150));
+        assert!(!frames.moves_at(Minimal, 150));
+        let still = f.parse(&file(&f, &[])).unwrap().frames;
+        assert!(still.is_empty() && !still.moves_at(Full, 150));
+    }
+
+    /// A tileset whose image is missing says so once: its moving cells
+    /// aren't checked against tiles it doesn't have.
+    #[test]
+    fn a_missing_image_is_the_one_problem_of_its_moving_cells() {
+        let f = Fixture::new();
+        let frames = format!("[(at: (1, 0), frames: [((1, 0), 100), ((2, 0), 100)], {STILLS})]");
+        let source = file(
+            &f,
+            &[
+                ("image", "\"tilesets/gone.png\""),
+                (
+                    "units",
+                    "(characters: {}, classes: {}, fallback: (image: \"units/a.png\", frame: (0, 0)))",
+                ),
+                ("frames", &frames),
+            ],
+        );
+        assert_eq!(
+            f.errors(&source),
+            ["image \"tilesets/gone.png\" is not a PNG in the asset bundle"]
+        );
+    }
+
     #[test]
     fn a_look_at_a_time_moves_every_row_that_draws_the_cell() {
         let f = Fixture::new();
