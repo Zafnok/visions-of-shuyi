@@ -27,4 +27,7 @@
     // A battle file's own light (ticket 0438). Noon, the light of a map
     // that names none, so the battle looks as it did.
     light: "noon",
+    // The place's sound bed under the music (ticket 1332), an ambience of
+    // data/ambience.ron, so the gates play one without the private content.
+    ambience: "meadow",
 )

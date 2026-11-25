@@ -49,6 +49,7 @@ use core::any::Any;
 use shuyi_ui::text::StyledText;
 
 use trpg_content::WorldMapDef;
+use trpg_content::lighting::NOON;
 use trpg_core::{Campaign, LEAD_ID, NodeKind, Pos, WorldCommand, WorldEvent, WorldMap};
 pub use view::{ListView, PanelView, PlaceMark, PlaceView, WorldMapView};
 
@@ -239,6 +240,46 @@ pub struct WorldMapScreen {
     /// move may start (1296), and the place it stood when they were found.
     voices: KeptVoices,
     voices_at: Option<String>,
+}
+
+impl WorldMapScreen {
+    /// [`Screen::update`]'s frame, before the place's sound bed.
+    fn frame(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        self.tick_music(ctx);
+        self.keep_voices(ctx);
+        if let Some(t) = self.walk_on(ctx, input) {
+            return t;
+        }
+        for &action in &input.actions {
+            let t = match &self.open {
+                Open::Nothing => self.on_map(ctx, action),
+                Open::Menu(_) => self.on_menu(ctx, action),
+                Open::Find(_) => self.on_find(ctx, action),
+                Open::Town(..) => self.on_town(ctx, action),
+            };
+            if !matches!(t, Transition::None) {
+                return t;
+            }
+        }
+        Transition::None
+    }
+
+    /// The place's sound bed this frame (ticket 1332): an open town's own,
+    /// else the map's, through the quiet between rounds of its track too.
+    fn ambience(&self, ctx: &mut Ctx, transition: &Transition, dt: f32) {
+        if !matches!(transition, Transition::None | Transition::Push(_)) {
+            crate::ambience::leave(ctx, Self::NAME);
+            return;
+        }
+        let def = self.def(ctx);
+        let town = match &self.open {
+            Open::Town(town, _) => def.and_then(|d| d.place_ambience.get(town)),
+            _ => None,
+        };
+        let ambience = town.or_else(|| def.and_then(|d| d.ambience.as_ref()));
+        let cue = crate::ambience::bed(ctx, ambience.map(String::as_str), NOON);
+        crate::ambience::play(ctx, Self::NAME, cue.as_deref(), false, dt);
+    }
 }
 
 impl WorldMapScreen {
@@ -994,23 +1035,9 @@ impl Screen<Shuyi> for WorldMapScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        self.tick_music(ctx);
-        self.keep_voices(ctx);
-        if let Some(t) = self.walk_on(ctx, input) {
-            return t;
-        }
-        for &action in &input.actions {
-            let t = match &self.open {
-                Open::Nothing => self.on_map(ctx, action),
-                Open::Menu(_) => self.on_menu(ctx, action),
-                Open::Find(_) => self.on_find(ctx, action),
-                Open::Town(..) => self.on_town(ctx, action),
-            };
-            if !matches!(t, Transition::None) {
-                return t;
-            }
-        }
-        Transition::None
+        let transition = self.frame(ctx, input);
+        self.ambience(ctx, &transition, input.dt());
+        transition
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

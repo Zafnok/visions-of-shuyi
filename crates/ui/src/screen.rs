@@ -179,6 +179,8 @@ pub struct Shuyi {
     /// words; a test of the look turns them on
     /// ([`Harness::with_key_caps`](crate::harness::Harness::with_key_caps)).
     pub key_caps: bool,
+    /// The places' sound bed playing (ticket 1332), one for every screen.
+    pub ambience: crate::ambience::AmbiencePlayer,
 }
 
 impl Shuyi {
@@ -201,6 +203,7 @@ impl Shuyi {
             lead: LeadProfile::new(DEFAULT_NAME, LeadGender::Male),
             demo: trpg_content::bundle::is_demo(),
             key_caps: true,
+            ambience: crate::ambience::AmbiencePlayer::default(),
         }
     }
 
@@ -464,6 +467,8 @@ impl ShuyiCtx for Ctx {
         let look = self.settings().game.map_look;
         let skin = crate::map_view::skin_for(SkinSet::Playdate, look, &self.game.content);
         self.set_map_skin(skin);
+        // No sound beds there until the bench says they run well (1332).
+        self.game.ambience = crate::ambience::AmbiencePlayer::off();
     }
 }
 

@@ -403,6 +403,13 @@ sign-off: "it should sound like a heal").
   (0922, `assets-src/audio/import.py`).
 - A place that has beds for some lights but not the one its map is in
   plays its noon bed.
+- A town with no bed of its own plays the world map's while it is open
+  (ticket 1332).
+- A scene over the battle with no place of its own leaves the battle's
+  bed playing; a scene in black (no place) plays none; `@place battle`
+  plays the battle's (ticket 1332).
+- The Playdate plays no bed and has no Ambience row until the bench is
+  run with them (ticket 1332).
 - The Ambience volume row on Options sits under the Sound volume
   (`options.md`, *Volumes*).
 

@@ -303,6 +303,12 @@ Campfire 02
   Version: HQ preview; 40 s from 1:00, compressed and looped
   License: CC0-1.0
 
+Summer Meadow
+  Author: baryy
+  Source: https://freesound.org/s/409143/
+  Version: HQ preview; 40 s from 0:20, mono, levelled like the music and looped
+  License: CC0-1.0
+
 Idylwild's Chromatic Campfires
   Author: Idylwild
   Source: https://opengameart.org/content/idylwilds-chromatic-campfires

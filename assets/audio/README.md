@@ -77,7 +77,11 @@ crashes it, so the checks below read every file's header.
 - `groups` sets where the Music (`music`), Sound (`sfx`) and Voice
   (`voice`) volumes start for a new player, and what `Restore defaults`
   puts them back to. The numbers are Nick's, from
-  `docs/design/options.md` (*Volumes*): 100 for all three (0879).
+  `docs/design/options.md` (*Volumes*): 100 for all three (0879). The
+  game's own `ambience` group (1332) starts at 90, 10 under the music.
+- `ducks` lowers a group while a voice clip plays: the music, and the
+  `ambience` group by the same numbers (`audio.md`, rule 11 and
+  *Ambience*).
 - Every cue id (sounds, music and pools together) is unique.
 - `length_ms` is the track's real length: screens that keep time with the
   music wrap their clock there
@@ -85,6 +89,36 @@ crashes it, so the checks below read every file's header.
   hand: write any number but 0, run `cargo test -p trpg-content`, and copy
   the value from the failure (`... it plays for 133743 ms ... write
   length_ms: 133743`). The same goes for a track that is re-cut.
+
+## Ambience
+
+The places' sound beds (ticket 1332, ADR-0132; `audio.md`, *Ambience*):
+looped sound cues in `ambience/`, each with `group: "ambience"` and
+volume 100 (the player's Ambience volume sets how loud they are), levelled
+like the music by `assets-src/audio/import.py`. Which place plays which is
+`assets/data/ambience.ron`:
+
+```ron
+(
+    // Each ambience's beds, by light (data/lighting.ron). Every ambience
+    // has a "noon" bed, which a light without its own plays.
+    ambiences: {
+        "meadow": {"noon": "bed_summer_meadow", "night": "bed_crickets"},
+    },
+    // The ambience a scene plays over `@place <map>`, by map id.
+    places: {"harrowby_yard": "meadow"},
+    // Camp's, if any.
+    camp: Some("meadow"),
+)
+```
+
+A battle file names its own (`ambience: "meadow"`, `assets/battles/`),
+and a world map names the map's and each town's (`ambience: Some(...)`,
+`assets/worldmaps/`); `@place battle` plays its battle's.
+`cargo test -p trpg-content` refuses a bed that isn't a looped sound cue
+of the `ambience` group, a light that isn't one, an ambience without a
+`noon` bed, a place's map that isn't one, and a name of an ambience that
+isn't one.
 
 ## Third-party files
 

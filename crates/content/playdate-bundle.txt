@@ -30,6 +30,11 @@ icon/
 # its cues, and the Playdate's player reads their files and volumes.
 audio/sfx/
 
+# The places' sound beds (ticket 1332): the Playdate plays none until the
+# bench says they run well there (audio.md, Ambience), and its build bakes
+# none.
+audio/ambience/
+
 # The chapter title card's Cinzel sheets (ticket 0812, ADR-0128): the
 # Playdate's card is in the cell font. The title art loads without them.
 title/chapter_name.png

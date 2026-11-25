@@ -552,6 +552,7 @@ impl Screen<Shuyi> for DialogueScreen {
             self.music = music;
         }
         self.voice(ctx, &transition);
+        self.ambience(ctx, &transition, input.dt());
         transition
     }
 
@@ -569,6 +570,37 @@ impl Screen<Shuyi> for DialogueScreen {
 }
 
 impl DialogueScreen {
+    /// The place's sound bed this frame (ticket 1332): the bed of the
+    /// place behind the text, none in black. A scene over the battle with
+    /// no place of its own leaves the battle's bed playing. Leaving fades
+    /// out the bed the scene started.
+    fn ambience(&self, ctx: &mut Ctx, transition: &Transition, dt: f32) {
+        if !matches!(transition, Transition::None | Transition::Push(_)) {
+            crate::ambience::leave(ctx, Self::NAME);
+            return;
+        }
+        let place = self.player.current().place;
+        if self.overlay && place.is_none() {
+            return;
+        }
+        let content = &ctx.game.content;
+        let (ambience, light) = match place {
+            Some(PlaceLine::Map { map, .. }) => {
+                let light = content.maps.get(map).map(|m| m.look.light.as_str());
+                (content.ambience.places.get(map).map(String::as_str), light)
+            }
+            Some(PlaceLine::Battle { .. }) => {
+                let battle = self.battle.as_deref();
+                let ambience = battle.and_then(|b| b.ambience.as_deref());
+                (ambience, battle.map(|b| b.look.light.as_str()))
+            }
+            _ => (None, None),
+        };
+        let light = light.unwrap_or(trpg_content::lighting::NOON).to_owned();
+        let cue = crate::ambience::bed(ctx, ambience, &light);
+        crate::ambience::play(ctx, Self::NAME, cue.as_deref(), false, dt);
+    }
+
     /// The voices this frame (0043, question 7): leaving the screen stops
     /// the one playing; a box come up stops it and says its own line, once
     /// any opening before it is over, then tells `app` the lines that can

@@ -136,6 +136,7 @@
     (key: "options.row.theme", source: "Colors", text: "COLORS"),
     (key: "options.row.music_volume", source: "Music volume", text: "MUSIC VOLUME"),
     (key: "options.row.sound_volume", source: "Sound volume", text: "SOUND VOLUME"),
+    (key: "options.row.ambience_volume", source: "Ambience volume", text: "AMBIENCE VOLUME"),
     (key: "options.row.voices", source: "Voices (AI-generated)", text: "VOICES (AI-GENERATED)"),
     (key: "options.row.voice_volume", source: "Voice volume", text: "VOICE VOLUME"),
     (key: "options.row.log_voice", source: "Voice on hover in the log", text: "VOICE ON HOVER IN THE LOG"),

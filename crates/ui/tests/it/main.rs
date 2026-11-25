@@ -55,6 +55,7 @@ fn unpadded(line: &str) -> String {
     parts.collect::<Vec<_>>().join(" · ")
 }
 
+mod ambience;
 mod auto_advance;
 mod battle;
 mod ch01_lessons;

@@ -991,6 +991,49 @@ fn the_menu_saves_camps_and_opens_options() {
     assert!(matches!(t, Transition::Push(ref o) if o.name() == "options"));
 }
 
+/// The music requests the screen made since the last call: without the
+/// place's bed (1332), whose fades ask every frame.
+fn music(ctx: &mut Ctx) -> Vec<AudioRequest> {
+    let mut asked = ctx.audio.take();
+    asked.retain(|r| {
+        !matches!(
+            r,
+            AudioRequest::StartSound { .. }
+                | AudioRequest::SoundVolume { .. }
+                | AudioRequest::StopSound { .. }
+        )
+    });
+    asked
+}
+
+/// The bed (1332): the map's on the map and in a town with none of its
+/// own, a town's own while it is open, and the map's again after it.
+#[test]
+fn the_maps_bed_plays_and_a_towns_own_while_it_is_open() {
+    let mut ctx = ctx();
+    let worlds = &mut ctx.game.content.worldmaps;
+    let world = worlds.get_mut("test_world").unwrap();
+    world.place_ambience.insert("city".into(), "hall".into());
+    let table = &mut ctx.game.content.ambience;
+    let hall = [("noon".to_owned(), "hall_bed".to_owned())].into();
+    table.ambiences.insert("hall".into(), hall);
+    let mut s = screen(&ctx);
+    press(&mut s, &mut ctx, &[]);
+    assert_eq!(ctx.game.ambience.cue(), Some("bed_summer_meadow"));
+    // Millbrook has none of its own: the map's goes on.
+    press(&mut s, &mut ctx, &[Action::Confirm]);
+    assert!(matches!(s.open, Open::Town(..)));
+    assert_eq!(ctx.game.ambience.cue(), Some("bed_summer_meadow"));
+    press(&mut s, &mut ctx, &[Action::Cancel]);
+    // Kingsgate's own while it is open, then the map's again.
+    s.open = Open::Town("city".into(), Menu::new(Vec::new()));
+    press(&mut s, &mut ctx, &[]);
+    assert_eq!(ctx.game.ambience.cue(), Some("hall_bed"));
+    s.open = Open::Nothing;
+    press(&mut s, &mut ctx, &[]);
+    assert_eq!(ctx.game.ambience.cue(), Some("bed_summer_meadow"));
+}
+
 /// Music: the map's track on the map, a town's own cue while it is open
 /// (Nick: "while interacting with a town"), the map's again once it
 /// closes, and after a screen over the map.
@@ -1000,15 +1043,15 @@ fn a_towns_music_while_it_is_open_then_the_maps() {
     let mut s = screen(&ctx);
     press(&mut s, &mut ctx, &[]);
     let map = Speaker::faded_in(&ctx, "world_map");
-    assert_eq!(ctx.audio.take(), std::slice::from_ref(&map));
+    assert_eq!(music(&mut ctx), std::slice::from_ref(&map));
     // Confirm on Millbrook, where the army stands: its shops and its cue,
     // an ordinary switch (the manifest's: the map's track fades out over
     // its fade, then the town's starts at full gain).
     press(&mut s, &mut ctx, &[Action::Confirm]);
-    ctx.audio.take();
+    music(&mut ctx);
     press(&mut s, &mut ctx, &[]);
     let village = AudioRequest::play_music("village", None);
-    assert_eq!(ctx.audio.take(), std::slice::from_ref(&village));
+    assert_eq!(music(&mut ctx), std::slice::from_ref(&village));
     let mut speaker = Speaker::new(&ctx);
     ctx.audio.play_music("world_map");
     speaker.play(&mut ctx, 0.0);
@@ -1022,12 +1065,12 @@ fn a_towns_music_while_it_is_open_then_the_maps() {
     assert_eq!(speaker.gain("world_map"), 0.0);
     assert_eq!(speaker.gain("village"), 1.0, "{:?}", speaker.commands());
     press(&mut s, &mut ctx, &[Action::Cancel]);
-    ctx.audio.take();
+    music(&mut ctx);
     press(&mut s, &mut ctx, &[]);
-    assert_eq!(ctx.audio.take(), std::slice::from_ref(&map));
+    assert_eq!(music(&mut ctx), std::slice::from_ref(&map));
     s.uncovered(&mut ctx, None);
     frame(&mut s, &mut ctx, &[], 0.01);
-    assert_eq!(ctx.audio.take(), [map]);
+    assert_eq!(music(&mut ctx), [map]);
 }
 
 /// The map's track plays to its end, fades, the map is quiet 30 s, then

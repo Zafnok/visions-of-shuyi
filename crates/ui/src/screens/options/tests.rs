@@ -13,6 +13,7 @@ use crate::settings::{SETTINGS_KEY, TextSpeed};
 use crate::storage::{Storage, StorageError};
 use crate::tips::{TIPS_SEEN_KEY, TipsSeen};
 use shuyi_ui::Screen;
+use trpg_content::ambience::AMBIENCE;
 
 fn press(s: &mut OptionsScreen, c: &mut Ctx, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
@@ -266,6 +267,10 @@ fn every_setting_row_changes_its_own_setting() {
                 Row::SoundVolume,
                 s.volumes.get(SFX) != before.volumes.get(SFX),
             ),
+            (
+                Row::AmbienceVolume,
+                s.volumes.get(AMBIENCE) != before.volumes.get(AMBIENCE),
+            ),
             (Row::Voices, s.voices != before.voices),
             (
                 Row::VoiceVolume,
@@ -315,9 +320,10 @@ fn rows_show_their_values() {
             "On*",
             "On*",
             "Earthy painterly*",
-            // Nick's start, the top (0879).
+            // Nick's start, the top (0879); the ambience 10 under (1332).
             "<100/100>",
             "<100/100>",
+            "<90/100>",
             "On*",
             "<100/100>",
             "On*",
@@ -334,6 +340,7 @@ fn rows_show_their_values() {
         s.game.cursor_style = CursorStyle::LargeCorners;
         s.volumes.set(MUSIC, 0);
         s.volumes.set(SFX, 100);
+        s.volumes.set(AMBIENCE, 40);
         s.game.auto_end_turn = true;
         s.game.anim_speed = AnimSpeed::Fast;
         s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast;
@@ -349,6 +356,7 @@ fn rows_show_their_values() {
     assert_eq!(value(&c, Row::Cursor), "Large corners*");
     assert_eq!(value(&c, Row::MusicVolume), "<0/100>");
     assert_eq!(value(&c, Row::SoundVolume), "<100/100>");
+    assert_eq!(value(&c, Row::AmbienceVolume), "<40/100>");
     assert_eq!(value(&c, Row::AutoEnd), "On*");
     // Each named setting shows the value it has, not its default.
     let named = |key: &str| format!("{}*", c.text(key));

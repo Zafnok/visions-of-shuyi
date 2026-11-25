@@ -86,7 +86,12 @@ fn play_in(skin: &str, zoom: MapZoom, light: Option<&str>) -> (Vec<After>, Vec<A
             battle: battle.map(|b| b.state().clone()),
         });
     }
-    (after, h.audio_requests())
+    // The volume steps of the fades (the title's crackle, the place's bed,
+    // 1332) are one a frame: they would compare the frames each sound
+    // falls on, not which sounds play.
+    let mut audio = h.audio_requests();
+    audio.retain(|r| !matches!(r, AudioRequest::SoundVolume { .. }));
+    (after, audio)
 }
 
 /// [`play_in`] the map's own light.

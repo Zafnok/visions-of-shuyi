@@ -120,6 +120,11 @@ struct RawBattle {
     /// in the [`BattleDef`].
     #[serde(default, deserialize_with = "bare")]
     light: Option<String>,
+    /// The place's sound bed under the music (ticket 1332), written bare:
+    /// `ambience: "meadow"`, an id of `data/ambience.ron`. Look data: read
+    /// by [`ambiences`], never put in the [`BattleDef`].
+    #[serde(default, deserialize_with = "bare")]
+    ambience: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -284,6 +289,21 @@ pub fn load_lights(lighting: &Lighting) -> Result<BTreeMap<String, String>, Vec<
     } else {
         Err(errors)
     }
+}
+
+/// The ambience each battle file of the bundle names (ticket 1332), by
+/// battle id (the file stem). A file that doesn't parse names none here:
+/// [`load_all`] reports it; [`crate::ambience`] checks the names.
+pub fn ambiences() -> BTreeMap<String, String> {
+    let files = bundle::files_in(BATTLES_DIR)
+        .into_iter()
+        .filter_map(|path| {
+            let stem = path.strip_prefix(BATTLES_DIR)?.strip_prefix('/')?;
+            let stem = stem.strip_suffix(EXTENSION)?.to_owned();
+            let raw = parse_ron::<RawBattle>(path, &bundle::file(path)?).ok()?;
+            Some((stem, raw.ambience?))
+        });
+    files.collect()
 }
 
 // engine-friction: engine#2247, moves (game 1223 deletes it)
