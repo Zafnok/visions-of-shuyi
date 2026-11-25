@@ -444,11 +444,11 @@ impl ShuyiCtx for Ctx {
     }
 
     fn words(&self) -> Words<'_> {
-        Words::new(&self.game.content.lang, self.effective_lang())
+        Words::new(&self.game.content.lang, self.effective_lang()).with_widths(self.widths())
     }
 
     fn language(&self) -> Language {
-        Language::new(&self.game.content.lang, self.effective_lang())
+        Language::new(&self.game.content.lang, self.effective_lang()).with_widths(self.widths())
     }
 
     fn set_map_skin(&mut self, skin: MapSkin) {

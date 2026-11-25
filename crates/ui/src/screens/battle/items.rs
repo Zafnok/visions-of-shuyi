@@ -13,9 +13,11 @@ use trpg_core::{
 use super::attack::{spell_uses, weapon_name};
 use super::info::range_text;
 use super::mode::{Line, Selection};
+use crate::screens::pad_cells;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::widgets::wrap_step;
 use crate::words::Words;
+use shuyi_assets::lang::text_width;
 
 /// One line of the pack list: every copy of one consumable.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -112,7 +114,8 @@ fn item_name(state: &BattleState, words: Words<'_>, id: &ItemId) -> String {
 /// The pack list: `Potion ×3  Restore 10 HP` per group.
 pub fn pack_menu(state: &BattleState, words: Words<'_>, groups: &[PackGroup]) -> Menu<Line> {
     let name = |g: &PackGroup| item_name(state, words, &g.item);
-    let name_w = groups.iter().map(|g| name(g).chars().count()).max();
+    let widths = words.widths();
+    let name_w = groups.iter().map(|g| text_width(&name(g), widths)).max();
     let items = groups
         .iter()
         .map(|g| {
@@ -120,12 +123,8 @@ pub fn pack_menu(state: &BattleState, words: Words<'_>, groups: &[PackGroup]) ->
                 .items()
                 .consumable(&g.item)
                 .map_or_default(|c| effect_text(words, c.effect));
-            let text = format!(
-                "{:<w$} ×{}  {effect}",
-                name(g),
-                g.count,
-                w = name_w.unwrap_or(0)
-            );
+            let name = pad_cells(&name(g), name_w.unwrap_or(0), widths);
+            let text = format!("{name} ×{}  {effect}", g.count);
             MenuItem::new(text)
                 .with_value(Line::Item(g.clone()))
                 .with_enabled(!g.targets.is_empty())
@@ -323,7 +322,7 @@ fn equip_label(
     } else {
         ' '
     };
-    let name = format!("{marker} {name:<name_w$}");
+    let name = format!("{marker} {}", pad_cells(&name, name_w, words.widths()));
     let (might, hit, crit, weight) = (
         format!("{:>2}", numbers.might),
         format!("{:>3}", numbers.hit),
@@ -356,7 +355,7 @@ pub fn equip_menu(
 ) -> Menu<Line> {
     let name_w = choices
         .iter()
-        .map(|c| equip_name(state, words, unit, &c.what).chars().count())
+        .map(|c| text_width(&equip_name(state, words, unit, &c.what), words.widths()))
         .max()
         .unwrap_or(0);
     let broken = |what: &Equipped| match what {

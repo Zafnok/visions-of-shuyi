@@ -97,6 +97,30 @@ pub(crate) fn clip(text: &str, w: usize, widths: &shuyi_assets::font::CellWidths
         .collect()
 }
 
+/// `text` and as many spaces after it as make it `w` cells as `widths`
+/// measure them, none if it is wider: a column padded in cells, where
+/// `format!`'s width counts characters (ticket 0263).
+pub(crate) fn pad_cells(text: &str, w: usize, widths: &shuyi_assets::font::CellWidths) -> String {
+    let used = shuyi_assets::lang::text_width(text, widths);
+    let mut padded = String::from(text);
+    padded.extend(core::iter::repeat_n(' ', w.saturating_sub(used)));
+    padded
+}
+
+/// The cells of `line` before `marker` as `widths` measure them: where a
+/// column built with [`pad_cells`] starts, for its tests (ticket 0263).
+#[cfg(test)]
+pub(crate) fn cells_before(
+    line: &str,
+    marker: &str,
+    widths: &shuyi_assets::font::CellWidths,
+) -> usize {
+    let at = line
+        .find(marker)
+        .unwrap_or_else(|| panic!("{marker:?} in {line:?}"));
+    shuyi_assets::lang::text_width(&line[..at], widths)
+}
+
 /// A pick-one screen's frame: `input` goes to `menu`, and the item chosen
 /// pops the screen with its value for the screen below; Cancel pops it
 /// with nothing.
@@ -138,7 +162,7 @@ pub(crate) use shuyi_ui::debug::glyph::paint_hint as paint_debug_hint;
 
 #[cfg(test)]
 mod clip_tests {
-    use super::clip;
+    use super::{clip, pad_cells};
     use shuyi_assets::font::CellWidths;
 
     /// `clip` keeps what fits in cells: a wide character counts two and is
@@ -153,5 +177,17 @@ mod clip_tests {
         assert_eq!(clip("姝怡A", 3, &wide), "姝");
         assert_eq!(clip("A姝怡", 2, &wide), "A");
         assert_eq!(clip("姝", 0, &wide), "");
+    }
+
+    /// `pad_cells` pads to a width in cells: a wide character takes two of
+    /// them, and text already wider gets no spaces (ticket 0263).
+    #[test]
+    fn pad_cells_pads_by_cells() {
+        let wide = CellWidths::wide(['姝', '怡']);
+        assert_eq!(pad_cells("姝怡", 6, &wide), "姝怡  ");
+        assert_eq!(pad_cells("姝怡", 6, &CellWidths::NARROW), "姝怡    ");
+        assert_eq!(pad_cells("Iron", 6, &wide), "Iron  ");
+        assert_eq!(pad_cells("姝怡A", 4, &wide), "姝怡A");
+        assert_eq!(pad_cells("", 2, &wide), "  ");
     }
 }

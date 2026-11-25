@@ -16,9 +16,11 @@ use trpg_core::{
 use super::art_list::reason_text;
 use super::info::stat_name;
 use super::mode::{Line, Selection};
+use crate::screens::pad_cells;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::widgets::wrap_step;
 use crate::words::Words;
+use shuyi_assets::lang::text_width;
 use trpg_core::StanceReaction;
 
 /// A skill's cost as text: `3 dur` (weapon durability), `+1 use` (one more
@@ -407,7 +409,8 @@ fn menu_line(
         }
         _ => String::new(),
     };
-    format!("{name:<name_w$}  {text:>6}{weapon}")
+    let name = pad_cells(name, name_w, words.widths());
+    format!("{name}  {text:>6}{weapon}")
 }
 
 /// The `Skill` menu: each skill with its uses left this battle,
@@ -423,7 +426,7 @@ pub fn skill_menu(
 ) -> Menu<Line> {
     let name_w = choices
         .iter()
-        .map(|c| skill_name(state, words, &c.skill).chars().count())
+        .map(|c| text_width(&skill_name(state, words, &c.skill), words.widths()))
         .max()
         .unwrap_or(0);
     let weapon = equipped_durability(state, unit);
@@ -624,6 +627,49 @@ mod tests {
         assert_eq!(line(dur, Some((17, 20))), "Brace     3 dur  Wpn 17/20");
         assert_eq!(line(dur, None), "Brace     3 dur");
         assert_eq!(line(None, Some((17, 20))), "Brace          ");
+    }
+
+    /// A wide skill name (two cells a character) pads the `Skill` menu's
+    /// name column in cells: the costs line up with an English name's
+    /// (ticket 0263). A skill the table lacks is named by its id.
+    #[test]
+    fn a_wide_skill_name_keeps_the_skill_columns_in_line() {
+        let c = ctx();
+        let (map, units) = quick_units(&c);
+        let state = battle_with(
+            &c,
+            map,
+            units,
+            trpg_core::Objective::Rout { turn_limit: None },
+        );
+        let choice = |id: &str| SkillChoice {
+            skill: SkillId::new(id),
+            needs_target: false,
+            targets: Vec::new(),
+            usable: true,
+            reason: None,
+            area: Vec::new(),
+        };
+        let choices = [choice("姝怡"), choice("Brace")];
+        let wide = shuyi_assets::font::CellWidths::wide("姝怡".chars());
+        let menu = skill_menu(
+            &state,
+            Words::ENGLISH.with_widths(&wide),
+            UnitId(1),
+            &choices,
+        );
+        let lines: Vec<&str> = menu
+            .items()
+            .iter()
+            .map(|i| crate::widgets::menu::text_of(&i.label))
+            .collect();
+        // No cost to show: the name, its padding and the empty cost column.
+        assert_eq!(lines, ["姝怡         ", "Brace        "]);
+        let ends: Vec<usize> = lines
+            .iter()
+            .map(|l| shuyi_assets::lang::text_width(l, &wide))
+            .collect();
+        assert_eq!(ends, [13, 13]);
     }
 
     #[test]

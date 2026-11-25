@@ -64,7 +64,7 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     }
     match &view.dialog {
         Some(DialogView::Objective(o)) => {
-            let mut lines: Vec<String> = objective::padded(&o.lines)
+            let mut lines: Vec<String> = objective::padded(&o.lines, ctx.widths())
                 .into_iter()
                 .chain(o.village.clone())
                 .chain([o.turn.clone()])
@@ -513,7 +513,8 @@ fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, area: Rect, buf: &mut 
         ink.text,
     );
     let room = to_usize(rect.w - 6);
-    let rows = (rect.y + 4..rect.y + rect.h - 2).zip(objective::padded(&banner.lines));
+    let rows =
+        (rect.y + 4..rect.y + rect.h - 2).zip(objective::padded(&banner.lines, ctx.widths()));
     for (y, line) in rows {
         buf.print(
             rect.x + 3,

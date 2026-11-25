@@ -12,7 +12,10 @@ use trpg_core::{BattleState, Faction};
 
 use super::map_menu::objective_text;
 use super::view::ObjectiveLine;
+use crate::screens::pad_cells;
 use crate::words::Words;
+use shuyi_assets::font::CellWidths;
+use shuyi_assets::lang::text_width;
 use shuyi_ui::text::ToArg;
 
 /// The objective's lines for `state`: `Win:` and what wins it, then
@@ -97,20 +100,21 @@ pub fn village_count(state: &BattleState, words: Words<'_>) -> Option<String> {
 }
 
 /// `lines` as text, each label padded to the widest so the parts line up
-/// (`Win:  Defeat Hendry` / `Lose: 3 of 5 houses burn`).
-pub fn padded(lines: &[ObjectiveLine]) -> Vec<String> {
-    let w = label_width(lines);
+/// (`Win:  Defeat Hendry` / `Lose: 3 of 5 houses burn`), in cells as
+/// `widths` measure them.
+pub fn padded(lines: &[ObjectiveLine], widths: &CellWidths) -> Vec<String> {
+    let w = label_width(lines, widths);
     lines
         .iter()
-        .map(|l| format!("{:<w$}{}", l.label, l.text))
+        .map(|l| format!("{}{}", pad_cells(&l.label, w, widths), l.text))
         .collect()
 }
 
-/// The labels' column width: the widest label and a space.
-pub fn label_width(lines: &[ObjectiveLine]) -> usize {
+/// The labels' column width in cells: the widest label and a space.
+pub fn label_width(lines: &[ObjectiveLine], widths: &CellWidths) -> usize {
     lines
         .iter()
-        .map(|l| l.label.chars().count())
+        .map(|l| text_width(&l.label, widths))
         .max()
         .map_or(0, |w| w + 1)
 }

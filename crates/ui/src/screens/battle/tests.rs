@@ -1048,3 +1048,22 @@ fn a_command_being_applied_is_in_the_crash_record() {
     assert_eq!(record.applying, Some(Command::EndPhase));
     assert_eq!(record.commands(), [Command::EndPhase]);
 }
+
+/// The battle keeps the player's language with its cell widths, English
+/// too, from its first frame, and the one the player switches to after:
+/// its lists pad their columns in the cells that language's text takes
+/// (ticket 0263).
+#[test]
+fn the_battle_keeps_the_languages_cell_widths_and_follows_a_switch() {
+    let mut c = ctx();
+    let mut s = BattleScreen::new(quick_battle(&c.game.content).unwrap());
+    assert!(!s.language.has_widths());
+    step(&mut s, &mut c, &[]);
+    assert_eq!(s.language, c.language());
+    assert_eq!(s.language.words().widths(), c.widths());
+    // The player picks another language: the next frame keeps that one.
+    c.lang = trpg_content::LangCode::new(trpg_content::lang::TEST).unwrap();
+    step(&mut s, &mut c, &[]);
+    assert!(!s.language.words().is_english());
+    assert_eq!(s.language, c.language());
+}
