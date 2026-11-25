@@ -45,6 +45,9 @@ pub fn with_looks<R>(ctx: &Ctx, paint: impl FnOnce(&Looks) -> R) -> R {
 pub struct MapSkin {
     grid: Rc<dyn GridSkin<UnitView>>,
     units: Units,
+    /// A sprite skin's glyph skin (its colours and marks), to paint a
+    /// frame of its moving tiles with ([`moving`](super::sprite::moving)).
+    sprite_glyph: Option<GlyphSkin>,
 }
 
 /// Which of this game's painters paints the units on a skin.
@@ -62,7 +65,19 @@ pub enum Units {
 impl MapSkin {
     /// The kit's skin `grid`, its units painted by `units`.
     pub fn new(grid: Rc<dyn GridSkin<UnitView>>, units: Units) -> Self {
-        Self { grid, units }
+        Self {
+            grid,
+            units,
+            sprite_glyph: None,
+        }
+    }
+
+    // engine-friction: engine#2359, moves (game 1357 deletes it)
+    /// The same skin, painting a frame of its tileset's moving tiles
+    /// with `glyph`'s colours and marks.
+    pub(super) const fn with_sprite_glyph(mut self, glyph: GlyphSkin) -> Self {
+        self.sprite_glyph = Some(glyph);
+        self
     }
 
     /// The battle map as coloured glyphs: today's look.
@@ -105,7 +120,10 @@ impl MapSkin {
     /// The same skin drawing at `zoom`, or `None` if it can't zoom.
     pub fn at_zoom(&self, zoom: MapZoom) -> Option<Self> {
         let grid = self.grid.at_zoom(zoom.factor())?;
-        Some(Self::new(grid, self.units.clone()))
+        Some(Self {
+            grid,
+            ..self.clone()
+        })
     }
 
     /// The same skin, at the same zoom, drawing the threat arrows as
@@ -138,9 +156,23 @@ impl MapSkin {
     /// Paints `scene` into the cells of `area`, its units by the painter of
     /// this frame's `ctx`. Touches nothing outside it.
     pub fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer) {
+        // engine-friction: engine#2359, moves (game 1357 deletes it)
+        // The frame of the tileset's moving tiles at the scene's clock, if
+        // any moves now (ticket 1315).
+        let moved = match (&self.units, self.sprite_glyph) {
+            (Units::Sprite(tileset), Some(glyph)) => {
+                let zoom = self.grid.zoom().unwrap_or(1);
+                super::sprite::moving::frame_skin(ctx, scene, tileset, glyph, zoom)
+            }
+            _ => None,
+        };
+        let grid: &dyn GridSkin<UnitView> = match &moved {
+            Some(skin) => skin,
+            None => self.grid.as_ref(),
+        };
         with_looks(ctx, |looks| {
             let mut paint = |units: &dyn UnitPainter<UnitView>| {
-                self.grid.paint(looks, scene, area, units, buf);
+                grid.paint(looks, scene, area, units, buf);
             };
             match &self.units {
                 Units::Glyph => paint(&GlyphUnits {

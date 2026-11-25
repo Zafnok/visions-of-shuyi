@@ -760,7 +760,7 @@ fn run_writes_the_image_and_the_tileset_into_the_private_checkout() {
     assert_eq!(
         summary,
         "tileset-import: wrote assets-private/game/tilesets/tiny_tales.png (256×16) and \
-         assets-private/game/tilesets/tiny_tales.ron"
+         assets-private/game/tilesets/tiny_tales.ron (0 moving tiles)"
     );
     let game = root.join(GAME_DIR);
     let png = fs::read(game.join("tilesets/tiny_tales.png")).unwrap();
@@ -921,4 +921,127 @@ fn a_block_layer_is_a_picture_on_each_tile_for_each_way_its_terrain_ends() {
         check(&bad, &terrains).unwrap_err(),
         "layer \"wood\": terrain \"moss\" is not in terrain.ron"
     );
+}
+
+/// [`TSX`] with these loops (ticket 1315): the water's tile 6 between 5
+/// and itself (written from 5), the fort's tile 3 with 4, tile 1 with
+/// itself (one picture: no motion) and tile 0 between 5 and 6 (never
+/// itself).
+fn animated_tsx() -> String {
+    let anim = |id: u32, rest: &str, frames: &[(u32, u32)]| {
+        let mut written = String::new();
+        for (tile, ms) in frames {
+            let _ = write!(written, "<frame tileid=\"{tile}\" duration=\"{ms}\"/>");
+        }
+        let frames = written;
+        format!("<tile id=\"{id}\"{rest}><animation>{frames}</animation></tile>")
+    };
+    TSX.replace("<tile id=\"6\"/>", &anim(6, "", &[(5, 300), (6, 100)]))
+        .replace(
+            "<tile id=\"3\" terrain=\"0,,,\"/>",
+            &anim(3, " terrain=\"0,,,\"", &[(3, 100), (4, 120)]),
+        )
+        .replace(
+            "<tile id=\"1\" terrain=\"0,0,0,0\"/>",
+            &anim(1, " terrain=\"0,0,0,0\"", &[(1, 100), (1, 100)]),
+        )
+        .replace(
+            "<tile id=\"0\" terrain=\",,,0\"/>",
+            &anim(0, " terrain=\",,,0\"", &[(5, 100), (6, 100)]),
+        )
+}
+
+#[test]
+fn a_tsx_gives_each_tiles_animation() {
+    assert_eq!(
+        parse_tsx(TSX).unwrap().animations,
+        BTreeMap::from([(2, vec![(2, 150)])])
+    );
+    let tsx = parse_tsx(&animated_tsx()).unwrap();
+    assert_eq!(tsx.animations[&6], [(5, 300), (6, 100)]);
+    assert_eq!(tsx.animations.len(), 5);
+    let stray = TSX.replace(
+        "<tile id=\"0\"",
+        "<frame tileid=\"1\" duration=\"5\"/><tile id=\"0\"",
+    );
+    assert_eq!(parse_tsx(&stray).unwrap_err(), "a <frame> outside a <tile>");
+    let bad = TSX.replace("duration=\"150\"", "duration=\"soon\"");
+    assert_eq!(
+        parse_tsx(&bad).unwrap_err(),
+        "tile 2: a <frame> is not read"
+    );
+}
+
+#[test]
+fn an_import_packs_the_frames_of_each_tile_that_moves() {
+    let temp = Temp::new("frames").with_sheet("lib");
+    temp.write("lib/set/Made.tsx", animated_tsx().as_bytes());
+    let map = mapping(LAYERS, LOOKS);
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    // The looks' six cells as before (tile 1, 6, 0, 3, then 0 and 3 in
+    // fire), then the frames: tile 5, tile 4 and tile 4 in fire.
+    let (width, height, rgba) = &imported.image;
+    assert_eq!((*width, *height), (256, 16));
+    let px = |cell: usize| {
+        let at = (5 * 256 + cell * 16 + 5) * 4;
+        [rgba[at], rgba[at + 1], rgba[at + 2], rgba[at + 3]]
+    };
+    assert_eq!((px(6), px(7)), (color(5), color(4)));
+    let mut tinted = color(4);
+    tint(&mut tinted, [200, 100, 0]);
+    assert_eq!(px(8), tinted);
+    let todo = || Some(MINIMAL_TODO.to_owned());
+    assert_eq!(
+        imported.moving,
+        [
+            // Turned to start on the water's own tile.
+            FramesText {
+                at: (1, 0),
+                frames: vec![((1, 0), 100), ((6, 0), 300)],
+                minimal_todo: todo(),
+            },
+            FramesText {
+                at: (3, 0),
+                frames: vec![((3, 0), 100), ((7, 0), 120)],
+                minimal_todo: todo(),
+            },
+            FramesText {
+                at: (5, 0),
+                frames: vec![((5, 0), 100), ((8, 0), 120)],
+                minimal_todo: todo(),
+            },
+        ]
+    );
+    // The game's loader takes them: each moving cell is drawn by a row.
+    let text = tileset(&imported, &UNITS);
+    assert!(
+        text.contains(
+            "    frames: [\n        (at: (1, 0), frames: [((1, 0), 100), ((6, 0), 300)],\n"
+        )
+    );
+    let png = encode_png(*width, *height, rgba).unwrap();
+    let mut sheet = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR".to_vec();
+    sheet.extend(48u32.to_be_bytes());
+    sheet.extend(80u32.to_be_bytes());
+    let mut horse = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR".to_vec();
+    horse.extend(72u32.to_be_bytes());
+    horse.extend(96u32.to_be_bytes());
+    let files = [
+        ("tilesets/tiny_tales.png", png.as_slice()),
+        ("units/a.png", sheet.as_slice()),
+        ("units/horse.png", horse.as_slice()),
+    ];
+    let content = trpg_content::load_embedded().unwrap();
+    let refs = TilesetRefs {
+        images: &trpg_content::image::from_files(files).unwrap(),
+        terrain: &content.terrain.display,
+        classes: &content.classes,
+        characters: &content.characters,
+    };
+    let read = parse_tileset("tiny_tales.ron", "tiny_tales", &text, &refs).unwrap();
+    let ats: Vec<(u32, u32)> = read.frames.iter().map(|t| t.at).collect();
+    assert_eq!(ats, [(1, 0), (3, 0), (5, 0)]);
+    let report = trpg_content::motion::check(trpg_content::tileset::moving_rows([&read]));
+    assert!(report.problems.is_empty(), "{:?}", report.problems);
+    assert_eq!(report.todo.len(), 3);
 }

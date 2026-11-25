@@ -28,6 +28,7 @@ skin*, which goes round every tileset). They are test files: they are in
     },
     layers: [],                      // optional: pictures painted over the tiles (below)
     looks: {},                       // optional: other looks by name (below)
+    frames: [],                      // optional: cells that loop through frames (below)
     unit_px: (24, 24),               // a unit picture, across × down; may be taller than a tile
     units: (
         characters: {},              // character id (characters.ron) → a picture
@@ -86,6 +87,39 @@ looks: {
 
 The tileset's top-level `terrain` and `layers` are its own look: a map
 outdoors, a map that names no look, and any look the tileset lacks.
+
+### Moving tiles: `frames`
+
+`frames` makes **cells of the image loop through frames** (ticket 1315,
+ADR-0131): flowing water, a shore's foam. Every row that draws a moving
+cell moves with it, in every look: a terrain's own tile, a corner
+layer's mix, a tile layer's picture. So the rows stay as they are, and
+a cell moves wherever it is drawn.
+
+```ron
+frames: [
+    // The cell, then each frame: a cell and how long it shows, in ms.
+    // The first frame is the cell itself: what stands still.
+    (at: (3, 1), frames: [((3, 1), 600), ((0, 9), 200), ((1, 9), 400), ((2, 9), 200)],
+     // How it shows on a lesser target (`trpg_content::motion`, ADR-0131):
+     // a still for every tier below the lowest it moves at (`Full`
+     // unless `lowest` says). A tile's still is its first frame.
+     motion: (stills: {
+         Reduced: (show: FirstFrame),                           // the Playdate
+         Minimal: (show: FirstFrame, todo: "a one-bit tile"),   // a GBA one day
+     })),
+],
+```
+
+- The sprite skin draws a moving cell's frame for the scene's clock, so
+  a picture at a given time (`cargo shuyi frame-png` after a wait) is
+  always the same; the loop repeats for ever, and every tile of the cell
+  shows the same frame.
+- It draws the **first frame** below the lowest tier the cell moves at
+  (the Playdate is `Reduced`) and while idle motion is off (a test's
+  frame).
+- The content test `every_moving_look_names_its_stills` checks every
+  cell's stills and lists each `todo`.
 
 ### Units
 
@@ -166,7 +200,11 @@ its name:
   corner layer) have a picture; a mix must be four of `#` and `.`, listed
   once, and a corner layer has none for `....`; a look's name must be one
   a map can give (`trpg_content::map::TILE_LOOKS`) other than the
-  tileset's own, `outdoor`.
+  tileset's own, `outdoor`;
+- `frames` need `terrain`; a moving cell is listed once, is drawn by a
+  terrain or a layer, has two frames or more, the first the cell itself,
+  each lasting 1 ms or more and lying inside the image; its stills show
+  `FirstFrame` (`Nothing` would leave a hole in the map).
 
 ## Files
 
@@ -175,7 +213,7 @@ The test tilesets, in `assets-test/tilesets/`:
 | File | What |
 | ---- | ---- |
 | `test.ron`, `test.png` | The **test tileset**: 24 × 24 tiles, so nothing can quietly assume the glyph skin's 16 × 16. Each terrain's tile is its `bg` colour with its two glyphs in its `fg` colour; each class's picture is a grey disc with the first two letters of its name in white, by class id; then a `??` fallback. Not art: generated from our own data and the font atlas |
-| `test_auto.ron`, `test_auto.png` | The **test tileset with layers and looks**, shaped like the bought one: 16 × 16 tiles (each terrain's `bg` colour and glyphs); a 2-pixel line round the water (with what lies on it) and round the woods, as corner layers, in the glyph colour of the layer's first terrain; a frame on the fort; rails on the bridge, which turn where water is to its left and right; an `indoor` look with a line round the floor instead; and the test unit sheets' pictures. Not art: generated the same way |
+| `test_auto.ron`, `test_auto.png` | The **test tileset with layers and looks**, shaped like the bought one: 16 × 16 tiles (each terrain's `bg` colour and glyphs); a 2-pixel line round the water (with what lies on it) and round the woods, as corner layers, in the glyph colour of the layer's first terrain; a frame on the fort; rails on the bridge, which turn where water is to its left and right; an `indoor` look with a line round the floor instead; the water's tile **moving** through four frames of 600, 200, 400 and 200 ms, a ripple line lower down in each after the first (`frames`); and the test unit sheets' pictures. Not art: generated the same way |
 | `test_units.ron`, `test_units/*.png` | The **test unit sheets**: no terrain tiles, and one 48×80 sheet per class of the Quick Battle (and a `??` fallback), shaped like the bought map sprites: 3 × 4 frames of 16 × 20, each a grey figure with the class's first two letters, a band across its head by facing and its feet by walking frame. Every entry has `walk: true`. Not art: generated the same way |
 
 These files are **generated**; never edit them by hand. After changing the
@@ -208,3 +246,9 @@ table):
   `assets-src/tilesets/tiny_tales.ron` (which bought tile or Tiled terrain
   stands for each of ours) and the bought sets' own `.tsx` corner tables,
   then the unit pictures of the table above. Run it after either changes.
+  A tile it packs that the `.tsx` animates (Tiled's `<animation>`) gets
+  its frames in `frames`, each still on a lesser tier (`Minimal` with a
+  `todo`); a loop whose frames are all one picture is left out, and Tiny
+  Tales' coasts, hills and woods are such loops (0096), so `tiny_tales`
+  has no moving tiles. Chapter 1's moving water comes with its new
+  tileset (1318).

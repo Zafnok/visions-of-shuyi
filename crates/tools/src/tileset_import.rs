@@ -11,6 +11,12 @@
 //! writes the tileset file: the terrain looks, then the unit pictures of
 //! `map-sprite-import`'s table.
 //!
+//! A tile the looks use that the `.tsx` animates (Tiled's `<animation>`)
+//! moves in the game too (ticket 1315): its frames are packed and written
+//! as the tileset's `frames`, each still on a lesser graphics tier. A loop
+//! whose frames are all one picture doesn't move and is left out: Tiny
+//! Tales' coasts, hills and woods are such loops (0096).
+//!
 //! It is the only reader of Tiled files: the game reads our RON and PNG.
 //! The XML it needs is three kinds of tag and their attributes, read by
 //! [`tags`]; no XML crate.
@@ -29,7 +35,7 @@ use trpg_content::map::{DEFAULT_TILES, TILE_LOOKS};
 use trpg_content::tileset::parse_mix;
 
 use crate::map_sprite_import::{self, GAME_DIR, MapSprite, TILESET_ID};
-use crate::tileset_ron::{self, At, LayerText, LookText};
+use crate::tileset_ron::{self, At, FramesText, LayerText, LookText};
 use shuyi_cli::codec::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
@@ -50,6 +56,9 @@ pub const MAPPING_PATH: &str = "assets-src/tilesets/tiny_tales.ron";
 pub const TILE: u32 = 16;
 /// Tiles per row of the packed image.
 pub const COLUMNS: u32 = 16;
+/// What a moving tile still needs for the `Minimal` tier (a GBA one day:
+/// `TODO(gba)`), listed by the content's stills check (ADR-0131).
+pub const MINIMAL_TODO: &str = "a one-bit tile";
 
 /// A tile of a bought sheet: the sheet (its `.tsx` under [`LIBRARY_DIR`],
 /// without the extension) and the tile's id in it.
@@ -201,6 +210,9 @@ pub struct Tsx {
     /// top-left, top-right, bottom-left and bottom-right corner (`None`:
     /// none).
     pub corners: Vec<(u32, [Option<usize>; 4])>,
+    /// Each animated tile's frames, by its id: each frame's tile and its
+    /// time in ms, in order.
+    pub animations: BTreeMap<u32, Vec<(u32, u32)>>,
 }
 
 /// A colour written as six hex digits.
@@ -257,6 +269,23 @@ pub fn parse_tsx(xml: &str) -> Result<Tsx, String> {
         let tile = id.zip(corner_terrains(text));
         corners.push(tile.ok_or_else(|| format!("a <tile> with terrain \"{text}\" is not read"))?);
     }
+    // A <frame> belongs to the <tile> before it: frames are only in a
+    // tile's <animation>.
+    let mut animations: BTreeMap<u32, Vec<(u32, u32)>> = BTreeMap::new();
+    let mut tile = None;
+    for (name, attributes) in &tags {
+        let number = |key: &str| attributes.get(key).and_then(|v| v.parse::<u32>().ok());
+        match name.as_str() {
+            "tile" => tile = number("id"),
+            "frame" => {
+                let at = tile.ok_or("a <frame> outside a <tile>")?;
+                let frame = number("tileid").zip(number("duration"));
+                let frame = frame.ok_or_else(|| format!("tile {at}: a <frame> is not read"))?;
+                animations.entry(at).or_default().push(frame);
+            }
+            _ => {}
+        }
+    }
     Ok(Tsx {
         image: source.clone(),
         clear,
@@ -264,6 +293,7 @@ pub fn parse_tsx(xml: &str) -> Result<Tsx, String> {
         columns: number("columns")?,
         terrains,
         corners,
+        animations,
     })
 }
 
@@ -469,6 +499,46 @@ impl Packer<'_> {
         Ok((index % COLUMNS, index / COLUMNS))
     }
 
+    /// The frames of each packed tile its sheet animates, packed now: a
+    /// cell for every frame, in the same tint, the loop turned to start on
+    /// the tile itself (what stands still). A loop of one picture, or one
+    /// that never shows the tile itself, is left out.
+    fn moving(&mut self) -> Result<Vec<FramesText>, String> {
+        let mut out = Vec::new();
+        for index in 0..self.cells.len() {
+            let (sheet, cut, tint_name) = self.cells[index].clone();
+            let Cut::Tile(tile) = cut else {
+                continue;
+            };
+            let source = self.sheet(&sheet)?;
+            let Some(mut frames) = source.tsx.animations.get(&tile).cloned() else {
+                continue;
+            };
+            let Some(first) = frames.iter().position(|&(id, _)| id == tile) else {
+                continue;
+            };
+            frames.rotate_left(first);
+            let mut pictures = Vec::new();
+            for &(id, _) in &frames {
+                pictures.push(source.tile(id).map_err(|e| format!("{sheet}: {e}"))?);
+            }
+            if pictures.iter().all(|p| *p == pictures[0]) {
+                continue;
+            }
+            let mut packed = Vec::new();
+            for (id, ms) in frames {
+                packed.push((self.packed(&sheet, Cut::Tile(id), &tint_name)?, ms.max(1)));
+            }
+            let index = u32::try_from(index).unwrap_or(u32::MAX);
+            out.push(FramesText {
+                at: (index % COLUMNS, index / COLUMNS),
+                frames: packed,
+                minimal_todo: Some(MINIMAL_TODO.to_owned()),
+            });
+        }
+        Ok(out)
+    }
+
     /// The packed image: width, height and RGBA8 pixels.
     fn image(&self) -> (u32, u32, Vec<u8>) {
         let count = u32::try_from(self.cells.len()).unwrap_or(u32::MAX);
@@ -497,6 +567,8 @@ pub struct Imported {
     pub own: LookText,
     /// The other looks, by name.
     pub others: Vec<(String, LookText)>,
+    /// The packed tiles that move, and their frames.
+    pub moving: Vec<FramesText>,
 }
 
 /// One layer of the mapping as the tileset file has it, its tiles packed.
@@ -694,10 +766,12 @@ pub fn import(
     let mut looks = looks.into_iter();
     let own = looks.next().filter(|(name, _)| name == DEFAULT_TILES);
     let (_, own) = own.ok_or_else(|| format!("the mapping has no look \"{DEFAULT_TILES}\""))?;
+    let moving = packer.moving()?;
     Ok(Imported {
         image: packer.image(),
         own,
         others: looks.collect(),
+        moving,
     })
 }
 
@@ -717,6 +791,7 @@ pub fn tileset(imported: &Imported, sprites: &[MapSprite]) -> String {
     );
     out.push_str(&tileset_ron::look(&imported.own, "    "));
     out.push_str(&tileset_ron::looks(&imported.others));
+    out.push_str(&tileset_ron::frames(&imported.moving));
     out.push_str(&map_sprite_import::units(sprites));
     out.push_str(")\n");
     out
@@ -814,8 +889,10 @@ pub fn run(root: &Path, sprites: &[MapSprite]) -> Result<String, String> {
         fs::write(&path, bytes).map_err(|e| format!("writing {}: {e}", path.display()))?;
     }
     Ok(format!(
-        "tileset-import: wrote {GAME_DIR}/{} ({width}×{height}) and {GAME_DIR}/{ron_path}",
-        image_path()
+        "tileset-import: wrote {GAME_DIR}/{} ({width}×{height}) and {GAME_DIR}/{ron_path} \
+         ({} moving tiles)",
+        image_path(),
+        imported.moving.len()
     ))
 }
 
