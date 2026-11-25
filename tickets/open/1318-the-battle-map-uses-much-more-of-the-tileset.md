@@ -56,6 +56,14 @@ What Chapter 1 needs, as the mockups drew it:
 - Harrowby: the ruins' round pillar as a small tower. Few rocks.
 - The moving parts (water, trees) are 1315's; this ticket can draw their
   frame 0 first.
+- **2026-11-24, from 1315:** a tileset's cells can loop through frames
+  now (`frames`, `assets/tilesets/README.md`), drawn by the sprite skin
+  at the scene's clock and still on the Playdate. 1315 moved no real
+  tile (Tiny Tales' loops are all one picture), so the river's 8 frames
+  of `RA_Animated_Water.png` go in with this ticket's water: give each
+  water cell its `frames` and `motion` (`Minimal` with a `todo`, as
+  `cargo xtask tileset-import` writes them). The trees are 1356's,
+  after this ticket.
 
 This is more than one PR: split it with `write-ticket` before coding
 (a likely cut: ground and water; hills; fort and details).

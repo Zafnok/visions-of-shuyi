@@ -116,6 +116,51 @@ pub fn looks(named: &[(String, LookText)]) -> String {
     out
 }
 
+/// A moving cell to write (ticket 1315): every row that draws `at`
+/// loops through `frames`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FramesText {
+    /// The cell, and its first frame.
+    pub at: At,
+    /// Each frame's cell and its time in ms, the first `at` itself.
+    pub frames: Vec<(At, u32)>,
+    /// What is still to make for the `Minimal` tier's still (a one-bit
+    /// tile), if anything: the check lists it (ADR-0131).
+    pub minimal_todo: Option<String>,
+}
+
+/// The `frames` field naming each of `moving`, every lesser tier showing
+/// the first frame; nothing for none.
+pub fn frames(moving: &[FramesText]) -> String {
+    if moving.is_empty() {
+        return String::new();
+    }
+    let mut out = String::from("    frames: [\n");
+    for FramesText {
+        at: (column, row),
+        frames,
+        minimal_todo,
+    } in moving
+    {
+        let shown: Vec<String> = frames
+            .iter()
+            .map(|((c, r), ms)| format!("(({c}, {r}), {ms})"))
+            .collect();
+        let todo = minimal_todo
+            .as_ref()
+            .map_or_default(|t| format!(", todo: \"{t}\""));
+        let stills = format!("{{Reduced: (show: FirstFrame), Minimal: (show: FirstFrame{todo})}}");
+        // Writing to a `String` can't fail.
+        let _ = writeln!(
+            out,
+            "        (at: ({column}, {row}), frames: [{}],\n         motion: (stills: {stills})),",
+            shown.join(", ")
+        );
+    }
+    out.push_str("    ],\n");
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -183,6 +228,35 @@ mod tests {
         assert_eq!(
             layer(&beside, ""),
             "Tiles(of: [\"bridge\"], at: (1, 4), beside: [\"water\"], sides: [\n]),\n"
+        );
+    }
+
+    #[test]
+    fn moving_cells_are_written_with_their_stills_or_not_at_all() {
+        assert_eq!(frames(&[]), "");
+        let water = FramesText {
+            at: (3, 1),
+            frames: vec![((3, 1), 600), ((4, 1), 200)],
+            minimal_todo: None,
+        };
+        let coast = FramesText {
+            at: (5, 0),
+            frames: vec![((5, 0), 100), ((6, 0), 100)],
+            minimal_todo: Some("a one-bit tile".to_owned()),
+        };
+        assert_eq!(
+            frames(&[water, coast]),
+            [
+                "    frames: [",
+                "        (at: (3, 1), frames: [((3, 1), 600), ((4, 1), 200)],",
+                "         motion: (stills: {Reduced: (show: FirstFrame), Minimal: (show: FirstFrame)})),",
+                "        (at: (5, 0), frames: [((5, 0), 100), ((6, 0), 100)],",
+                "         motion: (stills: {Reduced: (show: FirstFrame), \
+                 Minimal: (show: FirstFrame, todo: \"a one-bit tile\")})),",
+                "    ],",
+                "",
+            ]
+            .join("\n")
         );
     }
 

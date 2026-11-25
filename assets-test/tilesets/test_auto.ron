@@ -131,6 +131,10 @@
             ],
         ),
     },
+    frames: [
+        (at: (8, 0), frames: [((8, 0), 600), ((0, 6), 200), ((1, 6), 400), ((2, 6), 200)],
+         motion: (stills: {Reduced: (show: FirstFrame), Minimal: (show: FirstFrame)})),
+    ],
     unit_px: (16, 20),
     units: (
         characters: {},
