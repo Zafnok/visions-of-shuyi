@@ -541,6 +541,9 @@ fn open(
         marker_spans("fn a() {}\n// engine-friction: engine#25\n"),
         []
     );
+    // After code that doesn't end the item: through the item's end.
+    let trailing = "use a;\nfn a() { // engine-friction: engine#2540, moves (game 1182 deletes it)\n    b();\n}\nfn c() {}\n";
+    assert_eq!(marker_spans(trailing), [span(2, 4, "2540", Some("1182"))]);
     // On the first line: the whole file.
     let file =
         "// engine-friction: engine#2578, moves (game 1224 deletes it)\nuse a;\n\nfn b() {}\n";

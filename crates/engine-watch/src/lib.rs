@@ -530,16 +530,15 @@ pub fn marker_spans(source: &str) -> Vec<MarkerSpan> {
             continue;
         };
         let code = line[..at].trim();
-        let last = if !code.is_empty() && ends_an_item(code) {
-            i
-        } else if i == 0 && code.is_empty() {
+        let last = if i == 0 && code.is_empty() {
             lines.len() - 1
         } else {
+            // From the marker's own line: code before it may end the item.
             let depth = indent(line);
             lines
                 .iter()
                 .enumerate()
-                .skip(i + 1)
+                .skip(i)
                 .find(|(_, l)| {
                     let text = l.trim_start();
                     indent(l) == depth && !text.starts_with("//") && ends_an_item(text)
