@@ -11,8 +11,16 @@
     (key: "test_21833604", source: "You're late.", text: "YOU'RE LATE."),
     // In Chinese (ticket 0237), for the test of wrapping without spaces:
     // three lines of the box, where cutting at 46 characters would start
-    // the second and third with `。`. Made of the only Chinese characters
-    // the wide font has (`title.crashed`'s), so it reads as nonsense.
+    // the second and third with `。`. Made of `title.crashed`'s
+    // characters, so the atlas needs few, and it reads as nonsense.
+    // In Chinese (ticket 0239), for the test of the pack's wide
+    // punctuation: `“好”` takes six cells, and `——` and `……` stay whole.
+    // Test characters, not a translation.
+    (
+        key: "test_b98e130d",
+        source: "Than never. Say it. I've heard it from you often enough.",
+        text: "“好”——已保存报告……",
+    ),
     (
         key: "test_d7fb4eb3",
         source: "The knight stamps off into the rain.",

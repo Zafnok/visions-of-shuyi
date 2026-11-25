@@ -223,6 +223,26 @@ mod tests {
         assert_eq!(status.orphans, []);
     }
 
+    /// Ticket 0239: each pack's `lang.ron` names the wide set it draws
+    /// from and whether `“ ” ‘ ’ … —` are wide in it. English names none
+    /// and keeps them narrow; the test pack stands in for Chinese.
+    #[test]
+    fn the_packs_load_with_their_wide_sets() {
+        let lang = load(None).unwrap();
+        let base = font::widths();
+        let english = lang.widths(&LangCode::default(), &base);
+        assert_eq!(english.wide_font(), None);
+        assert!(!english.wide_punctuation() && !english.is_wide('“'));
+        let test = lang.pack(&code(TEST)).unwrap();
+        assert_eq!(test.info.wide_font.as_deref(), Some("zhhans"));
+        assert!(test.info.wide_punctuation);
+        let widths = lang.widths(&code(TEST), &base);
+        assert_eq!(widths.wide_font(), Some("zhhans"));
+        for c in ['“', '”', '‘', '’', '…', '—', '好', '。'] {
+            assert!(widths.is_wide(c), "{c}");
+        }
+    }
+
     #[test]
     fn each_gender_of_the_lead_has_its_variant() {
         assert_eq!(variant(LeadGender::Male), "m");

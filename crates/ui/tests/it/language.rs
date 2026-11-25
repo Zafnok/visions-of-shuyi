@@ -155,12 +155,63 @@ fn a_chinese_line_pages_in_the_box_with_no_line_starting_with_a_stop() {
     for line in &lines {
         let cells = shuyi_assets::lang::text_width(line, &widths);
         assert!(cells <= TEXT_W, "{cells} cells: {line}");
-        assert!(!line.starts_with(['。', '、']), "{lines:?}");
+        assert!(!line.starts_with(['。', '、', '，']), "{lines:?}");
     }
     // Typed out in full: the three lines as the box shows them.
     h.wait(10.0);
     assert_eq!(h.top_screen(), "dialogue");
     assert_snapshot!(h.snapshot());
+}
+
+/// Ticket 0239: the test pack has Chinese punctuation (`wide_punctuation`),
+/// so its Chinese line's `“好”` is six cells in the dialogue box, each
+/// quotation mark a wide glyph from the pack's set like `好`, and `——` and
+/// `……` four cells each. In English the same marks are one cell.
+#[test]
+fn a_chinese_line_shows_its_quotation_marks_wide() {
+    use trpg_ui::screens::DialogueScreen;
+    let mut h = title();
+    h.keys("F2 Down Down f");
+    let mut found = None;
+    for _ in 0..100 {
+        let Some(screen) = h.screen::<DialogueScreen>() else {
+            break;
+        };
+        let lines = screen.view(h.ctx()).text.lines;
+        if lines.iter().any(|line| line.contains('好')) {
+            found = Some(lines);
+            break;
+        }
+        h.keys("f");
+    }
+    let Some(lines) = found else {
+        panic!("the scene never showed its line with 好");
+    };
+    assert_eq!(lines, ["“好”——已保存报告……"]);
+    let widths = h.ctx().widths().clone();
+    assert_eq!(widths.wide_font(), Some("zhhans"));
+    let cells = |text: &str| shuyi_assets::lang::text_width(text, &widths);
+    assert_eq!((cells("“好”"), cells("——"), cells("……")), (6, 4, 4));
+    // On screen, typed out: three characters of two cells each.
+    h.wait(10.0);
+    let buf = h.game().buffer();
+    let (w, rows) = (i32::from(buf.width()), i32::from(buf.height()));
+    let (x, y) = (0..rows)
+        .flat_map(|y| (0..w).map(move |x| (x, y)))
+        .find(|&(x, y)| buf.get(x, y).is_some_and(|c| c.glyph == '“'))
+        .expect("the line is on screen");
+    let row: Vec<_> = (x..x + 6).map(|x| buf.get(x, y).unwrap()).collect();
+    let glyphs: Vec<_> = row.iter().step_by(2).map(|c| c.glyph).collect();
+    assert_eq!(glyphs, ['“', '好', '”']);
+    for (i, pair) in row.chunks(2).enumerate() {
+        assert!(!pair[0].is_continuation(), "cell {i}: a character");
+        assert!(pair[1].is_continuation(), "cell {i}: its second half");
+    }
+    // English keeps them narrow.
+    h.ctx_mut().lang = LangCode::default();
+    let narrow = h.ctx().widths().clone();
+    assert_eq!(narrow.wide_font(), None);
+    assert_eq!(shuyi_assets::lang::text_width("“好”", &narrow), 4);
 }
 
 /// Without the debug tools the test pack is not a language: English.
