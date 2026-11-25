@@ -276,7 +276,10 @@ pub const BATTLERS: [Picture; 18] = [
     ),
     // The prior of Greywater is the dark priest, his hair white (ticket 0861).
     tinted(
-        shironejiya("greywater_prior", "shironejiya/monster_s/m_s_mage_dark_m01.png"),
+        shironejiya(
+            "greywater_prior",
+            "shironejiya/monster_s/m_s_mage_dark_m01.png",
+        ),
         &RED_HAIR_TO_WHITE,
     ),
     // The Rider is the Paladin in the enemy's red; Tamsin has her own.

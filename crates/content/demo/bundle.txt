@@ -61,9 +61,10 @@ keep data/names.ron: place.harrowby place.veyne_hall place.greywater place.thorn
 keep data/names.ron: faction.red_company family.veyne house.veyne god.mother.name event.ash_peace
 
 # The credits name the bought art of characters first met after Chapter 1
-# (ticket 0858): the demo's copy doesn't.
-swap data/credits.ron: "battlers/brigand.", "battlers/defector.", => "battlers/brigand.",
-swap data/credits.ron: "portraits/defector", "portraits/heretic", => "portraits/heretic",
+# (tickets 0858, 0861): the demo's copy doesn't.
+swap data/credits.ron: "battlers/brigand.", "battlers/defector.", "battlers/greywater_prior.", => "battlers/brigand.",
+swap data/credits.ron: "portraits/defector", "portraits/greywater_prior", "portraits/heretic", => "portraits/heretic",
+swap data/credits.ron: "portraits/hound_sergeant", "portraits/keeper", => "portraits/keeper",
 
 # That art, in a build that has it (`assets-private/game/`): left out, and
 # the tileset's entry for it cut.
@@ -71,5 +72,11 @@ art portraits/defector/
 art portraits/defector.ron
 art battlers/defector.png
 art battlers/defector.ron
+art portraits/greywater_prior/
+art portraits/greywater_prior.ron
+art battlers/greywater_prior.png
+art battlers/greywater_prior.ron
+art portraits/hound_sergeant/
+art portraits/hound_sergeant.ron
 art units/thief.png
 art swap tilesets/tiny_tales.ron: "defector": (image: "units/thief.png", frame: (1, 0), walk: true), =>
