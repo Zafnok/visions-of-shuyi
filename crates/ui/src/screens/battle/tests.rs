@@ -1048,3 +1048,16 @@ fn a_command_being_applied_is_in_the_crash_record() {
     assert_eq!(record.applying, Some(Command::EndPhase));
     assert_eq!(record.commands(), [Command::EndPhase]);
 }
+
+/// The battle keeps the player's language with its cell widths, English
+/// too, from its first frame: its lists pad their columns in the cells
+/// that language's text takes (ticket 0263).
+#[test]
+fn the_battle_keeps_the_languages_cell_widths_from_its_first_frame() {
+    let mut c = ctx();
+    let mut s = BattleScreen::new(quick_battle(&c.game.content).unwrap());
+    assert!(!s.language.has_widths());
+    step(&mut s, &mut c, &[]);
+    assert_eq!(s.language, c.language());
+    assert_eq!(s.language.words().widths(), c.widths());
+}
