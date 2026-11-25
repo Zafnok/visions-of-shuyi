@@ -41,7 +41,8 @@ pub const PACK_WITH_PREPARATIONS: &str =
 /// always fit the notes panel and the `Objective` page.
 pub const MAX_NOTES: usize = 5;
 
-/// The longest a battle note's text may be, in characters.
+/// The longest a battle note's text may be, in cells (a Chinese character
+/// takes two: [`crate::font::text_width`]).
 pub const MAX_NOTE_CHARS: usize = 120;
 
 /// The content a battle file refers to.
@@ -894,13 +895,11 @@ impl<'a, 'r> Checker<'a, 'r> {
         for (i, note) in notes.iter().enumerate() {
             let what = format!("battle note {}", i + 1);
             let text = note.text.trim();
-            let chars = text.chars().count();
+            let cells = crate::font::text_width(text);
             if text.is_empty() {
                 self.err(format!("{what}: no text"));
-            } else if chars > MAX_NOTE_CHARS {
-                self.err(format!(
-                    "{what}: {chars} characters, more than {MAX_NOTE_CHARS}"
-                ));
+            } else if cells > MAX_NOTE_CHARS {
+                self.err(format!("{what}: {cells} cells, more than {MAX_NOTE_CHARS}"));
             }
             if text.chars().any(char::is_control) {
                 self.err(format!("{what}: the text must be one line"));

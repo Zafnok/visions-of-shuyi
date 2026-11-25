@@ -47,6 +47,7 @@ use crate::widgets::help::{action_key, key_name};
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use history::History;
 use log::{LogView, RowKind};
+use shuyi_assets::font::CellWidths;
 use shuyi_ui::dialogue::{Step, TextBox};
 use trpg_content::LineId;
 use view::{DialogueView, OpeningView, SkipView, TextView, WaitView};
@@ -202,8 +203,11 @@ pub struct DialogueScreen {
     /// The current text box: its pages ([`TEXT_LINES`] lines each) and how
     /// much is revealed.
     text: TextBox,
-    /// Characters per line of its pages ([`text_w`]).
+    /// Cells per line of its pages ([`text_w`]).
     width: usize,
+    /// How many cells each character takes in the language it is told in
+    /// ([`Ctx::widths`]): a Chinese one two (ticket 0237).
+    widths: CellWidths,
     /// "Skip scene?", while it is open.
     asking_skip: Option<Ask<bool>>,
     /// The lead's replies, while a choice is open.
@@ -275,13 +279,9 @@ impl DialogueScreen {
         let mut screen = Self {
             player,
             overlay: false,
-            text: TextBox::new(
-                "",
-                TEXT_W,
-                TEXT_LINES,
-                &shuyi_assets::font::CellWidths::NARROW,
-            ),
+            text: TextBox::new("", TEXT_W, TEXT_LINES, &CellWidths::NARROW),
             width: TEXT_W,
+            widths: CellWidths::NARROW,
             asking_skip: None,
             menu: None,
             history: History::new(),
@@ -310,11 +310,13 @@ impl DialogueScreen {
     }
 
     /// The same screen with its pages as wide as `ctx`'s skins show them
-    /// ([`text_w`]): the Playdate's are narrower. Before it has played.
+    /// ([`text_w`]: the Playdate's are narrower), its text measured in the
+    /// cells of `ctx`'s language ([`Ctx::widths`]). Before it has played.
     #[must_use]
     pub fn wrapped_for(mut self, ctx: &Ctx) -> Self {
-        if self.width != text_w(ctx) {
+        if self.width != text_w(ctx) || self.widths != *ctx.widths() {
             self.width = text_w(ctx);
+            self.widths = ctx.widths().clone();
             self.show_box();
         }
         self
@@ -487,7 +489,7 @@ impl DialogueScreen {
             view.text.as_deref().unwrap_or(""),
             self.width,
             TEXT_LINES,
-            &shuyi_assets::font::CellWidths::NARROW,
+            &self.widths,
         );
         let menu = view.choices.map(|choices| {
             let items = choices.into_iter().enumerate();

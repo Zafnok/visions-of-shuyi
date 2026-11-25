@@ -21,6 +21,7 @@ use shuyi_ui::text::{Args, StyledText, TextRole};
 
 use crate::input::Action;
 use crate::screen::Ctx;
+use crate::widgets::{breaks_at, word_wrap};
 
 pub use crate::input::help_keys::{
     NOT_MAPPED, SEPARATOR, all_key_names, cursor_keys_name, help_line, key_name,
@@ -202,45 +203,65 @@ pub fn styled_lines(text: &StyledText) -> Vec<StyledText> {
     lines
 }
 
-/// `text` wrapped at the spaces of its plain spans into rows of at most
-/// `room` cells as `widths` measure them (a key cap whole, with what
-/// follows it up to the next space: `F,` stays together). A word wider
-/// than `room` has a row of its own. The engine's
-/// [`word_wrap`](crate::widgets::word_wrap) wraps plain text only:
-/// workaround until the engine wraps styled text (ticket 0254's notes).
+/// What [`wrap_styled`] measures a span that isn't plain as: a run of
+/// these as wide as the span is drawn, which [`word_wrap`] never breaks
+/// inside (nor from a letter or a `,` next to it).
+const WHOLE: char = 'x';
+
+/// `text` wrapped by the engine's [`word_wrap`] into rows of at most
+/// `room` cells as `widths` measure them, its plain spans broken as
+/// `word_wrap` breaks text (at spaces; Chinese and Japanese between
+/// characters, ticket 0237), a key (any span with a role) whole, with
+/// what follows it up to the next break: `F,` stays together. A key
+/// wider than `room` has a row of its own. (`word_wrap` wraps plain text
+/// only: each key goes in as a run of [`WHOLE`] its width, a cap's extra
+/// cells too, and comes back out whole.)
 pub fn wrap_styled(text: &StyledText, room: usize, widths: &CellWidths) -> Vec<StyledText> {
-    let mut words = vec![StyledText::new()];
-    for span in text.spans() {
-        let parts: Vec<&str> = match span.role {
-            None => span.text.split(' ').collect(),
-            Some(_) => vec![span.text.as_str()],
-        };
-        for (i, part) in parts.into_iter().enumerate() {
-            if i > 0 {
-                words.push(StyledText::new());
-            }
-            if let (false, Some(word)) = (part.is_empty(), words.last_mut()) {
-                word.push(part, span.role);
-            }
+    let spans = text.spans();
+    let mut measured = String::new();
+    // Each character of `measured`, and the span it stands for if a key.
+    let mut source: Vec<(char, Option<usize>)> = Vec::new();
+    for (i, span) in spans.iter().enumerate() {
+        if span.role.is_none() {
+            measured.push_str(&span.text);
+            source.extend(span.text.chars().map(|c| (c, None)));
+        } else {
+            let mut key = StyledText::new();
+            key.push(&span.text, span.role);
+            let cells = key.width(widths).max(1);
+            measured.extend(core::iter::repeat_n(WHOLE, cells));
+            source.extend(core::iter::repeat_n((WHOLE, Some(i)), cells));
         }
     }
+    let mut source = source.into_iter();
+    let mut last_key = None;
     let mut rows = Vec::new();
-    let (mut row, mut used) = (StyledText::new(), 0);
-    for word in words.into_iter().filter(|w| !w.is_empty()) {
-        let w = word.width(widths);
-        if !row.is_empty() && used + 1 + w > room {
-            rows.push(core::mem::take(&mut row));
-            used = 0;
+    for line in word_wrap(&measured, room, widths) {
+        let mut row = StyledText::new();
+        for c in line.chars() {
+            // The line's characters are `measured`'s in order, a break's
+            // spaces dropped and one space put where it broke.
+            let Some((from, key)) = source.find(|&(s, _)| s == c || (c == ' ' && breaks_at(s)))
+            else {
+                break;
+            };
+            match key {
+                // After the rest of a key cut over rows (dropped).
+                None if c == ' ' && row.is_empty() => {}
+                None => {
+                    let mut buf = [0; 4];
+                    row.push(from.encode_utf8(&mut buf), None);
+                }
+                Some(i) if last_key != Some(i) => {
+                    row.push(&spans[i].text, spans[i].role);
+                    last_key = Some(i);
+                }
+                Some(_) => {}
+            }
         }
         if !row.is_empty() {
-            row.push_plain(" ");
-            used += 1;
+            rows.push(row);
         }
-        row.append(&word);
-        used += w;
-    }
-    if !row.is_empty() {
-        rows.push(row);
     }
     rows
 }

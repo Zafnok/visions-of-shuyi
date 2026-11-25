@@ -72,7 +72,7 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
             if let Some(notes) = &o.notes {
                 lines.push(String::new());
                 lines.push(notes.title.clone());
-                lines.extend(note_lines(notes, area));
+                lines.extend(note_lines(notes, area, buf.widths()));
             }
             paint_box(ctx, view, &o.title, &lines, buf);
         }
@@ -85,7 +85,13 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
         info::paint(ctx, i, area, buf);
     }
     if let Some(notes) = &view.notes {
-        paint_box(ctx, view, &notes.title, &note_lines(notes, area), buf);
+        paint_box(
+            ctx,
+            view,
+            &notes.title,
+            &note_lines(notes, area, buf.widths()),
+            buf,
+        );
     }
     if let Some(b) = &view.banner {
         paint_banner(ctx, b, area, buf);
@@ -447,9 +453,10 @@ fn paint_header(ctx: &Ctx, header: &MenuHeader, rect: Rect, buf: &mut GlyphBuffe
 }
 
 /// The lines of `notes`, wrapped again to fit a window across `area`.
-fn note_lines(notes: &NotesView, area: Rect) -> Vec<String> {
-    let texts = unwrap_notes(&notes.lines);
-    wrap_notes(texts.iter().map(String::as_str), to_usize(area.w - 4))
+fn note_lines(notes: &NotesView, area: Rect, widths: &CellWidths) -> Vec<String> {
+    let texts = unwrap_notes(&notes.lines, widths);
+    let width = to_usize(area.w - 4);
+    wrap_notes(texts.iter().map(String::as_str), width, widths)
 }
 
 /// Paints a window of `lines` under `title`, centred across the map and

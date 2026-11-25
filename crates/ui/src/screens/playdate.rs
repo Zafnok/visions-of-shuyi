@@ -206,10 +206,11 @@ impl Item {
     }
 }
 
-/// `text` wrapped at `width` cells by words, keeping its own line breaks.
-pub fn wrap(text: &str, width: usize) -> Vec<String> {
+/// `text` wrapped at `width` cells as `widths` measure them (by words;
+/// Chinese and Japanese between characters), keeping its own line breaks.
+pub fn wrap(text: &str, width: usize, widths: &CellWidths) -> Vec<String> {
     text.lines()
-        .flat_map(|line| word_wrap(line, width, &shuyi_assets::font::CellWidths::NARROW))
+        .flat_map(|line| word_wrap(line, width, widths))
         .collect()
 }
 
@@ -346,7 +347,7 @@ fn answers_line(answers: Answers<'_>, widths: &CellWidths) -> (String, Vec<i32>)
 /// [`QUESTION_W`], then a blank row and its answers. Returns the window.
 pub fn ask(ctx: &Ctx, buf: &mut GlyphBuffer, text: &str, answers: Answers<'_>) -> Rect {
     let ink = inks(ctx);
-    let lines = wrap(text, QUESTION_W);
+    let lines = wrap(text, QUESTION_W, buf.widths());
     let (line, starts) = answers_line(answers, buf.widths());
     let widest = lines
         .iter()

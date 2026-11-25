@@ -120,6 +120,49 @@ fn a_gendered_entry_shows_the_text_for_the_lead() {
     assert!(!his.contains("HER GRIP"));
 }
 
+/// Ticket 0237: the test pack's Chinese line (in its wide font, two cells
+/// a character) pages in the dialogue box at the same three lines, broken
+/// between characters within the box's cells and never before `。` or
+/// `、`, though cutting it at 46 characters would start two lines with `。`.
+#[test]
+fn a_chinese_line_pages_in_the_box_with_no_line_starting_with_a_stop() {
+    use trpg_ui::screens::DialogueScreen;
+    use trpg_ui::screens::dialogue::{TEXT_LINES, TEXT_W};
+    let mut h = title();
+    h.keys("F2 Down Down f");
+    let mut found = None;
+    for _ in 0..100 {
+        let Some(screen) = h.screen::<DialogueScreen>() else {
+            break;
+        };
+        let lines = screen.view(h.ctx()).text.lines;
+        if lines.iter().any(|line| line.contains('游')) {
+            found = Some(lines);
+            break;
+        }
+        h.keys("f");
+    }
+    let Some(lines) = found else {
+        panic!("the scene never showed its Chinese line");
+    };
+    let widths = h.ctx().widths().clone();
+    assert!(widths.is_wide('游') && widths.is_wide('。'));
+    let text: Vec<char> = lines.concat().chars().collect();
+    assert_eq!(text.len(), 92, "{lines:?}");
+    // Cut every 46 characters (92 cells), lines 2 and 3 would start `。`.
+    assert_eq!((text[46], text[92 - 1]), ('。', '。'));
+    assert_eq!(lines.len(), TEXT_LINES, "{lines:?}");
+    for line in &lines {
+        let cells = shuyi_assets::lang::text_width(line, &widths);
+        assert!(cells <= TEXT_W, "{cells} cells: {line}");
+        assert!(!line.starts_with(['。', '、']), "{lines:?}");
+    }
+    // Typed out in full: the three lines as the box shows them.
+    h.wait(10.0);
+    assert_eq!(h.top_screen(), "dialogue");
+    assert_snapshot!(h.snapshot());
+}
+
 /// Without the debug tools the test pack is not a language: English.
 #[test]
 fn the_test_pack_counts_only_with_the_debug_tools() {

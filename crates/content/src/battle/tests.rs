@@ -744,7 +744,7 @@ lines")]"#
     );
     assert_eq!(
         note_errors(&c, &format!("[(text: \"{fits}x\")]")),
-        ["battle note 1: 121 characters, more than 120"]
+        ["battle note 1: 121 cells, more than 120"]
     );
     let notes = |n: usize| format!("[{}]", "(text: \"A.\"),".repeat(n));
     assert_eq!(note_errors(&c, &notes(MAX_NOTES)), Vec::<String>::new());

@@ -279,7 +279,7 @@ fn the_objective_page_wraps_its_notes_to_the_screen_under_its_title() {
     let s = quick();
     let note = "Burn the forest to cut off the ambush quickly, before the riders \
                 reach the ford.";
-    let lines = wrap_notes([note], NOTE_WIDTH);
+    let lines = wrap_notes([note], NOTE_WIDTH, &shuyi_assets::font::CellWidths::NARROW);
     assert!(
         lines.iter().any(|l| cells(l, &CellWidths::NARROW) > 46),
         "{lines:?}"
@@ -322,7 +322,11 @@ fn the_battle_notes_box_keeps_off_the_rows_of_the_units_they_are_about() {
     let lord = s.cursor().pos;
     let notes = NotesView {
         title: "BATTLE NOTES".into(),
-        lines: wrap_notes(["The lord must live."], NOTE_WIDTH),
+        lines: wrap_notes(
+            ["The lord must live."],
+            NOTE_WIDTH,
+            &shuyi_assets::font::CellWidths::NARROW,
+        ),
     };
     let window_rows = |noted: Vec<Pos>| {
         let buf = painted_with(&s, |v| {
