@@ -72,14 +72,27 @@ same report on every machine and every thread count.
             band: (min: 80, max: 100), floor: Some(50)),
        Median(entrant: "rollout", measure: "turns", among: [(measure: "won", min: Some(1))],
               want: Lower, than: "random"),
+       Gap(entrant: "rollout", than: "random", success: [(measure: "won", min: Some(1))],
+           most: 60),
    ]
    ```
 
    A `Rate` is the share of an entrant's tries that meet every
-   `success` condition: inside its `band` (✓), under it (✗ too hard) or
-   over it (⚠ too easy). Under its `floor` the run is blocked, and that
-   alone fails `playtest`. A `Median` compares a measure between two
-   entrants.
+   `success` condition, judged with its 95% interval (a Wilson score
+   interval in whole percents, `Band::interval`): inside its `band` (✓);
+   under it (✗ too hard) or over it (⚠ too easy) only when the whole
+   interval is out; out with the interval still reaching the band,
+   `~ maybe too hard` or `~ maybe too easy`. On 100 tries a share carries
+   about ±10 points of noise, so 49/100 against a band from 50 is a maybe
+   (`band 50–75% · 95% 40–58%`), and 15/100 a sure miss: play more tries
+   before retuning on a maybe. Under its `floor` the run is blocked, and
+   that alone fails `playtest`; the floor is judged on the share itself,
+   never the interval. A `Median` compares a measure between two
+   entrants. A `Gap` says `entrant`'s share of tries meeting `success`
+   is at most `most` percentage points over `than`'s (the bot with the
+   best deck wins at most 15 points more often than the one with the
+   starter deck), compared in integers across any two try counts. It is
+   ✓ or ✗ in the report, and never blocks a run.
 
 5. **Give the plan.** The stage's `GameTools::playtest_plan` returns a
    `PlaytestPlan::new(title, entrants, checks, play)`: the entrants by
@@ -114,7 +127,9 @@ same report on every machine and every thread count.
    play on. The tries run on every core, and the report never depends on
    how many. The answer's `result` holds one report per stage: each
    entrant's tries with their measures, each check with what it found
-   (`found.Rate.verdict` is `Within`, `Below` or `Above`), `blocked`,
+   (`found.Rate.verdict` is `Within`, `Below`, `Above`, `MaybeBelow` or
+   `MaybeAbove`, and `found.Rate.interval` its 95% interval, `[lo, hi]`;
+   `found.Gap.verdict` is `Within` or `Over`), `blocked`,
    and each entrant's seconds per try, the one number that changes with
    the machine, and its `summary` lines.
 
@@ -175,9 +190,19 @@ same report on every machine and every thread count.
 - **Targets by tier.** A game with tiers of stages (easy, hard) writes
   what each entrant should achieve once, as
   `shuyi_core::bots::playtest::Targets`: `success` per entrant, `bands`
-  per tier and entrant, `floors`, and `medians`.
+  per tier and entrant, `floors`, `medians`, and `gaps`, each
+  `(entrant, than, success, most)` as a `Gap` check has them.
   `Targets::checks(&tier, &entrants)` gives a stage's checks, and
   `unknown_entrants` names a file's typos.
+- **Kinds of stage.** A stage of a kind the game names (a time trial, a
+  hold) takes `kinds: {"trial": (bands: {..}, medians: false)}`:
+  `Targets::checks_of(&tier, &["trial"], &entrants)` lays each kind's
+  bands for the tier over the tier's, entrant by entrant (a later kind
+  wins), and leaves the medians out if a kind says `medians: false`, for
+  a stage that lasts the same however it is played. `medians` is true
+  when left out. The gaps stay on every kind: a gap of successes doesn't
+  hang on how long a stage lasts. Each median and gap is checked only
+  where both its entrants play.
 - **Personas.** A kind of player is data (`shuyi_core::bots::weigh`): a
   `Persona` holds its `PlanSettings`, its weights by the game's feature
   names, and the game's own extras. `Weighted { weights, counts }` turns
@@ -228,13 +253,22 @@ order instead (ADR-0044):
 - **Grid games:** `TacticsOrder::new(hooks, cap)` with the game's
   `OrderHooks`: `prepare` builds the state's `Threats` and
   `GoalDistance`, `classify` tags each command (`Kind::Strike`,
-  `Extra`, `Step`, `End`, `Drop`, `Other`), `pick` is the game's AI's
+  `Extra`, `Step`, `Spare`, `End`, `Drop`, `Other`), `pick` is the game's AI's
   own command, and `at`, `distance`, `safe` answer from them. Its eight
   steps: each piece's best strike on each target, the pick, the extras,
   each piece's advance (its step nearest the goals by walking, if
   nearer than where it stands), each piece's hold (its safe step
   nearest the goals, if not its advance), the other ways of striking,
   the rest, and the end.
+- **Pieces with several targets:**
+  `.with_targets_after_steps(true)` lists each piece's best strike only
+  in step 1; its best on each other target comes after the holds, then
+  the other ways. Without it, three pieces with three targets each fill
+  a cap of ten with blows and no piece's advance is tried (ADR-0145).
+- **Nothing left to fear:** tag a command `Kind::Spare { step }` to try
+  it only as the pick or, with `Some((piece, dest))`, as that piece's
+  advance or hold, never in the rest: once a floor is cleared, only the
+  step towards the stairs is worth a place.
 
 Give the order the planner's own `candidates` as its `cap`, or the end
 can fall past the planner's cut. What a strike or a heal is and what it
