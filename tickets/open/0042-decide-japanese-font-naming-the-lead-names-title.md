@@ -92,7 +92,12 @@ translating anything (0719). No mockup made with bought art is committed
 5. Update 0718 and 0825 where an answer changes their text. The
    Japanese font goes in the atlas as the set `ja`: in 0236 or 0239 if
    either is still open (add the step there), otherwise in a ticket of
-   its own (`write-ticket`) that 0719 waits for.
+   its own (`write-ticket`) that 0719 waits for. Both closed before this
+   was answered (0239, 2026-11-25), so it is a ticket of its own, and it
+   carries 0239's check left waiting: the same character (直) draws from
+   the set `ja` with the language `ja` and from `zhhans` with `zhhans`
+   (a frame PNG test against two committed references). The engine
+   already looks a glyph up in the language's set first (engine#2303).
 
 ## Acceptance criteria
 

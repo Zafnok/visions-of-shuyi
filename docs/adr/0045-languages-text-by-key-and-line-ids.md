@@ -1,6 +1,6 @@
 # ADR-0045: Languages: text by key, dialogue lines by id, wide glyphs in two cells
 
-- **Status:** Accepted (§1–2 built by tickets 0233 and 0235, §3 by ticket 0717; the details each settled are marked *0233*, *0235*, *0243* and *As built (ticket 0717)*)
+- **Status:** Accepted (§1–2 built by tickets 0233 and 0235, §3 by ticket 0717, §4 by tickets 0236, 0237 and 0239; the details each settled are marked *0233*, *0235*, *0243* and *As built (ticket 0717)*)
 - **Date:** 2026-10-03
 - **Related tickets:** 0042, 0233, 0234, 0235, 0236, 0237, 0243, 0717, 0718, 0719, 0723, 0825, 0907
 - **Amends:** ADR-0016 (the atlas gains 16×16 glyphs from a second font) and
@@ -151,6 +151,35 @@ entry with the new line nearest to it so a translator sees the old text.
   between any two characters, except before closing punctuation
   (`。、」` and the like) and after opening brackets.
 - The "plain ASCII" rule stays for English only.
+
+As built (tickets 0236, 0237 and 0239, 2026-11-25; the engine builds all
+of it, engine#2302 and engine#2303):
+
+- **A wide set per font.** Japanese and Chinese share code points but not
+  shapes (直, 骨, 角), so the atlas holds each wide font as a named set:
+  `cargo shuyi font-atlas --wide <set>=<font.bdf>`, one `--wide` a set.
+  The game has one, `zhhans` (Fusion Pixel 12px, 0045's choice for
+  Simplified Chinese, its 12×12 glyphs placed in the 16×16 wide cell by
+  the BDF's bounding box, `assets/fonts/README.md`). `ja` joins it when
+  0042 picks the Japanese font. `shuyi.ron`'s `font_atlas.wide_set_glyphs`
+  keeps glyphs in a set whatever the packs use (the CJK punctuation block
+  and the full-width forms, for `zhhans`).
+- **A pack names its set**: `lang.ron`'s `wide_font: Some("<set>")`;
+  English names none. A wide glyph is looked up in the current language's
+  set first, then in the unnamed set, then in the other named sets by
+  name, so a word of one language shown in another still draws.
+- **Six widths depend on the language**: `“ ” ‘ ’ … —` are one cell in
+  English and two in Chinese, from the same code points. A pack says
+  `wide_punctuation: true` to have them wide; the atlas then holds them
+  both narrow and in its set, and the widths every screen measures with
+  follow the language the text is shown in.
+- **Line breaking** is the engine's `word_wrap` in the language's cells:
+  Chinese and Japanese break between any two characters, never before
+  closing punctuation (`，。、！？；：」）` and the like) or after an
+  opening bracket, and never inside `……` or `——`.
+- The test pack (`assets-test/lang/test/`) draws from `zhhans` with wide
+  punctuation, as a Chinese pack will; no Chinese or Japanese pack ships
+  yet (translating is 0726).
 
 ### 5. The player's language
 

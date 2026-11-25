@@ -51,7 +51,10 @@ The atlas keeps the glyphs of the set `zhhans` that the text uses (the
 packs whose `lang.ron` says `wide_font: Some("zhhans")`; the test pack
 does) and the ones `shuyi.ron`'s `font_atlas.wide_set_glyphs` names
 whatever the packs say: the CJK punctuation block and the full-width
-forms, so tests don't depend on a translation. A pack that gains a
+forms, so tests don't depend on a translation. A pack with
+`wide_punctuation: true` (Chinese, and the test pack) adds the marks
+`“ ” ‘ ’ … —` it uses to the set as well: the atlas then has them both
+narrow, for English, and wide (ticket 0239). A pack that gains a
 character the committed atlas lacks fails the stale-atlas test until the
 atlas is regenerated.
 
@@ -59,7 +62,7 @@ atlas is regenerated.
 
 | File | What |
 | ---- | ---- |
-| `atlas.png` | 557 narrow glyphs, 174 wide ones (two cells each) and the bold face's, white on transparent, 32 cells of 8×16 per row (256×736 px) |
+| `atlas.png` | 557 narrow glyphs, 179 wide ones (two cells each) and the bold face's, white on transparent, 32 cells of 8×16 per row (256×736 px) |
 | `atlas.ron` | `FontAtlasDef`: cell size, columns, `char → cell index` map, the wide sets (`wide_sets`: each wide glyph's left cell) and the bold glyphs |
 | `atlas_1bit.bin` | The same glyphs packed one bit a pixel for the Playdate (ADR-0074): each glyph in cell index order, 16 bytes (a byte a row, the highest bit the left pixel, a set bit the glyph), so the device never decodes a PNG |
 | `Terminus-LICENSE.txt` | The font's licence (OFL-1.1), shipped with the game |

@@ -2,8 +2,11 @@
 // offered to players; it only shows where debug tools are on. One line,
 // `title.crashed`, is in Chinese (ticket 0236), so a test can show wide
 // glyphs on the title screen; it draws them from the wide set `zhhans`.
+// Its punctuation `“ ” ‘ ’ … —` is wide, as in Chinese (ticket 0239), so
+// a test can show `“好”` six cells wide; its capitals' `…` are wide too.
 (
     name: "TEST",
     made_by: Machine,
     wide_font: Some("zhhans"),
+    wide_punctuation: true,
 )

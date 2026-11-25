@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0236", "0237"]
 nick_input: none
-completed:
+completed: 2026-11-25
 ---
 
 # 0239 — Chinese glyphs: a wide font per language, wide punctuation, Chinese line breaking
@@ -114,16 +114,16 @@ that, say so in the completion notes, and keep the other steps.
 
 ## Acceptance criteria
 
-- [ ] The same character (直) draws from the Japanese set with the
+- [ ] (Waits for the set `ja`, 0042: see the completion notes.) The same character (直) draws from the Japanese set with the
       language `ja` and from the Chinese set with `zhhans` in the game's
       atlas (a frame PNG test against two committed references).
-- [ ] A Chinese line from the test pack shows `“好”` six cells wide, and
+- [x] A Chinese line from the test pack shows `“好”` six cells wide, and
       a Chinese paragraph in the dialogue box has no line starting with
       `，` or `。` (Harness tests reading the view or the cells).
-- [ ] Every existing snapshot, the narrow atlas cells and the Japanese
+- [x] Every existing snapshot, the narrow atlas cells and the Japanese
       glyphs are unchanged.
-- [ ] The font's licence is shipped and listed.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The font's licence is shipped and listed.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -132,3 +132,48 @@ that, say so in the completion notes, and keep the other steps.
   ADR-0038 allows for tests of a look.
 
 ## Completion notes
+
+Done 2026-11-25.
+
+**What was left.** 0236 had already done steps 2 and 3's Chinese half:
+Fusion Pixel's BDF and licence, its credit and README section, and the
+named set `zhhans` with the CJK punctuation block and the full-width
+forms kept in it (`shuyi.ron`'s `wide_set_glyphs`). Step 1 was the pin
+move of 2026-11-07. The engine looks a glyph up in the language's set
+and measures by the language's widths (engine#2303), so no game code
+changed.
+
+- **One set, not two.** 0042 (the Japanese font) is still open, so the
+  atlas has one set, `zhhans`. The acceptance check on 直 waits for the
+  set `ja`: 0042's step 5 now says the ticket that adds it carries that
+  check (both 0236 and 0239 closed before it was answered).
+- **The packs.** The game ships no Chinese or Japanese pack yet (only
+  `en`, which names no set, and `test`), so step 4 is the test pack: it
+  already drew from `zhhans` and now has `wide_punctuation: true`, as a
+  Chinese pack will. Its capitals' `…` (`PRESS a KEY…`) and the English
+  shown for lines it lacks are wide in it too; no snapshot changed.
+- **The test line.** `test_b98e130d` ("Than never. Say it. …") is
+  `“好”——已保存报告……` in the test pack: test characters, not a
+  translation. The atlas gained 好 and the wide `“ ” — …` in `zhhans`
+  (179 wide glyphs). The narrow glyph map is unchanged; the bold face's
+  cells moved after the set, as in 0236.
+- **ADR-0045 §4**: an "as built" paragraph (the sets, the look-up order,
+  the six widths, the breaking rules; engine#2302 and engine#2303).
+
+**Tests.** `lang::tests::the_packs_load_with_their_wide_sets` (content:
+English names no set and keeps `“` narrow; the test pack names `zhhans`
+with wide punctuation); `language::a_chinese_line_shows_its_quotation_marks_wide`
+(the box shows `“好”` in six cells, each a character and its continuation,
+`——` and `……` four each, and English measures `“好”` in four); 0237's
+`a_chinese_line_pages_in_the_box_with_no_line_starting_with_a_stop` now
+checks `，` too.
+
+**Deviation.** Step 6's picture can't come from `cargo shuyi frame-png`
+(it can't set the language), so, as in 0236, it was painted by the
+game's `painted` from a Harness in a throwaway test, not committed:
+`docs/screenshots/0239-wide-quotation-marks.png`. It shows Chinese and
+Latin; Japanese waits for its font.
+
+**Friction:** none: no production code.
+
+No gameplay rule was decided; nothing for the Act 1 playtest.
