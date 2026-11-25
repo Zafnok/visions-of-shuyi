@@ -538,18 +538,13 @@ enum Cut {
 }
 
 impl Cut {
-    /// The tile it starts from: the one most to the left.
-    const fn first(self) -> u32 {
+    /// The column of its tile furthest right, in a sheet `columns` tiles
+    /// across: a block's is two past its top-left tile's.
+    fn right_column(self, columns: u32) -> u32 {
         match self {
-            Self::Tile(tile) => tile,
-            Self::Joined { block, .. } => block,
-            Self::Pair { under, over } => {
-                if under < over {
-                    under
-                } else {
-                    over
-                }
-            }
+            Self::Tile(tile) => tile % columns,
+            Self::Joined { block, .. } => block % columns + 2,
+            Self::Pair { under, over } => (under % columns).max(over % columns),
         }
     }
 
@@ -739,10 +734,9 @@ impl Packer<'_> {
     ) -> Result<Option<FramesText>, String> {
         let columns = self.sheet(sheet)?.tsx.columns;
         let last = (strip.frames.max(1) - 1) * strip.step;
-        if cut.first() % columns + last >= columns {
+        if cut.right_column(columns) + last >= columns {
             return Err(format!(
-                "{sheet}: the frames of tile {} run past the image's right edge",
-                cut.first()
+                "{sheet}: the frames of {cut:?} run past the image's right edge"
             ));
         }
         let mut packed = Vec::new();

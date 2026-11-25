@@ -1132,19 +1132,19 @@ fn a_plain_sheets_tiles_are_cut_by_their_place() {
 fn a_pair_is_its_upper_tile_over_its_lower_one() {
     let temp = Temp::new("pair");
     // Tile 0 all one colour; tile 1 see-through on its left half, a
-    // fifth opaque at its top-right pixel.
+    // fifth opaque at its top-right pixel; tile 2 a fifth opaque all over.
     let mut rgba = Vec::new();
     for y in 0..16u32 {
-        for x in 0..32u32 {
+        for x in 0..48u32 {
             rgba.extend(match (x, y) {
                 (0..16, _) => [100, 0, 0, 255],
                 (16..24, _) => [9, 9, 9, 0],
-                (31, 0) => [0, 0, 200, 51],
+                (31, 0) | (32.., _) => [0, 0, 200, 51],
                 _ => [0, 0, 200, 255],
             });
         }
     }
-    temp.write("lib/pack/pair.png", &encode_png(32, 16, &rgba).unwrap());
+    temp.write("lib/pack/pair.png", &encode_png(48, 16, &rgba).unwrap());
     let sheet = Sheet::read(&temp.0.join("lib"), "pack/pair.png").unwrap();
     let pixels = paired(&sheet, 0, 1).unwrap();
     let px = |x: usize, y: usize| pixels[(y * 16 + x) * 4..(y * 16 + x) * 4 + 4].to_vec();
@@ -1155,9 +1155,11 @@ fn a_pair_is_its_upper_tile_over_its_lower_one() {
     assert_eq!(px(8, 15), [0, 0, 200, 255]);
     // A fifth of the way from the lower colour to the upper one.
     assert_eq!(px(15, 0), [80, 0, 40, 255]);
-    // Over nothing, a pixel is what it is: the clear half stays clear.
+    // Over nothing, a pixel is what it is: the clear half stays clear,
+    // and a part see-through one keeps its colour and its alpha.
     assert_eq!(paired(&sheet, 1, 1).unwrap()[..4], [0; 4]);
-    assert!(paired(&sheet, 0, 2).is_err());
+    assert_eq!(paired(&sheet, 1, 2).unwrap()[..4], [0, 0, 200, 51]);
+    assert!(paired(&sheet, 0, 3).is_err());
 }
 
 #[test]
@@ -1165,10 +1167,16 @@ fn a_cuts_frames_are_the_same_picture_further_along() {
     assert_eq!(Cut::Tile(4).along(2), Cut::Tile(6));
     let pair = Cut::Pair { under: 14, over: 0 };
     assert_eq!(pair.along(1), Cut::Pair { under: 15, over: 1 });
-    assert_eq!(pair.first(), 0);
     let block = Cut::Joined { block: 3, ends: 5 };
     assert_eq!(block.along(3), Cut::Joined { block: 6, ends: 5 });
-    assert_eq!(block.first(), 3);
+    // The column furthest right, in a sheet six tiles across: a frame
+    // runs past the edge from there, whichever tile has the lower number.
+    assert_eq!(Cut::Tile(10).right_column(6), 4);
+    assert_eq!(pair.right_column(6), 2);
+    assert_eq!(Cut::Pair { under: 12, over: 2 }.right_column(6), 2);
+    assert_eq!(Cut::Pair { under: 2, over: 12 }.right_column(6), 2);
+    assert_eq!(Cut::Pair { under: 6, over: 6 }.right_column(6), 0);
+    assert_eq!(block.right_column(6), 5);
 }
 
 #[test]
@@ -1265,10 +1273,33 @@ fn a_plain_sheets_tiles_move_along_its_strip() {
     let own = &imported.own.terrain;
     let water = own.iter().find(|(id, _)| id == "water").unwrap().1;
     assert!(imported.moving.iter().any(|m| m.at == water));
-    // A step that runs past the right edge.
-    let map = plain_mapping(&layers, &looks, "(frames: 2, step: 4, ms: 160)");
-    let err = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap_err();
-    assert!(err.contains("run past the image's right edge"), "{err}");
+    // Frames that run past the right edge: the last frame is
+    // (frames - 1) × step tiles on, from the picture's rightmost column.
+    // Five on from the water's own tile (column 1) is past it; four on
+    // from it fits, but not from the patch's right column (2).
+    let cases = [
+        ("(frames: 2, step: 5, ms: 160)", "Tile(7)"),
+        ("(frames: 3, step: 2, ms: 160)", "Tile(2)"),
+    ];
+    for (strip, cut) in cases {
+        let map = plain_mapping(&layers, &looks, strip);
+        let err = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap_err();
+        let past = format!("{PLAIN}: the frames of {cut} run past the image's right edge");
+        assert_eq!(err, past, "{strip}");
+    }
+    // A loop whose frames are all one picture doesn't move.
+    let mut flat = Vec::new();
+    for _ in 0..16 * 64 {
+        flat.extend([40, 60, 80, 255]);
+    }
+    temp.write("lib/pack/flat.png", &encode_png(64, 16, &flat).unwrap());
+    let looks = r#""outdoor": (terrain: { "water": ("pack/flat.png", 0) }, layers: []),"#;
+    let text = mapping_text("", looks);
+    let open = text.trim_end_matches(')');
+    let text = format!("{open}, moving: {{ \"pack/flat.png\": (frames: 4, step: 1, ms: 9) }})");
+    let map: Mapping = ron::from_str(&text).unwrap();
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    assert_eq!(imported.moving, []);
 }
 
 #[test]
