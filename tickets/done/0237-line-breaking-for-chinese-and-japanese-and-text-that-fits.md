@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0235", "0236"]
 nick_input: none
-completed:
+completed: 2026-11-25
 ---
 
 # 0237 — Line breaking for Chinese and Japanese, and screens whose text must fit
@@ -82,14 +82,14 @@ Chinese punctuation, its wide quotes and its own no-break rules
 
 ## Acceptance criteria
 
-- [ ] A Chinese line from the test pack (in 0236's wide font) pages in
+- [x] A Chinese line from the test pack (in 0236's wide font) pages in
       the dialogue box at the same 3 lines, with no line starting with
       `。` or `、` (Harness test reading the view).
-- [ ] English wrapping is unchanged (existing snapshots).
-- [ ] No wrapping routine of the game's own is left in `crates/ui/src`.
-- [ ] `cargo shuyi lang-status test` reports an entry made too long on
+- [x] English wrapping is unchanged (existing snapshots).
+- [x] No wrapping routine of the game's own is left in `crates/ui/src`.
+- [x] `cargo shuyi lang-status test` reports an entry made too long on
       purpose as overflow (test).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -98,3 +98,69 @@ Chinese punctuation, its wide quotes and its own no-break rules
   from the test pack.
 
 ## Completion notes
+
+Done 2026-11-25.
+
+**Wrapping.** Every wrap in `crates/ui/src` now goes through the
+engine's `word_wrap` (engine#2302's rules: Chinese and Japanese break
+between characters, never before `。` `、` `，` and the like, never after
+an opening bracket), measured in the language's cells:
+
+- `widgets::wrap_indented` (new): `word_wrap` with every line after the
+  first indented. The rewind list's `wrap`/`wrap_to` (its own space
+  splitter until now) is built on it.
+- `widgets::help::wrap_styled` (the tips' and hints' styled wrap, its
+  own space splitter) now hands `word_wrap` the plain text with each key
+  span as an unbreakable run of its width (a cap's extra cells
+  included), then puts the spans back. One change: a key wider than the
+  row still has a row of its own; a plain word wider than the row is now
+  cut to the row, as `word_wrap` cuts it, where it ran past before. The
+  rewind list's over-long word likewise.
+- Measured with the real widths, not `CellWidths::NARROW`: the dialogue
+  screen's pages (`Ctx::widths`, kept on the screen and set by
+  `wrapped_for`), the cinematic talk box, the dialogue log (both
+  skins), the battle notes (both skins), and the Playdate's `wrap` and
+  every caller (the battle's terrain preview, notes and warnings, the
+  question window, the mode select). The Playdate's `unwrap_notes`
+  rejoins two wrapped lines with no space where both sides are wide, so
+  a Chinese note doesn't gain one.
+- Left as it is: the credits list still wraps narrow. The code moves to
+  the engine (engine#3201, game 1211); a dated line in 1211's Context
+  says the engine screen should take `ctx.widths()`.
+
+**Limits in cells.** 0235 had already moved the dialogue, reply, lead
+line, tip and lesson limits to cells (the engine's `DialogueLimits`
+checks and `crate::font::text_width`). Left were the battle notes: the
+120 limit is now in cells, for the battle files and for a pack's
+`battles.<id>.note_<n>` entries.
+
+**`max_cells`.** Given from the layout to the `en/ui.ron` keys drawn in a
+fixed width (with a note for translators): `results.exp` (3),
+`results.level_up` (9), `save.column.slot`/`chapter`/`mode` (5/48/9),
+`stat.hp` (2: the forecast's column) and the other stat names (3: the
+info screen's column, before the value), `battle.forecast.hit`/`crit`/
+`no_counter`/`total` (3/4/11/5). Menus, help bars and panels sized to
+their text aren't fixed places and have none. The test pack's
+`results.exp` is `EXPERIENCE` on purpose: `lang-status test` reports it
+too long (10 cells; the place has 3).
+
+**Layouts from 0234 and 0243's lists.** Fixed where measuring was the
+fix: the three labels centered by their length in bytes (the info
+screen's and the level-up page's portrait placeholders, the info
+screen's spell uses) now use cells. The rest are columns, not
+measurements, and stay as they are, now covered by `max_cells` where
+they hold one key: the forecast's and results' columns, the info
+screen's stat column, the save list's columns. Not done (a redesign,
+not measuring): the key bindings' `SLOT_W`/`CHOICE_W`, lead select's
+name-grid box, the layout picker's legend column, the class change
+screen's columns, the list lines with numbers glued to labels, the help
+bar sharing its row with the toggles.
+
+**The test line.** The test pack's Chinese narration
+(`test_d7fb4eb3`, "The knight stamps off into the rain.") is made of the
+only Chinese characters the wide font has (`title.crashed`'s), so it
+reads as nonsense; adding characters means rebuilding the atlas. Cut
+every 46 characters, its second and third lines would start with `。`;
+the box shows `告。` there instead.
+
+No gameplay rule was decided; nothing for Nick to check.

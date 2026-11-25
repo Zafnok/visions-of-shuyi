@@ -214,7 +214,7 @@ const WHOLE: char = 'x';
 /// characters, ticket 0237), a key (any span with a role) whole, with
 /// what follows it up to the next break: `F,` stays together. A key
 /// wider than `room` has a row of its own. (`word_wrap` wraps plain text
-/// only: each key goes in as a run of [`WHOLE`] its width, a cap's extra
+/// only: each key goes in as a run of `x` its width, a cap's extra
 /// cells too, and comes back out whole.)
 pub fn wrap_styled(text: &StyledText, room: usize, widths: &CellWidths) -> Vec<StyledText> {
     let spans = text.spans();
