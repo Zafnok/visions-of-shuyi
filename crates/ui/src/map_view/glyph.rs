@@ -62,6 +62,7 @@ impl UnitPainter<UnitView> for GlyphUnits<'_> {
         }
     }
 
+    // engine-friction: engine#3203, moves (game 1213 deletes it)
     fn paint_over(&self, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
         let color = self.palette.get(UiColor::Cursor);
         let brightness = edges::brightness(scene.clock_ms);
@@ -78,6 +79,7 @@ impl UnitPainter<UnitView> for GlyphUnits<'_> {
     }
 }
 
+// engine-friction: engine#3203, moves (game 1213 deletes it)
 /// The arrow glyph at the `side` edge of the view and its cell, on the
 /// tile whose left cell is `x`: the tile's outer cell on the right, else
 /// its left cell. In the cursor's colour, fading into the cell's

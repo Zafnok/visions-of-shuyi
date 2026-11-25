@@ -14,6 +14,7 @@ use crate::map_view::scene::{MapScene, range};
 /// 2 × 2 checker make dashes two pixels long.
 pub const DANGER_EDGE: i32 = 2;
 
+// engine-friction: engine#3203, moves (game 1213 deletes it)
 /// The danger zone's edge on `grid`: on each tile of it, a line
 /// [`DANGER_EDGE`] pixels thick along each side whose neighbour is a
 /// visible tile outside it. Where the zone goes on past the view's edge

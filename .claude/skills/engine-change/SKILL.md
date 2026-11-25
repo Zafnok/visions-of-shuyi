@@ -84,6 +84,17 @@ this order:
 3. **Write the game follow-up ticket** (`write-ticket`) that deletes the
    workaround and moves the pin: `blocked_by: ["engine#NNNN"]`. Check it
    with `cargo xtask ticket-lint --check-engine`.
+   **Mark the game code the engine ticket will replace**, in this same
+   PR (ticket 0193): the line above each item (above its doc comment
+   and attributes) is
+   `// engine-friction: engine#NNNN, moves (game MMMM deletes it)`, with
+   MMMM the follow-up ticket. A marker covers its item, through the
+   first later line at its indentation that is `}` or ends with `;`; a
+   marker on a file's first line covers the whole file (a module that
+   goes whole), since a `mod x;` line covers only itself. `cargo xtask pr-size` then warns any later PR that edits the
+   item, so the engine ticket learns of the change before it goes stale
+   (1180 lost a month to seven game tickets that changed what engine#2132
+   had copied). A workaround already marked keeps its marker.
 4. Add the row to `docs/engine/friction.md` if the `engine-friction`
    skill sent you here.
 

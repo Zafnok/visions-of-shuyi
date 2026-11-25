@@ -83,6 +83,7 @@ impl<'a> OneBitUnits<'a> {
 }
 
 impl UnitPainter<UnitView> for OneBitUnits<'_> {
+    // engine-friction: engine#3203, moves (game 1213 deletes it)
     fn paint_under(&self, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
         let dashes = self.palette.get(UiColor::DangerZone);
         for rect in marks::danger_edges(scene, grid) {

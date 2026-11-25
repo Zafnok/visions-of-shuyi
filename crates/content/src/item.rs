@@ -260,6 +260,7 @@ impl Validator<'_> {
         });
     }
 
+    // engine-friction: engine#2247, moves (game 1223 deletes it)
     /// Records an error about item `id`.
     fn err_at_item(&mut self, id: &str, message: String) {
         self.err(&format!("id: \"{id}\""), message);

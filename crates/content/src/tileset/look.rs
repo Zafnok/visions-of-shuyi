@@ -1,3 +1,4 @@
+// engine-friction: engine#2243, moves (game 1219 deletes it)
 //! A tileset's terrain looks (ADR-0052) as its file writes them: for each
 //! look, a tile for every terrain and the layers painted over those tiles,
 //! checked against this game's terrains and the looks its maps may name.

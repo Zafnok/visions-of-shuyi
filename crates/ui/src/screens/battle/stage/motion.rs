@@ -62,6 +62,7 @@ pub enum Blow {
     Heal,
 }
 
+// engine-friction: engine#2109, moves (game 1228 deletes it)
 /// `t` clamped to 0..=1, slowing toward 1 (a bad number counts as 0).
 fn ease_out(t: f32) -> f32 {
     let t = if t.is_finite() {
@@ -72,6 +73,7 @@ fn ease_out(t: f32) -> f32 {
     1.0 - (1.0 - t) * (1.0 - t)
 }
 
+// engine-friction: engine#2109, moves (game 1228 deletes it)
 /// `t` clamped to 0..=1, speeding up from 0 (a bad number counts as 0).
 fn ease_in(t: f32) -> f32 {
     let t = if t.is_finite() {

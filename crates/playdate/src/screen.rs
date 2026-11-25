@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! The one-bit frame onto the Playdate's screen (ticket 1033):
 //! `trpg_ui::onebit` already lays a [`Frame`] out as the SDK's frame
 //! buffer (52-byte rows, the highest bit the left pixel, a set bit white),

@@ -44,6 +44,24 @@ discipline here is the whole quality system.
   (`gh pr list --search "head:engine-pin/"`), the ticket may wait for it
   to merge instead of moving the pin itself. Not in `done/`: blocked. `cargo xtask ticket-lint --check-engine` reports an
   `engine#NNNN` that doesn't exist at all.
+- **An engine-blocked ticket is ready only if the code it replaces still
+  matches its engine ticket** (ticket 0193; 1180 waited a month on
+  engine#2148 because seven game tickets had changed the bots' `order`
+  since engine#2132 copied it). The code carries
+  `// engine-friction: engine#NNNN, moves (game MMMM deletes it)`
+  markers. List what changed in the marked files since the engine
+  ticket was written:
+
+  ```bash
+  git grep -l "moves (game MMMM deletes it)" -- '*.rs'
+  git log --since <engine ticket's date> --oneline -- <those files>
+  ```
+
+  Each commit that changed a marked item is either named in the ticket's
+  Context (a dated line) or already covered by the engine ticket.
+  Otherwise the ticket isn't ready: add the gap to the engine ticket
+  (`engine-change`, with Nick's OK) first. An audit that re-checks a
+  ready ticket runs this too, not only `blocked_by` and the pin.
 - If the ticket's **Nick input** says *Answer first* and the design doc it needs
   doesn't exist yet in `docs/design/`, stop and tell the user which `00xx`
   ticket must be answered first. Do not guess game-design answers.
@@ -111,6 +129,14 @@ Set `status: in-progress` in the ticket frontmatter.
   works alone, move the rest to a new ticket (`write-ticket`), and stack the
   PRs if the second needs the first. If it can't split cleanly, ship it and
   say why. The warning never blocks.
+- **When `pr-size` names a marker** (`<path>:<line> moves to the engine
+  with engine#NNNN (game MMMM deletes it)`, ticket 0193), this branch
+  edits code an engine ticket is copying. Check that engine#NNNN covers
+  the change (read its Scope at the engine's `main`). If it doesn't, add
+  the gap to that engine ticket by the `engine-change` skill, with
+  Nick's OK (ask before an engine PR). Then add a dated line to MMMM's
+  Context: what this ticket changed in the marked code, and whether the
+  engine ticket covers it. The warning never blocks either.
 - Follow the ticket's **Implementation steps** in order. If a step turns out to
   be wrong, deviate minimally and explain it in the Completion notes.
 - Respect crate boundaries (ADR-0004): no I/O, clock or macroquad outside `app`;

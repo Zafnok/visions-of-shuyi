@@ -42,6 +42,7 @@ fn x(kind: CreditRowKind) -> i32 {
     }
 }
 
+// engine-friction: engine#3201, moves (game 1211 deletes it)
 /// Paints `view` over the whole of `buf`. The panel has room for
 /// 25 rows of the list; the screen gives no more.
 pub fn paint(ctx: &Ctx, view: &CreditsView, buf: &mut GlyphBuffer) {

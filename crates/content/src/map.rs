@@ -135,6 +135,7 @@ pub(crate) fn register(
     }))
 }
 
+// engine-friction: engine#2233, moves (game 1186 deletes it)
 /// Loads every `*.map` file in the bundle, keyed by file stem
 /// (`maps/test_small.map` → `"test_small"`), its legend's terrain ids
 /// resolved in the terrain file's. Reports every error of every file.

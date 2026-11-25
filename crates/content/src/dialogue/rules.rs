@@ -155,6 +155,7 @@ impl SceneRules<Stage> for Rules<'_> {
         self.characters.is_none_or(|t| t.can_speak(character))
     }
 
+    // engine-friction: engine#2246, moves (game 1222 deletes it)
     /// `expression` must be one of the character's portraits' expressions
     /// when they have any (the lead: both portraits'), else one of the
     /// [`STANDARD_EXPRESSIONS`].

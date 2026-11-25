@@ -474,6 +474,87 @@ pub fn friction_markers(source: &str) -> Vec<String> {
         .collect()
 }
 
+/// The code a marker covers (lines from 1): the marker's own line through
+/// the end of the item after it (ticket 0193).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MarkerSpan {
+    /// The marker's line.
+    pub first: usize,
+    /// The item's last line.
+    pub last: usize,
+    /// The engine ticket's id (`NNNN`).
+    pub engine: String,
+    /// The game ticket of a "moves" marker
+    /// (`// engine-friction: engine#NNNN, moves (game MMMM deletes it)`):
+    /// the one that deletes the code once the engine has it. `None` for a
+    /// workaround's marker.
+    pub game: Option<String>,
+}
+
+/// The game ticket a "moves" marker names, from its text after the id.
+fn moves_ticket(after_id: &str) -> Option<String> {
+    let rest = after_id.trim_start().strip_prefix(", moves (game ")?;
+    rest.get(..4)
+        .filter(|id| id.chars().all(|c| c.is_ascii_digit()))
+        .filter(|_| rest[4..].starts_with(" deletes it)"))
+        .map(str::to_owned)
+}
+
+/// Whether a line, without its indentation and trailing comment, ends an
+/// item: `}` or a statement ending with `;`.
+fn ends_an_item(code: &str) -> bool {
+    let code = code.split(" //").next().unwrap_or_default().trim_end();
+    code.ends_with('}') || code.ends_with(';')
+}
+
+/// The spans of the markers in a source file. A marker covers its own line
+/// through the first later line at its indentation that is `}` or ends
+/// with `;` (a comment line never ends it), or to the end of the file. A
+/// marker after code on its line (`let a = b(); // engine-friction: …`)
+/// covers that line when the code ends there. A marker on a file's first
+/// line covers the whole file: a module that goes whole.
+pub fn marker_spans(source: &str) -> Vec<MarkerSpan> {
+    const MARK: &str = "// engine-friction: engine#";
+    let lines: Vec<&str> = source.lines().collect();
+    let indent = |line: &str| line.len() - line.trim_start().len();
+    let mut spans = Vec::new();
+    for (i, line) in lines.iter().enumerate() {
+        let Some(at) = line.find(MARK) else {
+            continue;
+        };
+        let after = &line[at + MARK.len()..];
+        let Some(engine) = after
+            .get(..4)
+            .filter(|id| id.chars().all(|c| c.is_ascii_digit()))
+        else {
+            continue;
+        };
+        let code = line[..at].trim();
+        let last = if i == 0 && code.is_empty() {
+            lines.len() - 1
+        } else {
+            // From the marker's own line: code before it may end the item.
+            let depth = indent(line);
+            lines
+                .iter()
+                .enumerate()
+                .skip(i)
+                .find(|(_, l)| {
+                    let text = l.trim_start();
+                    indent(l) == depth && !text.starts_with("//") && ends_an_item(text)
+                })
+                .map_or(lines.len() - 1, |(j, _)| j)
+        };
+        spans.push(MarkerSpan {
+            first: i + 1,
+            last: last + 1,
+            engine: engine.to_owned(),
+            game: moves_ticket(&after[4..]),
+        });
+    }
+    spans
+}
+
 /// The engine tickets a PR moved to `tickets/done/`. A PR that only files a
 /// ticket finishes none.
 fn finished(pr: &EnginePr) -> impl Iterator<Item = &String> {

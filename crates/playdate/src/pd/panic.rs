@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! Panics stop the game with the SDK's error screen, showing the message
 //! (and logging it to the console).
 

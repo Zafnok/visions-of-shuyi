@@ -813,6 +813,7 @@ impl Mode {
     }
 }
 
+// engine-friction: engine#3206, moves (game 1217 deletes it)
 /// How many of `sel`'s path steps a walk has taken once it has gone
 /// `tiles` tiles (at most all of them; none for a negative or NaN
 /// distance).
@@ -820,12 +821,14 @@ fn walk_steps(sel: &Selection, tiles: f32) -> usize {
     walk::steps(sel.path.len(), tiles)
 }
 
+// engine-friction: engine#3206, moves (game 1217 deletes it)
 /// Whether the walk along `sel`'s path is over once it has gone `tiles`
 /// tiles.
 fn walk_done(sel: &Selection, tiles: f32) -> bool {
     walk_steps(sel, tiles) + 1 >= sel.path.len()
 }
 
+// engine-friction: engine#3206, moves (game 1217 deletes it)
 /// The tile a walk along `sel`'s path is on once it has gone `tiles`
 /// tiles.
 fn walk_pos(sel: &Selection, tiles: f32) -> Pos {

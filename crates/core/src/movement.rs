@@ -449,6 +449,7 @@ pub fn path_cost(
     Ok(total)
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// Every tile at Manhattan distance `min..=max` from a stoppable tile of
 /// `reach`, except the stoppable tiles themselves. Empty if `min > max`.
 pub fn attack_tiles(reach: &Reach, min: u32, max: u32) -> TileSet {
@@ -501,6 +502,7 @@ pub fn area_tiles(width: u16, height: u16, center: Pos, radius: u32) -> TileSet 
     out
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// The tiles unit `unit` threatens this turn with attacks of the given
 /// ranges (in a battle: [`Unit::threat_ranges`], its weapons, castable
 /// attack spells, arts and actives): its stoppable tiles plus their attack tiles. Empty if
@@ -517,6 +519,7 @@ pub fn threat_area(
     Ok(area_of(&reach, ranges))
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// The tiles unit `unit` threatens this turn, as the player is shown them
 /// and the threat arrows count them: its [`threat_area`], except that one
 /// that never moves ([`AiBehavior::Stationary`]) threatens only from its
@@ -554,6 +557,7 @@ pub fn threat_tiles(
     Ok(set)
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// The threat area of `reach` with attacks of `ranges` ([`threat_area`]).
 fn area_of(reach: &Reach, ranges: &[AttackRange]) -> TileSet {
     let stoppable = reach.stoppable();
@@ -567,6 +571,7 @@ fn area_of(reach: &Reach, ranges: &[AttackRange]) -> TileSet {
     set
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// The union of the tiles every unit hostile to `faction` threatens
 /// ([`threat_tiles`]: one that never moves only from its own tile), with
 /// each unit's attack ranges given by `ranges` (in a battle:
@@ -582,6 +587,7 @@ pub fn danger_zone(
     zone_of(map, terrain, classes, units, faction, ranges, threat_tiles)
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// The AI's danger zone: the union of the [`threat_area`]s of every unit
 /// hostile to `faction`, one that never moves counted as if it walked its
 /// full Mov too ([`danger_zone`] before ticket 0450, kept so the AI plays
@@ -607,6 +613,7 @@ type AreaFn = fn(
     &[AttackRange],
 ) -> Result<TileSet, MoveError>;
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// The union of `area` for every unit hostile to `faction`.
 fn zone_of(
     map: &BattleMap,
@@ -624,6 +631,7 @@ fn zone_of(
     Ok(zone)
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// The units hostile to unit `unit` that could attack it in their next
 /// phase if it stood on `at` (`docs/design/turn-structure.md`, *Threat
 /// arrows*), in the order of `units`: `at` is in their [`threat_tiles`]

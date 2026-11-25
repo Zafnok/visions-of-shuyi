@@ -1,3 +1,4 @@
+// engine-friction: engine#2532, moves (game 1207 deletes it)
 //! `cargo xtask playtest` (tickets 0505 and 0506, ADR-0033): bots play a
 //! battle file many times, each try with fresh luck, and the report says
 //! how the tries went and whether each persona met its target

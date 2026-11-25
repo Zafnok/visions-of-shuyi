@@ -215,6 +215,7 @@ fn walks_the_test_scene() {
     );
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// Each reply plays its own reaction, then every one shows the same view
 /// from the rejoin on.
 #[test]
@@ -248,6 +249,7 @@ fn every_reply_rejoins_the_same_way() {
     assert_eq!(rejoined[0], rejoined[2]);
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 #[test]
 fn advancing_a_finished_scene_does_nothing() {
     let mut player = play(&Scene {
@@ -266,6 +268,7 @@ fn advancing_a_finished_scene_does_nothing() {
     assert_eq!(player, before);
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 #[test]
 fn a_scene_without_text_starts_finished() {
     let player = play(&Scene {
@@ -294,6 +297,7 @@ fn a_scene_without_text_starts_finished() {
     );
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// A speaker's expression change applies only to the speaker, and a
 /// speaker who isn't on screen (a script the validator would reject) has no
 /// side.
@@ -355,6 +359,7 @@ fn narration(text: &str) -> Step {
     }
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 #[test]
 fn a_choice_waits_for_a_reply() {
     let mut player = play(&Scene {
@@ -394,6 +399,7 @@ fn a_choice_waits_for_a_reply() {
     assert!(player.is_finished());
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 #[test]
 fn a_choice_without_replies_is_passed_over() {
     let player = play(&Scene {
@@ -403,6 +409,7 @@ fn a_choice_without_replies_is_passed_over() {
     assert_eq!(player.current().text.as_deref(), Some("after"));
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// At the rejoin, portraits stay as the reaction left them: the script,
 /// not the player, decides any change.
 #[test]
@@ -455,6 +462,7 @@ fn cue(cue: &str) -> MusicLine {
     MusicLine::Cue(cue.into())
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// A `@music` line is handed over when the scene reaches it: with the text
 /// box after it, not before, and once.
 #[test]
@@ -487,6 +495,7 @@ fn music_is_asked_for_when_its_line_is_reached() {
     assert_eq!(player.take_music(), None);
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// Several `@music` lines passed at once (a skip, or two in a row) leave
 /// only the last.
 #[test]
@@ -521,6 +530,7 @@ fn only_the_last_music_line_passed_counts() {
     assert_eq!(player.take_music(), None);
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// A reply's reaction may change the music; the other replies don't.
 #[test]
 fn music_in_a_reaction_plays_only_for_that_reply() {
@@ -552,6 +562,7 @@ fn music_in_a_reaction_plays_only_for_that_reply() {
     assert_eq!(player.take_music(), None);
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// Skipping stops at each choice, and at the end.
 #[test]
 fn skipping_stops_at_choices() {
@@ -716,6 +727,7 @@ fn expected_texts(steps: &[Step], picks: &[usize]) -> Vec<String> {
     out
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 proptest! {
     /// Whatever replies are picked, every text box outside the choices is
     /// shown exactly once, in order, with the picked reactions between.
@@ -853,6 +865,7 @@ test_lord: On we go.
 @end
 ";
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// Acceptance (0715): a scene with an `@if` block plays its first part
 /// when the character is there and the other (or nothing) when they
 /// aren't; in reactions and around choices too.
@@ -907,6 +920,7 @@ fn a_block_plays_the_part_for_who_is_there() {
     assert_eq!(everyone, walk(&["test_knight", "test_archer"], 0));
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// Someone who isn't there is never put on screen, and the steps around
 /// their lines (portraits, music) aren't applied either.
 #[test]
@@ -940,6 +954,7 @@ fn the_part_not_played_leaves_no_trace() {
     assert_eq!(player.take_music(), Some(cue("talk_calm")));
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// Skipping agrees with reading: it stops at the choices of the parts
 /// played, and asks for their music only.
 #[test]
@@ -969,6 +984,7 @@ fn skipping_follows_the_parts_played() {
     assert_eq!(player.take_music(), Some(cue("scene_sad")));
 }
 
+// engine-friction: engine#3207, moves (game 1218 deletes it)
 /// A scene whose every line is someone's who isn't there starts finished.
 #[test]
 fn a_scene_with_nothing_to_say_for_those_there_starts_finished() {

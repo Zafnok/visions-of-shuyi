@@ -334,9 +334,10 @@ fn pr_size(args: &[String], hook_stdin: impl FnOnce() -> String) -> u8 {
     }
     let measured = pr_size::changed_files(&root, &base).and_then(|(files, from)| {
         let branch = branch.map_or_else(|| pr_size::current_branch(&root), Ok)?;
-        Ok((files, from, branch))
+        let moved = pr_size::moved_markers(&root, &base)?;
+        Ok((files, from, branch, moved))
     });
-    let (files, from, branch) = match measured {
+    let (files, from, branch, moved) = match measured {
         Ok(measured) => measured,
         Err(e) => {
             eprintln!("pr-size: {e}");
@@ -351,6 +352,7 @@ fn pr_size(args: &[String], hook_stdin: impl FnOnce() -> String) -> u8 {
             &format!("{base} (from {from})"),
             false,
             env::var("GITHUB_ACTIONS").ok().as_deref(),
+            &moved,
         )
     );
     0

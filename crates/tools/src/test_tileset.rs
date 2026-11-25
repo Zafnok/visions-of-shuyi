@@ -109,12 +109,14 @@ fn rows(count: usize) -> u32 {
     u32::try_from(count).unwrap_or(u32::MAX).div_ceil(COLUMNS)
 }
 
+// engine-friction: engine#2580, moves (game 1226 deletes it)
 /// An RGBA8 image being drawn.
 pub(crate) struct Canvas {
     pub(crate) width: u32,
     pub(crate) rgba: Vec<u8>,
 }
 
+// engine-friction: engine#2580, moves (game 1226 deletes it)
 impl Canvas {
     pub(crate) fn new(width: u32, height: u32) -> Self {
         let len = usize::try_from(width * height * 4).unwrap_or(0);
@@ -187,6 +189,7 @@ impl Canvas {
     }
 }
 
+// engine-friction: engine#2580, moves (game 1226 deletes it)
 /// Channel `under` blended towards `over` by `cover` (0 = none of it,
 /// 255 = all of it), rounded.
 fn blend(under: u8, over: u8, cover: u32) -> u8 {

@@ -205,36 +205,42 @@ impl Harness {
         Self(self.0.with_system_hook(hook))
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::music_load_delay`].
     pub fn music_load_delay(&mut self, seconds: f32) -> &mut Self {
         self.0.music_load_delay(seconds);
         self
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::without_music`].
     pub fn without_music(&mut self) -> &mut Self {
         self.0.without_music();
         self
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::use_pad`].
     pub fn use_pad(&mut self, kind: PadKind) -> &mut Self {
         self.0.use_pad(kind);
         self
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::keys`].
     pub fn keys(&mut self, script: &str) -> &mut Self {
         self.0.keys(script);
         self
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::type_text`].
     pub fn type_text(&mut self, text: &str) -> &mut Self {
         self.0.type_text(text);
         self
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::hold`].
     pub fn hold(&mut self, chord: &str, seconds: f32) -> &mut Self {
         self.0.hold(chord, seconds);
@@ -249,24 +255,28 @@ impl Harness {
         self
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::pad`].
     pub fn pad(&mut self, script: &str) -> &mut Self {
         self.0.pad(script);
         self
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::hold_pad`].
     pub fn hold_pad(&mut self, button: &str, seconds: f32) -> &mut Self {
         self.0.hold_pad(button, seconds);
         self
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::wait`].
     pub fn wait(&mut self, seconds: f32) -> &mut Self {
         self.0.wait(seconds);
         self
     }
 
+    // engine-friction: engine#3204, moves (game 1214 deletes it)
     /// [`Core::clear_audio`].
     pub fn clear_audio(&mut self) -> &mut Self {
         self.0.clear_audio();

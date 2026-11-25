@@ -1,3 +1,4 @@
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 //! The Playdate's look of the Key bindings screen (ticket 1045): the
 //! engine's [`KeyBindingsView`] in the one-bit look of
 //! [`crate::screens::playdate`]. A window the screen's width, its title in

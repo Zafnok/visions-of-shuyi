@@ -184,6 +184,7 @@ pub const fn sell_box(area: Rect) -> Rect {
 /// The sale's box, in the middle of the list.
 pub const SELL_BOX: Rect = sell_box(AREA);
 
+// engine-friction: engine#3205, moves (game 1215 deletes it)
 /// Paints the confirmation `sell` over the list, in `sell_box`.
 fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, sell_box: Rect, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);

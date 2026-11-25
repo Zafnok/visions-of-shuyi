@@ -1315,6 +1315,7 @@ fn replay_refuses_a_record_that_isnt_one() {
     assert!(error.starts_with("x.ron: a record of version 9"), "{error}");
 }
 
+// engine-friction: engine#3091, moves (game 1227 deletes it)
 /// Ticket 1200: the game's copy of the Playdate's profile says what the
 /// engine's says, at the pin.
 #[test]

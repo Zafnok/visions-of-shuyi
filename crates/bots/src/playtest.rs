@@ -284,6 +284,7 @@ pub fn unit_measure(measures: &Measures, what: &str, name: &str) -> i64 {
         .unwrap_or(0)
 }
 
+// engine-friction: engine#2148, moves (game 1180 deletes it)
 /// What the personas should achieve (`docs/design/playtest-bots.md`), as
 /// `targets.ron` holds it.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -308,6 +309,7 @@ pub struct Targets {
     pub faster: Faster,
 }
 
+// engine-friction: engine#2129, moves (game 1180 deletes it)
 /// [`Targets::faster`].
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -328,6 +330,7 @@ impl Targets {
         ron::from_str(text).map_err(|e| format!("targets: {e}"))
     }
 
+    // engine-friction: engine#2148, moves (game 1180 deletes it)
     /// The checks of a battle of `tier` played by `entrants`: each one's
     /// success band, with its floor, then the faster check when both of its
     /// personas play. An entrant with no target (the baseline) gets none.
@@ -335,6 +338,7 @@ impl Targets {
         self.checks_with(self.bands.get(&tier), true, entrants)
     }
 
+    // engine-friction: engine#2148, moves (game 1180 deletes it)
     /// [`checks`](Self::checks) for a battle of `kind`, a hold or not
     /// ([`is_hold`]): a skirmish is judged by its own bands, and any other
     /// hold by its own where it has them. A hold lasts its turns however it
@@ -356,6 +360,7 @@ impl Targets {
         self.checks_with(bands.as_ref(), !hold, entrants)
     }
 
+    // engine-friction: engine#2148, moves (game 1180 deletes it)
     fn checks_with(
         &self,
         bands: Option<&BTreeMap<String, Band>>,

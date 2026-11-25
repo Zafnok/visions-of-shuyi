@@ -98,6 +98,7 @@ impl UnitPainter<UnitView> for SpriteUnits<'_> {
         units::paint_marks(self.ctx, scene, grid, buf);
     }
 
+    // engine-friction: engine#3203, moves (game 1213 deletes it)
     fn paint_over(&self, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
         if self.tileset.terrain.is_none() {
             GlyphUnits {
@@ -125,10 +126,12 @@ impl UnitPainter<UnitView> for SpriteUnits<'_> {
     }
 }
 
+// engine-friction: engine#3203, moves (game 1213 deletes it)
 /// How far an edge arrow's box sits in from the view's edge, in pixels of
 /// the art.
 pub const EDGE_GAP: i32 = 1;
 
+// engine-friction: engine#3203, moves (game 1213 deletes it)
 /// The box of the `side` edge's arrow in [`EDGE_MARKS_PATH`]: the right
 /// and the left arrow 8 × 13, then the down and the up arrow 13 × 8.
 pub const fn edge_src(side: Side) -> PxRect {
@@ -140,6 +143,7 @@ pub const fn edge_src(side: Side) -> PxRect {
     }
 }
 
+// engine-friction: engine#3203, moves (game 1213 deletes it)
 /// Where the `side` edge's arrow goes on its tile `tile` (at the art's
 /// size): [`EDGE_GAP`] in from the view's edge, centred along it, and
 /// above the HP bar, so it never covers a unit's bar.

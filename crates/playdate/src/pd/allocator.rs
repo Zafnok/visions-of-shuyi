@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! The global allocator: the SDK's `realloc` (ADR-0070 §1), with padding
 //! for alignments above its own ([`crate::heap`]).
 

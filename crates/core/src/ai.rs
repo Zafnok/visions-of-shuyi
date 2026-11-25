@@ -891,6 +891,7 @@ impl<'a> Planner<'a> {
         }))
     }
 
+    // engine-friction: engine#2131, moves (game 1180 deletes it)
     /// The flow distances to `faction`'s targets for `movement_type`.
     fn flow(&self, faction: Faction, movement_type: MovementTypeId) -> Rc<Flow> {
         let mut flows = self.flows.borrow_mut();
@@ -901,6 +902,7 @@ impl<'a> Planner<'a> {
         )
     }
 
+    // engine-friction: engine#2131, moves (game 1180 deletes it)
     /// Every tile a unit hostile to `faction` could attack this turn.
     fn danger(&self, faction: Faction) -> Rc<TileSet> {
         let state = self.state;
@@ -1057,6 +1059,7 @@ fn escape_area(state: &BattleState, unit: &Unit) -> Option<TileRect> {
     }
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// The flow distance of every tile to `faction`'s targets for
 /// `movement_type` (see the module docs).
 fn flow_field(state: &BattleState, faction: Faction, movement_type: MovementTypeId) -> Flow {

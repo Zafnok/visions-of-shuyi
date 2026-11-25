@@ -255,6 +255,7 @@ enum RawSide {
     Right,
 }
 
+// engine-friction: engine#2233, moves (game 1186 deletes it)
 /// Loads every cinematic file in the bundle, keyed by id (the file stem),
 /// checking its references against `refs`. Reports every error of every
 /// file.

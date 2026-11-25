@@ -211,6 +211,7 @@ fn indent(source: &str, at: usize) -> &str {
     &lead[..lead.len() - lead.trim_start().len()]
 }
 
+// engine-friction: engine#2244, moves (game 1220 deletes it)
 /// `source`'s bytes with every string's contents and every comment
 /// blanked, so brackets and names in them don't count. One pass, byte by
 /// byte.
@@ -240,6 +241,7 @@ fn code(source: &str) -> Vec<u8> {
     out
 }
 
+// engine-friction: engine#2244, moves (game 1220 deletes it)
 /// Where [`code`] is in the text.
 #[derive(Debug, Clone, Copy)]
 enum In {
@@ -258,6 +260,7 @@ enum In {
     BlockStar,
 }
 
+// engine-friction: engine#2244, moves (game 1220 deletes it)
 /// Where field `key` is in `code`, at bracket depth `depth`: the byte
 /// after its `:`.
 fn field_at(code: &[u8], key: &str, depth: i32) -> Option<usize> {
@@ -282,10 +285,12 @@ fn field_at(code: &[u8], key: &str, depth: i32) -> Option<usize> {
     None
 }
 
+// engine-friction: engine#2244, moves (game 1220 deletes it)
 fn is_name(c: u8) -> bool {
     c.is_ascii_alphanumeric() || c == b'_'
 }
 
+// engine-friction: engine#2244, moves (game 1220 deletes it)
 /// The span of each entry of the root's `enemies: [...]`: none if it has
 /// no such list.
 fn enemy_spans(source: &str) -> Vec<Range<usize>> {
@@ -319,6 +324,7 @@ fn enemy_spans(source: &str) -> Vec<Range<usize>> {
     spans
 }
 
+// engine-friction: engine#2244, moves (game 1220 deletes it)
 /// `source` with `line` added as the last entry of the root's `key: [...]`
 /// list, on a line of its own indented `indent`; `None` if it has no such
 /// list. Everything else, comments too, stays as written (a generated
@@ -352,6 +358,7 @@ pub fn add_to_list(source: &str, key: &str, line: &str, indent: &str) -> Option<
     ))
 }
 
+// engine-friction: engine#2244, moves (game 1220 deletes it)
 /// Entry `text` (`(` to `)`) with field `key` set to `value`: its value
 /// replaced, or the field added at the end.
 fn set_field(text: &str, key: &str, value: &str) -> String {

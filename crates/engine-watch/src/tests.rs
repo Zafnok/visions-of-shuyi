@@ -476,6 +476,80 @@ fn friction_markers_and_completion_notes_are_found() {
     assert_eq!(completion_notes("# no notes\n"), None);
 }
 
+/// Ticket 0193: a "moves" marker parses as a workaround's does, and covers
+/// its item.
+#[test]
+fn a_moves_marker_parses_as_today_s() {
+    let line = "// engine-friction: engine#2132, moves (game 1180 deletes it)";
+    assert_eq!(friction_markers(line), ["2132"]);
+    assert_eq!(marker_lines(line), [(1, "2132".to_owned())]);
+    let diff = format!("+++ b/crates/bots/src/persona.rs\n+{line}\n");
+    assert_eq!(added_markers(&diff), ["2132"]);
+}
+
+fn span(first: usize, last: usize, engine: &str, game: Option<&str>) -> MarkerSpan {
+    MarkerSpan {
+        first,
+        last,
+        engine: engine.to_owned(),
+        game: game.map(str::to_owned),
+    }
+}
+
+#[test]
+fn a_marker_spans_its_item_and_nothing_past_it() {
+    // Line 1 is code: a marker on the first line covers the whole file.
+    let source = "\
+use a;
+// engine-friction: engine#2132, moves (game 1180 deletes it)
+/// The order.
+#[must_use]
+pub fn order(a: u8) -> u8 {
+    let b = a; // not the end
+    // a comment;
+    b
+}
+fn after() {}
+
+    // engine-friction: engine#2131, moves (game 1180 deletes it)
+    pub struct Targets {
+        a: u8,
+    }
+
+// engine-friction: engine#2129
+impl Tally {
+    fn score(&self) {}
+}
+// engine-friction: engine#2148, moves (game 1207 deletes it)
+const ONE: u8 = 1;
+let x = y(); // engine-friction: engine#2540, moves (game 1182 deletes it)
+// engine-friction: engine#2633, moves (game 12 deletes it)
+fn open(
+";
+    assert_eq!(
+        marker_spans(source),
+        [
+            span(2, 9, "2132", Some("1180")),
+            span(12, 15, "2131", Some("1180")),
+            span(17, 20, "2129", None),
+            span(21, 22, "2148", Some("1207")),
+            span(23, 23, "2540", Some("1182")),
+            span(24, 25, "2633", None),
+        ]
+    );
+    assert_eq!(
+        marker_spans("fn a() {}\n// engine-friction: engine#25\n"),
+        []
+    );
+    // After code that doesn't end the item: through the item's end.
+    let trailing = "use a;\nfn a() { // engine-friction: engine#2540, moves (game 1182 deletes it)\n    b();\n}\nfn c() {}\n";
+    assert_eq!(marker_spans(trailing), [span(2, 4, "2540", Some("1182"))]);
+    // On the first line: the whole file.
+    let file =
+        "// engine-friction: engine#2578, moves (game 1224 deletes it)\nuse a;\n\nfn b() {}\n";
+    assert_eq!(marker_spans(file), [span(1, 4, "2578", Some("1224"))]);
+}
+
 fn run() -> Run {
     Run {
         trigger: "dispatch".to_owned(),

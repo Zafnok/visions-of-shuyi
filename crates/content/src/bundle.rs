@@ -522,6 +522,7 @@ pub fn load_each<T>(
     install().load_each(dir, ext, parse)
 }
 
+// engine-friction: engine#2233, moves (game 1186 deletes it)
 /// The files of a [`load_each`] whose parse gave `Some`, for a loader that
 /// reports each file's problems itself and then checks the files together;
 /// the files that are not UTF-8 go to `errors` (and then none are kept).

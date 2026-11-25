@@ -1,3 +1,4 @@
+// engine-friction: engine#2371, moves (game 1184 deletes it)
 //! The Playdate's look of the Profile screen (ticket 1045): the profiles
 //! in a window, the one in use marked, then the row that adds one; the
 //! menu of what can be done to a profile, the questions and the name boxes

@@ -1,3 +1,4 @@
+// engine-friction: engine#3097, moves (game 1170 deletes it)
 //! The Playdate's buttons (ticket 1033): the SDK's button bits become one
 //! controller of [`PadKind::Playdate`] fed through `trpg-ui`'s [`Pads`],
 //! so they reach screens as `Action`s through the player's pad bindings

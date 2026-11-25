@@ -46,6 +46,17 @@ code now: the game depends on the engine's crates by a git revision.
   last section isn't the pin, a row has no decision, or an adoption
   names no ticket, so a ticket's own pin move (`engine-change` §3.6)
   writes its section too.
+  The marker has a second use (ticket 0193): code that waits to *move*
+  to the engine, not a workaround, is marked
+  `// engine-friction: engine#NNNN, moves (game MMMM deletes it)`, MMMM
+  the game ticket that deletes it once the engine has it. The watcher
+  reads it like any marker (the words after the id change nothing).
+  `cargo xtask pr-size` (its hook and the CI step) warns a PR that edits
+  a marked item, from the marker's line through the first later line at
+  its indentation that is `}` or ends with `;` (on a file's first line,
+  the whole file), so the engine ticket
+  hears of the change while it is still being written and MMMM gets a
+  dated line. It never fails a check.
 - **The local checkout.** Over the 30 days before the move, 24 of the 83
   game PRs merged since `engine/` existed changed it (29%; 24 of all 332
   merged PRs in those 30 days), so the engine's API is still moving and

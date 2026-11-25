@@ -643,6 +643,7 @@ fn a_click_does_not_end_the_prompt() {
     }
 }
 
+// engine-friction: engine#2579, moves (game 1225 deletes it)
 /// The logic modules of the converted screens say what they show, never
 /// how it looks (ADR-0054): none of them names a colour, a rectangle, a
 /// box style or a cell.
@@ -702,6 +703,7 @@ fn the_logic_modules_name_no_cells_or_colours() {
     }
 }
 
+// engine-friction: engine#2579, moves (game 1225 deletes it)
 /// Whether `word` appears in `source` as a whole identifier.
 fn names_word(source: &str, word: &str) -> bool {
     let ident = |c: char| c.is_alphanumeric() || c == '_';
@@ -712,6 +714,7 @@ fn names_word(source: &str, word: &str) -> bool {
     })
 }
 
+// engine-friction: engine#2579, moves (game 1225 deletes it)
 #[test]
 fn names_word_finds_whole_identifiers_only() {
     assert!(names_word("use crate::color::UiColor;", "UiColor"));

@@ -47,6 +47,7 @@ pub const CINEMATIC: &[Action] = &[Cancel];
 pub const PORTRAIT_VIEWER: &[Action] = &[CursorUp, CursorDown, CursorLeft, CursorRight, Cancel];
 /// What the scene preview screen reacts to.
 pub const SCENE_PREVIEW: &[Action] = &[Confirm, Cancel];
+// engine-friction: engine#3202, moves (game 1212 deletes it)
 /// What the sprite test screen reacts to.
 pub const SPRITE_TEST: &[Action] = &[Cancel];
 /// It shows itself as its first screen and reads nothing.
@@ -93,6 +94,7 @@ pub const SHOP: &[Action] = GRID;
 pub const CAMP: &[Action] = LIST;
 /// What the class change screen reacts to.
 pub const CLASS_CHANGE: &[Action] = GRID;
+// engine-friction: engine#3201, moves (game 1211 deletes it)
 /// What the credits screen reacts to.
 pub const CREDITS: &[Action] = LIST;
 /// What the dialogue screen reacts to.

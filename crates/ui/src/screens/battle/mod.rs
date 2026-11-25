@@ -1006,6 +1006,7 @@ impl BattleScreen {
         self.cursor
     }
 
+    // engine-friction: engine#3206, moves (game 1217 deletes it)
     /// Scrolls the camera to keep `target` [`Camera::MARGIN`] tiles from the
     /// viewport's edges.
     pub fn follow(&mut self, target: Pos) {
@@ -1014,6 +1015,7 @@ impl BattleScreen {
         self.camera.follow(target, w, h, self.view, Camera::MARGIN);
     }
 
+    // engine-friction: engine#3206, moves (game 1217 deletes it)
     /// The camera for a viewport of `view` tiles: the screen's own, or, if
     /// that was kept for another size (the map skin changed), one centred on
     /// the cursor.
@@ -2278,6 +2280,7 @@ fn animate(scene: &mut MapScene, gait: Option<(UnitId, Gait)>) {
     }
 }
 
+// engine-friction: engine#3206, moves (game 1217 deletes it)
 /// The camera for a viewport of `view` tiles on `state`'s map: `camera`,
 /// if it was kept for that size, else (the map skin changed) one centred
 /// on the `cursor`'s tile.
