@@ -5,11 +5,11 @@ type: content
 milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["0849"]
 blocks: ["1064"]
 nick_input: setup
-completed:
+completed: 2026-11-24
 ---
 
 # 0861 — Chapter 3 art: the prior's and Ned Tolley's faces and combat picture
@@ -99,16 +99,16 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
 
 ## Acceptance criteria
 
-- [ ] With the private assets, the prior and Ned have faces in every
+- [x] With the private assets, the prior and Ned have faces in every
       Chapter 3 scene they speak in, and the prior his own combat
       picture.
-- [ ] The private-assets tests resolve their character-specific
+- [x] The private-assets tests resolve their character-specific
       portrait and battler ids; substituting a class default or omitting
       a portrait fails. Ordinary gates stay independent of the bought
       files.
-- [ ] `cargo shuyi private-assets --pin` passes (every new file has a
+- [x] `cargo shuyi private-assets --pin` passes (every new file has a
       credit).
-- [ ] All gates in the `run-gates` skill pass, the private-assets tests
+- [x] All gates in the `run-gates` skill pass, the private-assets tests
       included.
 
 ## Tests required
@@ -118,5 +118,53 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done**
+
+- **The prior** (`greywater_prior`): Nick's generator face (Adult Male,
+  `balding_a`, `narrow_a` eyes, no facial hair, `commoner_a` in near-black),
+  cut by `portrait-import --generator`. The generator has no white, so
+  the hair, brows and irises were recoloured afterwards (white fringe,
+  pale gray brows, gray-blue eyes): a palette swap of exact colours, the
+  brows only above the collar (the robe shares their colour).
+- **His combat picture**: Shironejiya's `m_s_mage_dark_m01`, downloaded
+  from the site directly (a plain download worked; the browser is
+  blocked there), at 1.25×. It has long red hair under its hat; the hair
+  is recoloured white on import to match his face (`RED_HAIR_TO_WHITE`),
+  and the red cross on his chest kept. That needed a row bound on a
+  recolour (`Tint::to_row`, `above()`): the cross is the hair's hue.
+- **Ned** (`hound_sergeant`): Nick's generator face (Large Male,
+  `buzz_a`, `jaw_a` stubble, `narrow_a` eyes, `brawler_a`: a black tunic
+  with brown leather shoulder guards, the collar trim as his faded blue
+  scarf). The generator's gray is lavender: hair, brows and stubble
+  recoloured neutral gray, the trim's bright blue faded.
+- Credits (`credits.ron`, both portraits and the battler), the Tiny Tales
+  and Shironejiya rows of `THIRD_PARTY_ASSETS.md`, the download noted in
+  the private `library/shironejiya/terms.txt`.
+- The Chapter 1 demo leaves the two faces and the picture out
+  (`crates/content/demo/bundle.txt`), as 0858 did for Joss.
+- Test: `chapter_three_speakers_have_their_own_faces_and_the_prior_his_picture`
+  (the private-assets tests): each has his own private face for every
+  expression his scenes use, and the prior's battler is his own, not the
+  Mage's.
+- Looked at with `frame-png` (bought art): Ned's scene with Hollis
+  (`ch03_sergeant_engage_retainer`), the prior's with Maud
+  (`ch03_boss_engage_keeper`), and a staged fight with the prior (a
+  throwaway battle file, removed).
+
+**Deviations**
+
+- The parts lists above didn't fit the generator: it has no old body, no
+  robe or hood and no scarf, and its soldier outfits are all mail or
+  plate. Nick built the faces from new lists (above), picked in the
+  session with him; the eyes were changed after his look (`droopy_b`
+  read as feminine; `narrow_b` draws one eye shut).
+- No soot smudge on the prior: the generator has none, and it wasn't
+  asked for again.
+- The private change went through a pull request there, as 0858's did;
+  the pin moved to its merge on `main` with `--pin`.
+
+**Starting looks for the Act 1 playtest (1064)**
+
+- The prior's combat picture has long hair (now white) under a flat hat;
+  his face is bald with a white fringe.
+- Ned's collar trim stands in for the faded blue scarf of his sheet.

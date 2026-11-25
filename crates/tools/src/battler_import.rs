@@ -86,6 +86,9 @@ pub struct Tint {
     /// The first row of the picture it changes (0: the whole picture), to
     /// tell clothes from hair of the same colour.
     pub from_row: u32,
+    /// The row it stops before (`u32::MAX`: the bottom), for hair above
+    /// clothes of the same colour.
+    pub to_row: u32,
 }
 
 const fn tint(hues: (f32, f32), min_sat: f32, hue: f32, sat: f32, val: f32) -> Tint {
@@ -96,12 +99,18 @@ const fn tint(hues: (f32, f32), min_sat: f32, hue: f32, sat: f32, val: f32) -> T
         sat,
         val,
         from_row: 0,
+        to_row: u32::MAX,
     }
 }
 
 /// `tint` for the rows from `from_row` down only.
 const fn below(tint: Tint, from_row: u32) -> Tint {
     Tint { from_row, ..tint }
+}
+
+/// `tint` for the rows above `to_row` only.
+const fn above(tint: Tint, to_row: u32) -> Tint {
+    Tint { to_row, ..tint }
 }
 
 /// The Church Knight's gold trim, tabard and shield in the enemy's red.
@@ -118,6 +127,9 @@ const ARCHER_TO_RED: [Tint; 3] = [
 /// The female lead's pink top in her coat's blue, as her portrait has it.
 /// Her hair is the same pink, above row 33; her skin's shadows are redder.
 const PINK_TO_BLUE: [Tint; 1] = [below(tint((325.0, 352.0), 0.2, 212.0, 0.9, 0.9), 33)];
+/// The dark priest's red hair white, as the prior's face has it (ticket
+/// 0861). The red cross on his chest, below row 28, is the same hue.
+const RED_HAIR_TO_WHITE: [Tint; 1] = [above(tint((8.0, 16.0), 0.5, 0.0, 0.08, 1.5), 28)];
 
 /// A Tiny Tales still battle picture: faces right, its own size.
 const fn tiny(id: &'static str, source: &'static str) -> Picture {
@@ -198,12 +210,11 @@ const HOUND_BLACK: [Tint; 2] = [
     tint((0.0, 18.0), 0.45, 250.0, 0.15, 0.4),
 ];
 
-/// Every class and named character of the Quick Battle, Chapter 1 and
-/// Chapter 2 with a bought picture (Nick's choices, tickets 0413 and
-/// 0070). A class's picture is what the enemy's soldiers of that class
-/// look like; a named character of the player's who shares it has their
-/// own row.
-pub const BATTLERS: [Picture; 17] = [
+/// Every class and named character of the Quick Battle and Chapters 1 to
+/// 3 with a bought picture (Nick's choices, tickets 0413 and 0070). A
+/// class's picture is what the enemy's soldiers of that class look like; a
+/// named character of the player's who shares it has their own row.
+pub const BATTLERS: [Picture; 18] = [
     // The lead, by gender; the Exile class as the male lead.
     tiny(
         "exile",
@@ -262,6 +273,14 @@ pub const BATTLERS: [Picture; 17] = [
     tinted(
         shironejiya("defector", "shironejiya/monster_s/m_s_hero07.png"),
         &HOUND_BLACK,
+    ),
+    // The prior of Greywater is the dark priest, his hair white (ticket 0861).
+    tinted(
+        shironejiya(
+            "greywater_prior",
+            "shironejiya/monster_s/m_s_mage_dark_m01.png",
+        ),
+        &RED_HAIR_TO_WHITE,
     ),
     // The Rider is the Paladin in the enemy's red; Tamsin has her own.
     tinted(pixel_flag("rider", PALADIN), &PALADIN_TO_RED),
@@ -417,8 +436,12 @@ pub fn recolour(pixels: &mut [u8], width: u32, tints: &[Tint]) {
             continue;
         }
         let (hue, sat, val) = to_hsv([red, green, blue]);
-        let fits =
-            |t: &&Tint| t.hues.0 <= hue && hue <= t.hues.1 && sat >= t.min_sat && row >= t.from_row;
+        let fits = |t: &&Tint| {
+            t.hues.0 <= hue
+                && hue <= t.hues.1
+                && sat >= t.min_sat
+                && (t.from_row..t.to_row).contains(&row)
+        };
         if let Some(t) = tints.iter().find(fits) {
             let [red, green, blue] = to_rgb(t.hue, (sat * t.sat).min(1.0), (val * t.val).min(1.0));
             *pixel = [red, green, blue, alpha];
@@ -689,6 +712,17 @@ mod tests {
         let mut p = [gold; 4].concat();
         recolour(&mut p, 2, &lowest);
         assert_eq!(p, [gold; 4].concat());
+        // One for the upper rows leaves the rows from its end down alone,
+        // and with both ends, only the rows between change.
+        let any = tint((0.0, 360.0), 0.0, 120.0, 1.0, 1.0);
+        let upper = [above(any, 1)];
+        let mut p = [gold; 4].concat();
+        recolour(&mut p, 2, &upper);
+        assert_eq!(p, [green_now, green_now, gold, gold].concat());
+        let middle = [above(below(any, 1), 3)];
+        let mut p = [gold; 4].concat();
+        recolour(&mut p, 1, &middle);
+        assert_eq!(p, [gold, green_now, green_now, gold].concat());
         // Saturation and brightness stop at 1.
         let mut p = gold.to_vec();
         recolour(&mut p, 1, &[tint((0.0, 360.0), 0.0, 0.0, 2.0, 2.0)]);

@@ -6,7 +6,7 @@ milestone: M4 Enemy AI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["engine#2148"]
+blocked_by: ["engine#2149"]
 nick_input: none
 completed:
 ---
@@ -44,14 +44,15 @@ order to the `work-ticket` skill.
 
 None. The bands, the 20% floor and what a miss does stay Nick's
 (`docs/design/playtest-bots.md`); this only says how sure the bots'
-count is. The engine part is engine#2148's part D (Nick asked for it,
-2026-11-24, with the engine's other bot gaps in one ticket); this ticket
-is the game's half, after the pin passes it.
+count is. The engine part is engine#2149's part A (Nick asked for it,
+2026-11-24, as part D of engine#2148, which split it off into
+engine#2149 at its size valve); this ticket is the game's half, after
+the pin passes it.
 
 ## Scope
 
 **In:**
-- Engine (engine#2148, part D; not this PR): a 95% Wilson score interval in whole percents for each rate
+- Engine (engine#2149, part A; not this PR): a 95% Wilson score interval in whole percents for each rate
   check, shown in the table (`band 50–75% · 95% 35–53%`). New verdicts:
   ✗ too hard only when the whole interval is under the band, ⚠ too easy
   only when it is all over the band. A share outside the band whose
@@ -79,9 +80,9 @@ is the game's half, after the pin passes it.
 
 ## Implementation steps
 
-1. Engine: **done by engine#2148 (part D)**, not here. Steps 1–3 are
+1. Engine: **done by engine#2149 (part A)**, not here. Steps 1–3 are
    what that ticket builds, kept for reference. If the pin is not past
-   engine#2148 yet, move it first (`engine-change` §7, the `engine-pin`
+   engine#2149 yet, move it first (`engine-change` §7, the `engine-pin`
    skill's review). In `crates/core/src/bots/playtest.rs`, add
    `Band::interval(successes, count) -> Option<(u32, u32)>`: the lowest
    and highest whole percent `k` in `0..=100` that passes the score test
@@ -109,11 +110,11 @@ is the game's half, after the pin passes it.
 5. Add the `work-ticket` bullet and sync the skill loaders.
 
 Expected size: about 40 game lines, mostly tests and docs (the engine's
-160 are engine#2148's), plus the pin move if this moves it.
+160 are engine#2149's), plus the pin move if this moves it.
 
 ## Acceptance criteria
 
-- [ ] The pin is past engine#2148, whose table shows `95% lo–hi%` on
+- [ ] The pin is past engine#2149, whose table shows `95% lo–hi%` on
       every rate line.
 - [ ] `cargo xtask playtest ch04 --bot all` on the moved pin prints the
       interval; a ✗ or ⚠ appears only when the whole interval is outside.
@@ -126,7 +127,7 @@ Expected size: about 40 game lines, mostly tests and docs (the engine's
 
 ## Tests required
 
-- Unit (engine, engine#2148): `Band::interval` and `Band::verdict` at the
+- Unit (engine, engine#2149): `Band::interval` and `Band::verdict` at the
   numbers in step 3.
 - Unit (game): the two tests in step 4.
 

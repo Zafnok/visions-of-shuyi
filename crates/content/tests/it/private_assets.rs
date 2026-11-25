@@ -279,3 +279,40 @@ fn the_bought_backdrops_have_their_own_dusk_and_night() {
         }
     }
 }
+
+/// Chapter 3's speaking enemies (ticket 0861): the prior of Greywater and
+/// Ned Tolley have their own generator faces, with every expression their
+/// scenes use, and the prior his own combat picture, not his class's.
+#[test]
+fn chapter_three_speakers_have_their_own_faces_and_the_prior_his_picture() {
+    use trpg_content::bundle::{display_path, is_private};
+
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    for id in ["greywater_prior", "hound_sergeant"] {
+        let portrait = content.portraits.get(id);
+        let Some(portrait) = portrait else {
+            panic!("no portrait {id}")
+        };
+        for name in ["neutral", "angry", "sad", "surprised"] {
+            let found = portrait.expressions.iter().find(|e| e.name == name);
+            let Some(expression) = found else {
+                panic!("{id} has no {name}")
+            };
+            let shown = display_path(expression.image.path());
+            assert!(
+                is_private(&shown) && shown.contains(&format!("portraits/{id}/")),
+                "{id} {name}: {shown}"
+            );
+        }
+    }
+    let prior = content.battlers.pick(["greywater_prior", "mage"]);
+    let Some(prior) = prior else {
+        panic!("no battler for the prior")
+    };
+    assert_eq!(prior.id, "greywater_prior");
+    let shown = display_path(prior.image.path());
+    assert!(is_private(&shown), "{shown}");
+}

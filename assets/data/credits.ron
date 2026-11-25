@@ -51,7 +51,8 @@
             "battlers/heretic.", "battlers/lead_f.", "battlers/mage.", "battlers/poacher.",
             "battlers/retainer.",
             "portraits/guide/", "portraits/guide.ron",
-            "portraits/defector", "portraits/heretic", "portraits/keeper", "portraits/lead_f", "portraits/lead_m",
+            "portraits/defector", "portraits/greywater_prior", "portraits/heretic",
+            "portraits/hound_sergeant", "portraits/keeper", "portraits/lead_f", "portraits/lead_m",
             "portraits/messenger", "portraits/poacher", "portraits/red_captain",
             "portraits/retainer", "portraits/rival", "portraits/sergeant", "portraits/soldier",
             "portraits/test_knight", "portraits/test_lord",
@@ -65,7 +66,8 @@
          ]),
 
         // Shironejiya's free battle pictures (0413): the Brigand, the Raider
-        // and the red captain in the combat scene; Joss recoloured (0858). Its terms ask for the site's name,
+        // and the red captain in the combat scene; Joss recoloured (0858); the
+        // prior of Greywater, his hair recoloured (0861). Its terms ask for the site's name,
         // its address and the no-reuse line in a text shipped with the
         // game: this entry is that text (the site's name is written in
         // kanji, which the font doesn't have: THIRD_PARTY_ASSETS.md).
@@ -73,7 +75,10 @@
          title: "Shironejiya battle pictures (the materials in this game may not be reused)",
          author: "Shironejiya (Shiro Nejiya)",
          source: "http://hi79.web.fc2.com/", license: "Custom (Shironejiya)",
-         private: ["battlers/brigand.", "battlers/defector.", "battlers/raider.", "battlers/red_captain."]),
+         private: [
+             "battlers/brigand.", "battlers/defector.", "battlers/greywater_prior.",
+             "battlers/raider.", "battlers/red_captain.",
+         ]),
 
         // Pixel Flag's Paladin (0446): the riders in the combat scene, the
         // enemy's and Tamsin's, recoloured. Bought on BOOTH; its terms ask
