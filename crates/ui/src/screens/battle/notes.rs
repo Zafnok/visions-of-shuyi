@@ -175,6 +175,12 @@ mod tests {
             "{lines:?}"
         );
         assert_eq!(unwrap_notes(&lines, &wide), [text]);
+        // Where only one side of the break is wide, the space stays.
+        let mixed = ["• Fire is", "  冰元素。", "• 冰元素", "  ice"].map(String::from);
+        assert_eq!(
+            unwrap_notes(&mixed, &wide),
+            ["Fire is 冰元素。", "冰元素 ice"]
+        );
     }
 
     #[test]
