@@ -62,10 +62,34 @@ fn light_quick_battle(h: &mut Harness, light: &str) {
     lights.insert(QUICK.to_owned(), light.to_owned());
 }
 
+/// What a run of [`SCRIPT`] left and asked for.
+#[derive(Debug, Clone, PartialEq)]
+struct Run {
+    /// What each step left.
+    after: Vec<After>,
+    /// Every sound and music request, with the frame that asked.
+    heard: Vec<(u32, AudioRequest)>,
+    /// The skin's walking speeds, in tiles per second (normal, Fast
+    /// animations, held): a skin's own (Nick, 2026-10-04 and 2026-11-25),
+    /// so a footstep falls when the unit is seen entering its tile.
+    walk: (f32, f32, f32),
+}
+
+impl Run {
+    /// The requests in order without their frames, and without the fades'
+    /// volume steps (the title's crackle, the place's bed, 1332): one a
+    /// frame, they count frames, not what is heard.
+    fn sounds(&self) -> Vec<&AudioRequest> {
+        let heard = self.heard.iter().map(|(_, r)| r);
+        heard
+            .filter(|r| !matches!(r, AudioRequest::SoundVolume { .. }))
+            .collect()
+    }
+}
+
 /// Plays [`SCRIPT`] with the map painted by the skin `skin` at the zoom
-/// `zoom`, in the light `light` if one is given: what each step left, and
-/// every sound and music request of the run.
-fn play_in(skin: &str, zoom: MapZoom, light: Option<&str>) -> (Vec<After>, Vec<AudioRequest>) {
+/// `zoom`, in the light `light` if one is given.
+fn play_in(skin: &str, zoom: MapZoom, light: Option<&str>) -> Run {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     at_zoom(&mut h, zoom);
     h.with_map_skin(skin);
@@ -86,63 +110,84 @@ fn play_in(skin: &str, zoom: MapZoom, light: Option<&str>) -> (Vec<After>, Vec<A
             battle: battle.map(|b| b.state().clone()),
         });
     }
-    // The volume steps of the fades (the title's crackle, the place's bed,
-    // 1332) are one a frame: they would compare the frames each sound
-    // falls on, not which sounds play.
-    let mut audio = h.audio_requests();
-    audio.retain(|r| !matches!(r, AudioRequest::SoundVolume { .. }));
-    (after, audio)
+    let heard = h.audio_log();
+    let heard = heard.into_iter().map(|(f, r)| (f, r.clone())).collect();
+    let walk = h.ctx().game.map_skin.walk();
+    let walk = (walk.normal, walk.fast, walk.held);
+    Run { after, heard, walk }
 }
 
 /// [`play_in`] the map's own light.
-fn play(skin: &str, zoom: MapZoom) -> (Vec<After>, Vec<AudioRequest>) {
+fn play(skin: &str, zoom: MapZoom) -> Run {
     play_in(skin, zoom, None)
 }
 
 /// One long scripted Quick Battle, played under the glyph skin, under the
 /// sprite skins (plain tiles, and the tileset with layers and looks) and
-/// under the mixed skin (sprite units on glyph terrain), ends the same way: the same battle, the cursor on the same tile and the
-/// same screens after every step, the same sounds.
+/// under the mixed skin (sprite units on glyph terrain), at each zoom and
+/// in another light, ends the same way: the same battle, the cursor on the
+/// same tile and the same screens after every step, the same sounds in
+/// the same order. Every skin that walks at the same speed asks for every
+/// sound on the same frame (1358): a walk's footsteps follow the walk on
+/// screen, and the sprites walk slower than the glyphs (Nick kept the two
+/// speeds, 2026-11-25), so only the walks may move a sound.
 #[test]
 fn the_skin_never_changes_the_game() {
-    let (glyph, glyph_audio) = play("glyph", MapZoom::X1);
+    let glyph = play("glyph", MapZoom::X1);
     // The glyph skin doesn't zoom: the same run whatever the setting.
-    assert_eq!(
-        play("glyph", MapZoom::X2),
-        (glyph.clone(), glyph_audio.clone())
-    );
+    assert_eq!(play("glyph", MapZoom::X2), glyph);
     // The script did what it says: the lord moved and fought, the fight
     // was rewound, and the enemy phase came and went.
-    let state = |i: usize| glyph[i].battle.clone().unwrap();
+    let state = |i: usize| glyph.after[i].battle.clone().unwrap();
     let lord = |s: &BattleState| s.units()[0].pos;
-    assert_eq!(glyph[0].screens, ["title", "game_flow", "battle"]);
+    assert_eq!(glyph.after[0].screens, ["title", "game_flow", "battle"]);
     assert_eq!(lord(&state(6)), Pos::new(6, 4));
     assert_ne!(state(6), state(1));
     assert_eq!(lord(&state(10)), Pos::new(3, 5), "rewound");
     assert!(state(15).turn() >= 2, "turn {}", state(15).turn());
-    let sounds = glyph_audio
-        .iter()
-        .filter(|r| matches!(r, AudioRequest::PlaySound { .. }));
-    assert!(sounds.count() > 10);
-    // Step by step, the same: under plain tiles, under tiles with layers
-    // between them, and under unit sprites on glyph terrain, each at both
-    // zooms (ticket 0439: at 2× the view is a quarter of the tiles).
+    let sounds = glyph.sounds().into_iter();
+    let played = sounds.filter(|r| matches!(r, AudioRequest::PlaySound { .. }));
+    assert!(played.count() > 10);
+    // Under plain tiles, under tiles with layers between them, and under
+    // unit sprites on glyph terrain, each at both zooms (ticket 0439: at
+    // 2× the view is a quarter of the tiles); then in the dusk light
+    // (ticket 0438: shaded ground, and a shaded backdrop behind the
+    // fight).
+    let mut runs = Vec::new();
     for skin in ["sprite", "test_auto", "sprite_units"] {
         for zoom in MapZoom::ALL {
-            let (sprite, sprite_audio) = play(skin, zoom);
-            for (g, s) in glyph.iter().zip(&sprite) {
-                assert_eq!(g, s, "after {:?} under {skin} at {zoom:?}", g.step);
-            }
-            assert_eq!(glyph.len(), sprite.len(), "{skin} at {zoom:?}");
-            assert_eq!(glyph_audio, sprite_audio, "{skin} at {zoom:?}");
+            runs.push((format!("{skin} at {zoom:?}"), play(skin, zoom)));
         }
     }
-    // Nor does the light the map is in (ticket 0438): shaded ground, and
-    // a shaded backdrop behind the fight.
     for skin in ["test_auto", "glyph"] {
-        let (dusk, dusk_audio) = play_in(skin, MapZoom::X1, Some("dusk"));
-        assert_eq!(glyph, dusk, "{skin} at dusk");
-        assert_eq!(glyph_audio, dusk_audio, "{skin} at dusk");
+        let dusk = play_in(skin, MapZoom::X1, Some("dusk"));
+        runs.push((format!("{skin} at dusk"), dusk));
+    }
+    // The first run at each walking speed, which the others at that speed
+    // match frame for frame.
+    let mut by_walk = vec![glyph.clone()];
+    for (name, run) in &runs {
+        // Step by step, the same.
+        for (g, s) in glyph.after.iter().zip(&run.after) {
+            assert_eq!(g, s, "after {:?} under {name}", g.step);
+        }
+        assert_eq!(glyph.after.len(), run.after.len(), "{name}");
+        assert_eq!(glyph.sounds(), run.sounds(), "{name}");
+        let Some(same_walk) = by_walk.iter().find(|r| r.walk == run.walk) else {
+            by_walk.push(run.clone());
+            continue;
+        };
+        for (g, s) in same_walk.heard.iter().zip(&run.heard) {
+            assert_eq!(g, s, "{name}");
+        }
+        assert_eq!(same_walk.heard, run.heard, "{name}");
+    }
+    // Both walking speeds were played, the glyphs' and the sprites', and
+    // each was matched frame for frame by another run.
+    assert_eq!(by_walk.len(), 2, "{:?}", by_walk.iter().map(|r| r.walk));
+    for (i, walk) in by_walk.iter().enumerate() {
+        let same = runs.iter().filter(|(_, r)| r.walk == walk.walk).count();
+        assert!(same > usize::from(i > 0), "{:?}", walk.walk);
     }
 }
 

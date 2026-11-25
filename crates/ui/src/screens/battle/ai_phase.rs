@@ -74,9 +74,6 @@ pub struct AiAction {
     before: Vec<Unit>,
     /// The camera's origin when the action starts, and once panned.
     pan: (Pos, Pos),
-    /// How long the pan lasts, in seconds: none if the camera doesn't
-    /// move.
-    pan_len: f32,
     /// The unit's move, its start tile first (just that tile if it stays).
     path: Vec<Pos>,
     /// Seconds played.
@@ -106,12 +103,10 @@ impl AiAction {
         } else {
             path
         };
-        let pan_len = if from == to { 0.0 } else { pacing.pan };
         Self {
             unit,
             before,
             pan: (from, to),
-            pan_len,
             path,
             t: 0.0,
             then,
@@ -134,9 +129,12 @@ impl AiAction {
         self.t
     }
 
-    /// How long the pan lasts: none if the camera doesn't move.
+    /// How long the pan lasts: as long whether or not the camera moves
+    /// (1358), since how far it moves is the map skin's (its tiles' size,
+    /// the zoom), and a skin never changes when anything is heard
+    /// (ADR-0038).
     fn pan_len(&self) -> f32 {
-        self.pan_len
+        self.pacing.pan
     }
 
     /// Pans from origin `from` to `to` instead (the viewport changed size),
@@ -241,9 +239,11 @@ impl AiAction {
         self.t >= self.walk_start()
     }
 
-    /// Whether the cursor marks the unit: after the pan, until it walks.
+    /// Whether the cursor marks the unit: after the pan (from the start
+    /// when the camera stays), until it walks.
     pub fn shows_cursor(&self) -> bool {
-        self.t >= self.pan_len() && !self.walking()
+        let panned = self.pan.0 == self.pan.1 || self.t >= self.pan_len();
+        panned && !self.walking()
     }
 
     // engine-friction: engine#2109, moves (game 1228 deletes it)
@@ -350,10 +350,13 @@ mod tests {
     }
 
     #[test]
-    fn no_pan_when_the_camera_stays_and_no_walk_when_the_unit_stays() {
+    fn a_still_camera_takes_the_pan_s_time_and_no_walk_when_the_unit_stays() {
         let here = Pos::new(2, 2);
         let a = action((here, here), vec![]);
-        assert!((a.total() - PACING.highlight).abs() < 1e-6);
+        // As long as a pan: how far the camera goes is the skin's (1358).
+        assert!((a.total() - PACING.pan - PACING.highlight).abs() < 1e-6);
+        assert_eq!(a.camera(), here);
+        // The cursor marks the unit all that time.
         assert!(a.shows_cursor());
         assert_eq!(a.start(), Pos::new(1, 1));
         assert_eq!(a.walker_pos(), Pos::new(1, 1));

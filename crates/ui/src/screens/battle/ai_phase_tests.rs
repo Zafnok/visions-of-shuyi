@@ -137,16 +137,18 @@ fn an_action_pans_marks_the_unit_then_walks() {
     assert_ne!(s.state().unit(unit).unwrap().pos, start, "it moves");
     assert_eq!(s.cursor().pos, start);
     assert_eq!(s.help(&c), "hold f fast");
-    // The cursor marks it (no pan: the small map is all in view), then it
-    // walks (and the cursor goes).
-    assert!((a.walk_start() - (PACING.highlight)).abs() < 1e-6);
-    frame(&mut s, &mut c, &[], PACING.highlight / 2.0, false);
+    // The cursor marks it (the camera stays, the small map being all in
+    // view, for as long as a pan would take: 1358), then it walks (and the
+    // cursor goes).
+    let walk_start = PACING.pan + PACING.highlight;
+    assert!((a.walk_start() - walk_start).abs() < 1e-6);
+    frame(&mut s, &mut c, &[], walk_start / 2.0, false);
     let Mode::AiAction(a) = s.mode() else {
         panic!("{:?}", s.mode());
     };
     assert!(a.shows_cursor());
     assert_eq!(s.scene(&c).cursor_tile(), Some(start));
-    frame(&mut s, &mut c, &[], PACING.highlight, false);
+    frame(&mut s, &mut c, &[], walk_start, false);
     let Mode::AiAction(a) = s.mode() else {
         panic!("{:?}", s.mode());
     };
