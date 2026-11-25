@@ -6,7 +6,7 @@ milestone: M4 Enemy AI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["engine#2149"]
+blocked_by: []
 nick_input: none
 completed:
 ---
@@ -81,9 +81,10 @@ the pin passes it.
 ## Implementation steps
 
 1. Engine: **done by engine#2149 (part A)**, not here. Steps 1–3 are
-   what that ticket builds, kept for reference. If the pin is not past
+   what that ticket builds, kept for reference. ~~If the pin is not past
    engine#2149 yet, move it first (`engine-change` §7, the `engine-pin`
-   skill's review). In `crates/core/src/bots/playtest.rs`, add
+   skill's review).~~ Done by the pin move of 2026-11-24 (`b69585ee`,
+   issue #824). In `crates/core/src/bots/playtest.rs`, add
    `Band::interval(successes, count) -> Option<(u32, u32)>`: the lowest
    and highest whole percent `k` in `0..=100` that passes the score test
    `(100·s − k·n)² · 10_000 ≤ 38_416 · n · k · (100 − k)` (z² = 3.8416),
@@ -100,11 +101,12 @@ the pin passes it.
    intervals 44/100 → 35–53, 0/100 and 100/100, 0 tries; every verdict
    on band 30–55 at 100 tries (20 → `Below`, 29 → `MaybeBelow`,
    40 → `Within`, 60 → `MaybeAbove`); the table text.
-4. Game, after the pin passes it: update
+4. Game, after the pin passes it: ~~update
    `band_check_flags_too_easy_and_too_hard` in
    `crates/bots/src/playtest/tests.rs` (lines 61–86: 29 and 60 become
    `Maybe`, 20 stays `Below`) and `render_matches_the_layout` in
-   `crates/tools/src/playtest/tests.rs` (line 271). In
+   `crates/tools/src/playtest/tests.rs` (line 271).~~ Done by the pin
+   move of 2026-11-24, which had to for its gates. In
    `docs/playtesting.md`, *Reading the report*, explain the interval
    and the marks, with the noise at 100 and 200 tries.
 5. Add the `work-ticket` bullet and sync the skill loaders.

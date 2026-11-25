@@ -284,7 +284,11 @@ fn render_matches_the_layout() {
     assert_eq!(text, expected);
     // The engine's table has the band check.
     assert!(table.contains("normal · 1/5 succeed"), "{table}");
-    assert!(table.contains("band 50–75%   ✗ too hard"), "{table}");
+    // 1/5 is under the band, but its 95% interval reaches it (engine#2149).
+    assert!(
+        table.contains("band 50–75% · 95% 4–62%   ~ maybe too hard"),
+        "{table}"
+    );
 }
 
 #[test]

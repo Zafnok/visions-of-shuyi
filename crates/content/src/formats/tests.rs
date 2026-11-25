@@ -8,12 +8,15 @@ use crate::{ai, art, item, skill};
 /// The registry's kinds, each with its formats in the order they are
 /// tried. The PNG pixels' kind and the dithered one-bit format are there
 /// only when a crate built with this one turns the engine's `png` feature
-/// on, so they are left out.
+/// on, and the `.sfx.ron` sound effects only with its `sfx` feature (the
+/// tool program's `shuyi-cli` turns it on), so they are left out.
 #[test]
 fn the_registry_lists_its_kinds_and_their_formats() {
     let listing = format!("{:?}", install())
         .replace(r#"("image pixels", ["png"]), "#, "")
-        .replace(r#", "dithered""#, "");
+        .replace(r#", "dithered""#, "")
+        .replace(r#", "sfx""#, "")
+        .replace(r#"("sound effect", ["sfx"]), "#, "");
     let kinds = [
         r#"("image", ["png", "one-bit"])"#,
         r#"("one-bit picture", ["one-bit"])"#,

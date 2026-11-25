@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: high
 status: todo
-blocked_by: ["0506", "engine#2129", "engine#2130", "engine#2131", "engine#2132", "engine#2532", "engine#2533", "engine#2021", "engine#2148"]
+blocked_by: ["0506", "engine#2129", "engine#2130", "engine#2131", "engine#2132", "engine#2532", "engine#2533", "engine#2021"]
 nick_input: none
 completed:
 ---
@@ -92,9 +92,10 @@ Use them so:
 A cover is never a hold, because a hold's tile is safe. It can only be a
 unit's advance in a survive with goals (houses), where the game drops
 that unit's advance and `TacticsOrder` takes its next one. The seeded
-traces show whether any battle has that case. Moving the pin past
+traces show whether any battle has that case. ~~Moving the pin past
 engine#2148 is this ticket's first step (`engine-change` §7, with the
-`engine-pin` skill's review).
+`engine-pin` skill's review).~~ Done by the pin move of 2026-11-24
+(`b69585ee`, issue #824).
 
 **Either order with 0527:** 0527 adds per-unit measures to the bots'
 report (damage dealt, kills, EXP and level for each playable unit, and a
