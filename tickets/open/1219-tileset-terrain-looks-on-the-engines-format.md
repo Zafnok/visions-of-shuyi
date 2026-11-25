@@ -33,6 +33,11 @@ TileRules}`, their `problems` and `resolve`, and `ImageRect::cell` and
 `ImageInfo::holds`. This ticket moves the tileset loader onto them. The
 tileset files don't change: their fields are the engine's spelling.
 
+**2026-11-25, from 1318:** `TILE_LOOKS` (`crates/content/src/map.rs`)
+gained a third look a map can name, `rogue_adventure`; in `look.rs` only
+a test's expected message changed (the list of names). engine#2243 takes
+the look names a map may give from the game, so it covers this.
+
 ## Nick input
 
 None. Nothing a player sees changes; an unknown terrain's error text

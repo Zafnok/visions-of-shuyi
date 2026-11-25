@@ -76,11 +76,12 @@ impl Temp {
         fs::write(path, bytes).unwrap();
     }
 
-    /// The made-up sheet as `set/Made` under `dir` of the folder.
+    /// The made-up sheet as Tiled sheet `set/Made` of the packs in `dir`
+    /// of the folder.
     fn with_sheet(self, dir: &str) -> Self {
-        self.write(&format!("{dir}/set/Made.tsx"), TSX.as_bytes());
+        self.write(&format!("{dir}/{TILED_DIR}/set/Made.tsx"), TSX.as_bytes());
         let png = encode_png(64, 32, &made_image()).unwrap();
-        self.write(&format!("{dir}/set/Images/made.png"), &png);
+        self.write(&format!("{dir}/{TILED_DIR}/set/Images/made.png"), &png);
         self
     }
 }
@@ -293,11 +294,11 @@ fn a_sheet_that_cant_be_read_says_which_file() {
         err.starts_with("reading ") && err.contains("None.tsx"),
         "{err}"
     );
-    temp.write("lib/set/Bad.tsx", b"<map/>");
+    temp.write("lib/tiny-tales/tilesets/set/Bad.tsx", b"<map/>");
     let err = Sheet::read(&dir, "set/Bad").unwrap_err();
     assert!(err.ends_with("Bad.tsx: no <tileset>"), "{err}");
     temp.write(
-        "lib/set/Big.tsx",
+        "lib/tiny-tales/tilesets/set/Big.tsx",
         TSX.replace("tilewidth=\"16\"", "tilewidth=\"8\"")
             .as_bytes(),
     );
@@ -307,7 +308,7 @@ fn a_sheet_that_cant_be_read_says_which_file() {
         "{err}"
     );
     temp.write(
-        "lib/set/Lost.tsx",
+        "lib/tiny-tales/tilesets/set/Lost.tsx",
         TSX.replace("made.png", "lost.png").as_bytes(),
     );
     let err = Sheet::read(&dir, "set/Lost").unwrap_err();
@@ -315,9 +316,9 @@ fn a_sheet_that_cant_be_read_says_which_file() {
         err.starts_with("reading ") && err.contains("lost.png"),
         "{err}"
     );
-    temp.write("lib/set/Images/text.png", b"not a png");
+    temp.write("lib/tiny-tales/tilesets/set/Images/text.png", b"not a png");
     temp.write(
-        "lib/set/Text.tsx",
+        "lib/tiny-tales/tilesets/set/Text.tsx",
         TSX.replace("made.png", "text.png").as_bytes(),
     );
     let err = Sheet::read(&dir, "set/Text").unwrap_err();
@@ -449,6 +450,7 @@ fn more_tiles_than_a_row_holds_go_on_the_next_row() {
     let mut packer = Packer {
         dir: &dir,
         colors: &fire,
+        strips: &BTreeMap::new(),
         sheets: BTreeMap::new(),
         cells: Vec::new(),
         pixels: Vec::new(),
@@ -723,7 +725,7 @@ fn the_games_mapping_gives_every_look_every_terrain() {
     let map = read_mapping(&root).unwrap();
     assert_eq!(check(&map, &terrains()), Ok(()));
     let looks: Vec<&str> = map.looks.keys().map(String::as_str).collect();
-    assert_eq!(looks, ["indoor", "outdoor"]);
+    assert_eq!(looks, ["indoor", "outdoor", "rogue_adventure"]);
     // Every layer is used by a look.
     for name in map.layers.keys() {
         let used = map.looks.values().any(|look| look.layers.contains(name));
@@ -733,7 +735,7 @@ fn the_games_mapping_gives_every_look_every_terrain() {
 
 #[test]
 fn run_writes_the_image_and_the_tileset_into_the_private_checkout() {
-    let temp = Temp::new("run").with_sheet(LIBRARY_DIR);
+    let temp = Temp::new("run").with_sheet(LIBRARIES_DIR);
     let root = &temp.0;
     // Without the checkout's game folder, or the mapping: nothing.
     let err = run(root, &UNITS).unwrap_err();
@@ -767,7 +769,7 @@ fn run_writes_the_image_and_the_tileset_into_the_private_checkout() {
     let palette = trpg_content::palette::load().unwrap();
     let colors = |name: &str| palette.get(name);
     let map = mapping(LAYERS, LOOKS);
-    let imported = import(&root.join(LIBRARY_DIR), &map, &terrains(), &colors).unwrap();
+    let imported = import(&root.join(LIBRARIES_DIR), &map, &terrains(), &colors).unwrap();
     assert_eq!(decode_png(&png).unwrap(), imported.image);
     let text = fs::read_to_string(game.join("tilesets/tiny_tales.ron")).unwrap();
     assert_eq!(text, tileset(&imported, &UNITS));
@@ -777,7 +779,7 @@ fn run_writes_the_image_and_the_tileset_into_the_private_checkout() {
     let err = run(&bare.0, &UNITS).unwrap_err();
     assert!(err.contains("is missing"), "{err}");
     // A file where the tilesets folder goes fails the write.
-    let blocked = Temp::new("run-blocked").with_sheet(LIBRARY_DIR);
+    let blocked = Temp::new("run-blocked").with_sheet(LIBRARIES_DIR);
     blocked.write(MAPPING_PATH, mapping_text(LAYERS, LOOKS).as_bytes());
     blocked.write("assets-private/game/tilesets", b"x");
     let err = run(&blocked.0, &UNITS).unwrap_err();
@@ -864,10 +866,10 @@ fn a_block_layer_is_a_picture_on_each_tile_for_each_way_its_terrain_ends() {
     let sheet = block_sheet(4);
     let png = encode_png(64, 48, &sheet.rgba).unwrap();
     temp.write(
-        "lib/set/Big.tsx",
+        "lib/tiny-tales/tilesets/set/Big.tsx",
         TSX.replace("made.png", "big.png").as_bytes(),
     );
-    temp.write("lib/set/Images/big.png", &png);
+    temp.write("lib/tiny-tales/tilesets/set/Images/big.png", &png);
     let layers = r#""wood": Block(of: ["forest", "thicket"], sheet: "set/Big", block: 1),
                     "fire": Block(of: ["burning"], sheet: "set/Big", block: 1, tint: "fire"),"#;
     let looks = r#""outdoor": (layers: ["wood", "fire"])"#;
@@ -975,7 +977,10 @@ fn a_tsx_gives_each_tiles_animation() {
 #[test]
 fn an_import_packs_the_frames_of_each_tile_that_moves() {
     let temp = Temp::new("frames").with_sheet("lib");
-    temp.write("lib/set/Made.tsx", animated_tsx().as_bytes());
+    temp.write(
+        "lib/tiny-tales/tilesets/set/Made.tsx",
+        animated_tsx().as_bytes(),
+    );
     let map = mapping(LAYERS, LOOKS);
     let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
     // The looks' six cells as before (tile 1, 6, 0, 3, then 0 and 3 in
@@ -1044,4 +1049,303 @@ fn an_import_packs_the_frames_of_each_tile_that_moves() {
     let report = trpg_content::motion::check(trpg_content::tileset::moving_rows([&read]));
     assert!(report.problems.is_empty(), "{:?}", report.problems);
     assert_eq!(report.todo.len(), 3);
+}
+
+/// A plain sheet (ticket 1318) of 6 × 6 tiles: each tile one colour by
+/// its number ([`plain_color`]), as `pack/plain.png` of the packs in `lib`.
+const PLAIN: &str = "pack/plain.png";
+
+/// The colour of tile `id` of the plain sheet.
+fn plain_color(id: u32) -> [u8; 4] {
+    [u8::try_from(7 * id).unwrap(), 50, 50, 255]
+}
+
+/// Writes the plain sheet.
+fn with_plain(temp: &Temp) {
+    let mut rgba = Vec::new();
+    for y in 0..96u32 {
+        for x in 0..96u32 {
+            rgba.extend(plain_color((y / 16) * 6 + x / 16));
+        }
+    }
+    temp.write(&format!("lib/{PLAIN}"), &encode_png(96, 96, &rgba).unwrap());
+}
+
+/// The colour of the packed image's cell `at`, at its pixel (5, 5).
+fn cell_color(image: &(u32, u32, Vec<u8>), (column, row): At) -> [u8; 4] {
+    let (width, _, rgba) = image;
+    let (x, y) = (column * 16 + 5, row * 16 + 5);
+    let at = usize::try_from((y * width + x) * 4).unwrap();
+    rgba[at..at + 4].try_into().unwrap()
+}
+
+/// A mapping of the made-up sheets with these `layers` and `looks`, and
+/// the plain sheet moving by `strip` (unless it is empty).
+fn plain_mapping(layers: &str, looks: &str, strip: &str) -> Mapping {
+    let text = mapping_text(layers, looks);
+    let text = if strip.is_empty() {
+        text
+    } else {
+        let open = text.trim_end_matches(')');
+        format!("{open}, moving: {{ \"{PLAIN}\": {strip} }})")
+    };
+    ron::from_str(&text).unwrap()
+}
+
+#[test]
+fn a_plain_sheets_tiles_are_cut_by_their_place() {
+    let temp = Temp::new("plain");
+    with_plain(&temp);
+    let dir = temp.0.join("lib");
+    let sheet = Sheet::read(&dir, PLAIN).unwrap();
+    assert_eq!((sheet.size, sheet.tsx.columns), ((96, 96), 6));
+    assert!(
+        sheet
+            .tile(7)
+            .unwrap()
+            .chunks(4)
+            .all(|p| p == plain_color(7))
+    );
+    assert_eq!(
+        sheet.tile(36).unwrap_err(),
+        "tile 36 is outside the 96×96 px image"
+    );
+    // Nothing to read, an image too small for a tile, not an image.
+    let err = Sheet::read(&dir, "pack/none.png").unwrap_err();
+    assert!(
+        err.starts_with("reading ") && err.contains("none.png"),
+        "{err}"
+    );
+    let small = encode_png(8, 32, &[0; 8 * 32 * 4]).unwrap();
+    temp.write("lib/pack/small.png", &small);
+    let err = Sheet::read(&dir, "pack/small.png").unwrap_err();
+    assert!(
+        err.ends_with("a 8×32 px image holds no 16×16 tile"),
+        "{err}"
+    );
+    // One tile is enough.
+    let one = encode_png(16, 16, &[7; 16 * 16 * 4]).unwrap();
+    temp.write("lib/pack/one.png", &one);
+    let sheet = Sheet::read(&dir, "pack/one.png").unwrap();
+    assert_eq!((sheet.size, sheet.tsx.columns), ((16, 16), 1));
+    temp.write("lib/pack/text.png", b"not a png");
+    let err = Sheet::read(&dir, "pack/text.png").unwrap_err();
+    assert!(err.contains("text.png: "), "{err}");
+}
+
+#[test]
+fn a_pair_is_its_upper_tile_over_its_lower_one() {
+    let temp = Temp::new("pair");
+    // Tile 0 all one colour; tile 1 see-through on its left half, a
+    // fifth opaque at its top-right pixel; tile 2 a fifth opaque all over.
+    let mut rgba = Vec::new();
+    for y in 0..16u32 {
+        for x in 0..48u32 {
+            rgba.extend(match (x, y) {
+                (0..16, _) => [100, 0, 0, 255],
+                (16..24, _) => [9, 9, 9, 0],
+                (31, 0) | (32.., _) => [0, 0, 200, 51],
+                _ => [0, 0, 200, 255],
+            });
+        }
+    }
+    temp.write("lib/pack/pair.png", &encode_png(48, 16, &rgba).unwrap());
+    let sheet = Sheet::read(&temp.0.join("lib"), "pack/pair.png").unwrap();
+    let pixels = paired(&sheet, 0, 1).unwrap();
+    let px = |x: usize, y: usize| pixels[(y * 16 + x) * 4..(y * 16 + x) * 4 + 4].to_vec();
+    assert_eq!(
+        (px(0, 0), px(7, 15)),
+        (vec![100, 0, 0, 255], vec![100, 0, 0, 255])
+    );
+    assert_eq!(px(8, 15), [0, 0, 200, 255]);
+    // A fifth of the way from the lower colour to the upper one.
+    assert_eq!(px(15, 0), [80, 0, 40, 255]);
+    // Over nothing, a pixel is what it is: the clear half stays clear,
+    // and a part see-through one keeps its colour and its alpha.
+    assert_eq!(paired(&sheet, 1, 1).unwrap()[..4], [0; 4]);
+    assert_eq!(paired(&sheet, 1, 2).unwrap()[..4], [0, 0, 200, 51]);
+    assert!(paired(&sheet, 0, 3).is_err());
+}
+
+#[test]
+fn a_cuts_frames_are_the_same_picture_further_along() {
+    assert_eq!(Cut::Tile(4).along(2), Cut::Tile(6));
+    let pair = Cut::Pair { under: 14, over: 0 };
+    assert_eq!(pair.along(1), Cut::Pair { under: 15, over: 1 });
+    let block = Cut::Joined { block: 3, ends: 5 };
+    assert_eq!(block.along(3), Cut::Joined { block: 6, ends: 5 });
+    // The column furthest right, in a sheet six tiles across: a frame
+    // runs past the edge from there, whichever tile has the lower number.
+    assert_eq!(Cut::Tile(10).right_column(6), 4);
+    assert_eq!(pair.right_column(6), 2);
+    assert_eq!(Cut::Pair { under: 12, over: 2 }.right_column(6), 2);
+    assert_eq!(Cut::Pair { under: 2, over: 12 }.right_column(6), 2);
+    assert_eq!(Cut::Pair { under: 6, over: 6 }.right_column(6), 0);
+    assert_eq!(block.right_column(6), 5);
+}
+
+#[test]
+fn a_patch_layer_takes_each_mix_from_the_usual_layout() {
+    let temp = Temp::new("patch").with_sheet("lib");
+    with_plain(&temp);
+    let layers = format!(
+        "{LAYERS} \"ground\": Patch(of: [\"plain\"], sheet: \"{PLAIN}\", patch: 0, inside: 3),
+         \"dry\": Patch(of: [\"road\"], sheet: \"{PLAIN}\", patch: 0, inside: 3, full: false),"
+    );
+    let looks = r#""outdoor": (layers: ["ground"]), "indoor": (layers: ["dry"]),"#;
+    let map = plain_mapping(&layers, looks, "");
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    let LayerText::Corners { of, tiles } = &imported.own.layers[0] else {
+        panic!("{:?}", imported.own.layers);
+    };
+    assert_eq!(of, &["plain"]);
+    // Each mix (up-left, up-right, down-left, down-right) and the tile
+    // it shows: the patch's (0, 1, 2, 6, 7, 8, 12, 13, 14), the inside
+    // corners' (3, 5, 15, 17), and on the diagonals the patch's outside
+    // corner drawn last, which covers the other (the tiles are solid).
+    let expected = [
+        ([0, 0, 0, 1], 0),
+        ([0, 0, 1, 1], 1),
+        ([0, 0, 1, 0], 2),
+        ([0, 1, 0, 1], 6),
+        ([1, 1, 1, 1], 7),
+        ([1, 0, 1, 0], 8),
+        ([0, 1, 0, 0], 12),
+        ([1, 1, 0, 0], 13),
+        ([1, 0, 0, 0], 14),
+        ([1, 1, 1, 0], 3),
+        ([1, 1, 0, 1], 5),
+        ([1, 0, 1, 1], 15),
+        ([0, 1, 1, 1], 17),
+        ([1, 0, 0, 1], 0),
+        ([0, 1, 1, 0], 2),
+    ];
+    assert_eq!(tiles.len(), 15);
+    for (corners, tile) in expected {
+        let mix = trpg_content::tileset::mix(corners.map(|c| c == 1));
+        let at = tiles.iter().find(|(m, _)| *m == mix).unwrap().1;
+        assert_eq!(
+            cell_color(&imported.image, at),
+            plain_color(tile),
+            "{corners:?}"
+        );
+    }
+    // Without the full tile: the other fourteen.
+    let (_, indoor) = &imported.others[0];
+    let LayerText::Corners { tiles, .. } = &indoor.layers[0] else {
+        panic!("{:?}", indoor.layers);
+    };
+    assert_eq!(tiles.len(), 14);
+    assert!(tiles.iter().all(|(mix, _)| *mix != 15));
+    // A patch past the image's right edge.
+    let layers = format!(
+        "{LAYERS} \"ground\": Patch(of: [\"plain\"], sheet: \"{PLAIN}\", patch: 4, inside: 3),"
+    );
+    let map = plain_mapping(&layers, r#""outdoor": (layers: ["ground"]),"#, "");
+    let err = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap_err();
+    assert!(
+        err.ends_with("the patch from tile 4 runs past the image's right edge"),
+        "{err}"
+    );
+}
+
+#[test]
+fn a_plain_sheets_tiles_move_along_its_strip() {
+    let temp = Temp::new("strip").with_sheet("lib");
+    with_plain(&temp);
+    // A patch on the sheet's left half: each frame three tiles on.
+    let layers = format!(
+        "{LAYERS} \"river\": Patch(of: [\"water\"], sheet: \"{PLAIN}\", patch: 0, inside: 18, full: false),"
+    );
+    let looks =
+        format!(r#""outdoor": (terrain: {{ "water": ("{PLAIN}", 7) }}, layers: ["river"]),"#);
+    let map = plain_mapping(&layers, &looks, "(frames: 2, step: 3, ms: 160)");
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    // The water's own tile and the river's fourteen pictures move; the
+    // made-up Tiled sheet's tiles don't.
+    assert_eq!(imported.moving.len(), 15);
+    for moving in &imported.moving {
+        let [(first, 160), (second, 160)] = moving.frames[..] else {
+            panic!("{moving:?}");
+        };
+        assert_eq!(first, moving.at);
+        let [red, ..] = cell_color(&imported.image, first);
+        let [red_after, ..] = cell_color(&imported.image, second);
+        // Three tiles on: seven more of red for each.
+        assert_eq!(red_after, red + 21, "{moving:?}");
+        assert_eq!(moving.minimal_todo.as_deref(), Some(MINIMAL_TODO));
+    }
+    let own = &imported.own.terrain;
+    let water = own.iter().find(|(id, _)| id == "water").unwrap().1;
+    assert!(imported.moving.iter().any(|m| m.at == water));
+    // Frames that run past the right edge: the last frame is
+    // (frames - 1) × step tiles on, from the picture's rightmost column.
+    // Five on from the water's own tile (column 1) is past it; four on
+    // from it fits, but not from the patch's right column (2).
+    let cases = [
+        ("(frames: 2, step: 5, ms: 160)", "Tile(7)"),
+        ("(frames: 3, step: 2, ms: 160)", "Tile(2)"),
+    ];
+    for (strip, cut) in cases {
+        let map = plain_mapping(&layers, &looks, strip);
+        let err = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap_err();
+        let past = format!("{PLAIN}: the frames of {cut} run past the image's right edge");
+        assert_eq!(err, past, "{strip}");
+    }
+    // A loop whose frames are all one picture doesn't move.
+    let mut flat = Vec::new();
+    for _ in 0..16 * 64 {
+        flat.extend([40, 60, 80, 255]);
+    }
+    temp.write("lib/pack/flat.png", &encode_png(64, 16, &flat).unwrap());
+    // Its frames are packed after the patch's fifteen pictures, on the
+    // image's second row: each is compared with the frame it is.
+    let looks = r#""outdoor": (terrain: { "water": ("pack/flat.png", 0) }, layers: ["ground"]),"#;
+    let ground =
+        format!("\"ground\": Patch(of: [\"plain\"], sheet: \"{PLAIN}\", patch: 0, inside: 3),");
+    let text = mapping_text(&ground, looks);
+    let open = text.trim_end_matches(')');
+    let text = format!("{open}, moving: {{ \"pack/flat.png\": (frames: 4, step: 1, ms: 9) }})");
+    let map: Mapping = ron::from_str(&text).unwrap();
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    assert_eq!(imported.moving, []);
+    assert_eq!(imported.image.1, 32);
+}
+
+#[test]
+fn a_strip_and_a_patch_are_checked_with_the_mapping() {
+    let terrains = terrains();
+    let looks = r#""outdoor": (layers: []),"#;
+    let checked = |strip: &str| check(&plain_mapping("", looks, strip), &terrains);
+    assert_eq!(checked("(frames: 2, step: 1, ms: 1)"), Ok(()));
+    let bad = [
+        "(frames: 1, step: 1, ms: 1)",
+        "(frames: 2, step: 0, ms: 1)",
+        "(frames: 2, step: 1, ms: 0)",
+    ];
+    for strip in bad {
+        assert_eq!(
+            checked(strip).unwrap_err(),
+            format!("moving \"{PLAIN}\": it needs 2 frames or more, a step and a time")
+        );
+    }
+    let text = mapping_text("", looks);
+    let open = text.trim_end_matches(')');
+    let text = format!("{open}, moving: {{ \"set/Made\": (frames: 2, step: 1, ms: 1) }})");
+    let map: Mapping = ron::from_str(&text).unwrap();
+    assert_eq!(
+        check(&map, &terrains).unwrap_err(),
+        "moving \"set/Made\": only a plain sheet (….png) moves this way"
+    );
+    // A patch's terrains are ours.
+    let layers = format!("\"g\": Patch(of: [\"lava\"], sheet: \"{PLAIN}\", patch: 0, inside: 3),");
+    let map = plain_mapping(&layers, r#""outdoor": (layers: ["g"]),"#, "");
+    assert_eq!(
+        check(&map, &terrains).unwrap_err(),
+        "layer \"g\": terrain \"lava\" is not in terrain.ron"
+    );
+    // The list names its sheet and patch.
+    let text = list(&map);
+    let line = format!("between tiles of lava: {PLAIN} patch from tile 0");
+    assert!(text.contains(&line), "{text}");
 }

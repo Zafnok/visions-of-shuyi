@@ -140,8 +140,20 @@ mod tests {
         let ids: Vec<&str> = bought.iter().map(|c| c.id.as_str()).collect();
         assert_eq!(
             ids,
-            ["tiny_tales", "shironejiya", "pixel_flag", "mattwalkden"]
+            [
+                "tiny_tales",
+                "shironejiya",
+                "pixel_flag",
+                "mattwalkden",
+                "elv_games"
+            ]
         );
+        // Rogue Adventure's tiles share Tiny Tales' packed image (1318).
+        assert!(
+            bought[4].covers("tilesets/tiny_tales.png")
+                && bought[0].covers("tilesets/tiny_tales.png")
+        );
+        assert!(!bought[4].covers("units/witch.png"));
         assert!(bought.iter().all(|c| c.group == CreditGroup::Art));
         assert!(bought[0].covers("units/witch.png"));
         // Each combat picture is its own artist's (0413).

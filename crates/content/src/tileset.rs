@@ -1199,7 +1199,7 @@ mod tests {
         assert_eq!(
             f.errors(&file(&f, &[("looks", &looks)])),
             [
-                "look \"cave\" is not a look a map can name (\"outdoor\", \"indoor\")",
+                "look \"cave\" is not a look a map can name (\"outdoor\", \"indoor\", \"rogue_adventure\")",
                 "look \"outdoor\" is the tileset's own `terrain` and `layers`: write it there",
             ]
         );

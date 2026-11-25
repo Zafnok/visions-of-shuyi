@@ -37,8 +37,9 @@ pub const MAX_MAP_SIZE: usize = 64;
 /// The sets of terrain pictures a map may ask for in its header's `look`
 /// (ADR-0052). A tileset names its pictures for each; one that lacks a
 /// look paints the map with its own. The first is the look of a map that
-/// names none.
-pub const TILE_LOOKS: [&str; 2] = [DEFAULT_TILES, "indoor"];
+/// names none. `rogue_adventure` is outdoors drawn with ELV Games' *Rogue
+/// Adventure* (Chapter 1, ticket 1318), where the default is Tiny Tales'.
+pub const TILE_LOOKS: [&str; 3] = [DEFAULT_TILES, "indoor", "rogue_adventure"];
 
 /// What the game's maps may be.
 const FORMAT: MapFormat<'static> = MapFormat::new(&TILE_LOOKS, MAX_MAP_SIZE);

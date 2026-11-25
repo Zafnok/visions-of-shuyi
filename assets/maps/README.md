@@ -59,8 +59,10 @@ look: (tiles: "indoor", light: "dusk"),
 ```
 
 `tiles` names the set of pictures a skin that has pictures paints the
-terrain with: `"outdoor"` (the default: leave `look` out) or `"indoor"`
-(a fortress, a cave, a hall). It changes only the look: the terrain ids,
+terrain with: `"outdoor"` (the default: leave `look` out), `"indoor"`
+(a fortress, a cave, a hall) or `"rogue_adventure"` (outdoors in another
+bought set, ELV Games' *Rogue Adventure*: Chapter 1, ticket 1318; which
+set the other chapters use isn't decided). It changes only the look: the terrain ids,
 and so the rules, are the same, and the glyph look ignores it. A tileset
 says what each look is (`assets/tilesets/README.md`); one that lacks a look
 paints the map with its own. The loader keeps it beside the map the rules
@@ -103,7 +105,7 @@ Each is reported with `file:line:column`, and all are reported at once:
 - a feature outside the map, on a tile no movement type can enter, a shop
   with an empty list (or a blacksmith with a list), a chest with 0 gold;
 - an unknown item id, or a shop listing an item its kind doesn't sell;
-- a `look` whose `tiles` isn't `"outdoor"` or `"indoor"`;
+- a `look` whose `tiles` isn't `"outdoor"`, `"indoor"` or `"rogue_adventure"`;
 - a `look` whose `light` isn't a light of `assets/data/lighting.ron`.
 
 Unused legend entries are allowed.

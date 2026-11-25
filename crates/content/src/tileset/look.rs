@@ -251,7 +251,9 @@ mod tests {
         );
         assert_eq!(
             name_problem("cave").as_deref(),
-            Some("look \"cave\" is not a look a map can name (\"outdoor\", \"indoor\")")
+            Some(
+                "look \"cave\" is not a look a map can name (\"outdoor\", \"indoor\", \"rogue_adventure\")"
+            )
         );
         assert_eq!(prefix(None), "");
         assert_eq!(prefix(Some("indoor")), "look \"indoor\": ");

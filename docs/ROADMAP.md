@@ -150,7 +150,8 @@ newcomer bot · **0096** the tileset overhaul, moving tiles and drifting
 effects, and **1314** a graphics tier per target with a still fallback
 for every moving look (Nick: the Playdate and a future GBA come later
 but are never forgotten) → **1315** flowing water and swaying trees ·
-**1316** drifting petals · **1318** the tileset overhaul · **More life,
+**1316** drifting petals · **1318** the tileset overhaul (ground and
+river) → **1359** hills, **1360** the fort and lamps · **More life,
 chapter by chapter** (Nick, 2026-11-23, after Stardew Valley's small
 touches): **1322** ambient sound and **1323** hit particles and map
 touches (with 0096, the palette) → **1332** the ambience player ·
@@ -526,7 +527,7 @@ recruit joins outside battle.
   a mode easier than Casual → **0536** its newcomer bot · **1314**
   graphics tiers and fallbacks → **1317** the lesser-targets checklist;
   **0096** → **1315** moving tiles · **1316** drifting petals (both also
-  after 1314) · **1318** the tileset overhaul · **1322**, **1323** →
+  after 1314) · **1318** the tileset overhaul → **1359**, **1360** · **1322**, **1323** →
   **1332**, **1333**, **1334** → **1324–1331** → **1335–1342** ambience,
   particles and sounds chapter by chapter → **1344** passing calls
   asked again · **0469** → **1321**

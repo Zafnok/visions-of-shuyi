@@ -17,6 +17,11 @@
 //! whose frames are all one picture doesn't move and is left out: Tiny
 //! Tales' coasts, hills and woods are such loops (0096).
 //!
+//! A pack with no Tiled files (ELV Games' *Rogue Adventure*, ticket 1318)
+//! is read as plain sheets: a tile by its place, a `Patch` layer from the
+//! usual three-by-three layout, and a sheet's moving tiles by `moving`
+//! (each frame a step along the row).
+//!
 //! It is the only reader of Tiled files: the game reads our RON and PNG.
 //! The XML it needs is three kinds of tag and their attributes, read by
 //! [`tags`]; no XML crate.
@@ -41,13 +46,19 @@ use shuyi_cli::codec::{decode_png, encode_png};
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask tileset-import [--list]\n\n\
 Packs the bought tiles named by assets-src/tilesets/tiny_tales.ron, from\n\
-assets-private/library/tiny-tales/tilesets/, into\n\
+assets-private/library/ (Tiny Tales' Tiled sets, other packs' plain sheets), into\n\
 assets-private/game/tilesets/tiny_tales.png, and writes tiny_tales.ron beside it:\n\
 the terrain looks, and the unit pictures of `map-sprite-import`'s table.\n\
 --list  print which bought tiles each terrain and layer uses, and write nothing\n\n\
 Run `cargo shuyi private-assets --library` first. Afterwards commit and push in\n\
 assets-private/, then run `cargo shuyi private-assets --pin`.";
 
+/// The sorted bought packs, relative to the repo root: a plain sheet
+/// (`….png`) of the mapping is named by its path under it.
+pub const LIBRARIES_DIR: &str = "assets-private/library";
+/// The Tiny Tales tilesets, under [`LIBRARIES_DIR`]: a Tiled sheet of the
+/// mapping is named by its path under it, without `.tsx`.
+pub const TILED_DIR: &str = "tiny-tales/tilesets";
 /// The sorted bought tilesets, relative to the repo root.
 pub const LIBRARY_DIR: &str = "assets-private/library/tiny-tales/tilesets";
 /// The mapping file, relative to the repo root.
@@ -60,8 +71,10 @@ pub const COLUMNS: u32 = 16;
 /// `TODO(gba)`), listed by the content's stills check (ADR-0131).
 pub const MINIMAL_TODO: &str = "a one-bit tile";
 
-/// A tile of a bought sheet: the sheet (its `.tsx` under [`LIBRARY_DIR`],
-/// without the extension) and the tile's id in it.
+/// A tile of a bought sheet: the sheet and the tile's id in it, counting
+/// its 16×16 tiles row by row from 0. A sheet is a Tiled file (its `.tsx`
+/// under [`TILED_DIR`], without the extension) or a plain sheet (a `.png`
+/// under [`LIBRARIES_DIR`], with it): a pack with no Tiled files.
 pub type TileRef = (String, u32);
 
 /// The mapping file.
@@ -74,6 +87,23 @@ pub struct Mapping {
     pub layers: BTreeMap<String, LayerMap>,
     /// The looks, by the name a map file gives.
     pub looks: BTreeMap<String, LookMap>,
+    /// The plain sheets whose tiles move, by sheet: every packed tile of
+    /// one loops through its frames ([`Strip`]).
+    #[serde(default)]
+    pub moving: BTreeMap<String, Strip>,
+}
+
+/// How a plain sheet draws its moving tiles: frame `k` of a tile is the
+/// tile `k × step` places to its right, each shown for `ms`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Strip {
+    /// How many frames, the tile itself the first.
+    pub frames: u32,
+    /// Tiles from one frame to the next, along the row.
+    pub step: u32,
+    /// How long each frame shows, in ms.
+    pub ms: u32,
 }
 
 /// A layer of the mapping.
@@ -134,7 +164,56 @@ pub enum LayerMap {
         #[serde(default)]
         tint: String,
     },
+    /// Pictures between tiles, as `Corners`, from a sheet laid out the
+    /// usual way rather than a Tiled terrain: a patch of nine tiles,
+    /// three by three, whose eight outer tiles are its edge and outside
+    /// corners and its middle the full tile, and nine more whose four
+    /// corner tiles are the inside corners. A mix of two diagonal corners
+    /// is two of the patch's outside corners, one over the other.
+    Patch {
+        /// Our terrains in the layer.
+        of: Vec<String>,
+        /// The sheet.
+        sheet: String,
+        /// The patch's top-left tile.
+        patch: u32,
+        /// The top-left tile of the nine with the inside corners.
+        inside: u32,
+        /// Whether to take the full tile in too, as for `Corners`.
+        #[serde(default = "yes")]
+        full: bool,
+    },
 }
+
+/// A mix of corners (up-left, up-right, down-left, down-right in the
+/// layer), whether its picture is in the inside corners' nine of a
+/// [`LayerMap::Patch`], and its tiles' (column, row) there, the second
+/// drawn over the first.
+type PatchPlace = ([bool; 4], bool, &'static [(u32, u32)]);
+
+/// Where each mix of corners is in a [`LayerMap::Patch`].
+const PATCH: [PatchPlace; 15] = {
+    const fn m(ul: u8, ur: u8, dl: u8, dr: u8) -> [bool; 4] {
+        [ul == 1, ur == 1, dl == 1, dr == 1]
+    }
+    [
+        (m(0, 0, 0, 1), false, &[(0, 0)]),
+        (m(0, 0, 1, 1), false, &[(1, 0)]),
+        (m(0, 0, 1, 0), false, &[(2, 0)]),
+        (m(0, 1, 0, 1), false, &[(0, 1)]),
+        (m(1, 1, 1, 1), false, &[(1, 1)]),
+        (m(1, 0, 1, 0), false, &[(2, 1)]),
+        (m(0, 1, 0, 0), false, &[(0, 2)]),
+        (m(1, 1, 0, 0), false, &[(1, 2)]),
+        (m(1, 0, 0, 0), false, &[(2, 2)]),
+        (m(1, 1, 1, 0), true, &[(0, 0)]),
+        (m(1, 1, 0, 1), true, &[(2, 0)]),
+        (m(1, 0, 1, 1), true, &[(0, 2)]),
+        (m(0, 1, 1, 1), true, &[(2, 2)]),
+        (m(1, 0, 0, 1), false, &[(2, 2), (0, 0)]),
+        (m(0, 1, 1, 0), false, &[(0, 2), (2, 0)]),
+    ]
+};
 
 const fn yes() -> bool {
     true
@@ -309,9 +388,14 @@ pub struct Sheet {
 }
 
 impl Sheet {
-    /// Reads sheet `name` (its `.tsx` without the extension) under `dir`.
-    pub fn read(dir: &Path, name: &str) -> Result<Self, String> {
-        let path = dir.join(format!("{name}.tsx"));
+    /// Reads sheet `name` of the packs under `libraries`: a plain sheet
+    /// (`….png`) there, or a Tiled one (its `.tsx` without the extension)
+    /// under [`TILED_DIR`].
+    pub fn read(libraries: &Path, name: &str) -> Result<Self, String> {
+        if is_plain(name) {
+            return Self::plain(&libraries.join(name));
+        }
+        let path = libraries.join(TILED_DIR).join(format!("{name}.tsx"));
         let xml =
             fs::read_to_string(&path).map_err(|e| format!("reading {}: {e}", path.display()))?;
         let tsx = parse_tsx(&xml).map_err(|e| format!("{}: {e}", path.display()))?;
@@ -326,6 +410,35 @@ impl Sheet {
         let bytes = fs::read(&image).map_err(|e| format!("reading {}: {e}", image.display()))?;
         let (width, height, rgba) =
             decode_png(&bytes).map_err(|e| format!("{}: {e}", image.display()))?;
+        Ok(Self {
+            tsx,
+            size: (width, height),
+            rgba,
+        })
+    }
+
+    /// Reads the plain sheet at `path`: an image of 16×16 tiles and
+    /// nothing else (no clear colour, no terrains, nothing moving).
+    fn plain(path: &Path) -> Result<Self, String> {
+        let bytes = fs::read(path).map_err(|e| format!("reading {}: {e}", path.display()))?;
+        let (width, height, rgba) =
+            decode_png(&bytes).map_err(|e| format!("{}: {e}", path.display()))?;
+        if width < TILE || height < TILE {
+            return Err(format!(
+                "{}: a {width}×{height} px image holds no {TILE}×{TILE} tile",
+                path.display()
+            ));
+        }
+        let image = path.file_name().unwrap_or_default().to_string_lossy();
+        let tsx = Tsx {
+            image: image.into_owned(),
+            clear: None,
+            tile: (TILE, TILE),
+            columns: width / TILE,
+            terrains: Vec::new(),
+            corners: Vec::new(),
+            animations: BTreeMap::new(),
+        };
         Ok(Self {
             tsx,
             size: (width, height),
@@ -383,6 +496,13 @@ impl Sheet {
     }
 }
 
+/// Whether sheet `name` is a plain sheet (`….png`), not a Tiled one.
+fn is_plain(name: &str) -> bool {
+    Path::new(name)
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("png"))
+}
+
 /// How bright a colour is, 0 to 255 000: the usual weights of red, green
 /// and blue.
 fn brightness(rgb: [u8; 3]) -> u32 {
@@ -412,6 +532,60 @@ enum Cut {
     /// block's top-left tile, and the mix of sides (up, right, down,
     /// left) where the terrain ends.
     Joined { block: u32, ends: u8 },
+    /// Tile `over` drawn over tile `under` ([`LayerMap::Patch`]'s
+    /// diagonal mixes).
+    Pair { under: u32, over: u32 },
+}
+
+impl Cut {
+    /// The column of its tile furthest right, in a sheet `columns` tiles
+    /// across: a block's is two past its top-left tile's.
+    fn right_column(self, columns: u32) -> u32 {
+        match self {
+            Self::Tile(tile) => tile % columns,
+            Self::Joined { block, .. } => block % columns + 2,
+            Self::Pair { under, over } => (under % columns).max(over % columns),
+        }
+    }
+
+    /// The same picture `places` tiles to the right in its sheet: its
+    /// frame of a [`Strip`].
+    const fn along(self, places: u32) -> Self {
+        match self {
+            Self::Tile(tile) => Self::Tile(tile + places),
+            Self::Joined { block, ends } => Self::Joined {
+                block: block + places,
+                ends,
+            },
+            Self::Pair { under, over } => Self::Pair {
+                under: under + places,
+                over: over + places,
+            },
+        }
+    }
+}
+
+/// Tile `over` of `sheet` drawn over tile `under`: RGBA8, row by row.
+fn paired(sheet: &Sheet, under: u32, over: u32) -> Result<Vec<u8>, String> {
+    let mut out = sheet.tile(under)?;
+    let top = sheet.tile(over)?;
+    let (out_pixels, _) = out.as_chunks_mut::<4>();
+    let (top_pixels, _) = top.as_chunks::<4>();
+    for (pixel, drawn) in out_pixels.iter_mut().zip(top_pixels) {
+        if drawn[3] == u8::MAX || pixel[3] == 0 {
+            *pixel = *drawn;
+        } else if drawn[3] != 0 {
+            // A part see-through pixel over a solid one: mixed by its
+            // alpha (the bought art has none, but a sheet might).
+            let a = u32::from(drawn[3]);
+            for (channel, top) in pixel.iter_mut().zip(drawn).take(3) {
+                let mixed = (u32::from(*top) * a + u32::from(*channel) * (255 - a)) / 255;
+                *channel = u8::try_from(mixed).unwrap_or(u8::MAX);
+            }
+            pixel[3] = pixel[3].max(drawn[3]);
+        }
+    }
+    Ok(out)
 }
 
 /// A tile joined from the quarters of the block of `sheet` whose top-left
@@ -445,8 +619,11 @@ fn joined(sheet: &Sheet, block: u32, ends: u8) -> Result<Vec<u8>, String> {
 
 /// The packed image being made: each bought tile the mapping uses, once.
 struct Packer<'a> {
+    /// The packs, [`LIBRARIES_DIR`].
     dir: &'a Path,
     colors: &'a dyn Fn(&str) -> Option<[u8; 3]>,
+    /// The plain sheets whose tiles move.
+    strips: &'a BTreeMap<String, Strip>,
     sheets: BTreeMap<String, Sheet>,
     /// The sheet, picture and tint of each cell, in the image's order.
     cells: Vec<(String, Cut, String)>,
@@ -484,6 +661,7 @@ impl Packer<'_> {
             let pixels = match cut {
                 Cut::Tile(tile) => source.tile(tile),
                 Cut::Joined { block, ends } => joined(source, block, ends),
+                Cut::Pair { under, over } => paired(source, under, over),
             };
             let mut pixels = pixels.map_err(|e| format!("{sheet}: {e}"))?;
             if !tint_name.is_empty() {
@@ -507,6 +685,10 @@ impl Packer<'_> {
         let mut out = Vec::new();
         for index in 0..self.cells.len() {
             let (sheet, cut, tint_name) = self.cells[index].clone();
+            if let Some(&strip) = self.strips.get(&sheet) {
+                out.extend(self.stripped(index, &sheet, cut, &tint_name, strip)?);
+                continue;
+            }
             let Cut::Tile(tile) = cut else {
                 continue;
             };
@@ -537,6 +719,49 @@ impl Packer<'_> {
             });
         }
         Ok(out)
+    }
+
+    /// The frames of packed cell `index`, picture `cut` of plain sheet
+    /// `sheet` moving by `strip`, packed now; `None` if every frame is
+    /// the same picture.
+    fn stripped(
+        &mut self,
+        index: usize,
+        sheet: &str,
+        cut: Cut,
+        tint_name: &str,
+        strip: Strip,
+    ) -> Result<Option<FramesText>, String> {
+        let columns = self.sheet(sheet)?.tsx.columns;
+        let last = (strip.frames.max(1) - 1) * strip.step;
+        if cut.right_column(columns) + last >= columns {
+            return Err(format!(
+                "{sheet}: the frames of {cut:?} run past the image's right edge"
+            ));
+        }
+        let mut packed = Vec::new();
+        for k in 0..strip.frames {
+            let frame = cut.along(k * strip.step);
+            let at = self.packed(sheet, frame, tint_name);
+            let at = at.map_err(|e| format!("{e} (frame {k} of a moving tile)"))?;
+            packed.push((at, strip.ms.max(1)));
+        }
+        let pixels = |at: At| {
+            let i = usize::try_from(at.1 * COLUMNS + at.0).unwrap_or(usize::MAX);
+            self.pixels.get(i)
+        };
+        if packed
+            .iter()
+            .all(|&(at, _)| pixels(at) == pixels(packed[0].0))
+        {
+            return Ok(None);
+        }
+        let index = u32::try_from(index).unwrap_or(u32::MAX);
+        Ok(Some(FramesText {
+            at: (index % COLUMNS, index / COLUMNS),
+            frames: packed,
+            minimal_todo: Some(MINIMAL_TODO.to_owned()),
+        }))
     }
 
     /// The packed image: width, height and RGBA8 pixels.
@@ -623,6 +848,13 @@ fn layer(packer: &mut Packer, layer: &LayerMap, terrains: &[String]) -> Result<L
                 sides: pictures,
             })
         }
+        LayerMap::Patch {
+            of,
+            sheet,
+            patch,
+            inside,
+            full,
+        } => patch_layer(packer, of, sheet, (*patch, *inside), *full),
         LayerMap::Block {
             of,
             sheet,
@@ -657,6 +889,48 @@ fn layer(packer: &mut Packer, layer: &LayerMap, terrains: &[String]) -> Result<L
     }
 }
 
+/// A [`LayerMap::Patch`] as the tileset file has it, its pictures packed:
+/// the patch and the inside corners from their top-left tiles.
+fn patch_layer(
+    packer: &mut Packer,
+    of: &[String],
+    sheet: &str,
+    (patch, inside): (u32, u32),
+    full: bool,
+) -> Result<LayerText, String> {
+    let columns = packer.sheet(sheet)?.tsx.columns;
+    for (what, block) in [("patch", patch), ("inside corners", inside)] {
+        if block % columns + 3 > columns {
+            return Err(format!(
+                "{sheet}: the {what} from tile {block} runs past the image's right edge"
+            ));
+        }
+    }
+    let at = |block: u32, (column, row): (u32, u32)| block + row * columns + column;
+    let mut tiles = Vec::new();
+    for (corners, in_inside, places) in PATCH {
+        let mix = trpg_content::tileset::mix(corners);
+        if mix == 15 && !full {
+            continue;
+        }
+        let block = if in_inside { inside } else { patch };
+        let cut = match places {
+            [one] => Cut::Tile(at(block, *one)),
+            [under, over] => Cut::Pair {
+                under: at(block, *under),
+                over: at(block, *over),
+            },
+            _ => continue,
+        };
+        tiles.push((mix, packer.packed(sheet, cut, "")?));
+    }
+    tiles.sort_unstable();
+    Ok(LayerText::Corners {
+        of: of.to_vec(),
+        tiles,
+    })
+}
+
 /// An error naming (as `what`) the first of `names` that isn't one of
 /// `terrains`.
 fn known<'a>(
@@ -680,7 +954,9 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
     for (name, layer) in &mapping.layers {
         let what = format!("layer \"{name}\"");
         match layer {
-            LayerMap::Corners { of, .. } | LayerMap::Block { of, .. } => {
+            LayerMap::Corners { of, .. }
+            | LayerMap::Block { of, .. }
+            | LayerMap::Patch { of, .. } => {
                 known(&what, of, terrains)?;
             }
             LayerMap::Tiles {
@@ -693,6 +969,18 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
                     ));
                 }
             }
+        }
+    }
+    for (sheet, strip) in &mapping.moving {
+        if !is_plain(sheet) {
+            return Err(format!(
+                "moving \"{sheet}\": only a plain sheet (….png) moves this way"
+            ));
+        }
+        if strip.frames < 2 || strip.step == 0 || strip.ms == 0 {
+            return Err(format!(
+                "moving \"{sheet}\": it needs 2 frames or more, a step and a time"
+            ));
         }
     }
     if !mapping.looks.contains_key(DEFAULT_TILES) {
@@ -720,7 +1008,8 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-/// Imports the looks of `mapping` from the Tiled sheets under `dir`:
+/// Imports the looks of `mapping` from the bought packs under `dir`
+/// ([`LIBRARIES_DIR`]):
 /// packs the tiles they use and writes them out as tileset looks, each
 /// with a tile for every one of `terrains` (ours, in `terrain.ron`'s
 /// order). `colors` gives a palette colour by name, for tints.
@@ -734,6 +1023,7 @@ pub fn import(
     let mut packer = Packer {
         dir,
         colors,
+        strips: &mapping.moving,
         sheets: BTreeMap::new(),
         cells: Vec::new(),
         pixels: Vec::new(),
@@ -834,6 +1124,12 @@ pub fn list(mapping: &Mapping) -> String {
                 Some(LayerMap::Block {
                     of, sheet, block, ..
                 }) => format!("on {}: {sheet} block from tile {block}", of.join(", ")),
+                Some(LayerMap::Patch {
+                    of, sheet, patch, ..
+                }) => format!(
+                    "between tiles of {}: {sheet} patch from tile {patch}",
+                    of.join(", ")
+                ),
                 None => "(no such layer)".to_owned(),
             };
             let _ = writeln!(out, "  layer {layer_name:<10} {described}");
@@ -873,7 +1169,8 @@ pub fn run(root: &Path, sprites: &[MapSprite]) -> Result<String, String> {
         .iter()
         .map(|t| t.id.clone())
         .collect();
-    let imported = import(&library, &mapping, &terrains, &|name| palette.get(name))?;
+    let packs = root.join(LIBRARIES_DIR);
+    let imported = import(&packs, &mapping, &terrains, &|name| palette.get(name))?;
     let (width, height, rgba) = &imported.image;
     let png = encode_png(*width, *height, rgba)?;
     let ron_path = format!("tilesets/{TILESET_ID}.ron");
