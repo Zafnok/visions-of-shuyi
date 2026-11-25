@@ -902,7 +902,10 @@ fn arriving_at_a_battle_pops_with_it() {
     );
     assert_eq!(s.cursor(), "ford");
     press(&mut s, &mut ctx, &[Action::Confirm]);
+    assert_eq!(ctx.game.ambience.cue(), Some("bed_summer_meadow"));
     let t = arrive(&mut s, &mut ctx);
+    // The map's bed fades out with it (1332).
+    assert_eq!(ctx.game.ambience.cue(), None);
     let battle: WorldBattle = popped_with(t).expect("a battle");
     assert_eq!(battle.node, "ford");
     let world = battle.campaign.world.expect("on the map");

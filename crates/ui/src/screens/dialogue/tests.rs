@@ -1154,3 +1154,86 @@ fn yes_no() -> shuyi_ui::text::StyledText {
         .push_plain(" no");
     keys
 }
+
+/// The bed playing, if any (ticket 1332).
+fn bed(c: &Ctx) -> Option<String> {
+    c.game.ambience.cue().map(str::to_owned)
+}
+
+/// Ticket 1332: a scene plays its place's bed (a map's from the places
+/// table, the battle's for `@place battle`), none in black, and fades out
+/// the bed it started as it closes.
+#[test]
+fn a_scene_plays_its_places_bed_and_fades_it_out_as_it_closes() {
+    let mut c = ctx();
+    c.change_settings(|s| s.text_speed = TextSpeed::Instant)
+        .unwrap();
+    let table = &mut c.game.content.ambience;
+    let hall = [("noon".to_owned(), "hall_bed".to_owned())].into();
+    table.ambiences.insert("hall".into(), hall);
+    table.places.insert("test_small".into(), "hall".into());
+    let small = PlaceLine::Map {
+        map: "test_small".into(),
+        at: at(3, 6),
+        bright: None,
+    };
+    let fort = PlaceLine::Battle {
+        at: at(11, 5),
+        bright: None,
+    };
+    let steps = vec![
+        setting(small),
+        narrate("The green."),
+        setting(fort),
+        narrate("The fort."),
+        setting(PlaceLine::None),
+        narrate("Black."),
+    ];
+    let field = Place::of_battle(&c.game.content, &c.game.content.battles["test"]);
+    let mut s = full(&scene(steps)).with_battle(field);
+    s.update(&mut c, &frame(&[], 0.0, false));
+    assert_eq!(bed(&c).as_deref(), Some("hall_bed"));
+    next_line(&mut s, &mut c);
+    assert_eq!(
+        bed(&c).as_deref(),
+        Some("bed_summer_meadow"),
+        "the battle's"
+    );
+    next_line(&mut s, &mut c);
+    assert_eq!(bed(&c), None, "none in black");
+    // A scene that started its bed fades it out as it closes.
+    let mut s = full(&scene(vec![
+        setting(PlaceLine::Map {
+            map: "test_small".into(),
+            at: at(3, 6),
+            bright: None,
+        }),
+        narrate("One."),
+    ]));
+    s.update(&mut c, &frame(&[], 0.0, false));
+    assert_eq!(bed(&c).as_deref(), Some("hall_bed"));
+    s.update(&mut c, &frame(&[], 0.0, false));
+    assert!(matches!(
+        press(&mut s, &mut c, Action::Confirm),
+        Transition::Pop
+    ));
+    assert_eq!(bed(&c), None);
+}
+
+/// Ticket 1332: a scene over the battle with no place of its own leaves
+/// the battle's bed playing, and closing doesn't stop it.
+#[test]
+fn a_scene_over_the_battle_without_a_place_keeps_the_battles_bed() {
+    let mut c = ctx();
+    c.change_settings(|s| s.text_speed = TextSpeed::Instant)
+        .unwrap();
+    crate::ambience::play(&mut c, "battle", Some("bed_summer_meadow"), false, 0.1);
+    let mut s = over(&scene(vec![narrate("One.")]));
+    s.update(&mut c, &frame(&[], 0.0, false));
+    assert_eq!(bed(&c).as_deref(), Some("bed_summer_meadow"));
+    assert!(matches!(
+        press(&mut s, &mut c, Action::Confirm),
+        Transition::Pop
+    ));
+    assert_eq!(bed(&c).as_deref(), Some("bed_summer_meadow"));
+}
