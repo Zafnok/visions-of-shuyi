@@ -5,11 +5,11 @@ type: content
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: in-progress
+status: done
 blocked_by: ["0096"]
 blocks: ["1064"]
 nick_input: answer-first
-completed:
+completed: 2026-11-25
 ---
 
 # 1318 — Chapter 1's ground, roads and river in Rogue Adventure
@@ -120,12 +120,12 @@ decided).
 
 ## Acceptance criteria
 
-- [ ] In the new look, plain, forest, road, water and bridge each have
+- [x] In the new look, plain, forest, road, water and bridge each have
       their own Rogue Adventure picture; the water moves through 8 frames.
-- [ ] Every other map looks as before.
-- [ ] Before/after pictures in the PR.
-- [ ] The tileset import's tests pass; `assets-private.rev` moved.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every other map looks as before.
+- [x] Before/after pictures in the PR.
+- [x] The tileset import's tests pass; `assets-private.rev` moved.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -142,3 +142,53 @@ the river's frames have their stills (`FirstFrame`) for `Reduced` and
 
 ## Completion notes
 
+
+**Done (2026-11-25).**
+
+- **Split first** (ADR-0101): this ticket kept the ground and river;
+  **1359** (hills and peaks, Lonesome Forest's kit) and **1360** (Harl's
+  stone keep, Harrowby's tower, the lamps) were filed with the tile
+  places 0096's mockups used. 1356 (trees) still waits on this one.
+- **The importer reads plain PNG sheets**
+  (`crates/tools/src/tileset_import.rs`): a sheet named `….png` is read
+  from `assets-private/library/` (Tiny Tales' Tiled sheets stay under
+  `tiny-tales/tilesets/`), its tiles by number; a **`Patch`** layer
+  builds the 15 corner mixes from the usual 3×3 patch and its 3×3 of
+  inside corners (the two diagonal mixes are two corner tiles packed as
+  one picture, `Cut::Pair`); the mapping's **`moving`** makes every
+  packed tile of a sheet loop along its row (`Strip`: frames, step, ms).
+  The tileset file's format is unchanged: the rows are ordinary
+  `Corners`, `Tiles` and `frames`.
+- **A map look `rogue_adventure`** (`trpg_content::map::TILE_LOOKS`),
+  named by Chapter 1's map (private content); every other map keeps
+  Tiny Tales. In it: Rogue Adventure's grass (plain and every grass-based
+  terrain), the darker forest floor joined at corners, roads as whole
+  dirt tiles, the river joined at its banks, moving through its 8 frames
+  at 160 ms (as the mockups ran), plank bridges over it. Hills, peaks,
+  the fort's walls and floor and the trees keep Tiny Tales' pictures over
+  this ground until 1359, 1360 and 1356.
+- **Credits:** ELV Games' *Rogue Adventure World* in
+  `assets/data/credits.ron` (covering the packed image, beside Tiny
+  Tales) and a row in `THIRD_PARTY_ASSETS.md`. Nothing recoloured, so
+  not marked as modified.
+- **Tests:** the importer's (plain sheets, pairs, every patch mix, the
+  strip's frames, the mapping's checks, the listing); the private
+  tests: every look a map can name has every terrain (now with the new
+  look), Chapter 1's map uses it with its own plain, forest, road and
+  water tiles and a moving river that stands still on a lesser tier;
+  the road test accepts a look whose roads are whole tiles.
+- **Checked:** Chapter 1 rendered before and after (crops in the PR);
+  Chapters 2–5 and the three Act 1 skirmishes are pixel-identical at
+  their first frame with the new tileset.
+
+**Deviation / finding:** re-packing also makes **Tiny Tales' coast foam
+move** (the Standard coast's `.tsx` has real 3-frame loops of 150 ms; 1315
+said Tiny Tales' coasts were one picture, but the tileset hadn't been
+re-packed since its importer learned frames). Their first frame is the
+old picture, so the maps' stills are unchanged; maps with a sea shore
+now move there. That matches 0096 (shore foam should move), so it is
+kept; `assets/tilesets/README.md` says so.
+
+**No gameplay rule decided.** Left to judge in play (1064's checklist):
+the river's speed (160 ms a frame) and the Tiny Tales stand-ins (trees,
+hills, fort) over Rogue Adventure's ground until their tickets land.

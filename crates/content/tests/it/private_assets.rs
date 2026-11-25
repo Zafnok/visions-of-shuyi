@@ -186,7 +186,8 @@ fn the_bought_tiles_paint_every_look_a_map_can_name() {
 /// layer counts a bridge as road, so the four tiles round a point on the
 /// seam, some road and some bridge, are all in the layer and pick the
 /// inside mix (`####`, which needs no edge picture), never an edge that
-/// narrows the road.
+/// narrows the road. A look whose roads are whole tiles (Rogue Adventure,
+/// 1318) has no road corner layer to narrow them.
 #[test]
 fn the_road_runs_full_width_onto_a_bridge() {
     use trpg_content::tileset::{Layer, mix};
@@ -208,7 +209,15 @@ fn the_road_runs_full_width_onto_a_bridge() {
             Layer::Corners(c) if c.of.contains(&road) && c.of.contains(&bridge) => Some(c),
             _ => None,
         });
-        let layer = layer.unwrap_or_else(|| panic!("look {name}: the road doesn't join a bridge"));
+        let Some(layer) = layer else {
+            // Whole tiles: no corner layer has the road at all.
+            let joined = look.layers.iter().any(|layer| match layer {
+                Layer::Corners(c) => c.of.contains(&road),
+                Layer::Tiles(_) => false,
+            });
+            assert!(!joined, "look {name}: the road doesn't join a bridge");
+            continue;
+        };
         // Road on one side of a bridge, bridge on the other.
         for tiles in [[road, bridge, road, bridge], [road, road, bridge, bridge]] {
             let picked = mix(tiles.map(|t| layer.of.contains(&t)));
@@ -218,6 +227,45 @@ fn the_road_runs_full_width_onto_a_bridge() {
             );
         }
     }
+}
+
+/// Chapter 1's map is drawn with Rogue Adventure (ticket 1318, 0096): its
+/// look gives the plain, the forest, the road, the water and the bridge
+/// each a tile of their own, none the outdoor look's, and its water moves.
+#[test]
+fn chapter_1s_ground_and_river_are_rogue_adventures() {
+    use trpg_content::motion::GraphicsTier;
+
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    assert_eq!(content.maps["ch01"].look.tiles, "rogue_adventure");
+    let tileset = &content.tilesets["tiny_tales"];
+    let rogue = tileset.look("rogue_adventure").expect("no look");
+    let outdoor = tileset.look("outdoor").expect("no look");
+    let display = &content.terrain.display;
+    let tile = |look: &trpg_content::tileset::Look, id: &str| {
+        look.tiles[&display.id_of(id).expect("no terrain")]
+    };
+    let ground = ["plain", "forest", "road", "water"].map(|id| tile(rogue, id));
+    for (id, rect) in ["plain", "forest", "road", "water"].into_iter().zip(ground) {
+        assert_ne!(rect, tile(outdoor, id), "{id} is Tiny Tales'");
+    }
+    // Four different pictures: the forest has a floor of its own.
+    let different: std::collections::BTreeSet<_> = ground.iter().map(|r| (r.x, r.y)).collect();
+    assert_eq!(different.len(), 4);
+    // Water under the bridge; the bridge's planks over it.
+    assert_eq!(tile(rogue, "bridge"), tile(rogue, "water"));
+    // The river moves, and stands still on a lesser tier.
+    let water = tile(rogue, "water");
+    let frames = &tileset.frames;
+    assert!(
+        (1..2000)
+            .step_by(40)
+            .any(|t| frames.picture(water, GraphicsTier::Full, t) != water)
+    );
+    assert_eq!(frames.picture(water, GraphicsTier::Reduced, 500), water);
 }
 
 /// Every bought file in the build has a credit (ADR-0051), and the credits
@@ -252,6 +300,8 @@ fn every_bought_file_has_a_credit() {
             "Shironejiya battle pictures (the materials in this game may not be reused)",
             "Classes and Mobs pixel-art TRPG pieces",
             "Fantasy Battle Pack",
+            // Chapter 1's ground and river (ticket 1318).
+            "Rogue Adventure World",
             // The title's campfire (ticket 0922).
             "Idylwild's Chromatic Campfires",
         ]

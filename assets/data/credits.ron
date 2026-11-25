@@ -98,6 +98,13 @@
          source: "https://mattwalkden.itch.io/fantasy-battle-pack", license: "Custom (MattWalkden)",
          private: ["units/lance_cavalier.", "units/mounted_archer."]),
 
+        // ELV Games' Rogue Adventure (1318): Chapter 1's ground, river and
+        // bridges, packed into the same image as Tiny Tales' tiles.
+        (id: "elv_games", group: Art, title: "Rogue Adventure World",
+         author: "ElvGames",
+         source: "https://elvgames.itch.io/rogue-adventure-world", license: "Custom (ElvGames)",
+         private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),
+
         // The title screen's campfire (0922).
         (id: "idylwild_campfires", group: Art, title: "Idylwild's Chromatic Campfires",
          author: "Idylwild", source: "https://opengameart.org/content/idylwilds-chromatic-campfires",

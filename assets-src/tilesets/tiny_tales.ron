@@ -11,6 +11,14 @@
 // for each mix of corners. A `Block` layer names the top-left tile of
 // nine (three by three) that draw a patch of the terrain with its edge on
 // every side: each of our tiles is joined from their quarters.
+//
+// A sheet ending in `.png` is a plain sheet of another bought pack, by its
+// path under assets-private/library/ (ELV Games' Rogue Adventure has no
+// Tiled files, ticket 1318). Its ids count its 16×16 tiles the same way.
+// A `Patch` layer is a terrain joined at corners from the usual layout: a
+// patch of nine whose top-left tile it names, and nine more with the
+// inside corners. `moving` makes every packed tile of a sheet loop: frame
+// k is the tile `k × step` places to its right.
 (
     // Each of our terrains' own tile, painted first, unless a look below
     // has another. What stands on grass has the grass; water under a
@@ -53,6 +61,24 @@
     // `full: false` leaves out the tile of all four corners: the layer's
     // terrains have it as their own tile already.
     layers: {
+        // Rogue Adventure (Chapter 1's look, ticket 1318). The forest floor:
+        // its patch from (9, 4), its inside corners from (9, 1).
+        "ra_forest_floor": Patch(
+            of: ["forest"],
+            sheet: "elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png",
+            patch: 109, inside: 34, full: false,
+        ),
+        // The river and its banks: its patch from (0, 12), its inside
+        // corners from (0, 9); it moves (`moving`, below).
+        "ra_river": Patch(
+            of: ["water", "sea", "bridge"],
+            sheet: "elv-games/tilesets/rogue-adventure/RA_Animated_Water.png",
+            patch: 384, inside: 288, full: false,
+        ),
+        // A plank bridge, (30, 39) of the jungle's sheet.
+        "ra_bridge": Tiles(
+            of: ["bridge"], tile: ("elv-games/tilesets/rogue-adventure/RA_Jungle.png", 1278),
+        ),
         // The deep sea's edge against shallow water.
         "deep": Corners(
             of: ["sea"],
@@ -233,7 +259,50 @@
             sides: { ".#.#": ("overworld/Set_D_Interiors", 42) },
         ),
     },
+    // Chapter 1 (ticket 1318, 0096's answer): ELV Games' Rogue Adventure.
+    // RA_Ground_Tiles.png is 25 tiles across, RA_Animated_Water.png and
+    // RA_Jungle.png 32. The river's 8 frames are 4 tiles apart, 160 ms
+    // each (as 0096's mockups ran them).
+    moving: {
+        "elv-games/tilesets/rogue-adventure/RA_Animated_Water.png": (frames: 8, step: 4, ms: 160),
+    },
     looks: {
+        // Chapter 1's map: Rogue Adventure's grass, the darker forest
+        // floor joined at corners, roads as whole dirt tiles that never
+        // taper, the moving river joined at its banks, plank bridges.
+        // Hills and peaks (1359), the fort (1360) and the trees (1356)
+        // keep Tiny Tales' pictures until their tickets, over this ground.
+        "rogue_adventure": (
+            terrain: {
+                // The grass, (2, 5); the forest floor's middle, (10, 5).
+                "plain": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "forest": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 135),
+                "thicket": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "mountain": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "peak": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "fort": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "house": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "gate": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "burning": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "burnt": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "roof": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "house_wall": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "house_door": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                "hedge": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
+                // The dirt, (2, 13).
+                "road": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 327),
+                "well": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 327),
+                "rack": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 327),
+                // The river's middle, (1, 13): water under a bridge is water.
+                "water": ("elv-games/tilesets/rogue-adventure/RA_Animated_Water.png", 417),
+                "sea": ("elv-games/tilesets/rogue-adventure/RA_Animated_Water.png", 417),
+                "bridge": ("elv-games/tilesets/rogue-adventure/RA_Animated_Water.png", 417),
+            },
+            layers: ["ra_forest_floor", "ra_river", "ice", "floor", "ash", "forest", "thicket",
+                     "burnt", "burning", "mountain", "peak", "ra_bridge", "fort", "house", "gate",
+                     "throne", "door", "roof", "house_wall", "lintel", "house_door", "hedge",
+                     "well", "rack", "desk", "papers", "shelf", "rug", "banner", "crest"],
+        ),
         // A map outdoors (and any map that names no look): the World Map
         // set in its Standard colours. Walls, floors and doors are the
         // Dungeons set's.

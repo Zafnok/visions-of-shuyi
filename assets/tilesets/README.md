@@ -248,7 +248,12 @@ table):
   then the unit pictures of the table above. Run it after either changes.
   A tile it packs that the `.tsx` animates (Tiled's `<animation>`) gets
   its frames in `frames`, each still on a lesser tier (`Minimal` with a
-  `todo`); a loop whose frames are all one picture is left out, and Tiny
-  Tales' coasts, hills and woods are such loops (0096), so `tiny_tales`
-  has no moving tiles. Chapter 1's moving water comes with its new
-  tileset (1318).
+  `todo`); a loop whose frames are all one picture is left out (Tiny
+  Tales' hills and woods are such loops, 0096; its Standard coast's foam
+  truly moves, three frames of 150 ms, first packed by 1318).
+  A pack with no Tiled files (ELV Games' *Rogue Adventure*, the look
+  `rogue_adventure` of Chapter 1's map, 1318) is read as plain sheets
+  (`….png` under `assets-private/library/`): a tile by its number, a
+  `Patch` layer joined at corners from the usual three-by-three layout,
+  and the sheet's moving tiles by the mapping's `moving` (each frame a
+  step along the row: the river's 8 frames).
