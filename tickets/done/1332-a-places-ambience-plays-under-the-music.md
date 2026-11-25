@@ -164,7 +164,7 @@ ADR-0099); the Options row is the engine's volume row on that group.
   (a frame's hash counts the sounds asked for, and the battle now asks for
   its bed); the skin test compares the sounds without the fades' per-frame
   volume steps, which showed footsteps under the sprite skin falling some
-  frames later than under glyphs: an older difference, ticket **1356**
+  frames later than under glyphs: an older difference, ticket **1358**
   (new).
 - **Size:** estimate 320 production lines, measured 409 (1.3×); PR about
   1,450 changed lines.
