@@ -1182,7 +1182,7 @@ mod tests {
         let f = Fixture::new();
         let layers = r##"[
             Corners(of: ["mountain"], tiles: [(corners: "#...", at: (1, 0))],
-                    size: (16, 24), offset: (1, -3), skip: ["wall", "fort"]),
+                    size: (24, 32), offset: (1, -3), skip: ["wall", "fort"]),
             Corners(of: ["mountain"], tiles: [(corners: "#...", at: (1, 0))]),
         ]"##;
         let t = f.parse(&file(&f, &[("layers", layers)])).unwrap();
@@ -1191,19 +1191,12 @@ mod tests {
         let [Layer::Corners(sized), Layer::Corners(plain)] = own.layers.as_slice() else {
             panic!("{:?}", own.layers);
         };
-        let rect = |h| {
-            Some(ImageRect {
-                x: 16,
-                y: 0,
-                w: 16,
-                h,
-            })
-        };
-        assert_eq!(sized.tiles[8], rect(24));
+        let rect = |w, h| Some(ImageRect { x: 16, y: 0, w, h });
+        assert_eq!(sized.tiles[8], rect(24, 32));
         assert_eq!(sized.offset, (1, -3));
         assert_eq!(sized.skip, BTreeSet::from([id("wall"), id("fort")]));
         // Left out: a tile's size, on its point, skipping nothing.
-        assert_eq!(plain.tiles[8], rect(16));
+        assert_eq!(plain.tiles[8], rect(16, 16));
         assert_eq!((plain.offset, plain.skip.is_empty()), ((0, 0), true));
         // Checked: the size's sides, the pictures inside the image, the
         // terrains real.
