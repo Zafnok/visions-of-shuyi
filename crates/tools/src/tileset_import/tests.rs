@@ -1439,28 +1439,31 @@ fn a_quarters_picture_is_each_tiles_quarter_by_its_neighbours() {
 #[test]
 fn a_quartered_picture_takes_the_quarter_of_each_cell_nearest_its_middle() {
     let temp = Temp::new("quarters");
-    // One tile, each quarter its own colour: up-left 0, up-right 1,
-    // down-left 2, down-right 3.
-    let shade = |q: u8| [40 * q + 10, 20, 30, 255];
+    // One tile, each quarter its own colour (up-left 0, up-right 1,
+    // down-left 2, down-right 3), its green the row in the quarter.
+    let shade = |q: u8, row: u8| [40 * q + 10, 20 + row, 30, 255];
     let mut rgba = Vec::new();
     for y in 0..16u8 {
         for x in 0..16u8 {
-            rgba.extend(shade(2 * u8::from(y >= 8) + u8::from(x >= 8)));
+            rgba.extend(shade(2 * u8::from(y >= 8) + u8::from(x >= 8), y % 8));
         }
     }
     temp.write("lib/pack/q.png", &encode_png(16, 16, &rgba).unwrap());
     let sheet = Sheet::read(&temp.0.join("lib"), "pack/q.png").unwrap();
     let px = |p: &[u8], x: usize, y: usize| p[(y * 16 + x) * 4..(y * 16 + x) * 4 + 4].to_vec();
     let all = quartered(&sheet, [Some(0); 4]).unwrap();
-    // Each quarter of the picture is the cell's opposite quarter.
-    assert_eq!(px(&all, 0, 0), shade(3));
-    assert_eq!(px(&all, 15, 0), shade(2));
-    assert_eq!(px(&all, 7, 15), shade(1));
-    assert_eq!(px(&all, 8, 8), shade(0));
+    // Each quarter of the picture is the cell's opposite quarter, row by
+    // row.
+    assert_eq!(px(&all, 0, 0), shade(3, 0));
+    assert_eq!(px(&all, 3, 5), shade(3, 5));
+    assert_eq!(px(&all, 15, 0), shade(2, 0));
+    assert_eq!(px(&all, 7, 15), shade(1, 7));
+    assert_eq!(px(&all, 8, 8), shade(0, 0));
+    assert_eq!(px(&all, 9, 12), shade(0, 4));
     // A quarter with no cell is clear.
     let some = quartered(&sheet, [None, Some(0), None, None]).unwrap();
     assert_eq!(px(&some, 3, 3), [0; 4]);
-    assert_eq!(px(&some, 12, 3), shade(2));
+    assert_eq!(px(&some, 12, 3), shade(2, 3));
     assert_eq!(px(&some, 12, 12), [0; 4]);
     assert!(quartered(&sheet, [None, None, None, Some(1)]).is_err());
     // As a cut: its frames are each cell further along.
