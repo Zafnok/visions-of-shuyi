@@ -21,7 +21,8 @@ for hits [...] we need to take some inspiration from here for giving the
 game more life even if its not a direct 1:1 copy". The full quote is in
 1322.
 
-One of three palette decisions the chapter passes (1324–1331) pick from:
+One of three palette decisions the chapter passes pick from (1362–1369
+for the maps; 1324–1331 pick only the sounds):
 **0096** (moving tiles, drifting petals and leaves), **1322** (ambient
 sound) and this one.
 

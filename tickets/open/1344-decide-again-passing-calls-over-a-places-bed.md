@@ -38,7 +38,7 @@ The calls heard (authors, pages, licenses) are listed in `audio.md`,
 *Ambience*. The 1322 page's source is gone (throwaway); the published
 page (https://claude.ai/artifact/T6YeygJ9ubs3apgU1Hmx4e) still plays them.
 
-The 13xx block holds this game's "more life" tickets (1322–1342), so
+The 13xx block holds this game's "more life" tickets (1322–1377), so
 this decision takes a 13xx number (`tickets/README.md`, *Numbering*).
 
 ## Nick input
@@ -68,7 +68,7 @@ picks any calls.
 
 **Out (do not do):** calls in a battle (Nick: "not in a battle"); building
 anything; changing a bed or its volume (1322); a chapter's own picks
-(1324–1331).
+(1324–1331, 1362–1369).
 
 ## Implementation steps
 
