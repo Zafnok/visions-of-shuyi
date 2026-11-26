@@ -1908,7 +1908,7 @@ fn a_mirrored_tile_is_its_left_half_twice_and_a_stack_is_two_tiles_tall() {
     assert_eq!(px(&stack, 4, 21), shade(0, 4, 5));
     assert!(stacked(&sheet, [0, 2]).is_err());
     assert!(mirrored(&sheet, 2).is_err());
-    assert!(blank().iter().all(|&c| c == 0));
+    assert_eq!(blank(), vec![0; 16 * 16 * 4]);
     // As cuts: a stack takes two cells down; frames are further along.
     let downs = (
         Cut::Stacked([0, 1]).down(),
@@ -1920,6 +1920,9 @@ fn a_mirrored_tile_is_its_left_half_twice_and_a_stack_is_two_tiles_tall() {
     assert_eq!(Cut::Mirrored(3).along(2), Cut::Mirrored(5));
     assert_eq!(Cut::Blank.along(2), Cut::Blank);
     assert_eq!(Cut::Stacked([3, 9]).right_column(6), 3);
+    // Either cell may be the one furthest right.
+    assert_eq!(Cut::Stacked([0, 11]).right_column(6), 5);
+    assert_eq!(Cut::Stacked([11, 0]).right_column(6), 5);
     assert_eq!(Cut::Mirrored(10).right_column(6), 4);
     assert_eq!(Cut::Blank.right_column(6), 0);
 }
