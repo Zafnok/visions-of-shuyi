@@ -157,8 +157,9 @@ pub enum LayerMap {
     Tiles {
         /// Our terrains that get it.
         of: Vec<String>,
-        /// The picture.
-        tile: TileRef,
+        /// The picture; left out, nothing (only `sides` and `near` draw).
+        #[serde(default, deserialize_with = "some")]
+        tile: Option<TileRef>,
         /// Our terrains a neighbour is looked at for.
         #[serde(default)]
         beside: Vec<String>,
@@ -166,6 +167,63 @@ pub enum LayerMap {
         /// one of `beside`), written as four of `#` and `.`.
         #[serde(default)]
         sides: BTreeMap<String, TileRef>,
+        /// The picture where any side is one of `beside` and `sides` has
+        /// none for the mix (ticket 1360: the keep's stone, a fort in a
+        /// floor).
+        #[serde(default, deserialize_with = "some")]
+        near: Option<TileRef>,
+    },
+    /// The top of a wall seen from above, on each tile of the layer, by
+    /// its neighbours in it (ticket 1360): `across` where one is beside it
+    /// and none above or below, `side`'s left half and that half mirrored
+    /// where one is above and one below and none beside, else `pillar`
+    /// (a corner, an end, a wall alone).
+    Walls {
+        /// Our terrains in the layer.
+        of: Vec<String>,
+        /// The sheet.
+        sheet: String,
+        /// A wall running across.
+        across: u32,
+        /// The cell whose left half is a wall running up and down.
+        side: u32,
+        /// A pillar's cap.
+        pillar: u32,
+    },
+    /// The face of a wall seen from the south, on the tile below each tile
+    /// of the layer (ticket 1360): `pillar` where the tile above that one
+    /// is in the layer too (the foot of a wall running down), else
+    /// `across`. Drawn as pictures between tiles, from the point at the
+    /// wall tile's top-left, so it never lands on the terrains `skip`
+    /// names (another wall, a gate).
+    Faces {
+        /// Our terrains in the layer.
+        of: Vec<String>,
+        /// The sheet.
+        sheet: String,
+        /// The face under a wall running across.
+        across: u32,
+        /// The face under a pillar.
+        pillar: u32,
+        /// Our terrains whose tiles get no face.
+        #[serde(default)]
+        skip: Vec<String>,
+    },
+    /// A picture two tiles tall standing on each tile of the layer, its
+    /// top on the tile above (ticket 1360: Harrowby's tower). Drawn as
+    /// pictures between tiles, from the point at the tile's top-left, so
+    /// it reaches out of its tile; `skip` names terrains its top never
+    /// lands on.
+    Standing {
+        /// Our terrains in the layer.
+        of: Vec<String>,
+        /// The sheet.
+        sheet: String,
+        /// Its cells, the top first.
+        cells: [u32; 2],
+        /// Our terrains whose tiles get no part of it.
+        #[serde(default)]
+        skip: Vec<String>,
     },
     /// A picture on each tile, joined from a block of a sheet: nine tiles,
     /// three by three, of a patch of the terrain with its edge on every
@@ -280,6 +338,76 @@ impl Face {
             (up_right && !down_right).then(|| end(up_left, self.left)),
         ]
     }
+}
+
+/// What a wall's top is ([`LayerMap::Walls`], ticket 1360), by its
+/// neighbours in the layer, as 0096's mockups drew Harl's keep.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WallTop {
+    /// A wall running across: one beside it, none above or below.
+    Across,
+    /// A wall running up and down: one above and one below, none beside.
+    UpDown,
+    /// A pillar: a corner, an end, a wall alone.
+    Pillar,
+}
+
+impl WallTop {
+    /// The top of a wall whose neighbours up, right, down and left are
+    /// `sides` in the layer.
+    pub const fn of(sides: [bool; 4]) -> Self {
+        match sides {
+            [false, true, false, _] | [false, _, false, true] => Self::Across,
+            [true, false, true, false] => Self::UpDown,
+            _ => Self::Pillar,
+        }
+    }
+}
+
+/// The cell of the face ([`LayerMap::Faces`], ticket 1360) hung from the
+/// point whose tiles (up-left, up-right, down-left, down-right) are
+/// `places` in the layer, on the tile below its down-right one: `pillar`
+/// where the up-right one is in too (the foot of a wall running down),
+/// else `across`; `None` where the down-right one isn't in.
+///
+/// A point sees no further than its four tiles, so a wall alone (whose
+/// top is a pillar) hangs the face of a wall running across.
+pub const fn face(places: [bool; 4], across: u32, pillar: u32) -> Option<u32> {
+    match places {
+        [_, true, _, true] => Some(pillar),
+        [.., true] => Some(across),
+        _ => None,
+    }
+}
+
+/// Half of `px` pixels, as an offset.
+fn half(px: u32) -> i32 {
+    i32::try_from(px / 2).unwrap_or(0)
+}
+
+/// A layer of a picture by each tile of `of` ([`LayerMap::Faces`],
+/// [`LayerMap::Standing`]), drawn as pictures between tiles from the
+/// point at the tile's top-left so that it may reach out of it: for each
+/// mix of corners, `cut`'s picture of `sheet`, or none. `place` moves it
+/// from the point to where it goes.
+fn by_tile(
+    packer: &mut Packer,
+    of: &[String],
+    sheet: &str,
+    cut: impl Fn([bool; 4]) -> Option<Cut>,
+    place: Place,
+) -> Result<LayerText, String> {
+    let mut tiles = Vec::new();
+    for mix in 1..16u8 {
+        if let Some(cut) = cut([8, 4, 2, 1].map(|bit| mix & bit != 0)) {
+            tiles.push((mix, packer.packed(sheet, cut, "")?));
+        }
+    }
+    Ok(LayerText::Corners {
+        of: of.to_vec(),
+        tiles,
+        place,
+    })
 }
 
 /// The cells of a [`LayerMap::Quarters`]: which cell each kind of quarter
@@ -688,6 +816,15 @@ enum Cut {
         face: [Option<u32>; 2],
         shadow: Option<[u8; 4]>,
     },
+    /// A tile's left half, and that half mirrored on its right
+    /// ([`LayerMap::Walls`]: a wall running up and down).
+    Mirrored(u32),
+    /// Two tiles, the first over the second: a picture two tiles tall
+    /// ([`LayerMap::Standing`]).
+    Stacked([u32; 2]),
+    /// Nothing: a tile all see-through, of no sheet ([`LayerMap::Tiles`]
+    /// without a `tile`).
+    Blank,
 }
 
 /// `cells` each moved `places` along.
@@ -708,7 +845,7 @@ impl Cut {
     /// across: a block's is two past its top-left tile's.
     fn right_column(self, columns: u32) -> u32 {
         match self {
-            Self::Tile(tile) => tile % columns,
+            Self::Tile(tile) | Self::Mirrored(tile) => tile % columns,
             Self::Joined { block, .. } => block % columns + 2,
             Self::Pair { under, over } => (under % columns).max(over % columns),
             Self::Quarters(cells) => cells
@@ -724,13 +861,15 @@ impl Cut {
                 .map(|c| c % columns)
                 .max()
                 .unwrap_or(0),
+            Self::Stacked([top, bottom]) => (top % columns).max(bottom % columns),
+            Self::Blank => 0,
         }
     }
 
     /// How many cells of the packed image it takes, down: two for a
     /// picture taller than a tile.
     const fn down(self) -> u32 {
-        if matches!(self, Self::Faced { .. }) {
+        if matches!(self, Self::Faced { .. } | Self::Stacked(_)) {
             2
         } else {
             1
@@ -760,8 +899,39 @@ impl Cut {
                 face: moved(face, places),
                 shadow,
             },
+            Self::Mirrored(tile) => Self::Mirrored(tile + places),
+            Self::Stacked([top, bottom]) => Self::Stacked([top + places, bottom + places]),
+            Self::Blank => Self::Blank,
         }
     }
+}
+
+/// [`Cut::Mirrored`]: tile `tile` of `sheet`, its right half its left
+/// half mirrored. RGBA8, row by row.
+fn mirrored(sheet: &Sheet, tile: u32) -> Result<Vec<u8>, String> {
+    let mut out = sheet.tile(tile)?;
+    let side = usize::try_from(TILE).unwrap_or(0);
+    let (pixels, _) = out.as_chunks_mut::<4>();
+    for row in pixels.chunks_exact_mut(side) {
+        for x in 0..side / 2 {
+            row[side - 1 - x] = row[x];
+        }
+    }
+    Ok(out)
+}
+
+/// [`Cut::Blank`]: a tile all see-through. RGBA8, row by row.
+fn blank() -> Vec<u8> {
+    let side = usize::try_from(TILE).unwrap_or(0);
+    vec![0; side * side * 4]
+}
+
+/// [`Cut::Stacked`]: tile `top` of `sheet` over tile `bottom`, a picture
+/// two tiles tall. RGBA8, row by row.
+fn stacked(sheet: &Sheet, [top, bottom]: [u32; 2]) -> Result<Vec<u8>, String> {
+    let mut out = sheet.tile(top)?;
+    out.extend(sheet.tile(bottom)?);
+    Ok(out)
 }
 
 /// Tile `over` of `sheet` drawn over tile `under`: RGBA8, row by row.
@@ -935,17 +1105,25 @@ impl Packer<'_> {
         let index = if let Some(index) = packed {
             index
         } else {
-            let source = self.sheet(sheet)?;
-            let pixels = match cut {
-                Cut::Tile(tile) => source.tile(tile),
-                Cut::Joined { block, ends } => joined(source, block, ends),
-                Cut::Pair { under, over } => paired(source, under, over),
-                Cut::Quarters(cells) => quartered(source, cells),
-                Cut::Faced {
-                    quarters,
-                    face,
-                    shadow,
-                } => faced(source, quarters, face, shadow),
+            // A blank is of no sheet: none is read for it.
+            let pixels = if cut == Cut::Blank {
+                Ok(blank())
+            } else {
+                let source = self.sheet(sheet)?;
+                match cut {
+                    Cut::Tile(tile) => source.tile(tile),
+                    Cut::Joined { block, ends } => joined(source, block, ends),
+                    Cut::Pair { under, over } => paired(source, under, over),
+                    Cut::Quarters(cells) => quartered(source, cells),
+                    Cut::Faced {
+                        quarters,
+                        face,
+                        shadow,
+                    } => faced(source, quarters, face, shadow),
+                    Cut::Mirrored(tile) => mirrored(source, tile),
+                    Cut::Stacked(cells) => stacked(source, cells),
+                    Cut::Blank => Ok(blank()),
+                }
             };
             let mut pixels = pixels.map_err(|e| format!("{sheet}: {e}"))?;
             if !tint_name.is_empty() {
@@ -1136,27 +1314,7 @@ fn layer(
                 place: Place::default(),
             })
         }
-        LayerMap::Tiles {
-            of,
-            tile: (sheet, tile),
-            beside,
-            sides,
-        } => {
-            let at = packer.cell(sheet, *tile, "")?;
-            let mut pictures = Vec::new();
-            for (text, (sheet, tile)) in sides {
-                let mix = parse_mix(text)
-                    .ok_or_else(|| format!("sides \"{text}\" must be four of `#` and `.`"))?;
-                pictures.push((mix, packer.cell(sheet, *tile, "")?));
-            }
-            pictures.sort_unstable();
-            Ok(LayerText::Tiles {
-                of: of.clone(),
-                at,
-                beside: beside.clone(),
-                sides: pictures,
-            })
-        }
+        LayerMap::Tiles { .. } => tiles_layer(packer, layer),
         LayerMap::Patch {
             of,
             sheet,
@@ -1168,6 +1326,8 @@ fn layer(
             let quarters = Quarters::of(layer).ok_or("not a quarters layer")?;
             quarters_layer(packer, &quarters, None)
         }
+        LayerMap::Walls { .. } => walls_layer(packer, layer),
+        LayerMap::Faces { .. } | LayerMap::Standing { .. } => from_points(packer, layer),
         LayerMap::Shadow { of, colour, offset } => {
             let quarters = layers.get(of).and_then(Quarters::of);
             let quarters = quarters.filter(|q| q.face.is_some());
@@ -1205,6 +1365,121 @@ fn layer(
                 sides,
             })
         }
+    }
+}
+
+/// A [`LayerMap::Tiles`] as the tileset file has it, its pictures packed:
+/// a see-through cell where it has no `tile`, and `near` for every mix of
+/// sides with one of `beside` that `sides` doesn't name.
+fn tiles_layer(packer: &mut Packer, layer: &LayerMap) -> Result<LayerText, String> {
+    let LayerMap::Tiles {
+        of,
+        tile,
+        beside,
+        sides,
+        near,
+    } = layer
+    else {
+        return Err("not a tiles layer".to_owned());
+    };
+    let at = match tile {
+        Some((sheet, tile)) => packer.cell(sheet, *tile, "")?,
+        None => packer.packed("", Cut::Blank, "")?,
+    };
+    let mut pictures = Vec::new();
+    for (text, (sheet, tile)) in sides {
+        let mix = parse_mix(text)
+            .ok_or_else(|| format!("sides \"{text}\" must be four of `#` and `.`"))?;
+        pictures.push((mix, packer.cell(sheet, *tile, "")?));
+    }
+    if let Some((sheet, tile)) = near {
+        let near = packer.cell(sheet, *tile, "")?;
+        for mix in 1..16 {
+            if !pictures.iter().any(|&(m, _)| m == mix) {
+                pictures.push((mix, near));
+            }
+        }
+    }
+    pictures.sort_unstable();
+    Ok(LayerText::Tiles {
+        of: of.clone(),
+        at,
+        beside: beside.clone(),
+        sides: pictures,
+    })
+}
+
+/// A [`LayerMap::Walls`] as the tileset file has it: a tile layer looking
+/// at its own terrains beside it, a pillar's cap unless [`WallTop::of`]
+/// says across or up and down.
+fn walls_layer(packer: &mut Packer, layer: &LayerMap) -> Result<LayerText, String> {
+    let LayerMap::Walls {
+        of,
+        sheet,
+        across,
+        side,
+        pillar,
+    } = layer
+    else {
+        return Err("not a walls layer".to_owned());
+    };
+    let mut sides = Vec::new();
+    for mix in 0..16u8 {
+        let cut = match WallTop::of([8, 4, 2, 1].map(|bit| mix & bit != 0)) {
+            WallTop::Across => Cut::Tile(*across),
+            WallTop::UpDown => Cut::Mirrored(*side),
+            WallTop::Pillar => continue,
+        };
+        sides.push((mix, packer.packed(sheet, cut, "")?));
+    }
+    Ok(LayerText::Tiles {
+        of: of.clone(),
+        at: packer.cell(sheet, *pillar, "")?,
+        beside: of.clone(),
+        sides,
+    })
+}
+
+/// A [`LayerMap::Faces`] or [`LayerMap::Standing`] as the tileset file
+/// has it: a picture by each of its tiles, drawn from the point at the
+/// tile's top-left ([`by_tile`]): a face moved a tile down onto the tile
+/// below, a standing picture two tiles tall moved up onto the tile above.
+fn from_points(packer: &mut Packer, layer: &LayerMap) -> Result<LayerText, String> {
+    match layer {
+        LayerMap::Faces {
+            of,
+            sheet,
+            across,
+            pillar,
+            skip,
+        } => {
+            let cut = |places| face(places, *across, *pillar).map(Cut::Tile);
+            // From the wall tile's top-left point to the tile below it.
+            let offset = (half(TILE), half(3 * TILE));
+            let place = Place {
+                size: None,
+                offset,
+                skip: skip.clone(),
+            };
+            by_tile(packer, of, sheet, cut, place)
+        }
+        LayerMap::Standing {
+            of,
+            sheet,
+            cells,
+            skip,
+        } => {
+            let cut = |[.., down_right]: [bool; 4]| down_right.then_some(Cut::Stacked(*cells));
+            // From the tile's top-left point to the tile above it.
+            let offset = (half(TILE), -half(TILE));
+            let place = Place {
+                size: Some((TILE, 2 * TILE)),
+                offset,
+                skip: skip.clone(),
+            };
+            by_tile(packer, of, sheet, cut, place)
+        }
+        _ => Err("not a layer of pictures by tiles".to_owned()),
     }
 }
 
@@ -1367,10 +1642,13 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
         match layer {
             LayerMap::Corners { of, .. }
             | LayerMap::Block { of, .. }
-            | LayerMap::Patch { of, .. } => {
+            | LayerMap::Patch { of, .. }
+            | LayerMap::Walls { of, .. } => {
                 known(&what, of, terrains)?;
             }
-            LayerMap::Quarters { of, skip, .. } => {
+            LayerMap::Quarters { of, skip, .. }
+            | LayerMap::Faces { of, skip, .. }
+            | LayerMap::Standing { of, skip, .. } => {
                 known(&what, of.iter().chain(skip), terrains)?;
             }
             LayerMap::Shadow { of, .. } => {
@@ -1541,8 +1819,29 @@ pub fn list(mapping: &Mapping) -> String {
                         of.join(", ")
                     )
                 }
-                Some(LayerMap::Tiles { of, tile: at, .. }) => {
-                    format!("on {}: {}", of.join(", "), tile(at))
+                Some(LayerMap::Tiles {
+                    of, tile: at, near, ..
+                }) => {
+                    let at = at.as_ref().map_or_else(|| "nothing".to_owned(), tile);
+                    let near = near
+                        .as_ref()
+                        .map_or_default(|n| format!(", by them {}", tile(n)));
+                    format!("on {}: {at}{near}", of.join(", "))
+                }
+                Some(LayerMap::Walls { of, sheet, .. }) => {
+                    format!("wall tops on {}: {sheet}", of.join(", "))
+                }
+                Some(LayerMap::Faces { of, sheet, .. }) => {
+                    format!("wall faces below {}: {sheet}", of.join(", "))
+                }
+                Some(LayerMap::Standing {
+                    of, sheet, cells, ..
+                }) => {
+                    let [top, bottom] = cells;
+                    format!(
+                        "standing on {}: {sheet} tiles {top} over {bottom}",
+                        of.join(", ")
+                    )
                 }
                 Some(LayerMap::Block {
                     of, sheet, block, ..

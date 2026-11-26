@@ -31,6 +31,15 @@
 // beside the tile above, and `skip` names terrains its pictures leave
 // alone; a `Shadow` layer is a faced layer's pictures as silhouettes in
 // one colour (and alpha), moved by `offset` pixels.
+//
+// Ticket 1360 (Harl's keep): a `Walls` layer is a wall's top by its
+// neighbours in it (across, up and down from a cell's left half and its
+// mirror, else a pillar); a `Faces` layer hangs a wall's face on the tile
+// below each wall tile (a pillar's under the foot of a wall running down),
+// never on what `skip` names; a `Standing` layer is a picture two cells
+// tall on each of its tiles, its top on the tile above. A `Tiles` layer
+// may leave its `tile` out (nothing but its `sides`) and give `near`: the
+// picture where any side is one of `beside`.
 (
     // Each of our terrains' own tile, painted first, unless a look below
     // has another. What stands on grass has the grass; water under a
@@ -116,6 +125,40 @@
             of: ["peak"],
             sheet: "elv-games/tilesets/rogue-adventure/RA_Overworld_Ground.png",
             patch: 531, inside: 441,
+        ),
+        // Harl's fort, the stone keep (ticket 1360, 0096's answer), from
+        // Rogue Adventure's ruins (RA_Ruins.png, 48 cells across). The
+        // wall's top: across (1, 8), up and down the left half of (0, 4)
+        // and its mirror, a pillar's cap (0, 8) at corners and ends.
+        "ra_wall": Walls(
+            of: ["wall"],
+            sheet: "elv-games/tilesets/rogue-adventure/RA_Ruins.png",
+            across: 385, side: 192, pillar: 384,
+        ),
+        // The face with its arrow slits on every side seen from the south:
+        // (1, 9) under a wall, (0, 9) under the foot of one running down;
+        // never on a wall or a gate (the gates stay open).
+        "ra_wall_face": Faces(
+            of: ["wall"],
+            sheet: "elv-games/tilesets/rogue-adventure/RA_Ruins.png",
+            across: 433, pillar: 432,
+            skip: ["wall", "road", "gate", "door"],
+        ),
+        // Harrowby, a small round stone tower on its fort tile: the
+        // pillar's cap (0, 12) on the tile above, its face (0, 15) on the
+        // tile. Its top never lands on the keep's wall or floor.
+        "ra_tower": Standing(
+            of: ["fort"],
+            sheet: "elv-games/tilesets/rogue-adventure/RA_Ruins.png",
+            cells: (576, 720),
+            skip: ["wall", "floor"],
+        ),
+        // The keep's fort tile, a fort in a floor, is a carved stone,
+        // (13, 1), drawn over the tower; any other fort is the tower.
+        "ra_keep": Tiles(
+            of: ["fort"],
+            beside: ["floor"],
+            near: ("elv-games/tilesets/rogue-adventure/RA_Ruins.png", 61),
         ),
         // A plank bridge, (30, 39) of the jungle's sheet.
         "ra_bridge": Tiles(
@@ -324,8 +367,10 @@
         // taper, the moving river joined at its banks, plank bridges;
         // hills and peaks as one raised area with a round rim, the peaks'
         // rock inside it (1359), the cliff's face below and its shadow
-        // (1361). The fort (1360) and the trees (1356) keep
-        // Tiny Tales' pictures until their tickets, over this ground.
+        // (1361); Harl's fort as the stone keep, its paving inside and
+        // Harrowby's round tower (1360), drawn last so nothing covers
+        // them. The trees (1356) keep Tiny Tales' pictures until their
+        // ticket, over this ground.
         "rogue_adventure": (
             terrain: {
                 // The grass, (2, 5); the forest floor's middle, (10, 5).
@@ -351,11 +396,21 @@
                 "water": ("elv-games/tilesets/rogue-adventure/RA_Animated_Water.png", 417),
                 "sea": ("elv-games/tilesets/rogue-adventure/RA_Animated_Water.png", 417),
                 "bridge": ("elv-games/tilesets/rogue-adventure/RA_Animated_Water.png", 417),
+                // The keep's paving, (13, 2) of the ruins, under what stands
+                // indoors; the grass round a pillar's cap.
+                "floor": ("elv-games/tilesets/rogue-adventure/RA_Ruins.png", 109),
+                "throne": ("elv-games/tilesets/rogue-adventure/RA_Ruins.png", 109),
+                "desk": ("elv-games/tilesets/rogue-adventure/RA_Ruins.png", 109),
+                "papers": ("elv-games/tilesets/rogue-adventure/RA_Ruins.png", 109),
+                "shelf": ("elv-games/tilesets/rogue-adventure/RA_Ruins.png", 109),
+                "rug": ("elv-games/tilesets/rogue-adventure/RA_Ruins.png", 109),
+                "wall": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
             },
-            layers: ["ra_forest_floor", "ra_river", "ice", "floor", "ash", "ra_peak", "lf_shadow",
-                     "lf_rim", "forest", "thicket", "burnt", "burning", "ra_bridge", "fort", "house",
-                     "gate", "throne", "door", "roof", "house_wall", "lintel", "house_door", "hedge",
-                     "well", "rack", "desk", "papers", "shelf", "rug", "banner", "crest"],
+            layers: ["ra_forest_floor", "ra_river", "ice", "ash", "ra_peak", "lf_shadow", "lf_rim",
+                     "forest", "thicket", "burnt", "burning", "ra_bridge", "house", "gate",
+                     "throne", "door", "roof", "house_wall", "lintel", "house_door", "hedge",
+                     "well", "rack", "desk", "papers", "shelf", "rug", "banner", "crest",
+                     "ra_wall_face", "ra_wall", "ra_tower", "ra_keep"],
         ),
         // A map outdoors (and any map that names no look): the World Map
         // set in its Standard colours. Walls, floors and doors are the
