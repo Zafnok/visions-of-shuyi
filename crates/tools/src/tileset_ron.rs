@@ -28,6 +28,8 @@ pub enum LayerText {
         of: Vec<String>,
         /// Each mix of corners that has a picture, and its tile.
         tiles: Vec<(u8, At)>,
+        /// Its pictures' size, offset and skipped terrains.
+        place: Place,
     },
     /// A picture on each tile.
     Tiles {
@@ -40,6 +42,37 @@ pub enum LayerText {
         /// Each mix of sides with a picture of its own, and its tile.
         sides: Vec<(u8, At)>,
     },
+}
+
+/// Where a corner layer's pictures go (ticket 1361), as the format's
+/// `size`, `offset` and `skip` write it: the default writes none of them.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Place {
+    /// Each picture's size in pixels; `None`, a tile's.
+    pub size: Option<(u32, u32)>,
+    /// Pixels across and down each picture is moved by.
+    pub offset: (i32, i32),
+    /// The terrains whose tiles get no part of a picture.
+    pub skip: Vec<String>,
+}
+
+impl Place {
+    /// The fields to write after a corner layer's `tiles`, each starting
+    /// with `, `; nothing for the default.
+    fn fields(&self) -> String {
+        let mut out = String::new();
+        if let Some((w, h)) = self.size {
+            let _ = write!(out, ", size: ({w}, {h})");
+        }
+        if self.offset != (0, 0) {
+            let (x, y) = self.offset;
+            let _ = write!(out, ", offset: ({x}, {y})");
+        }
+        if !self.skip.is_empty() {
+            let _ = write!(out, ", skip: {}", list(&self.skip));
+        }
+        out
+    }
 }
 
 /// `names` as a RON list of strings.
@@ -64,9 +97,10 @@ fn mixes(kind: &str, mixes: &[(u8, At)], indent: &str) -> String {
 fn layer(layer: &LayerText, indent: &str) -> String {
     let inner = format!("{indent}    ");
     match layer {
-        LayerText::Corners { of, tiles } => {
+        LayerText::Corners { of, tiles, place } => {
             let (of, tiles) = (list(of), mixes("corners", tiles, &inner));
-            format!("{indent}Corners(of: {of}, tiles: [\n{tiles}{indent}]),\n")
+            let place = place.fields();
+            format!("{indent}Corners(of: {of}, tiles: [\n{tiles}{indent}]{place}),\n")
         }
         LayerText::Tiles {
             of,
@@ -176,6 +210,7 @@ mod tests {
                 LayerText::Corners {
                     of: names(&["water", "sea"]),
                     tiles: vec![(1, (4, 2)), (12, (5, 2))],
+                    place: Place::default(),
                 },
                 LayerText::Tiles {
                     of: names(&["fort"]),
@@ -215,6 +250,35 @@ mod tests {
         );
         assert_eq!(list(&[]), "[]");
         assert_eq!(list(&names(&["a", "b"])), "[\"a\", \"b\"]");
+    }
+
+    #[test]
+    fn a_corner_layer_writes_where_its_pictures_go_only_if_it_says() {
+        let corners = |place| LayerText::Corners {
+            of: names(&["mountain"]),
+            tiles: vec![(8, (0, 2))],
+            place,
+        };
+        let tall = Place {
+            size: Some((16, 24)),
+            offset: (1, -3),
+            skip: names(&["wall", "fort"]),
+        };
+        assert_eq!(
+            layer(&corners(tall), ""),
+            "Corners(of: [\"mountain\"], tiles: [\n    (corners: \"#...\", at: (0, 2)),\n], \
+             size: (16, 24), offset: (1, -3), skip: [\"wall\", \"fort\"]),\n"
+        );
+        let moved = Place {
+            offset: (0, 1),
+            ..Place::default()
+        };
+        assert!(layer(&corners(moved), "").ends_with("], offset: (0, 1)),\n"));
+        let skipping = Place {
+            skip: names(&["wall"]),
+            ..Place::default()
+        };
+        assert!(layer(&corners(skipping), "").ends_with("], skip: [\"wall\"]),\n"));
     }
 
     #[test]

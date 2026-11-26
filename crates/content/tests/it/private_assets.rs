@@ -270,8 +270,9 @@ fn chapter_1s_ground_and_river_are_rogue_adventures() {
 
 /// Chapter 1's hills and peaks are one raised area (ticket 1359): a rim
 /// joined at corners round both, with a picture for every mix but all
-/// four (the grass of the hill's top), over the peaks' own rock; Tiny
-/// Tales' hills and peaks are gone from the look.
+/// four (the grass of the hill's top), over the peaks' own rock, the
+/// cliff's face below it and its shadow under both (1361); Tiny Tales'
+/// hills and peaks are gone from the look.
 #[test]
 fn chapter_1s_hills_and_peaks_are_one_raised_area_with_a_rim() {
     use std::collections::BTreeSet;
@@ -292,12 +293,25 @@ fn chapter_1s_hills_and_peaks_are_one_raised_area_with_a_rim() {
             .position(|l| matches!(l, Layer::Corners(c) if c.of == *of))
     };
     let raised = BTreeSet::from([mountain, peak]);
-    let rim = corners_of(rogue, &raised).expect("no rim round hills and peaks");
-    let Layer::Corners(layer) = &rogue.layers[rim] else {
-        unreachable!()
+    // Its shadow first (ticket 1361), then the rim with the cliff's face
+    // below: pictures half a tile taller than a tile, never on a wall.
+    let shadow = corners_of(rogue, &raised).expect("no rim round hills and peaks");
+    let rim = shadow + 1;
+    let (Layer::Corners(shade), Some(Layer::Corners(layer))) =
+        (&rogue.layers[shadow], rogue.layers.get(rim))
+    else {
+        panic!("no shadow under the rim: {:?}", &rogue.layers[shadow..]);
     };
-    let drawn: Vec<usize> = (0..16).filter(|&m| layer.tiles[m].is_some()).collect();
-    assert_eq!(drawn, (1..15).collect::<Vec<_>>());
+    assert_eq!(layer.of, raised);
+    assert_eq!((shade.offset, layer.offset), ((1, 3), (0, 0)));
+    assert_eq!(layer.skip, BTreeSet::from([id("wall")]));
+    assert_eq!(shade.skip, layer.skip);
+    for pieces in [layer, shade] {
+        let drawn: Vec<usize> = (0..16).filter(|&m| pieces.tiles[m].is_some()).collect();
+        assert_eq!(drawn, (1..15).collect::<Vec<_>>());
+        let sizes: BTreeSet<_> = pieces.tiles.iter().flatten().map(|r| (r.w, r.h)).collect();
+        assert_eq!(sizes, BTreeSet::from([(16, 24)]));
+    }
     // The peaks' rock, under the rim, isn't the outdoor look's.
     let rock = corners_of(rogue, &BTreeSet::from([peak])).expect("no rock on the peaks");
     assert!(rock < rim);

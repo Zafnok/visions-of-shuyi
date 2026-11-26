@@ -75,6 +75,22 @@ way). The tile just outside the view counts, so nothing changes as the
 camera moves; a tile off the map counts as the nearest tile on it; and a
 picture is drawn only inside tiles of the map.
 
+Three fields of a corner layer change that (ticket 1361, ADR-0133), for a
+cliff's face that hangs below its rim and the shadow under both:
+
+```ron
+Corners(of: ["mountain", "peak"], tiles: [ … ],
+        size: (16, 24),     // each picture's size in pixels, from its `at`'s top-left
+                            // (left out: a tile's); its top-left stays half a tile
+                            // up and left of the point, so it reaches further down
+        offset: (1, 3),     // pixels across and down every picture is moved
+                            // (left out: (0, 0)); at the art's size, times the zoom
+        skip: ["wall"]),    // terrains whose tiles get no part of a picture
+```
+
+A picture taller than a tile covers rows of the image below its `at`:
+nothing else may be packed there.
+
 `looks` holds **other looks** by the name a map file gives in its header
 (`look: (tiles: "indoor")`, `assets/maps/README.md`), each with a `terrain`
 table and `layers` of its own:
@@ -198,7 +214,9 @@ its name:
   character named must exist;
 - `layers` and `looks` need `terrain`; a layer must name a terrain and (a
   corner layer) have a picture; a mix must be four of `#` and `.`, listed
-  once, and a corner layer has none for `....`; a look's name must be one
+  once, and a corner layer has none for `....`; a corner layer's `size`
+  has sides of 8 to 64 px, its pictures at that size lie inside the
+  image, and its `skip` names real terrains; a look's name must be one
   a map can give (`trpg_content::map::TILE_LOOKS`) other than the
   tileset's own, `outdoor`;
 - `frames` need `terrain`; a moving cell is listed once, is drawn by a
@@ -262,4 +280,10 @@ table):
   two neighbours that way and the diagonal), so inside corners are round
   too: Chapter 1's hills and peaks, one raised area with Electric
   Lemon's *Lonesome Forest* rim round it (1359), its stones recoloured
-  by the mapping's `recolour` as the importer reads the sheet.
+  by the mapping's `recolour` as the importer reads the sheet. With a
+  `face` (1361) its pictures are 16 × 24, the kit's cliff face (row 8)
+  hung on the tile below the rim's bottom edge, rounded where the hill
+  ends beside the tile above, and a `Shadow` layer is those pictures'
+  silhouettes in one see-through colour, moved a pixel right and three
+  down (the tileset's `size`, `offset` and `skip`); each such picture
+  takes its cell and the one below it in the packed image.

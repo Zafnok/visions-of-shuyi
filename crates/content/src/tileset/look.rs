@@ -16,7 +16,7 @@ pub use shuyi_assets::tileset::{
 };
 use shuyi_assets::tileset::{MIX_IN as IN, MIX_OUT as OUT};
 
-use super::{Checker, ImageRect, TilesetRefs, grid_rect};
+use super::{Checker, ImageRect, TilesetRefs, grid_rect, side_problem};
 use crate::map::{DEFAULT_TILES, TILE_LOOKS};
 
 /// A look as written: in a tileset's `looks`, or (as `terrain` and
@@ -36,6 +36,16 @@ pub(super) enum LayerFile {
     Corners {
         of: Vec<String>,
         tiles: Vec<CornersAt>,
+        /// Each picture's size in pixels, from the top-left of its `at`;
+        /// left out, a tile's.
+        #[serde(default, deserialize_with = "super::written")]
+        size: Option<(u32, u32)>,
+        /// Pixels across and down each picture is moved by (ticket 1361).
+        #[serde(default)]
+        offset: (i32, i32),
+        /// The terrains whose tiles get no part of a picture.
+        #[serde(default)]
+        skip: Vec<String>,
     },
     Tiles {
         of: Vec<String>,
@@ -103,7 +113,17 @@ impl Looking<'_, '_> {
     /// The rectangle of tile `at`, reported (as `what`) if it lies outside
     /// the tileset's image.
     fn rect(&mut self, what: &str, at: (u32, u32)) -> ImageRect {
-        let rect = grid_rect(at, self.tile_px, (0, 0));
+        self.sized(what, at, self.tile_px)
+    }
+
+    /// The rectangle of `(w, h)` pixels from the top-left of tile `at`,
+    /// reported (as `what`) if it lies outside the tileset's image.
+    fn sized(&mut self, what: &str, at: (u32, u32), (w, h): (u32, u32)) -> ImageRect {
+        let rect = ImageRect {
+            w,
+            h,
+            ..grid_rect(at, self.tile_px, (0, 0))
+        };
         if let Some(sheet) = self.check.sheet {
             self.check.inside(what, sheet, rect);
         }
@@ -128,11 +148,13 @@ impl Looking<'_, '_> {
     }
 
     /// The pictures of the mixes `entries` (each a mix as written, called
-    /// a `kind`, and its tile), by mix; every problem reported as `what`.
+    /// a `kind`, and its tile), each `size` pixels, by mix; every problem
+    /// reported as `what`.
     fn mixes<'e>(
         &mut self,
         what: &str,
         kind: &str,
+        size: (u32, u32),
         entries: impl Iterator<Item = (&'e str, (u32, u32))>,
     ) -> [Option<ImageRect>; MIXES] {
         let mut tiles = [None; MIXES];
@@ -143,7 +165,7 @@ impl Looking<'_, '_> {
                 ));
                 continue;
             };
-            let rect = self.rect(&format!("{what}, {kind} \"{text}\""), at);
+            let rect = self.sized(&format!("{what}, {kind} \"{text}\""), at, size);
             if tiles[usize::from(m)].replace(rect).is_some() {
                 let problem = format!("{what}: {kind} \"{text}\" is listed twice");
                 self.check.problems.push(problem);
@@ -162,9 +184,19 @@ impl Looking<'_, '_> {
         }
         let of = self.terrains(&what, of);
         match file {
-            LayerFile::Corners { tiles, .. } => {
+            LayerFile::Corners {
+                tiles,
+                size,
+                offset,
+                skip,
+                ..
+            } => {
+                let size = size.unwrap_or(self.tile_px);
+                if let Some(problem) = side_problem(&format!("{what}: size"), size) {
+                    self.check.problems.push(problem);
+                }
                 let entries = tiles.iter().map(|t| (t.corners.as_str(), t.at));
-                let tiles = self.mixes(&what, "corners", entries);
+                let tiles = self.mixes(&what, "corners", size, entries);
                 if tiles[0].is_some() {
                     self.check.problems.push(format!(
                         "{what}: corners \"{}\" has no corner in the layer, so there is nothing \
@@ -176,14 +208,17 @@ impl Looking<'_, '_> {
                     let problem = format!("{what}: it has no pictures");
                     self.check.problems.push(problem);
                 }
-                Layer::Corners(CornerLayer::new(of, tiles))
+                let mut layer = CornerLayer::new(of, tiles);
+                layer.skip = self.terrains(&format!("{what}: skip"), skip);
+                layer.offset = *offset;
+                Layer::Corners(layer)
             }
             LayerFile::Tiles {
                 at, beside, sides, ..
             } => {
                 let tile = self.rect(&what, *at);
                 let entries = sides.iter().map(|s| (s.sides.as_str(), s.at));
-                let sides = self.mixes(&what, "sides", entries);
+                let sides = self.mixes(&what, "sides", self.tile_px, entries);
                 let beside = self.terrains(&what, beside);
                 Layer::Tiles(TileLayer {
                     of,
