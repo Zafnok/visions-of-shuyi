@@ -23,6 +23,28 @@ more so because nobody on the project can read the result
 ([ADR-0045 §6](../../docs/adr/0045-languages-text-by-key-and-line-ids.md)).
 This ticket sets the process up; 0719 uses it on Chapter 1.
 
+**From 0725 (2026-11-25), the Chinese twin, done first.** Its documents
+are in the private repository, `assets-private/story/zh/` (README,
+glossary, names, styles, for-review): this ticket's `docs/story/ja/` is
+`assets-private/story/ja/`, with the same files, changed by the
+`content-change` skill. Do these as part of this ticket:
+
+- Move the steps both languages share (the pack's files and where they
+  live, the chapter's steps, the back-translation check, the lengths,
+  what to do when the English changes) into one
+  `assets-private/story/translating.md`, and have both READMEs point to
+  it and keep only what is their language's.
+- The `story-writing` skill has its *Translating* section (0725): step 7
+  adds Japanese to it.
+- **Step 6's `lang.ron` waits for 0719.** A pack in the build is offered
+  to every player at first launch and in Options (0825), so the pack
+  lands with its first translation. Write `lang.ron`'s contents in the
+  README, as `zh/README.md` does, and check the names with a trial pack
+  that isn't committed (0725's completion notes say how).
+- The names and the data a pack translates are private, so `data.ron`
+  and `dialogue/` go in `assets-private/content/lang/ja/`, and only
+  `lang.ron` and `ui.ron` in `assets/lang/ja/`.
+
 ## Nick input
 
 None. (0042 answered what a player sees: katakana names or not, the

@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: fable-5.1 / gpt-6-astra
 effort: high
 status: todo
-blocked_by: ["0234", "0237", "0243", "0244", "0716", "0718", "0825", "0728", "0737"]
+blocked_by: ["0234", "0237", "0243", "0244", "0716", "0718", "0825", "0728", "0737", "0934"]
 nick_input: none
 completed:
 ---
@@ -26,6 +26,10 @@ critical path*): a human writer is being hired (0766) and may reword
 every line. A line's id is a hash of its words, so a clip or a
 translation made before the rewrite is redone after it. Don't start
 this ticket while 0766 is open without asking Nick.
+
+**From 0725 (2026-11-25).** A pack in the build must survive the
+Chapter 1 demo's cut of the names table: this ticket waits for 0934, as
+0726 does. 0718's context says where the pack's files go.
 
 ## Nick input
 
