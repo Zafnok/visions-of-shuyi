@@ -52,13 +52,40 @@ gauges, icons). They wait on it.
 - **MattWalkden Fantasy Battle Pack** (`library/mattwalkden/UI Elements/`):
   map pieces only (a selection cursor, range tiles, movement arrows, a
   grid). No windows.
-- **ELV Games Game Assets Mega Bundle** (bought 2026-11-24 for its
-  tilesets): check whether the bundle holds a UI pack before buying
-  one.
+- **ELV Games Game Assets Mega Bundle**
+  (<https://itch.io/s/79053/game-assets-mega-bundle>, bought 2026-11-24;
+  its terms: personal and commercial use, edits allowed, "Credits to
+  ElvGames", no resale, no generative-AI use, no crypto/NFT; its pages
+  say no generative AI was used). **Its UI packs are the first
+  candidates**, being owned and fantasy (read from the pages
+  2026-11-26). Only the Neatpixels fonts are downloaded so far
+  (`library/elv-games/fonts/`); Nick downloads the rest from his itch
+  library (**Setup**):
+  - **GUI KIT Pixelart Asset Pack**
+    (<https://elvgames.itch.io/inventory-and-ui-buttons>): wood and
+    parchment frames, inventory grids and boxes, buttons with and
+    without text, "separated sprites to use with 9slices", and 335
+    icons (armor, swords, equipment, UI symbols) on dark navy tiles in
+    4 styles. No bars, cursor or font listed.
+  - **Item Icons 16x16**, *Fantasy Dreamland* (288: swords, staffs,
+    axes, bows, spears, armor, rings…) and *Rogue Adventure* (over 1,000,
+    darker); **Enchanted Sword/Staff/Spear/Bow Icons 16x16**; 32×32
+    weapon and armor icon packs.
+  - **Neatpixels** fonts (5×5 to 7×7 pixels, downloaded): smaller than
+    the 8×16 cell, so mostly for numbers or titles if at all.
+  - **Keyboard UI** and **Controller Buttons** 16×16 (for hints: 0255,
+    out of scope here).
+  - Free Inventory for Farming RPG, Free Inventory Sci-Fi: farm and
+    sci-fi inventories, a poor fit.
+  The bundle's ELV art already draws Chapter 1's map (`rogue_adventure`
+  look), so its UI may sit with the map better than a third artist's.
 - Mega Tiles sells **no fantasy UI pack**; Code Ark is its only one (a
   commenter asked for one for the fantasy set; no answer, 2026-11-26).
 
-### Itch candidates (read from the store pages 2026-11-26; nothing downloaded)
+### Itch candidates to buy, if the owned packs fall short (read from the store pages 2026-11-26; nothing downloaded)
+
+The ELV GUI kit has no cursor or bars; a free or cheap pack below can
+fill those gaps.
 
 Prices and terms as stated on each page. **Read the licence inside the
 download before using a pack** (ADR-0013: commercial use, no copyleft,
@@ -129,14 +156,17 @@ The questions, in order:
    an option). Ask only whether it should borrow anything (for
    example the new cursor's shape drawn in the font).
 
-Buying a pack is Nick's (**Setup**). He buys it, and the purchase is
-recorded with the artist and link (memory: credit everyone).
+Downloading the ELV UI packs from his itch library, and buying any new
+pack, is Nick's (**Setup**): ask for the ELV downloads at the start of
+round 1. Each purchase is recorded with the artist and link (memory:
+credit everyone).
 
 ## Scope
 
 **In:**
-- Round 1: search the owned packs (ELV bundle included) and the
-  Japanese sites, then render the candidates above on the four screens.
+- Round 1: the ELV bundle's GUI kit and icons first (owned), the Code
+  Ark kit recoloured, then the bought-pack candidates and the Japanese
+  sites, rendered on the four screens.
 - The `ask-nick` rounds until each question has an answer.
 - `docs/design/look-and-feel.md`: a new section *Windows (the picture
   look)* with each answer, Nick's words, and Claude's starting rules
