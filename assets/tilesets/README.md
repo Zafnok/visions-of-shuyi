@@ -287,3 +287,14 @@ table):
   silhouettes in one see-through colour, moved a pixel right and three
   down (the tileset's `size`, `offset` and `skip`); each such picture
   takes its cell and the one below it in the packed image.
+  Harl's keep in Chapter 1 (1360), from *Rogue Adventure*'s ruins, needs
+  no new field: a `Walls` layer is a tile layer of the wall's top by its
+  walls beside it (across, up and down, else a pillar's cap); a `Faces`
+  layer is a corner layer that hangs the wall's face, tile-sized, on the
+  tile below each wall tile (`offset: (8, 24)` from the wall's top-left
+  point; a pillar's face where the wall goes on up) and skips walls and
+  gates; a `Standing` layer is a corner layer of 16 × 32 pictures
+  standing on each of its tiles (`offset: (8, -8)`: Harrowby's tower,
+  drawn over by the keep's stone where a fort is by a floor). A `Tiles`
+  layer may leave its `tile` out (a see-through cell) and give `near`,
+  its picture beside any of `beside`.
