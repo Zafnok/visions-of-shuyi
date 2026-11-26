@@ -144,7 +144,8 @@ Nick's pick, except the terrain rules, which wait for their decisions):
 **1311** the low-HP tip shows whenever its moment comes · **1312** Vix's
 tip steps aside while unit info or another full page is open · **1319**
 stronger move and attack range colours · **1320** the game fills a
-1280×720 window · **0095** how the lead stands out on the map → **1313**
+1280×720 window · **0882** a volume is a straight
+percentage of full (Nick, 2026-11-26: music at 20 played at 0.4%) · **0095** how the lead stands out on the map → **1313**
 · **0098** a mode easier than Casual → **0880** the mode → **0536** a
 newcomer bot · **0096** the tileset overhaul, moving tiles and drifting
 effects, and **1314** a graphics tier per target with a still fallback
