@@ -156,8 +156,11 @@ chapter by chapter** (Nick, 2026-11-23, after Stardew Valley's small
 touches): **1322** ambient sound and **1323** hit particles and map
 touches (with 0096, the palette) → **1332** the ambience player ·
 **1333** hit bursts in the fight · **1334** dust, splashes and creatures
-(both after 1316) → **1324–1331** each chapter's picks (Chapters 6–8
-after their battles) → **1335–1342** each chapter's data → **1344**
+(both after 1316) → **1362–1369** each chapter's maps picked
+(Chapters 6–8 after their battles) → **1370–1377** their data; and
+apart from the particles, **1324–1331** each chapter's sound beds
+picked (after 1322; Chapters 6–8 after their battles) → **1335–1342**
+their data (after 1332) → **1344**
 passing calls asked again (Nick: not "for now"); **1317** every
 ticket says what the lesser targets get (after 1314) · **1321** Vix's
 tips show a small moving picture (after **0469**, widened to the tip
@@ -531,8 +534,9 @@ recruit joins outside battle.
   graphics tiers and fallbacks → **1317** the lesser-targets checklist;
   **0096** → **1315** moving tiles · **1316** drifting petals (both also
   after 1314) · **1318** the tileset overhaul → **1359**, **1360** · **1322**, **1323** →
-  **1332**, **1333**, **1334** → **1324–1331** → **1335–1342** ambience,
-  particles and sounds chapter by chapter → **1344** passing calls
+  **1332**, **1333**, **1334** → **1362–1369** → **1370–1377**
+  particles and touches chapter by chapter; **1322** → **1324–1331** →
+  **1335–1342** (after 1332) sound beds chapter by chapter → **1344** passing calls
   asked again · **0469** → **1321**
   pictures in Vix's tips. After their decisions say which battles:
   **0099** → **0336** deep water; **0097** → **0337** barricades ·
