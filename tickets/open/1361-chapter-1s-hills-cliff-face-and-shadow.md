@@ -5,7 +5,7 @@ type: content
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
+status: todo
 blocked_by: ["engine#3246"]
 blocks: ["1064"]
 nick_input: none
@@ -51,10 +51,9 @@ engine#3246 (PR Zafnok/shuyi-engine#593) adds to
 `shuyi_assets::tileset::CornerLayer` the fields `skip:
 BTreeSet<TerrainId>` and `offset: (i32, i32)` (art pixels, times the
 zoom), draws each picture at its own `ImageRect` size, and makes the
-struct `#[non_exhaustive]` with `CornerLayer::new(of, tiles)`. The moved
-pin breaks the game's two `CornerLayer` struct literals
-(`crates/content/src/tileset/look.rs`, the sprite skin's test in
-`crates/ui/src/map_view/sprite.rs`): build them with `new` and set the
+struct `#[non_exhaustive]` with `CornerLayer::new(of, tiles)`.
+**2026-11-26:** the game's pin is at its merge (`96eb097c`), moved in a
+PR of its own; the game builds a `CornerLayer` with `new` and sets the
 fields after.
 
 ## Nick input
@@ -66,8 +65,6 @@ ADR-0118); what's left to judge in play goes on 1064's checklist.
 ## Scope
 
 **In:**
-- The pin past engine#3246 (`engine-change` §7, the `engine-pin`
-  skill's review and ledger for the engine PRs it passes).
 - The tileset format (`trpg_content::tileset`, `look.rs`'s `LayerFile`):
   a corner layer's picture size (in tiles down, or pixels), its `offset`
   and its `skip` terrains, checked (size inside the image, terrains
@@ -85,13 +82,12 @@ changes; other chapters' maps.
 
 ## Implementation steps
 
-1. Move the pin past engine#3246; fix the `CornerLayer` literals.
-2. The format's new fields in `look.rs`/`tileset.rs`, their checks and
+1. The format's new fields in `look.rs`/`tileset.rs`, their checks and
    tests; README; ADR.
-3. The importer: the face layer's taller pieces (the rim's quarters
+2. The importer: the face layer's taller pieces (the rim's quarters
    over the face of the tile below where the mix says) and the shadow
    pieces; test the face's ends and the shadow's shape.
-4. Mapping rows, re-pack, `frame-png` before and after.
+3. Mapping rows, re-pack, `frame-png` before and after.
 
 ## Acceptance criteria
 
