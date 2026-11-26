@@ -46,7 +46,11 @@ push there, then `cargo shuyi private-assets --pin`.
 - `game_over`: optional; a PNG in this folder, at most as big as a logo.
   The words of the Game Over screen, drawn under the logo at its size and
   centred like it: make it as wide as the logo and the two line up.
-  Without it the screen shows the words as text.
+  Without it the screen shows the words as text. A language brings its
+  own copy as `lang/<tag>/files/title/<the file>` (ticket 0831,
+  `assets/lang/README.md`); in a language with none along its chain the
+  screen shows that language's `game_over.heading` as text, never this
+  picture. The Playdate makes a copy one-bit as it makes this one.
 - `backdrops`: PNGs in this folder, 336×248 each (a battle backdrop's
   size), each named once. The title shows one per launch, never the one it
   showed last. The list may be empty: the logo is then on plain black.

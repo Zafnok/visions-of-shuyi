@@ -18,6 +18,7 @@ use crate::screen::Ctx;
 use crate::screens::title::glyph::{LOGO_SCALE, logo_sprite};
 use crate::screens::{centre_x, print_centred};
 use crate::widgets::menu::glyph as menu_glyph;
+use shuyi_ui::GameData;
 #[cfg(not(feature = "std"))]
 use shuyi_ui::float::Float;
 use shuyi_ui::screens::print_centred_styled;
@@ -75,6 +76,40 @@ pub fn words_sprite(image: trpg_content::ImageId, size: (u32, u32)) -> Sprite {
     Sprite::new(image, PxRect::new(0, 0, w, h), dest, Layer::Over)
 }
 
+/// Game Over's words picture in the language text is shown in, with its
+/// size, or `None` for the heading as text (ticket 0831): the language's
+/// own copy of the shipped picture `lang/<tag>/files/<path>` along its
+/// chain ([`Ctx::localized`](shuyi_ui::Ctx::localized)), asked each
+/// frame so a change of language shows at once; the shipped picture in
+/// the source language; text in a language with no copy, never the
+/// English picture; text too when `title.ron` names no picture.
+pub fn words_picture(ctx: &Ctx) -> Option<(trpg_content::ImageId, (u32, u32))> {
+    let shipped = ctx.game.content.title.game_over?;
+    let images = &ctx.game.content.images;
+    let path = ctx.localized(trpg_content::lang::LANG_DIR, shipped.0.path(), |p| {
+        images.id(p).is_some()
+    });
+    let source = &ctx.game.lang().source_lang().code;
+    words_at(shipped, &path, ctx.effective_lang() == source, images)
+}
+
+/// The picture at `path` with its size, where `path` is where the words
+/// `shipped` are read in a language ([`words_picture`]): `shipped` itself
+/// in the `source` language, `None` in another with no copy of it.
+fn words_at(
+    shipped: (trpg_content::ImageId, (u32, u32)),
+    path: &str,
+    source: bool,
+    images: &trpg_content::ImageTable,
+) -> Option<(trpg_content::ImageId, (u32, u32))> {
+    if path == shipped.0.path() {
+        return source.then_some(shipped);
+    }
+    let id = images.id(path)?;
+    let info = images.info(id)?;
+    Some((id, (info.width, info.height)))
+}
+
 /// Fills `buf` with blank cells.
 fn clear(ctx: &Ctx, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
@@ -116,7 +151,7 @@ pub fn paint(ctx: &Ctx, view: &GameOverView, buf: &mut GlyphBuffer) {
     }
     let words = ramp(view.progress, WORDS_IN);
     if words > 0.0 {
-        if let Some((image, size)) = ctx.game.content.title.game_over {
+        if let Some((image, size)) = words_picture(ctx) {
             let mut sprite = words_sprite(image, size);
             sprite.opacity = opacity(words);
             buf.add_sprite(sprite);
@@ -320,6 +355,71 @@ mod tests {
         assert!((part - 0.125).abs() < 1e-3);
         assert_eq!(buf.get(at, WORDS_ROW + 1).unwrap().fg, gold.scale(part));
         assert_eq!(row(&painted(&c, 140), WORDS_ROW + 1), "");
+    }
+
+    /// The test pack's own copy of the words (0831).
+    const TEST_COPY: &str = "lang/test/files/title/game_over.png";
+
+    fn in_test_language(c: &mut Ctx) {
+        c.lang = trpg_content::LangCode::new(trpg_content::lang::TEST).unwrap();
+    }
+
+    /// English shows the shipped words; a language with its own copy
+    /// shows it, from the frame it is chosen; one with no copy shows its
+    /// heading as text, never the English picture.
+    #[test]
+    fn each_language_gets_its_own_words_or_text() {
+        let mut c = ctx();
+        let shipped = c.game.content.title.game_over;
+        assert_eq!(words_picture(&c), shipped);
+        in_test_language(&mut c);
+        let copy = c.game.content.images.id(TEST_COPY).unwrap();
+        assert_eq!(words_picture(&c), Some((copy, (23, 7))));
+        let buf = painted(&c, FULL);
+        let words = buf.sprites()[1];
+        assert_eq!((words.image, words.src), (copy, PxRect::new(0, 0, 23, 7)));
+        assert_eq!(words.dest, PxRect::new(308, 304, 184, 56));
+        assert!((0..i32::from(ConsoleSpec::PC.rows)).all(|y| !row(&buf, y).contains("OVER")));
+        // Without debug tools the test pack isn't shown: English again.
+        c.debug_tools = false;
+        assert_eq!(words_picture(&c), shipped);
+        c.debug_tools = true;
+        // A language with no copy: the heading as text.
+        c.game.content.images.images.remove(TEST_COPY);
+        assert_eq!(words_picture(&c), None);
+        let buf = painted(&c, FULL);
+        assert_eq!(row(&buf, WORDS_ROW + 1), "OVER");
+        assert_eq!(buf.sprites().len(), 1, "the logo alone");
+        // No picture named in `title.ron`: text in every language.
+        c.game.content.title.game_over = None;
+        assert_eq!(words_picture(&c), None);
+    }
+
+    /// A copy along the language's chain is found as its own is: a
+    /// `pt-BR` with none reads `pt`'s.
+    #[test]
+    fn a_copy_along_the_chain_is_the_languages_words() {
+        let c = ctx();
+        let shipped = c.game.content.title.game_over.unwrap();
+        let mut images = c.game.content.images.clone();
+        let pt = "lang/pt/files/title/game_over.png";
+        images
+            .images
+            .insert(pt, trpg_content::ImageInfo::new(30, 7));
+        let tag = |t| trpg_content::LangCode::new(t).unwrap();
+        let chain = [tag("pt-BR"), tag("pt"), tag("en")];
+        let path = shuyi_assets::lang::localized_path("lang", &chain, shipped.0.path(), |p| {
+            images.id(p).is_some()
+        });
+        assert_eq!(path, pt);
+        let found = words_at(shipped, &path, false, &images);
+        assert_eq!(found, Some((images.id(pt).unwrap(), (30, 7))));
+        // The plain path: the shipped words in the source, else none.
+        assert_eq!(
+            words_at(shipped, shipped.0.path(), true, &images),
+            Some(shipped)
+        );
+        assert_eq!(words_at(shipped, shipped.0.path(), false, &images), None);
     }
 
     #[test]
