@@ -558,7 +558,7 @@ what is settled:
   water or a unit's tile ("its weird that there are animals being occluded
   by hills").
 - **Drifting effects, as kinds a chapter can name** (the palette that
-  1324–1331 pick from): **petals, leaves (green and autumn), snow, ash,
+  1362–1369 pick from): **petals, leaves (green and autumn), snow, ash,
   fireflies**. Nick on the leaves: "a good idea but looks poorly
   implemented … we can also look if this kind of effect is an asset too".
   Art: **ByteWright's *Weather Overlays*** (bought 2026-11-24 in its
@@ -569,7 +569,7 @@ what is settled:
   non-commercial, so it needs written permission for a sold game.
 - **Where: the battle map only.** Talk scenes and the world map stay as
   they are. Nick: "battle map only and probably we decide density later".
-  How many particles is decided later, per chapter (1324–1331).
+  How many particles is decided later, per chapter (1362–1369).
 - **The Playdate** (and any weaker target, 1314) shows the map still: no
   moving tiles, no drifting effects. Not contested; the default from
   1314.

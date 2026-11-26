@@ -43,7 +43,7 @@ checklist.
 - The touches 1323 picked, as effect data and scene items: a step puff
   keyed by the terrain under the step (a terrain table, so a new terrain
   is a row), the map hit burst, and creatures with a spawn rule (per map,
-  from 1335–1342's data; the test chapter names one).
+  from 1370–1377's data; the test chapter names one).
 - Creatures that scatter: computed from units' places at the scene's time
   (seed and time, no state kept by the rules).
 - Both map skins paint them; the glyph look with glyphs.

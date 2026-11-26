@@ -43,7 +43,7 @@ Consequences), not a fourth tier. Preview with `cargo shuyi frame-png
 `docs/design/look-and-feel.md`, *Moving tiles and effects*:
 
 - **Kinds:** petals, leaves (green and autumn), snow, ash, fireflies.
-  **Battle map only**; density per chapter later (1335–1342). The
+  **Battle map only**; density per chapter later (1370–1377). The
   Playdate shows none.
 - **Art:** ByteWright's *Weather Overlays* (`assets-private/library/
   bytewright/effects/weather-overlays/`): seamless looping overlays
@@ -79,7 +79,7 @@ Consequences), not a fourth tier. Preview with `cargo shuyi frame-png
 **Out (do not do):** weather that changes rules (rain lowering hit);
 sounds (1332); effects on screens 0096 didn't name; bursts on hits
 (1333) and touches and creatures on the map (1334), which use this
-ticket's engine particles; each chapter's pick (1335–1342).
+ticket's engine particles; each chapter's pick (1370–1377).
 
 ## Implementation steps
 
