@@ -119,6 +119,7 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
         Row::Intro,
         Row::MusicVolume,
         Row::SoundVolume,
+        Row::Language,
         Row::KeyBindings,
         Row::GameMode,
         Row::Tutorial,
@@ -281,6 +282,7 @@ fn every_setting_row_changes_its_own_setting() {
                 Row::AutoAdvance,
                 s.game.auto_advance != before.game.auto_advance,
             ),
+            (Row::Language, s.language != before.language),
         ];
         let rows: Vec<Row> = changed.iter().filter(|c| c.1).map(|c| c.0).collect();
         assert_eq!(rows, [row]);
@@ -328,6 +330,7 @@ fn rows_show_their_values() {
             "<100/100>",
             "On*",
             "Off*",
+            "English*",
             "Right-handed",
             "",
             "",
@@ -670,4 +673,53 @@ fn help_names_what_confirm_does_on_each_kind_of_row() {
         on(Row::KeyBindings).help(&c).plain(),
         "arrows move · f open · d back"
     );
+}
+
+/// Ticket 0825: the Language row, starting the group of Layout and Key
+/// bindings, lists every language by its own
+/// name, the test pack (machine-made, offered with debug tools) with its
+/// note. Choosing it changes every screen's text at once, the title's
+/// included; kept, it survives a restart.
+#[test]
+fn the_language_row_changes_every_screen_and_survives_a_restart() {
+    use crate::harness::Harness;
+    let mut h = Harness::with_screen(Box::new(on(Row::Language)));
+    let c = h.game().ctx();
+    let rows = shown_rows(c);
+    let at = rows.iter().position(|&r| r == Row::Language).unwrap();
+    assert_eq!(rows[at + 1], Row::Layout);
+    let names = crate::screens::language_list::names(c);
+    assert_eq!(names, ["English", "TEST (MACHINE TRANSLATION)"]);
+    assert_eq!(value(c, Row::Language).text(), Some("English"));
+    h.keys("Right");
+    let c = h.game().ctx();
+    assert_eq!(c.lang.as_str(), "test");
+    assert_eq!(c.text("title.new_game"), "NEW GAME");
+    let title = crate::screens::TitleScreen::new(c);
+    assert!(
+        Harness::with_screen(Box::new(title))
+            .snapshot()
+            .contains("NEW GAME")
+    );
+    assert!(h.snapshot().contains("LANGUAGE"), "{}", h.snapshot());
+    // Kept on leaving: Back is the default, two lefts are Keep.
+    h.keys("Escape Left Left f");
+    let h = Harness::with_storage(h.into_storage());
+    assert_eq!(h.game().ctx().lang.as_str(), "test");
+    assert!(h.snapshot().contains("NEW GAME"), "{}", h.snapshot());
+}
+
+/// Discard puts the language back, as every row's change.
+#[test]
+fn discarding_puts_the_language_back() {
+    let mut c = ctx();
+    c.debug_tools = true;
+    let mut s = on(Row::Language);
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    assert_eq!(c.lang.as_str(), "test");
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    assert_eq!(c.settings().language, None);
+    assert_eq!(c.lang.as_str(), "en");
 }

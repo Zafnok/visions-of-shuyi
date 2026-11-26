@@ -214,9 +214,12 @@ pipeline → **0719** Chapter 1 and the screens in Japanese (after 0716).
 wide font per language and Chinese line breaking (after 0236, 0237;
 engine#2303 done) → **0261** Unifont 16px as a second font in Options
 (after 0825); **0262** typing Chinese names with the system's input
-method (after 0068; not Chapter 1); **0725** the translation pipeline
-(after 0235) → **0726** Chapter 1 and the screens in Chinese (after
-0716, 0825, and Nick's wife's review of the lists).
+method (after 0068; not Chapter 1); **0725** done (2026-11-25: the
+pipeline, the glossary, the Chinese names and the style sheets, in the
+private repository's `story/zh/`; the pack itself lands with 0726)
+→ **0726** Chapter 1 and the screens in Chinese (after
+0716, 0825, Nick's wife's review of the lists, and **0934**: the demo
+keeps a pack's entries for what it holds; 0719 waits for it too).
 *Voices* (ADR-0046, ADR-0107): **0043** done, Nick picked the tools, what is
 voiced and each voice by ear; **0238** playback plumbing (after 0717) →
 **0754** the voice's word for the player's name, **0720** the dialogue screen

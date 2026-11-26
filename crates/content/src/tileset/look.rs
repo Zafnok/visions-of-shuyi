@@ -176,7 +176,7 @@ impl Looking<'_, '_> {
                     let problem = format!("{what}: it has no pictures");
                     self.check.problems.push(problem);
                 }
-                Layer::Corners(CornerLayer { of, tiles })
+                Layer::Corners(CornerLayer::new(of, tiles))
             }
             LayerFile::Tiles {
                 at, beside, sides, ..

@@ -72,13 +72,13 @@ fn the_options_are_read_by_their_version() {
     let c = ctx();
     let now = Settings::to_ron(c.settings());
     assert_eq!(verdict(&c, SETTINGS_KEY, &now), Verdict::Ready);
-    let old = now.replacen("version: 3", "version: 1", 1);
+    let old = now.replacen("version: 4", "version: 1", 1);
     assert_ne!(old, now);
     assert_eq!(verdict(&c, SETTINGS_KEY, &old), Verdict::Ready);
-    let later = now.replacen("version: 3", "version: 9", 1);
+    let later = now.replacen("version: 4", "version: 9", 1);
     assert_eq!(
         verdict(&c, SETTINGS_KEY, &later),
-        Verdict::Incompatible { found: 9, wants: 3 }
+        Verdict::Incompatible { found: 9, wants: 4 }
     );
     assert_eq!(verdict(&c, SETTINGS_KEY, "(nonsense"), Verdict::Unreadable);
 }
@@ -192,13 +192,13 @@ fn the_name_in_a_file_name() {
 fn the_options_verdict_is_the_first_that_isnt_ready() {
     let c = ctx();
     let keys = c.player_keys().to_ron();
-    let settings = Settings::to_ron(c.settings()).replacen("version: 3", "version: 9", 1);
+    let settings = Settings::to_ron(c.settings()).replacen("version: 4", "version: 9", 1);
     let text = file(&[(KEYBINDINGS_KEY, &keys), (SETTINGS_KEY, &settings)]);
     let report = Report::read(&c, "a.ron", &text, Channel::Profile);
     let report = report.unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(
         report.options,
-        Some(Verdict::Incompatible { found: 9, wants: 3 })
+        Some(Verdict::Incompatible { found: 9, wants: 4 })
     );
 }
 

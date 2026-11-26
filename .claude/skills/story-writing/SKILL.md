@@ -1,6 +1,6 @@
 ---
 name: story-writing
-description: Write or revise story material — story bible, character sheets, outline, chapter beat sheets, and .dlg dialogue scripts — following the pipeline in ADR-0011. Use for any 07xx story ticket or whenever dialogue/cutscene text is written. Not for story decisions, which are Nick's (ask-nick).
+description: Write or revise story material — story bible, character sheets, outline, chapter beat sheets, and .dlg dialogue scripts — following the pipeline in ADR-0011, and translate them into a language pack. Use for any 07xx story ticket or whenever dialogue/cutscene text is written or translated. Not for story decisions, which are Nick's (ask-nick).
 metadata:
   version: "1.0"
 ---
@@ -96,8 +96,7 @@ your first scene.
   (`assets-private/story/chapters/chNN.md`), the character sheets and the ledger.
   Keep the old `.dlg` closed until the new draft has passed the critique
   pass. Then open it only to carry over structure: scene ids, `@`
-  directives, the `@choice` replies the story gates read, the `@if`
-  blocks.
+  directives, the `@choice` replies the story gates read, the `@if` blocks.
 - **Quoted old lines count as old lines.** Sample lines in the character
   sheets and lines quoted in a beat sheet may come from a rejected draft
   (Chapter 1's do: 0707, 0724, 0728). Read the sheets for want, need,
@@ -107,8 +106,7 @@ your first scene.
   kept*).
 - **Never fix a rejected scene line by line, and never splice lines from
   two drafts.** If a scene needs more than a couple of lines changed, it
-  needs a new draft from its card. With two drafts, keep the better one
-  whole.
+  needs a new draft from its card. With two drafts, keep the better one whole.
 
 ### Before the first line: the scene card
 
@@ -141,8 +139,7 @@ written as a briefing gets transcribed as a briefing.
   nothing for the plot and everything for the relationship: a check-in
   ("did you eat?", "you're soaked"), fussing, a tease about a habit, a
   shared complaint about the cold. They are what players come to love
-  companions through. Under threat they stay, as plain care; the jokes
-  don't.
+  companions through. Under threat they stay, as plain care; the jokes don't.
 - **Care lands on the body.** People in danger look after each other's
   feet, hands, food, sleep and wounds. Each companion has a care
   signature: the thing they notice about other people. The carer insists,
@@ -196,8 +193,7 @@ written as a briefing gets transcribed as a briefing.
   feeling, never speaks for the dead, and a scene never ends on a symbol
   for the player to decode.
 - **Start late, cut on the turn.** Drag is repetition, recaps and talk
-  after the turn, not warmth. Cut a report box for every human box you
-  add.
+  after the turn, not warmth. Cut a report box for every human box you add.
 
 ### Grief and death
 
@@ -490,8 +486,12 @@ writing the lead"); the validator enforces the limits below.
 
 Follow [`references/critique-pass.md`](references/critique-pass.md):
 the cold read by a fresh subagent, then the editor's list. Fix every
-hit, then update `assets-private/story/ledger.md` with what changed for each
-character.
+hit, then update `assets-private/story/ledger.md` with what changed for each character.
+
+## Translating
+
+A step after the script (ADR-0045 §6), by a written process for each language:
+[`references/translating.md`](references/translating.md). Chinese: `assets-private/story/zh/README.md`.
 
 ## Gates
 

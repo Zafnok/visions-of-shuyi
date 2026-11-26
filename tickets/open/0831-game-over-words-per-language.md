@@ -26,6 +26,16 @@ English is the only shipped language today, so nothing is wrong yet. The
 first translated language (tickets 0042, 0045; ADR-0045) needs a way to
 show its own words.
 
+**The engine holds a language's copies** (engine #590, ticket 2278, made
+for this ticket and in the pin since the pin move of 2026-11-26). A
+language pack's folder may hold `files/<path>`, that language's copy of
+the game's file at `<path>` (`assets/lang/<tag>/files/title/game_over.png`),
+and `Ctx::localized("lang", path, has)` returns the first copy along the
+language's chain, else `path` itself. The game reads its packs with the
+engine's `shuyi_assets::lang` (`crates/content/src/lang.rs`), so the
+folder loads with no change there; the game writes no loader or field of
+its own.
+
 ## Nick input
 
 None. (Which words a language shows is that language's translation.)
@@ -45,9 +55,17 @@ None. (Which words a language shows is that language's translation.)
 
 ## Implementation steps
 
-1. Decide where a language names its picture (ADR-0045's files) and load
-   it with the language.
-2. `game_over/glyph.rs` takes the picture of the language in use.
+1. A language's picture is its pack's copy,
+   `lang/<tag>/files/title/game_over.png` (above). Check that the game's
+   image table lists it (the engine's lists every PNG of the bundle), and
+   that the Playdate's lettering (`LETTERINGS` in
+   `crates/content/src/playdate_images.rs`) takes a language's copy too.
+2. `game_over/glyph.rs` asks `ctx.localized("lang",
+   "title/game_over.png", …)` each frame it draws, so a change of
+   language shows at once. When it returns the plain path (no pack along
+   the chain has a copy), a language other than the source shows its
+   `game_over.heading` as text, as the scope says, never the English
+   picture.
 3. Document it in `assets/title/README.md` and the language pack's README.
 
 ## Acceptance criteria
@@ -59,7 +77,8 @@ None. (Which words a language shows is that language's translation.)
 
 ## Tests required
 
-- Unit: the loader's new field and its errors.
+- Unit: which picture or text each language gets (a copy, a copy along
+  the chain, none).
 - Snapshot / integration: Game Over in the `test` language.
 
 ## Completion notes

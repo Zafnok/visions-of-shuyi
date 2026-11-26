@@ -1,6 +1,6 @@
 ---
 name: story-writing
-description: Write or revise story material — story bible, character sheets, outline, chapter beat sheets, and .dlg dialogue scripts — following the pipeline in ADR-0011. Use for any 07xx story ticket or whenever dialogue/cutscene text is written. Not for story decisions, which are Nick's (ask-nick).
+description: Write or revise story material — story bible, character sheets, outline, chapter beat sheets, and .dlg dialogue scripts — following the pipeline in ADR-0011, and translate them into a language pack. Use for any 07xx story ticket or whenever dialogue/cutscene text is written or translated. Not for story decisions, which are Nick's (ask-nick).
 metadata:
   version: "1.0"
 ---

@@ -17,7 +17,9 @@ use trpg_core::{BattleState, GameMode, LeadGender, LeadProfile};
 
 use crate::debug::{self, DebugMenuScreen, ScenePreviewScreen};
 use crate::screen::{Ctx, Keyboard, Screen, ScreenStack, Shuyi};
-use crate::screens::{BattleScreen, LayoutPickerScreen, TitleScreen, layout_picker};
+use crate::screens::{
+    BattleScreen, LanguageListScreen, LayoutPickerScreen, TitleScreen, language_list, layout_picker,
+};
 
 pub use shuyi_ui::RawInputEvent;
 
@@ -81,7 +83,9 @@ pub(crate) fn use_saved_layout(ctx: &mut Ctx) {
 /// saved one (the settings') is loaded from `ctx.storage`; if none is
 /// saved (first launch), the first key press opens the layout picker.
 /// A platform without a keyboard ([`Keyboard::Absent`]) never opens
-/// it.
+/// it. A first launch with no language picked either asks for it first
+/// ([`language_list::asks`], ticket 0825): the language list opens at
+/// once, the layout picker under it on a keyboard.
 pub fn start(mut ctx: Ctx) -> Game {
     use_saved_layout(&mut ctx);
     let title = if ctx.debug_tools {
@@ -89,11 +93,14 @@ pub fn start(mut ctx: Ctx) -> Game {
     } else {
         TitleScreen::new(&ctx)
     };
-    with_atlas_widths(Game::with_stack(
-        ctx,
-        ScreenStack::new(Box::new(title)),
-        hooks(),
-    ))
+    let mut stack = ScreenStack::new(Box::new(title));
+    if language_list::asks(&ctx) {
+        if ctx.platform.keyboard == Keyboard::Present {
+            stack.push(Box::new(layout_picker::first(&ctx)));
+        }
+        stack.push(Box::new(LanguageListScreen::new(&ctx)));
+    }
+    with_atlas_widths(Game::with_stack(ctx, stack, hooks()))
 }
 
 /// A game opened straight on the dialogue scene `scene`, for whoever
