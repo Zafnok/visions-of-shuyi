@@ -280,8 +280,10 @@ pub static MARK: Kind = Kind {
 
 // engine-friction: engine#2245, moves (game 1221 deletes it)
 /// The kind of the picture at `path` (relative to `assets/`), or `None`
-/// if the Playdate keeps it as it is.
+/// if the Playdate keeps it as it is. A language's copy of a picture,
+/// `lang/<tag>/files/<path>` (ticket 0831), is of its picture's kind.
 pub fn kind_of(path: &str) -> Option<&'static Kind> {
+    let path = copy_of(path).unwrap_or(path);
     let png = path
         .rsplit_once('.')
         .is_some_and(|(_, ext)| ext.eq_ignore_ascii_case("png"));
@@ -298,6 +300,17 @@ pub fn kind_of(path: &str) -> Option<&'static Kind> {
         path.strip_prefix(kind.folder)
             .is_some_and(|rest| rest.starts_with('/'))
     })
+}
+
+/// The game's file that `path` is a language's copy of
+/// (`lang/<tag>/files/<file>`, the engine's `localized_path`), or `None`.
+/// `lang/` is `lang::LANG_DIR`, which the build script, sharing this
+/// file, can't name.
+fn copy_of(path: &str) -> Option<&str> {
+    let rest = path.strip_prefix("lang/")?;
+    let (tag, rest) = rest.split_once('/')?;
+    let file = rest.strip_prefix("files/")?;
+    (!tag.is_empty() && !file.is_empty()).then_some(file)
 }
 
 /// The touched-up one-bit picture of the PNG at `path` (ticket 1042): a
@@ -547,6 +560,18 @@ mod tests {
         assert_eq!(name("fonts/atlas.png"), None);
         assert_eq!(name("images/effect_marks.png"), None);
         assert_eq!(name("images/kill_mark.png"), Some("mark"));
+        // A language's copy is of its picture's kind (0831).
+        let copy = "lang/pt-BR/files/title/game_over.png";
+        assert_eq!(name(copy), Some("lettering"));
+        assert_eq!(name("lang/pt/files/portraits/a/b.png"), Some("portrait"));
+        assert_eq!(name("lang/pt/files/fonts/atlas.png"), None);
+        assert_eq!(name("lang/pt/title/game_over.png"), None);
+        assert_eq!(name("lang//files/title/game_over.png"), None);
+        assert_eq!(
+            copy_of(&format!("{}/x/files/a", crate::lang::LANG_DIR)),
+            Some("a")
+        );
+        assert_eq!(copy_of("lang/x/files/"), None);
     }
 
     /// The kill mark (ticket 0470) at its own size, see-through where the

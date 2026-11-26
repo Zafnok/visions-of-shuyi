@@ -224,6 +224,31 @@ fn game_over_snapshot() {
     assert_snapshot!(h.snapshot());
 }
 
+/// The finished screen in the test language (0831): its own words
+/// picture, its menu and help in capitals.
+#[test]
+fn game_over_in_the_test_language_snapshot() {
+    let test = trpg_content::LangCode::new(trpg_content::lang::TEST).unwrap();
+    let mut c = ctx();
+    c.lang = test.clone();
+    let mut s = GameOverScreen::new(&c, false);
+    s.skip();
+    let mut h = Harness::with_screen(Box::new(s));
+    h.ctx_mut().lang = test;
+    h.steps(1);
+    let images = &h.game().ctx().game.content.images;
+    let copy = images.id("lang/test/files/title/game_over.png").unwrap();
+    let shown: Vec<_> = h
+        .game()
+        .buffer()
+        .sprites()
+        .iter()
+        .map(|s| s.image)
+        .collect();
+    assert!(shown.contains(&copy), "{shown:?}");
+    assert_snapshot!(h.snapshot());
+}
+
 #[test]
 fn to_be_continued_snapshot() {
     let h = Harness::with_screen(Box::new(ToBeContinuedScreen));

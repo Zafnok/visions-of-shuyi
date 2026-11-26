@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: ["0830"]
 nick_input: none
-completed:
+completed: 2026-11-26
 ---
 
 # 0831 — Game Over's words per language
@@ -70,10 +70,10 @@ None. (Which words a language shows is that language's translation.)
 
 ## Acceptance criteria
 
-- [ ] In English the screen is as 0830 left it.
-- [ ] Test: a language with its own picture shows it; one with none shows
+- [x] In English the screen is as 0830 left it.
+- [x] Test: a language with its own picture shows it; one with none shows
       its heading as text.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -83,5 +83,27 @@ None. (Which words a language shows is that language's translation.)
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `game_over/glyph.rs`: `words_picture` asks `ctx.localized("lang",
+  <the shipped picture's path>, …)` each frame. A copy along the
+  language's chain is drawn in place of the English picture, at its own
+  size, centred on the same row; the source language draws the shipped
+  picture; a language with no copy prints its `game_over.heading` as
+  text (0830's fallback), never the English picture. English is
+  unchanged (its snapshot and look tests are as 0830 left them).
+- The image table already lists a pack's PNGs (the engine's lists every
+  PNG of the bundle); nothing changed there. The Playdate's `kind_of`
+  (`playdate_images.rs`) now reads `lang/<tag>/files/<path>` as of its
+  picture's kind, so a language's Game Over words are a lettering too.
+  That code carries 1221's marker (engine#2245): a dated line in 1221's
+  Context says the engine's bake covers it (a copy gets its own
+  `.meta`).
+- The `test` pack has `files/title/game_over.png`, a 23×7 `TEST` in the
+  same gold, drawn by a one-off script (a test picture, not shipped).
+- Tests: which picture or text each language gets (own copy, a copy
+  along the chain `pt-BR` → `pt`, none, no picture named, the test pack
+  hidden without debug tools); the Game Over screen in the test language
+  (snapshot plus its sprite).
+- Documented in `assets/title/README.md` and `assets/lang/README.md`
+  (*A language's own files*).
+- No gameplay rule decided. Nothing to judge by playing.
+- Engine friction: estimate 30, measured 31 (1.0×), under 2×. PR size: estimate 250, measured 221.

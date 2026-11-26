@@ -37,6 +37,13 @@ playdate`): if 1170 is done, its adapter calls this module; move it onto
 same files from the `.meta` data. If not, nothing more to do here:
 1170's adapter starts from the `.meta` data this ticket writes.
 
+**2026-11-26, ticket 0831:** `kind_of` reads a language's copy of a
+picture, `lang/<tag>/files/<path>` (the engine's `localized_path`), as
+of its picture's kind, so the Game Over words' copy is a lettering. The
+engine's bake covers it with no gap (engine#2245): a copy gets its own
+`.meta` beside it (`lang/<tag>/files/title/game_over.png.meta`, which a
+pack may hold), so write one for each copy as for its picture.
+
 ## Nick input
 
 None. The pictures must not change: every converted file comes out

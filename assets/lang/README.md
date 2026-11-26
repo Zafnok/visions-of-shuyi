@@ -12,13 +12,27 @@ assets/lang/
     ui.ron              screen text
     data.ron            names, tips, lessons, titles and notes of the data files
     dialogue/<file>.ron lines and captions, one file per .dlg file
+    files/<path>        the language's own copy of the game's file at
+                        <path> (files/title/game_over.png)
 ```
 
 The pack the tests use, `test` (English in capitals; never offered to
 players), is a test file: `assets-test/lang/test/` (ADR-0057).
 
-A pack needs `lang.ron` and `ui.ron`; `data.ron` and `dialogue/` are
-optional. Any other file is an error.
+A pack needs `lang.ron` and `ui.ron`; `data.ron`, `dialogue/` and
+`files/` are optional. Any other file is an error.
+
+## A language's own files
+
+A picture with words in it reads the same in every language, so a pack
+may hold its own copy of one under `files/`, at the game's path: the
+engine's `Ctx::localized` finds the first copy along the language's
+chain (`pt-BR`, then `pt`) and the game draws it in place of English's.
+Only a screen that asks for it reads one; today that is the Game Over
+screen's words (ticket 0831): `files/title/game_over.png`, drawn as
+`assets/title/README.md` says for `game_over.png`. A pack without one
+shows its `game_over.heading` as text there, never the English picture.
+The test pack has a small one, `TEST`, 23×7.
 
 ## Entries
 
