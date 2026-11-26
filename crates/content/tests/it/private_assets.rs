@@ -324,6 +324,81 @@ fn chapter_1s_hills_and_peaks_are_one_raised_area_with_a_rim() {
     assert!(corners_of(outdoor, &BTreeSet::from([mountain])).is_some());
 }
 
+/// Harl's fort is the stone keep and Harrowby a round tower (ticket 1360,
+/// 0096): drawn last, the face hung on the tile below each wall (never on
+/// a wall or a gate), the wall's top by its walls beside it, the tower two
+/// tiles tall standing on its fort, the keep's fort a stone by its floor;
+/// the floor paved, and Tiny Tales' floor and fort gone from the look.
+#[test]
+fn chapter_1s_fort_is_the_stone_keep_and_harrowby_a_tower() {
+    use std::collections::BTreeSet;
+    use trpg_content::tileset::Layer;
+
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    let tileset = &content.tilesets["tiny_tales"];
+    let rogue = tileset.look("rogue_adventure").expect("no look");
+    let outdoor = tileset.look("outdoor").expect("no look");
+    let id = |name: &str| content.terrain.display.id_of(name).expect("no terrain");
+    let (wall, fort, floor) = (id("wall"), id("fort"), id("floor"));
+    let keep = rogue.layers.len() - 4;
+    let [
+        Layer::Corners(face),
+        Layer::Tiles(top),
+        Layer::Corners(tower),
+        Layer::Tiles(stone),
+    ] = &rogue.layers[keep..]
+    else {
+        panic!("the keep isn't drawn last: {:?}", &rogue.layers[keep..]);
+    };
+    assert_eq!(
+        (&face.of, &top.of, &top.beside),
+        (&BTreeSet::from([wall]), &face.of, &face.of)
+    );
+    let gates = BTreeSet::from([wall, id("road"), id("gate"), id("door")]);
+    assert_eq!((face.offset, &face.skip), ((8, 24), &gates));
+    // Across, up and down, and a pillar: three pictures.
+    let at = |r: &trpg_content::tileset::ImageRect| (r.x, r.y, r.w, r.h);
+    let tops: BTreeSet<_> = top
+        .sides
+        .iter()
+        .flatten()
+        .chain([&top.tile])
+        .map(at)
+        .collect();
+    assert_eq!(tops.len(), 3);
+    assert_eq!(tower.of, BTreeSet::from([fort]));
+    assert_eq!(
+        (tower.offset, &tower.skip),
+        ((8, -8), &BTreeSet::from([wall, floor]))
+    );
+    let tall: BTreeSet<_> = tower.tiles.iter().flatten().map(|r| (r.w, r.h)).collect();
+    assert_eq!(tall, BTreeSet::from([(16, 32)]));
+    // The stone covers the tower's foot on a fort by a floor.
+    assert_eq!(
+        (&stone.of, &stone.beside),
+        (&tower.of, &BTreeSet::from([floor]))
+    );
+    assert!(stone.sides[1..].iter().all(Option::is_some));
+    assert_eq!(stone.sides[0], None);
+    // The paving isn't Tiny Tales'; no layer of the look is its floor's
+    // rim or its fort.
+    assert_ne!(rogue.tiles[&floor], outdoor.tiles[&floor]);
+    let tiny_tales_floor = outdoor.layers.iter().find(
+        |l| matches!(l, Layer::Corners(c) if c.of.contains(&floor) && !c.of.contains(&id("water"))),
+    );
+    let tiny_tales_fort = outdoor
+        .layers
+        .iter()
+        .find(|l| matches!(l, Layer::Tiles(t) if t.of == BTreeSet::from([fort])));
+    for layer in [tiny_tales_floor, tiny_tales_fort] {
+        let layer = layer.expect("outdoors has it");
+        assert!(!rogue.layers.contains(layer), "{layer:?}");
+    }
+}
+
 /// Every bought file in the build has a credit (ADR-0051), and the credits
 /// screen's list has the bought art's.
 #[test]
@@ -357,7 +432,7 @@ fn every_bought_file_has_a_credit() {
             "Classes and Mobs pixel-art TRPG pieces",
             "Fantasy Battle Pack",
             // Chapter 1's ground and river (ticket 1318).
-            "Rogue Adventure World",
+            "Rogue Adventure World (modified: a wall mirrored)",
             // Chapter 1's hills (ticket 1359).
             "Lonesome Forest (modified: stones recolored)",
             // The title's campfire (ticket 0922).

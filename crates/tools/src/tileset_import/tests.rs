@@ -1817,3 +1817,278 @@ fn a_shadow_is_of_a_faced_layer_and_what_it_skips_is_ours() {
         "layer \"rim\": terrain \"lava\" is not in terrain.ron"
     );
 }
+
+/// What a tile of a fort's rows is: `#` a wall, `:` a road (a gate).
+fn wall_at(rows: &[&str], x: i32, y: i32) -> (bool, bool) {
+    let row = usize::try_from(y).ok().and_then(|y| rows.get(y));
+    let at = usize::try_from(x).ok();
+    let c = row.zip(at).and_then(|(r, x)| r.as_bytes().get(x));
+    (c == Some(&b'#'), c == Some(&b':'))
+}
+
+#[test]
+fn a_walls_top_and_face_go_by_its_neighbours_on_a_ring_with_a_gate() {
+    // A keep like Harl's (ticket 1360): a gate in its west wall and one in
+    // its south wall.
+    let ring: &[&str] = &[
+        ".......", ".#####.", ".:...#.", ".#...#.", ".##:##.", ".......",
+    ];
+    // Its tops: `A` across, `V` up and down, `P` a pillar; and its faces,
+    // `a` under a wall running across, `p` under a pillar, as 0096's
+    // mockups drew them: on the tile below each wall that doesn't run up
+    // and down, unless that tile is a wall or a gate.
+    let tops: &[&str] = &[
+        ".......", ".AAAAP.", ".....V.", ".P...V.", ".PA.AP.", ".......",
+    ];
+    let faces: &[&str] = &[
+        ".......", ".......", "..aaa..", ".......", ".......", ".pa.ap.",
+    ];
+    let at = |rows: &[&str], x: i32, y: i32| {
+        let (x, y) = (usize::try_from(x).unwrap(), usize::try_from(y).unwrap());
+        rows[y].as_bytes()[x]
+    };
+    let wall = |x, y| wall_at(ring, x, y).0;
+    for (x, y) in (0..6).flat_map(|y| (0..7).map(move |x| (x, y))) {
+        let sides = [
+            wall(x, y - 1),
+            wall(x + 1, y),
+            wall(x, y + 1),
+            wall(x - 1, y),
+        ];
+        let top = wall(x, y).then(|| match WallTop::of(sides) {
+            WallTop::Across => b'A',
+            WallTop::UpDown => b'V',
+            WallTop::Pillar => b'P',
+        });
+        assert_eq!(top.unwrap_or(b'.'), at(tops, x, y), "top ({x}, {y})");
+        // The face on this tile hangs from the point at the top-left of
+        // the tile above it (that tile down-right of the point), unless
+        // this tile is skipped.
+        let round = [(x - 1, y - 2), (x, y - 2), (x - 1, y - 1), (x, y - 1)];
+        let (is_wall, is_road) = wall_at(ring, x, y);
+        let hung = face(
+            round.map(|(x, y)| wall(x, y)),
+            u32::from(b'a'),
+            u32::from(b'p'),
+        );
+        let shown = hung.filter(|_| !is_wall && !is_road);
+        let shown = shown.map_or(b'.', |c| u8::try_from(c).unwrap());
+        assert_eq!(shown, at(faces, x, y), "face ({x}, {y})");
+    }
+    // A wall alone is a pillar, but a point sees too little to tell it
+    // from the end of a wall running across: it hangs that face.
+    assert_eq!(WallTop::of([false; 4]), WallTop::Pillar);
+    assert_eq!(face([false, false, false, true], 1, 2), Some(1));
+    assert_eq!(face([true, true, true, false], 1, 2), None);
+}
+
+#[test]
+fn a_mirrored_tile_is_its_left_half_twice_and_a_stack_is_two_tiles_tall() {
+    let temp = Temp::new("walls");
+    // Two cells, each pixel's red its cell and column, its green its row.
+    let shade = |cell: u8, x: u8, y: u8| [40 * cell + x, 10 * y, 30, 255];
+    let mut rgba = Vec::new();
+    for y in 0..16u8 {
+        for x in 0..32u8 {
+            rgba.extend(shade(x / 16, x % 16, y));
+        }
+    }
+    temp.write("lib/pack/w.png", &encode_png(32, 16, &rgba).unwrap());
+    let sheet = Sheet::read(&temp.0.join("lib"), "pack/w.png").unwrap();
+    let px = |p: &[u8], x: usize, y: usize| p[(y * 16 + x) * 4..(y * 16 + x) * 4 + 4].to_vec();
+    let mirror = mirrored(&sheet, 1).unwrap();
+    assert_eq!(mirror.len(), 16 * 16 * 4);
+    assert_eq!(px(&mirror, 2, 3), shade(1, 2, 3));
+    assert_eq!(px(&mirror, 13, 3), shade(1, 2, 3));
+    assert_eq!(px(&mirror, 8, 15), shade(1, 7, 15));
+    assert_eq!(px(&mirror, 7, 15), shade(1, 7, 15));
+    let stack = stacked(&sheet, [1, 0]).unwrap();
+    assert_eq!(stack.len(), 16 * 32 * 4);
+    assert_eq!(px(&stack, 4, 5), shade(1, 4, 5));
+    assert_eq!(px(&stack, 4, 21), shade(0, 4, 5));
+    assert!(stacked(&sheet, [0, 2]).is_err());
+    assert!(mirrored(&sheet, 2).is_err());
+    assert!(blank().iter().all(|&c| c == 0));
+    // As cuts: a stack takes two cells down; frames are further along.
+    let downs = (
+        Cut::Stacked([0, 1]).down(),
+        Cut::Mirrored(0).down(),
+        Cut::Blank.down(),
+    );
+    assert_eq!(downs, (2, 1, 1));
+    assert_eq!(Cut::Stacked([3, 9]).along(1), Cut::Stacked([4, 10]));
+    assert_eq!(Cut::Mirrored(3).along(2), Cut::Mirrored(5));
+    assert_eq!(Cut::Blank.along(2), Cut::Blank);
+    assert_eq!(Cut::Stacked([3, 9]).right_column(6), 3);
+    assert_eq!(Cut::Mirrored(10).right_column(6), 4);
+    assert_eq!(Cut::Blank.right_column(6), 0);
+}
+
+/// The keep's layers (ticket 1360) on the plain sheet: tops from tiles 1
+/// (across), 2 (whose left half runs up and down) and 3 (a pillar),
+/// faces 4 (across) and 5 (a pillar), a tower of 6 over 7, and a fort's
+/// stone 8 by a floor.
+const KEEP: &str = r#"
+    "top": Walls(of: ["wall"], sheet: "pack/plain.png", across: 1, side: 2, pillar: 3),
+    "face": Faces(of: ["wall"], sheet: "pack/plain.png", across: 4, pillar: 5,
+                  skip: ["wall", "road"]),
+    "tower": Standing(of: ["fort"], sheet: "pack/plain.png", cells: (6, 7),
+                      skip: ["wall", "floor"]),
+    "stone": Tiles(of: ["fort"], beside: ["floor"], near: ("pack/plain.png", 8)),
+"#;
+
+/// The made-up sheets imported with [`KEEP`]'s layers, in a folder named
+/// for `name`.
+fn keep_import(name: &str) -> (Temp, Mapping, Imported) {
+    let temp = Temp::new(name).with_sheet("lib");
+    with_plain(&temp);
+    let look = r#""outdoor": (layers: ["face", "top", "tower", "stone"]),"#;
+    let map = plain_mapping(KEEP, look, "");
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    (temp, map, imported)
+}
+
+#[test]
+fn the_keeps_layers_are_packed_as_tiles_and_as_pictures_from_points() {
+    let (_temp, map, imported) = keep_import("keep");
+    let [
+        LayerText::Corners {
+            of: face_of,
+            tiles: faces,
+            place: face_place,
+        },
+        LayerText::Tiles {
+            of: top_of,
+            at: pillar,
+            beside,
+            sides: tops,
+        },
+        LayerText::Corners {
+            tiles: tower,
+            place: tower_place,
+            ..
+        },
+        LayerText::Tiles {
+            at: nothing,
+            beside: by,
+            sides: stone,
+            ..
+        },
+    ] = imported.own.layers.as_slice()
+    else {
+        panic!("{:?}", imported.own.layers);
+    };
+    let colour = |at: At| cell_color(&imported.image, at);
+    let names = |n: &[&str]| n.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>();
+    // The tops: a pillar unless the sides say across or up and down.
+    assert_eq!((top_of, beside), (&names(&["wall"]), &names(&["wall"])));
+    assert_eq!(colour(*pillar), plain_color(3));
+    let mixes = |tiles: &[(u8, At)]| tiles.iter().map(|(m, _)| *m).collect::<Vec<_>>();
+    assert_eq!(mixes(tops), [1, 4, 5, 10]);
+    assert_eq!(colour(tops[0].1), plain_color(1));
+    assert_eq!(tops[0].1, tops[2].1);
+    assert_eq!(colour(tops[3].1), plain_color(2));
+    // The faces: by every point with a wall down-right of it, a tile down
+    // from it, a pillar's where the wall goes on up.
+    assert_eq!(face_of, &names(&["wall"]));
+    let downright: Vec<u8> = (1..16).filter(|m| m & 1 == 1).collect();
+    assert_eq!(mixes(faces), downright);
+    for (mix, at) in faces {
+        let wanted = if mix & 4 == 4 { 5 } else { 4 };
+        assert_eq!(colour(*at), plain_color(wanted), "{mix}");
+    }
+    let hung = Place {
+        size: None,
+        offset: (8, 24),
+        skip: names(&["wall", "road"]),
+    };
+    assert_eq!(face_place, &hung);
+    // The tower: two tiles tall, standing on its tile, packed in two cells.
+    assert_eq!(mixes(tower), downright);
+    let standing = Place {
+        size: Some((16, 32)),
+        offset: (8, -8),
+        skip: names(&["wall", "floor"]),
+    };
+    assert_eq!(tower_place, &standing);
+    let (column, row) = tower[0].1;
+    assert_eq!(colour((column, row)), plain_color(6));
+    assert_eq!(colour((column, row + 1)), plain_color(7));
+    // The stone: by any floor; nothing elsewhere.
+    assert_eq!(by, &names(&["floor"]));
+    assert_eq!(colour(*nothing), [0; 4]);
+    assert_eq!(mixes(stone), (1..16).collect::<Vec<_>>());
+    assert!(stone.iter().all(|(_, at)| colour(*at) == plain_color(8)));
+    // The list names them.
+    let listed = list(&map);
+    for line in [
+        "wall tops on wall: pack/plain.png",
+        "wall faces below wall: pack/plain.png",
+        "standing on fort: pack/plain.png tiles 6 over 7",
+        "on fort: nothing, by them pack/plain.png tile 8",
+    ] {
+        assert!(listed.contains(line), "{line}\n{listed}");
+    }
+}
+
+#[test]
+fn the_game_reads_the_keeps_faces_and_tower_at_their_size_and_place() {
+    let (_temp, _, imported) = keep_import("keep-read");
+    let (width, height, rgba) = &imported.image;
+    let png = encode_png(*width, *height, rgba).unwrap();
+    let content = trpg_content::load_embedded().unwrap();
+    let header = |w: u32, h: u32| {
+        let mut sheet = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR".to_vec();
+        sheet.extend(w.to_be_bytes());
+        sheet.extend(h.to_be_bytes());
+        sheet
+    };
+    let (sheet, horse) = (header(48, 80), header(72, 96));
+    let files = [
+        ("tilesets/tiny_tales.png", png.as_slice()),
+        ("units/a.png", sheet.as_slice()),
+        ("units/horse.png", horse.as_slice()),
+    ];
+    let refs = TilesetRefs {
+        images: &trpg_content::image::from_files(files).unwrap(),
+        terrain: &content.terrain.display,
+        classes: &content.classes,
+        characters: &content.characters,
+    };
+    let text = tileset(&imported, &UNITS);
+    let read = parse_tileset("tiny_tales.ron", "tiny_tales", &text, &refs).unwrap();
+    let look = &read.terrain.unwrap().look;
+    let [
+        Layer::Corners(face),
+        Layer::Tiles(_),
+        Layer::Corners(tower),
+        Layer::Tiles(_),
+    ] = look.layers.as_slice()
+    else {
+        panic!("{:?}", look.layers);
+    };
+    let id = |name| content.terrain.display.id_of(name).unwrap();
+    assert_eq!((face.offset, tower.offset), ((8, 24), (8, -8)));
+    assert_eq!(face.skip, BTreeSet::from([id("wall"), id("road")]));
+    assert_eq!(tower.skip, BTreeSet::from([id("wall"), id("floor")]));
+    assert_eq!(face.tiles[1].map(|r| (r.w, r.h)), Some((16, 16)));
+    assert_eq!(tower.tiles[1].map(|r| (r.w, r.h)), Some((16, 32)));
+    assert_eq!(tower.tiles[2], None);
+}
+
+#[test]
+fn the_keeps_layers_name_only_our_terrains() {
+    let look = r#""outdoor": (layers: ["top", "face", "tower", "stone"]),"#;
+    let problem = |from: &str, to: &str| {
+        let layers = KEEP.replacen(from, to, 1);
+        check(&plain_mapping(&layers, look, ""), &terrains()).unwrap_err()
+    };
+    let lava = |layer: &str| format!("layer \"{layer}\": terrain \"lava\" is not in terrain.ron");
+    assert_eq!(
+        problem("[\"wall\"], sheet", "[\"lava\"], sheet"),
+        lava("top")
+    );
+    assert_eq!(problem("\"wall\", \"road\"", "\"lava\""), lava("face"));
+    assert_eq!(problem("\"wall\", \"floor\"", "\"lava\""), lava("tower"));
+    assert_eq!(problem("[\"floor\"]", "[\"lava\"]"), lava("stone"));
+}
