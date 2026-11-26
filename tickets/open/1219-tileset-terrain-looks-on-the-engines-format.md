@@ -38,6 +38,14 @@ gained a third look a map can name, `rogue_adventure`; in `look.rs` only
 a test's expected message changed (the list of names). engine#2243 takes
 the look names a map may give from the game, so it covers this.
 
+**2026-11-26, from 1361 (ADR-0133):** `LayerFile::Corners` in `look.rs`
+gained `size` (pixels, each side in the tile side range, every picture
+inside the image), `offset` and `skip` (real terrains), set on
+engine#3246's `CornerLayer` after `new`; `Looking::mixes` takes the
+picture size. engine#2243's `LayerDef::Corners` had only `of` and
+`tiles`; Zafnok/shuyi-engine#607 (Nick's OK) adds the three fields and
+their checks to its scope.
+
 ## Nick input
 
 None. Nothing a player sees changes; an unknown terrain's error text

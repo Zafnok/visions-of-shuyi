@@ -26,6 +26,10 @@
 //! quarters of a kit's cells, RPG Maker style, so inside corners are round
 //! too; `recolour` changes a sheet's colours as it is read (Lonesome
 //! Forest's stones in a sandy brown): the recoloured art is never kept.
+//! With a `face` (ticket 1361) its pictures are half a tile taller, the
+//! cliff's face hanging on the tile below its bottom edge, and a `Shadow`
+//! layer is their silhouettes, moved: the packed image then holds pictures
+//! taller than a tile, each over the cell below its own.
 //!
 //! It is the only reader of Tiled files: the game reads our RON and PNG.
 //! The XML it needs is three kinds of tag and their attributes, read by
@@ -34,7 +38,7 @@
 //! The output is bought art (ADR-0040): it goes to the private assets
 //! checkout, never into this repository.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
@@ -45,7 +49,7 @@ use trpg_content::map::{DEFAULT_TILES, TILE_LOOKS};
 use trpg_content::tileset::parse_mix;
 
 use crate::map_sprite_import::{self, GAME_DIR, MapSprite, TILESET_ID};
-use crate::tileset_ron::{self, At, FramesText, LayerText, LookText};
+use crate::tileset_ron::{self, At, FramesText, LayerText, LookText, Place};
 use shuyi_cli::codec::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
@@ -70,6 +74,10 @@ pub const LIBRARY_DIR: &str = "assets-private/library/tiny-tales/tilesets";
 pub const MAPPING_PATH: &str = "assets-src/tilesets/tiny_tales.ron";
 /// A tile's side in the packed image, in pixels: the bought tiles'.
 pub const TILE: u32 = 16;
+/// The height of a picture of a `Quarters` layer with a face (ticket
+/// 1361): the rim's tile, and the lower half of the face of the tile below
+/// its point.
+pub const FACED: u32 = TILE + TILE / 2;
 /// Tiles per row of the packed image.
 pub const COLUMNS: u32 = 16;
 /// What a moving tile still needs for the `Minimal` tier (a GBA one day:
@@ -212,7 +220,66 @@ pub enum LayerMap {
         sheet: String,
         /// Which of its cells each kind of quarter comes from.
         kit: Kit,
+        /// The cliff's face below the layer's bottom edge, if it has one
+        /// (ticket 1361): each picture is then [`FACED`] pixels tall.
+        #[serde(default, deserialize_with = "some")]
+        face: Option<Face>,
+        /// Our terrains whose tiles get no part of its pictures (a wall a
+        /// face never hangs on).
+        #[serde(default)]
+        skip: Vec<String>,
     },
+    /// The silhouettes of another layer's pictures, a `Quarters` layer
+    /// with a face, in one see-through colour, moved by `offset` (ticket
+    /// 1361: the soft shadow under a cliff). It skips what that layer
+    /// skips.
+    Shadow {
+        /// The layer whose pictures it is the shadow of.
+        of: String,
+        /// The shadow's colour and alpha.
+        colour: (u8, u8, u8, u8),
+        /// Pixels across and down it is moved by.
+        offset: (i32, i32),
+    },
+}
+
+/// A field that may be left out: `Some` of what is written.
+fn some<'de, D: serde::Deserializer<'de>, T: Deserialize<'de>>(
+    d: D,
+) -> Result<Option<T>, D::Error> {
+    T::deserialize(d).map(Some)
+}
+
+/// The cells of a cliff's face (ticket 1361), hung on the tile below a
+/// tile of the layer whose tile below isn't in it: its left half the
+/// `left` cell's where the layer ends to the left of the tile above,
+/// else `middle`'s; its right half the `right` cell's where it ends to
+/// the right, else `middle`'s.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Face {
+    /// The face's left end.
+    pub left: u32,
+    /// The face where the layer goes on both ways.
+    pub middle: u32,
+    /// The face's right end.
+    pub right: u32,
+}
+
+impl Face {
+    /// The cells of the face on the down-left and the down-right tile of a
+    /// point whose tiles (up-left, up-right, down-left, down-right) are
+    /// `places` in the layer: of the down-left tile its right half, of the
+    /// down-right its left half, the halves nearest the point; `None`
+    /// where no face hangs.
+    pub fn under(&self, places: [bool; 4]) -> [Option<u32>; 2] {
+        let [up_left, up_right, down_left, down_right] = places;
+        let end = |goes_on: bool, end: u32| if goes_on { self.middle } else { end };
+        [
+            (up_left && !down_left).then(|| end(up_right, self.right)),
+            (up_right && !down_right).then(|| end(up_left, self.left)),
+        ]
+    }
 }
 
 /// The cells of a [`LayerMap::Quarters`]: which cell each kind of quarter
@@ -612,6 +679,28 @@ enum Cut {
     /// its up-left, up-right, down-left and down-right quarter, the cell
     /// whose opposite quarter goes there, or nothing.
     Quarters([Option<u32>; 4]),
+    /// A [`Cut::Quarters`] [`FACED`] pixels tall, the half of a face cell
+    /// nearest the point (see [`Face::under`]) hung below each of its
+    /// lower two quarters that has one; with a `shadow`, its silhouette
+    /// in that colour (RGBA).
+    Faced {
+        quarters: [Option<u32>; 4],
+        face: [Option<u32>; 2],
+        shadow: Option<[u8; 4]>,
+    },
+}
+
+/// `cells` each moved `places` along.
+const fn moved<const N: usize>(cells: [Option<u32>; N], places: u32) -> [Option<u32>; N] {
+    let mut moved = cells;
+    let mut i = 0;
+    while i < N {
+        if let Some(cell) = moved[i] {
+            moved[i] = Some(cell + places);
+        }
+        i += 1;
+    }
+    moved
 }
 
 impl Cut {
@@ -628,6 +717,23 @@ impl Cut {
                 .map(|c| c % columns)
                 .max()
                 .unwrap_or(0),
+            Self::Faced { quarters, face, .. } => quarters
+                .iter()
+                .chain(&face)
+                .flatten()
+                .map(|c| c % columns)
+                .max()
+                .unwrap_or(0),
+        }
+    }
+
+    /// How many cells of the packed image it takes, down: two for a
+    /// picture taller than a tile.
+    const fn down(self) -> u32 {
+        if matches!(self, Self::Faced { .. }) {
+            2
+        } else {
+            1
         }
     }
 
@@ -644,17 +750,16 @@ impl Cut {
                 under: under + places,
                 over: over + places,
             },
-            Self::Quarters(cells) => {
-                let mut moved = cells;
-                let mut i = 0;
-                while i < moved.len() {
-                    if let Some(cell) = moved[i] {
-                        moved[i] = Some(cell + places);
-                    }
-                    i += 1;
-                }
-                Self::Quarters(moved)
-            }
+            Self::Quarters(cells) => Self::Quarters(moved(cells, places)),
+            Self::Faced {
+                quarters,
+                face,
+                shadow,
+            } => Self::Faced {
+                quarters: moved(quarters, places),
+                face: moved(face, places),
+                shadow,
+            },
         }
     }
 }
@@ -699,6 +804,41 @@ fn quartered(sheet: &Sheet, cells: [Option<u32>; 4]) -> Result<Vec<u8>, String> 
         for y in 0..half {
             let (src, dst) = (corner(from) + y * line, corner(to) + y * line);
             out[dst..dst + half * 4].copy_from_slice(&tile[src..src + half * 4]);
+        }
+    }
+    Ok(out)
+}
+
+/// A [`Cut::Faced`] picture of `sheet`: the quarters `quarters` and, on
+/// the lower two tiles, the halves of the face cells `face` nearest the
+/// point, from the picture's middle down; its silhouette in `shadow` if
+/// one is given. RGBA8, row by row, [`FACED`] rows.
+fn faced(
+    sheet: &Sheet,
+    quarters: [Option<u32>; 4],
+    face: [Option<u32>; 2],
+    shadow: Option<[u8; 4]>,
+) -> Result<Vec<u8>, String> {
+    let half = usize::try_from(TILE / 2).unwrap_or(0);
+    let line = usize::try_from(TILE * 4).unwrap_or(0);
+    let mut out = quartered(sheet, quarters)?;
+    out.resize(line * usize::try_from(FACED).unwrap_or(0), 0);
+    for (side, cell) in face.into_iter().enumerate() {
+        let Some(cell) = cell else {
+            continue;
+        };
+        let tile = sheet.tile(cell)?;
+        // The down-left tile's right half, the down-right's left half.
+        let (from, to) = ((side ^ 1) * half * 4, side * half * 4);
+        for (y, row) in tile.chunks_exact(line).enumerate() {
+            let at = (half + y) * line + to;
+            out[at..at + half * 4].copy_from_slice(&row[from..from + half * 4]);
+        }
+    }
+    if let Some(colour) = shadow {
+        let (pixels, _) = out.as_chunks_mut::<4>();
+        for pixel in pixels.iter_mut().filter(|p| p[3] != 0) {
+            *pixel = colour;
         }
     }
     Ok(out)
@@ -755,10 +895,15 @@ struct Packer<'a> {
     /// The colours changed in each sheet as it is read.
     recolours: &'a BTreeMap<String, Vec<(Rgb, Rgb)>>,
     sheets: BTreeMap<String, Sheet>,
-    /// The sheet, picture and tint of each cell, in the image's order.
+    /// The sheet, picture and tint of each picture, in the order packed.
     cells: Vec<(String, Cut, String)>,
-    /// The cells' pixels, in the same order.
+    /// The pictures' pixels, in the same order.
     pixels: Vec<Vec<u8>>,
+    /// The place in the image of each picture's top-left cell, counting
+    /// cells row by row, in the same order.
+    slots: Vec<u32>,
+    /// Every cell of the image a picture takes.
+    taken: BTreeSet<u32>,
 }
 
 impl Packer<'_> {
@@ -796,6 +941,11 @@ impl Packer<'_> {
                 Cut::Joined { block, ends } => joined(source, block, ends),
                 Cut::Pair { under, over } => paired(source, under, over),
                 Cut::Quarters(cells) => quartered(source, cells),
+                Cut::Faced {
+                    quarters,
+                    face,
+                    shadow,
+                } => faced(source, quarters, face, shadow),
             };
             let mut pixels = pixels.map_err(|e| format!("{sheet}: {e}"))?;
             if !tint_name.is_empty() {
@@ -803,12 +953,31 @@ impl Packer<'_> {
                     .ok_or_else(|| format!("no palette colour \"{tint_name}\""))?;
                 tint(&mut pixels, color);
             }
+            let slot = self.free(cut.down());
             self.cells.push(key);
             self.pixels.push(pixels);
+            self.slots.push(slot);
             self.cells.len() - 1
         };
-        let index = u32::try_from(index).unwrap_or(u32::MAX);
-        Ok((index % COLUMNS, index / COLUMNS))
+        Ok(self.at(index))
+    }
+
+    /// The first place, counting cells row by row, with `down` free cells
+    /// from it down; taken now.
+    fn free(&mut self, down: u32) -> u32 {
+        let cells = |slot: u32| (0..down).map(move |k| slot + k * COLUMNS);
+        let free = |slot: &u32| cells(*slot).all(|cell| !self.taken.contains(&cell));
+        // Every cell past the last taken one is free, and those below it.
+        let past = self.taken.last().map_or(0, |cell| cell + 1);
+        let slot = (0..past).find(free).unwrap_or(past);
+        self.taken.extend(cells(slot));
+        slot
+    }
+
+    /// Where the `index`th picture packed is: its top-left cell.
+    fn at(&self, index: usize) -> At {
+        let slot = self.slots.get(index).copied().unwrap_or(u32::MAX);
+        (slot % COLUMNS, slot / COLUMNS)
     }
 
     /// The frames of each packed tile its sheet animates, packed now: a
@@ -845,9 +1014,8 @@ impl Packer<'_> {
             for (id, ms) in frames {
                 packed.push((self.packed(&sheet, Cut::Tile(id), &tint_name)?, ms.max(1)));
             }
-            let index = u32::try_from(index).unwrap_or(u32::MAX);
             out.push(FramesText {
-                at: (index % COLUMNS, index / COLUMNS),
+                at: self.at(index),
                 frames: packed,
                 minimal_todo: Some(MINIMAL_TODO.to_owned()),
             });
@@ -881,8 +1049,8 @@ impl Packer<'_> {
             packed.push((at, strip.ms.max(1)));
         }
         let pixels = |at: At| {
-            let i = usize::try_from(at.1 * COLUMNS + at.0).unwrap_or(usize::MAX);
-            self.pixels.get(i)
+            let i = (0..self.cells.len()).find(|&i| self.at(i) == at);
+            i.and_then(|i| self.pixels.get(i))
         };
         if packed
             .iter()
@@ -890,9 +1058,8 @@ impl Packer<'_> {
         {
             return Ok(None);
         }
-        let index = u32::try_from(index).unwrap_or(u32::MAX);
         Ok(Some(FramesText {
-            at: (index % COLUMNS, index / COLUMNS),
+            at: self.at(index),
             frames: packed,
             minimal_todo: Some(MINIMAL_TODO.to_owned()),
         }))
@@ -900,14 +1067,16 @@ impl Packer<'_> {
 
     /// The packed image: width, height and RGBA8 pixels.
     fn image(&self) -> (u32, u32, Vec<u8>) {
-        let count = u32::try_from(self.cells.len()).unwrap_or(u32::MAX);
-        let (width, height) = (COLUMNS * TILE, count.div_ceil(COLUMNS).max(1) * TILE);
+        let rows = self.taken.last().map_or(0, |cell| cell / COLUMNS + 1);
+        let (width, height) = (COLUMNS * TILE, rows.max(1) * TILE);
         let row = usize::try_from(width * 4).unwrap_or(0);
         let mut rgba = vec![0; row * usize::try_from(height).unwrap_or(0)];
         let tile = usize::try_from(TILE).unwrap_or(0);
-        let columns = usize::try_from(COLUMNS).unwrap_or(1);
         for (index, pixels) in self.pixels.iter().enumerate() {
-            let (left, top) = (index % columns * tile * 4, index / columns * tile);
+            let (column, top) = self.at(index);
+            let column = usize::try_from(column).unwrap_or(0);
+            let top = usize::try_from(top).unwrap_or(0);
+            let (left, top) = (column * tile * 4, top * tile);
             for (y, line) in pixels.chunks_exact(tile * 4).enumerate() {
                 let at = (top + y) * row + left;
                 rgba[at..at + line.len()].copy_from_slice(line);
@@ -931,8 +1100,13 @@ pub struct Imported {
 }
 
 /// One layer of the mapping as the tileset file has it, its tiles packed.
-/// `terrains` are ours, by id.
-fn layer(packer: &mut Packer, layer: &LayerMap, terrains: &[String]) -> Result<LayerText, String> {
+/// `terrains` are ours, by id; `layers` the mapping's, for a shadow's.
+fn layer(
+    packer: &mut Packer,
+    layer: &LayerMap,
+    layers: &BTreeMap<String, LayerMap>,
+    terrains: &[String],
+) -> Result<LayerText, String> {
     match layer {
         LayerMap::Corners {
             of,
@@ -959,6 +1133,7 @@ fn layer(packer: &mut Packer, layer: &LayerMap, terrains: &[String]) -> Result<L
             Ok(LayerText::Corners {
                 of: of.clone(),
                 tiles,
+                place: Place::default(),
             })
         }
         LayerMap::Tiles {
@@ -989,7 +1164,16 @@ fn layer(packer: &mut Packer, layer: &LayerMap, terrains: &[String]) -> Result<L
             inside,
             full,
         } => patch_layer(packer, of, sheet, (*patch, *inside), *full),
-        LayerMap::Quarters { of, sheet, kit } => quarters_layer(packer, of, sheet, kit),
+        LayerMap::Quarters { .. } => {
+            let quarters = Quarters::of(layer).ok_or("not a quarters layer")?;
+            quarters_layer(packer, &quarters, None)
+        }
+        LayerMap::Shadow { of, colour, offset } => {
+            let quarters = layers.get(of).and_then(Quarters::of);
+            let quarters = quarters.filter(|q| q.face.is_some());
+            let quarters = quarters.ok_or_else(|| shadow_problem(of))?;
+            shadow_layer(packer, &quarters, *colour, *offset)
+        }
         LayerMap::Block {
             of,
             sheet,
@@ -1024,24 +1208,94 @@ fn layer(packer: &mut Packer, layer: &LayerMap, terrains: &[String]) -> Result<L
     }
 }
 
+/// A [`LayerMap::Quarters`], borrowed.
+struct Quarters<'a> {
+    of: &'a [String],
+    sheet: &'a str,
+    kit: &'a Kit,
+    face: Option<Face>,
+    skip: &'a [String],
+}
+
+impl<'a> Quarters<'a> {
+    /// `layer`, if it is a [`LayerMap::Quarters`].
+    fn of(layer: &'a LayerMap) -> Option<Self> {
+        match layer {
+            LayerMap::Quarters {
+                of,
+                sheet,
+                kit,
+                face,
+                skip,
+            } => Some(Self {
+                of,
+                sheet,
+                kit,
+                face: *face,
+                skip,
+            }),
+            _ => None,
+        }
+    }
+}
+
+/// A [`LayerMap::Shadow`] of `layer` as the tileset file has it: its
+/// pictures packed as silhouettes in `(r, g, b, a)`, moved by `offset`.
+fn shadow_layer(
+    packer: &mut Packer,
+    layer: &Quarters,
+    (r, g, b, a): (u8, u8, u8, u8),
+    offset: (i32, i32),
+) -> Result<LayerText, String> {
+    let mut text = quarters_layer(packer, layer, Some([r, g, b, a]))?;
+    if let LayerText::Corners { place, .. } = &mut text {
+        place.offset = offset;
+    }
+    Ok(text)
+}
+
+/// What is wrong with a shadow of layer `of`: it isn't a `Quarters`
+/// layer with a face.
+fn shadow_problem(of: &str) -> String {
+    format!("a shadow is of a `Quarters` layer with a face, and \"{of}\" isn't one")
+}
+
 /// A [`LayerMap::Quarters`] as the tileset file has it, its pictures
-/// packed: one for each mix of corners that draws anything.
+/// packed: one for each mix of corners that draws anything, with the face
+/// below if it has one, as silhouettes in `shadow` if one is given.
 fn quarters_layer(
     packer: &mut Packer,
-    of: &[String],
-    sheet: &str,
-    kit: &Kit,
+    layer: &Quarters,
+    shadow: Option<[u8; 4]>,
 ) -> Result<LayerText, String> {
     let mut tiles = Vec::new();
     for mix in 1..16u8 {
-        let cells = kit.quarters([8, 4, 2, 1].map(|bit| mix & bit != 0));
-        if cells.iter().any(Option::is_some) {
-            tiles.push((mix, packer.packed(sheet, Cut::Quarters(cells), "")?));
+        let places = [8, 4, 2, 1].map(|bit| mix & bit != 0);
+        let quarters = layer.kit.quarters(places);
+        let face = layer.face.map_or([None; 2], |f| f.under(places));
+        if quarters.iter().chain(&face).all(Option::is_none) {
+            continue;
         }
+        let cut = if layer.face.is_some() {
+            Cut::Faced {
+                quarters,
+                face,
+                shadow,
+            }
+        } else {
+            Cut::Quarters(quarters)
+        };
+        tiles.push((mix, packer.packed(layer.sheet, cut, "")?));
     }
+    let place = Place {
+        size: layer.face.map(|_| (TILE, FACED)),
+        offset: (0, 0),
+        skip: layer.skip.to_vec(),
+    };
     Ok(LayerText::Corners {
-        of: of.to_vec(),
+        of: layer.of.to_vec(),
         tiles,
+        place,
     })
 }
 
@@ -1084,6 +1338,7 @@ fn patch_layer(
     Ok(LayerText::Corners {
         of: of.to_vec(),
         tiles,
+        place: Place::default(),
     })
 }
 
@@ -1112,9 +1367,17 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
         match layer {
             LayerMap::Corners { of, .. }
             | LayerMap::Block { of, .. }
-            | LayerMap::Patch { of, .. }
-            | LayerMap::Quarters { of, .. } => {
+            | LayerMap::Patch { of, .. } => {
                 known(&what, of, terrains)?;
+            }
+            LayerMap::Quarters { of, skip, .. } => {
+                known(&what, of.iter().chain(skip), terrains)?;
+            }
+            LayerMap::Shadow { of, .. } => {
+                let quarters = mapping.layers.get(of).and_then(Quarters::of);
+                if quarters.is_none_or(|q| q.face.is_none()) {
+                    return Err(format!("{what}: {}", shadow_problem(of)));
+                }
             }
             LayerMap::Tiles {
                 of, beside, sides, ..
@@ -1185,6 +1448,8 @@ pub fn import(
         sheets: BTreeMap::new(),
         cells: Vec::new(),
         pixels: Vec::new(),
+        slots: Vec::new(),
+        taken: BTreeSet::new(),
     };
     let mut looks = Vec::new();
     // The look of a map that names none first: its tiles lead the image.
@@ -1205,7 +1470,7 @@ pub fn import(
         for layer_name in &look.layers {
             let map = mapping.layers.get(layer_name);
             let map = map.ok_or_else(|| format!("{what}: no layer \"{layer_name}\""))?;
-            let made = layer(&mut packer, map, terrains);
+            let made = layer(&mut packer, map, &mapping.layers, terrains);
             text.layers
                 .push(made.map_err(|e| format!("layer \"{layer_name}\": {e}"))?);
         }
@@ -1288,16 +1553,30 @@ pub fn list(mapping: &Mapping) -> String {
                     "between tiles of {}: {sheet} patch from tile {patch}",
                     of.join(", ")
                 ),
-                Some(LayerMap::Quarters { of, sheet, .. }) => {
+                Some(LayerMap::Quarters {
+                    of, sheet, face, ..
+                }) => {
                     let recoloured = if mapping.recolour.contains_key(sheet) {
                         ", recoloured"
                     } else {
                         ""
                     };
+                    let face = face.map_or_default(|f| {
+                        let Face {
+                            left,
+                            middle,
+                            right,
+                        } = f;
+                        format!(", a face below from tiles {left}, {middle}, {right}")
+                    });
                     format!(
-                        "between tiles of {}: {sheet} quarters{recoloured}",
+                        "between tiles of {}: {sheet} quarters{recoloured}{face}",
                         of.join(", ")
                     )
+                }
+                Some(LayerMap::Shadow { of, offset, .. }) => {
+                    let (x, y) = offset;
+                    format!("the shadow of layer {of}, moved ({x}, {y})")
                 }
                 None => "(no such layer)".to_owned(),
             };

@@ -1174,6 +1174,51 @@ mod tests {
         }
     }
 
+    /// Ticket 1361: a cliff's face hangs below its rim, so a corner
+    /// layer's pictures may be taller than a tile, sit off their point and
+    /// leave out the tiles of some terrains.
+    #[test]
+    fn a_corner_layer_may_size_move_and_skip_its_pictures() {
+        let f = Fixture::new();
+        let layers = r##"[
+            Corners(of: ["mountain"], tiles: [(corners: "#...", at: (1, 0))],
+                    size: (24, 32), offset: (1, -3), skip: ["wall", "fort"]),
+            Corners(of: ["mountain"], tiles: [(corners: "#...", at: (1, 0))]),
+        ]"##;
+        let t = f.parse(&file(&f, &[("layers", layers)])).unwrap();
+        let id = |name| f.content.terrain.display.id_of(name).unwrap();
+        let own = &t.terrain.as_ref().unwrap().look;
+        let [Layer::Corners(sized), Layer::Corners(plain)] = own.layers.as_slice() else {
+            panic!("{:?}", own.layers);
+        };
+        let rect = |w, h| Some(ImageRect { x: 16, y: 0, w, h });
+        assert_eq!(sized.tiles[8], rect(24, 32));
+        assert_eq!(sized.offset, (1, -3));
+        assert_eq!(sized.skip, BTreeSet::from([id("wall"), id("fort")]));
+        // Left out: a tile's size, on its point, skipping nothing.
+        assert_eq!(plain.tiles[8], rect(16, 16));
+        assert_eq!((plain.offset, plain.skip.is_empty()), ((0, 0), true));
+        // Checked: the size's sides, the pictures inside the image, the
+        // terrains real.
+        let layers = r##"[
+            Corners(of: ["mountain"], tiles: [(corners: "#...", at: (0, 0))], size: (16, 65)),
+            Corners(of: ["mountain"], tiles: [(corners: "#...", at: (0, 3))], size: (16, 24),
+                    skip: ["lava"]),
+        ]"##;
+        assert_eq!(
+            f.errors(&file(&f, &[("layers", layers)])),
+            [
+                "layer 1: size is (16, 65); each side must be 8 to 64 px",
+                "layer 1, corners \"#...\": its 16×65 px at (0, 0) lies outside the 64×64 px image",
+                "layer 2, corners \"#...\": its 16×24 px at (0, 48) lies outside the 64×64 px image",
+                "layer 2: skip: terrain \"lava\" is not in terrain.ron",
+            ]
+        );
+        // A tile layer has none of them.
+        let bad = r#"[Tiles(of: ["fort"], at: (0, 0), skip: ["wall"])]"#;
+        assert_eq!(f.parse(&file(&f, &[("layers", bad)])).unwrap_err().len(), 1);
+    }
+
     #[test]
     fn every_look_has_a_tile_for_every_terrain_and_a_name_a_map_can_give() {
         let f = Fixture::new();

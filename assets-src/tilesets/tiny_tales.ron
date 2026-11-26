@@ -26,6 +26,11 @@
 // neighbours that way and the diagonal, so every corner is round. Cells
 // are counted as tiles are. `recolour` changes colours of a sheet as it
 // is read (the art is never recoloured by hand or committed recoloured).
+// With a `face` (ticket 1361) each picture also hangs the cliff's face on
+// the tile below the layer's bottom edge, its ends where the layer ends
+// beside the tile above, and `skip` names terrains its pictures leave
+// alone; a `Shadow` layer is a faced layer's pictures as silhouettes in
+// one colour (and alpha), moved by `offset` pixels.
 (
     // Each of our terrains' own tile, painted first, unless a look below
     // has another. What stands on grass has the grass; water under a
@@ -89,12 +94,21 @@
         // the top (1, 3) and the bottom with its shade (1, 6), down the
         // left (0, 4) and the right (3, 4); the inside corners are the
         // kit's lobes, (1, 0) above and (1, 2) below. The hill's top is
-        // the plain's own grass.
+        // the plain's own grass. Its cliff face (ticket 1361) hangs on the
+        // tile below its bottom edge, the kit's row 8: its left end (0, 8),
+        // its middle (2, 8), its right end (3, 8); never on a wall
+        // (Chapter 1's top-right hills stand on the fort's).
         "lf_rim": Quarters(
             of: ["mountain", "peak"],
             sheet: "electric-lemon/tilesets/lonesome-forest/Summer Tileset/Lonesome_Forest_WALLS_and_CLIFF_EDGES.png",
             kit: (outer: (21, 24, 42, 45), across: (22, 43), down: (28, 31), inside: (1, 1, 15, 15)),
+            face: (left: 56, middle: 58, right: 59),
+            skip: ["wall"],
         ),
+        // The soft shadow under the rim and the face (1361, 0096's
+        // mockups): their shape, a dark green at alpha 70, a pixel right
+        // and three down.
+        "lf_shadow": Shadow(of: "lf_rim", colour: (12, 18, 8, 70), offset: (1, 3)),
         // The peaks' dark rock mass, under the rim: RA_Overworld_Ground.png
         // (30 tiles across), its patch from (21, 17), its inside corners
         // from (21, 14), over the grass.
@@ -309,7 +323,8 @@
         // floor joined at corners, roads as whole dirt tiles that never
         // taper, the moving river joined at its banks, plank bridges;
         // hills and peaks as one raised area with a round rim, the peaks'
-        // rock inside it (1359). The fort (1360) and the trees (1356) keep
+        // rock inside it (1359), the cliff's face below and its shadow
+        // (1361). The fort (1360) and the trees (1356) keep
         // Tiny Tales' pictures until their tickets, over this ground.
         "rogue_adventure": (
             terrain: {
@@ -337,9 +352,9 @@
                 "sea": ("elv-games/tilesets/rogue-adventure/RA_Animated_Water.png", 417),
                 "bridge": ("elv-games/tilesets/rogue-adventure/RA_Animated_Water.png", 417),
             },
-            layers: ["ra_forest_floor", "ra_river", "ice", "floor", "ash", "ra_peak", "lf_rim",
-                     "forest", "thicket", "burnt", "burning", "ra_bridge", "fort", "house", "gate",
-                     "throne", "door", "roof", "house_wall", "lintel", "house_door", "hedge",
+            layers: ["ra_forest_floor", "ra_river", "ice", "floor", "ash", "ra_peak", "lf_shadow",
+                     "lf_rim", "forest", "thicket", "burnt", "burning", "ra_bridge", "fort", "house",
+                     "gate", "throne", "door", "roof", "house_wall", "lintel", "house_door", "hedge",
                      "well", "rack", "desk", "papers", "shelf", "rug", "banner", "crest"],
         ),
         // A map outdoors (and any map that names no look): the World Map

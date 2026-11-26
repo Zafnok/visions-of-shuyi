@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
-use trpg_content::tileset::{TilesetRefs, parse_tileset};
+use trpg_content::tileset::{Layer, TilesetRefs, parse_tileset};
 
 use super::*;
 use crate::map_sprite_import::{For, Source};
@@ -413,6 +413,7 @@ fn an_import_packs_each_tile_once_and_writes_the_looks() {
             LayerText::Corners {
                 of: names(&["plain"]),
                 tiles: vec![(1, (2, 0)), (8, (3, 0)), (15, (0, 0))],
+                place: Place::default(),
             },
             LayerText::Tiles {
                 of: names(&["bridge"]),
@@ -439,6 +440,7 @@ fn an_import_packs_each_tile_once_and_writes_the_looks() {
         [LayerText::Corners {
             of: names(&["plain", "road"]),
             tiles: vec![(1, (4, 0)), (8, (5, 0))],
+            place: Place::default(),
         }]
     );
 }
@@ -455,6 +457,8 @@ fn more_tiles_than_a_row_holds_go_on_the_next_row() {
         sheets: BTreeMap::new(),
         cells: Vec::new(),
         pixels: Vec::new(),
+        slots: Vec::new(),
+        taken: BTreeSet::new(),
     };
     // No picture yet: one empty row.
     assert_eq!(packer.image().0, 256);
@@ -468,6 +472,8 @@ fn more_tiles_than_a_row_holds_go_on_the_next_row() {
         packer
             .pixels
             .push(vec![u8::try_from(i).unwrap(); 16 * 16 * 4]);
+        packer.slots.push(i);
+        packer.taken.insert(i);
     }
     assert_eq!(packer.cell("set/Made", 5, "").unwrap(), (1, 1));
     assert_eq!(packer.cell("set/Made", 5, "").unwrap(), (1, 1));
@@ -1196,7 +1202,7 @@ fn a_patch_layer_takes_each_mix_from_the_usual_layout() {
     let looks = r#""outdoor": (layers: ["ground"]), "indoor": (layers: ["dry"]),"#;
     let map = plain_mapping(&layers, looks, "");
     let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
-    let LayerText::Corners { of, tiles } = &imported.own.layers[0] else {
+    let LayerText::Corners { of, tiles, .. } = &imported.own.layers[0] else {
         panic!("{:?}", imported.own.layers);
     };
     assert_eq!(of, &["plain"]);
@@ -1515,7 +1521,7 @@ fn a_quarters_layer_is_packed_recoloured_and_listed() {
     let text = format!("{open}, recolour: {{ \"{PLAIN}\": [(({r}, {g}, {b}), (1, 2, 3))] }})");
     let map: Mapping = ron::from_str(&text).unwrap();
     let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
-    let LayerText::Corners { of, tiles } = &imported.own.layers[0] else {
+    let LayerText::Corners { of, tiles, .. } = &imported.own.layers[0] else {
         panic!("{:?}", imported.own.layers);
     };
     assert_eq!(of, &["mountain", "peak"]);
@@ -1538,6 +1544,276 @@ fn a_quarters_layer_is_packed_recoloured_and_listed() {
     let map = plain_mapping(&rim("\"lava\""), r#""outdoor": (layers: ["rim"]),"#, "");
     assert_eq!(
         check(&map, &terrains()).unwrap_err(),
+        "layer \"rim\": terrain \"lava\" is not in terrain.ron"
+    );
+}
+
+/// The face of [`KIT`]'s layer: its left end 13, its middle 14, its right
+/// end 15.
+const FACE: Face = Face {
+    left: 13,
+    middle: 14,
+    right: 15,
+};
+
+#[test]
+fn a_face_hangs_below_the_layer_rounded_at_its_ends() {
+    // Some mixes: (up-left, up-right, down-left, down-right) in the
+    // layer, and the face on the down-left tile's right half and the
+    // down-right's left half.
+    let expected: [([u8; 4], [Option<u32>; 2]); 5] = [
+        // The bottom edge: the face's middle on both.
+        ([1, 1, 0, 0], [Some(14), Some(14)]),
+        // The layer ends to the right of the tile above, or to the left.
+        ([1, 0, 0, 0], [Some(15), None]),
+        ([0, 1, 0, 0], [None, Some(13)]),
+        // An inside corner: the layer goes on right of the tile above.
+        ([1, 1, 0, 1], [Some(14), None]),
+        // Diagonal: the tile below the one in the layer gets its end.
+        ([1, 0, 0, 1], [Some(15), None]),
+    ];
+    for (places, face) in expected {
+        assert_eq!(FACE.under(places.map(|p| p == 1)), face, "{places:?}");
+    }
+    assert_eq!(FACE.under([false; 4]), [None; 2]);
+    assert_eq!(FACE.under([true; 4]), [None; 2]);
+    // On every shape, each half of each tile has the face 0096 chose: on
+    // a tile below one of the layer that isn't in it, the end where the
+    // layer ends that way beside the tile above, else the middle.
+    let shapes: [&[&str]; 5] = [
+        &[".....", "..#..", ".###.", "..#..", "....."],
+        &[".....", ".#...", ".#...", ".###.", "....."],
+        &[".....", ".###.", ".#.#.", ".###.", "....."],
+        &[".....", ".#.#.", "..#..", ".#.#.", "....."],
+        &[".....", ".##..", ".###.", "..##.", "....."],
+    ];
+    for rows in shapes {
+        let is = |x, y| is_in(rows, x, y);
+        for (x, y) in (0..5).flat_map(|y| (0..5).map(move |x| (x, y))) {
+            let hangs = is(x, y - 1) && !is(x, y);
+            let end = |dx, end| hangs.then_some(if is(x + dx, y - 1) { 14 } else { end });
+            // Its left half is the point at its top-left's (the tile is
+            // down-right of it), its right half the top-right's.
+            let point = |px: i32| {
+                let round = [(px - 1, y - 1), (px, y - 1), (px - 1, y), (px, y)];
+                FACE.under(round.map(|(x, y)| is(x, y)))
+            };
+            assert_eq!(point(x)[1], end(-1, 13), "{rows:?} ({x}, {y}) left");
+            assert_eq!(point(x + 1)[0], end(1, 15), "{rows:?} ({x}, {y}) right");
+        }
+    }
+}
+
+#[test]
+fn a_faced_picture_hangs_the_faces_halves_under_the_rim_and_its_shadow_is_its_shape() {
+    let temp = Temp::new("faced");
+    // Three cells, each pixel's red its cell and column, its green its row.
+    let shade = |cell: u8, x: u8, y: u8| [40 * cell + x, 10 * y, 30, 255];
+    let mut rgba = Vec::new();
+    for y in 0..16u8 {
+        for x in 0..48u8 {
+            rgba.extend(shade(x / 16, x % 16, y));
+        }
+    }
+    temp.write("lib/pack/f.png", &encode_png(48, 16, &rgba).unwrap());
+    let sheet = Sheet::read(&temp.0.join("lib"), "pack/f.png").unwrap();
+    let px = |p: &[u8], x: usize, y: usize| p[(y * 16 + x) * 4..(y * 16 + x) * 4 + 4].to_vec();
+    let top = [Some(0), Some(0), None, None];
+    let picture = faced(&sheet, top, [Some(1), Some(2)], None).unwrap();
+    // A tile wide, half a tile taller than one.
+    assert_eq!(picture.len(), 16 * 24 * 4);
+    // Its top half the rim's quarters, as a quartered picture's.
+    let rim = quartered(&sheet, top).unwrap();
+    assert_eq!(picture[..16 * 8 * 4], rim[..16 * 8 * 4]);
+    // From its middle down, the down-left tile's right half of the face
+    // cell, the down-right's left half, row by row.
+    assert_eq!(px(&picture, 2, 8), shade(1, 10, 0));
+    assert_eq!(px(&picture, 7, 23), shade(1, 15, 15));
+    assert_eq!(px(&picture, 12, 10), shade(2, 4, 2));
+    assert_eq!(px(&picture, 8, 16), shade(2, 0, 8));
+    // Its shadow: the same shape in the shadow's colour, nothing elsewhere.
+    let colour = [12, 18, 8, 70];
+    let one = [Some(0), None, None, None];
+    let shadow = faced(&sheet, one, [Some(1), None], Some(colour)).unwrap();
+    assert_eq!(px(&shadow, 3, 2), colour);
+    assert_eq!(px(&shadow, 3, 20), colour);
+    assert_eq!(px(&shadow, 12, 2), [0; 4]);
+    assert_eq!(px(&shadow, 12, 20), [0; 4]);
+    assert!(faced(&sheet, one, [None, Some(3)], None).is_err());
+    // As a cut: two cells down, its frames each cell further along.
+    let cut = Cut::Faced {
+        quarters: one,
+        face: [None, Some(2)],
+        shadow: None,
+    };
+    let downs = (cut.down(), Cut::Quarters(one).down(), Cut::Tile(0).down());
+    assert_eq!(downs, (2, 1, 1));
+    let along = Cut::Faced {
+        quarters: [Some(1), None, None, None],
+        face: [None, Some(3)],
+        shadow: None,
+    };
+    assert_eq!(cut.along(1), along);
+    assert_eq!(cut.right_column(6), 2);
+}
+
+/// [`rim`] with [`FACE`] below it, skipping walls, and its shadow.
+fn faced_rim() -> String {
+    let rim = rim("\"mountain\", \"peak\"").replace(
+        "))),",
+        ")), face: (left: 13, middle: 14, right: 15), skip: [\"wall\"]),",
+    );
+    format!("{rim} \"shade\": Shadow(of: \"rim\", colour: (12, 18, 8, 70), offset: (1, 3)),")
+}
+
+/// The made-up sheets imported with [`faced_rim`]'s layers, the shadow,
+/// the rim and the fort, in a folder named for `name`.
+fn faced_import(name: &str) -> (Temp, Mapping, Imported) {
+    let temp = Temp::new(name).with_sheet("lib");
+    with_plain(&temp);
+    let layers = format!("{LAYERS} {}", faced_rim());
+    let look = r#""outdoor": (layers: ["shade", "rim", "fort"]),"#;
+    let map = plain_mapping(&layers, look, "");
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    (temp, map, imported)
+}
+
+#[test]
+fn a_faced_layer_and_its_shadow_are_packed_taller_than_a_tile() {
+    let (_temp, map, imported) = faced_import("faced-layer");
+    let [
+        LayerText::Corners {
+            tiles: shade,
+            place: shade_place,
+            ..
+        },
+        LayerText::Corners {
+            of,
+            tiles: rim,
+            place,
+        },
+        LayerText::Tiles { at: fort, .. },
+    ] = imported.own.layers.as_slice()
+    else {
+        panic!("{:?}", imported.own.layers);
+    };
+    assert_eq!(of, &["mountain", "peak"]);
+    let tall = Place {
+        size: Some((16, 24)),
+        offset: (0, 0),
+        skip: vec!["wall".to_owned()],
+    };
+    assert_eq!(place, &tall);
+    // The shadow: the same pieces, moved a pixel right and three down.
+    let moved = Place {
+        offset: (1, 3),
+        ..tall
+    };
+    assert_eq!(shade_place, &moved);
+    // Every mix but all four has a piece, in both.
+    let mixes = |tiles: &[(u8, At)]| tiles.iter().map(|(m, _)| *m).collect::<Vec<_>>();
+    assert_eq!(mixes(rim), (1..15).collect::<Vec<_>>());
+    assert_eq!(mixes(shade), mixes(rim));
+    // Each piece has the cell below its own to itself: no picture starts
+    // there, and none is packed twice.
+    let pieces: Vec<At> = rim.iter().chain(shade).map(|(_, at)| *at).collect();
+    let mut starts: BTreeSet<At> = imported.own.terrain.iter().map(|(_, at)| *at).collect();
+    starts.insert(*fort);
+    for at in &pieces {
+        assert!(starts.insert(*at), "{at:?} packed twice");
+    }
+    for (column, row) in &pieces {
+        assert!(!starts.contains(&(*column, row + 1)), "({column}, {row})");
+    }
+    // The face's lower half, by the layer's ends; the shadow's colour.
+    let (width, _, rgba) = &imported.image;
+    let pixel = |(column, row): At, x: u32, y: u32| {
+        let at = usize::try_from(((row * 16 + y) * width + column * 16 + x) * 4).unwrap();
+        rgba[at..at + 4].to_vec()
+    };
+    let of_mix = |tiles: &[(u8, At)], mix: u8| tiles.iter().find(|(m, _)| *m == mix).unwrap().1;
+    let bottom = of_mix(rim, 12);
+    assert_eq!(pixel(bottom, 3, 20), plain_color(14));
+    assert_eq!(pixel(bottom, 12, 20), plain_color(14));
+    assert_eq!(pixel(of_mix(rim, 8), 3, 20), plain_color(15));
+    assert_eq!(pixel(of_mix(rim, 8), 12, 20), [0; 4]);
+    assert_eq!(pixel(of_mix(rim, 4), 12, 20), plain_color(13));
+    assert_eq!(pixel(of_mix(shade, 12), 3, 20), [12, 18, 8, 70]);
+    assert_eq!(pixel(of_mix(shade, 12), 3, 5), [12, 18, 8, 70]);
+    // The list names the face and the shadow.
+    let listed = list(&map);
+    assert!(
+        listed.contains(", a face below from tiles 13, 14, 15"),
+        "{listed}"
+    );
+    assert!(
+        listed.contains("the shadow of layer rim, moved (1, 3)"),
+        "{listed}"
+    );
+}
+
+#[test]
+fn the_game_reads_a_faced_layer_at_its_size_moved_and_skipping_walls() {
+    let (_temp, _, imported) = faced_import("faced-read");
+    let (width, height, rgba) = &imported.image;
+    let png = encode_png(*width, *height, rgba).unwrap();
+    let content = trpg_content::load_embedded().unwrap();
+    let header = |w: u32, h: u32| {
+        let mut sheet = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR".to_vec();
+        sheet.extend(w.to_be_bytes());
+        sheet.extend(h.to_be_bytes());
+        sheet
+    };
+    let (sheet, horse) = (header(48, 80), header(72, 96));
+    let files = [
+        ("tilesets/tiny_tales.png", png.as_slice()),
+        ("units/a.png", sheet.as_slice()),
+        ("units/horse.png", horse.as_slice()),
+    ];
+    let refs = TilesetRefs {
+        images: &trpg_content::image::from_files(files).unwrap(),
+        terrain: &content.terrain.display,
+        classes: &content.classes,
+        characters: &content.characters,
+    };
+    let text = tileset(&imported, &UNITS);
+    let read = parse_tileset("tiny_tales.ron", "tiny_tales", &text, &refs).unwrap();
+    let look = &read.terrain.unwrap().look;
+    let [Layer::Corners(shadow), Layer::Corners(face), _] = look.layers.as_slice() else {
+        panic!("{:?}", look.layers);
+    };
+    let wall = content.terrain.display.id_of("wall").unwrap();
+    assert_eq!((shadow.offset, face.offset), ((1, 3), (0, 0)));
+    assert_eq!(face.skip, BTreeSet::from([wall]));
+    assert_eq!(shadow.skip, face.skip);
+    assert_eq!(face.tiles[12].map(|r| (r.w, r.h)), Some((16, 24)));
+}
+
+#[test]
+fn a_shadow_is_of_a_faced_layer_and_what_it_skips_is_ours() {
+    let look = r#""outdoor": (layers: ["shade"]),"#;
+    let problem = |layers: &str| check(&plain_mapping(layers, look, ""), &terrains()).unwrap_err();
+    let shadow = |of: &str| {
+        format!("\"shade\": Shadow(of: \"{of}\", colour: (0, 0, 0, 9), offset: (0, 1)),")
+    };
+    let wanted = |of: &str| {
+        format!(
+            "layer \"shade\": a shadow is of a `Quarters` layer with a face, and \"{of}\" isn't one"
+        )
+    };
+    let plain_rim = rim("\"mountain\"");
+    assert_eq!(
+        problem(&format!("{plain_rim} {}", shadow("rim"))),
+        wanted("rim")
+    );
+    assert_eq!(
+        problem(&format!("{LAYERS} {}", shadow("fort"))),
+        wanted("fort")
+    );
+    assert_eq!(problem(&shadow("none")), wanted("none"));
+    let lava = faced_rim().replace("\"wall\"", "\"lava\"");
+    assert_eq!(
+        problem(&lava),
         "layer \"rim\": terrain \"lava\" is not in terrain.ron"
     );
 }

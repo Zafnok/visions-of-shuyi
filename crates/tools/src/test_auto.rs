@@ -28,7 +28,7 @@ use trpg_content::bundle::test_display_path;
 
 use crate::test_tileset::{Canvas, Sources, TerrainLook};
 use crate::test_units;
-use crate::tileset_ron::{self, At, FramesText, LayerText, LookText};
+use crate::tileset_ron::{self, At, FramesText, LayerText, LookText, Place};
 use shuyi_cli::codec::encode_png;
 
 /// The tileset's id.
@@ -255,6 +255,7 @@ fn corner_layer(src: &Sources, layer: usize) -> LayerText {
     LayerText::Corners {
         of: names(CORNER_LAYERS[layer]),
         tiles: (1..15u8).map(|mix| (mix, (u32::from(mix), row))).collect(),
+        place: Place::default(),
     }
 }
 
