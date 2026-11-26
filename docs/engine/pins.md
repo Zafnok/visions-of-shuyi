@@ -560,7 +560,7 @@ Nothing for the game: 4 PRs (#557, #558, #559, #566). #557 is the engine's agent
 
 Nothing for the game: 7 PRs (#569, #573, #574, #576, #577, #578, #586). #569 is the engine's own merge hooks; #573, #574, #576, #577 and #578 are the engine's docs, its book's checks and its skills for its own sessions; #586 moves research scripts out of the engine.
 
-## 2026-11-26: 80fad0de → 96eb097c (9 engine PRs), #847
+## 2026-11-26: 80fad0de → 96eb097c (9 engine PRs), #849
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
