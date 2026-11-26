@@ -171,9 +171,8 @@ the lamps' stills are their first frame. GBA: no target.
   (modified: a wall mirrored)" (the mirrored half is an edit, which the
   licence allows when the credits say so); `THIRD_PARTY_ASSETS.md` names
   the ruins sheet and the change.
-- **Art:** re-packed, pushed as Zafnok/visions-of-shuyi-assets#37;
-  `assets-private.rev` points at its branch commit until it merges, then
-  at `main` (`--pin`).
+- **Art:** re-packed, merged as Zafnok/visions-of-shuyi-assets#37;
+  `assets-private.rev` is at its merge on `main` (`2f1bbb03`).
 - **Checked:** every battle map rendered with the old and the new
   tileset: the other 13 are pixel-identical; Chapter 1 differs only at
   the keep and Harrowby.
