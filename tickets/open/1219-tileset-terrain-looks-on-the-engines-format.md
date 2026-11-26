@@ -42,9 +42,9 @@ the look names a map may give from the game, so it covers this.
 gained `size` (pixels, each side in the tile side range, every picture
 inside the image), `offset` and `skip` (real terrains), set on
 engine#3246's `CornerLayer` after `new`; `Looking::mixes` takes the
-picture size. **engine#2243 doesn't cover this yet:** its
-`LayerDef::Corners` has only `of` and `tiles`. The gap goes into
-engine#2243 (with Nick's OK, `engine-change`) before it is worked.
+picture size. engine#2243's `LayerDef::Corners` had only `of` and
+`tiles`; Zafnok/shuyi-engine#607 (Nick's OK) adds the three fields and
+their checks to its scope.
 
 ## Nick input
 
