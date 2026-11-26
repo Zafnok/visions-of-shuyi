@@ -1,5 +1,5 @@
 ---
-id: "1362"
+id: "1379"
 title: "Decide: the picture look's windows, a UI kit's frames, cursor, gauges, icons and font"
 type: design-decision
 milestone: Design decisions
@@ -11,7 +11,7 @@ nick_input: decision
 completed:
 ---
 
-# 1362 — Decide: the picture look's windows (frames, cursor, gauges, icons, font)
+# 1379 — Decide: the picture look's windows (frames, cursor, gauges, icons, font)
 
 ## Context
 
@@ -31,8 +31,8 @@ Mapped out on 2026-11-26 with `cargo shuyi frame-png --battle ch01`
 and `--scene ch01_prebattle` (built with `private-assets`).
 
 This ticket picks the art for the windows in the **picture look**.
-The build tickets are 1363 (the frames on the battle's windows),
-1364 (every other screen and the dialogue box) and 1365 (cursor,
+The build tickets are 1380 (the frames on the battle's windows),
+1381 (every other screen and the dialogue box) and 1382 (cursor,
 gauges, icons). They wait on it.
 
 ### What is already owned
@@ -193,12 +193,12 @@ credit everyone).
 - After the purchase: the pack in the private repository's
   `library/<artist>/` (`INDEX.md`, licence in `licences/`), and its
   entry in `THIRD_PARTY_ASSETS.md` (private, with the price and date).
-- Update 1363–1365 with the answers (file names, pack, materials). If
+- Update 1380–1382 with the answers (file names, pack, materials). If
   Nick picks a new font, file its ticket (`write-ticket`), blocked by
-  1363, and name it in 1365.
+  1380, and name it in 1382.
 
 **Out (do not do):**
-- Any code or skin change (1363–1365).
+- Any code or skin change (1380–1382).
 - The Playdate's windows (its one-bit look, 1184 and 1294).
 - The world map's place icons (1082), class icons (1006), the
   controller button pictures in hints (0255).
@@ -218,7 +218,7 @@ draw the glyph windows there unless a picture costs nothing.
       `docs/design/look-and-feel.md`, *Windows (the picture look)*.
 - [ ] Any pack chosen is bought or downloaded by Nick, sorted into the
       private repository and credited in `THIRD_PARTY_ASSETS.md`.
-- [ ] 1363, 1364 and 1365 updated with the answers; a font ticket filed
+- [ ] 1380, 1381 and 1382 updated with the answers; a font ticket filed
       if a new font was picked.
 - [ ] `cargo xtask ticket-lint` passes.
 

@@ -1,36 +1,36 @@
 ---
-id: "1364"
+id: "1381"
 title: "Every other screen and the dialogue box in the UI kit's frames"
 type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
-blocked_by: ["1363"]
+blocked_by: ["1380"]
 nick_input: none
 completed:
 ---
 
-# 1364 — Every other screen and the dialogue box in the UI kit's frames
+# 1381 — Every other screen and the dialogue box in the UI kit's frames
 
 ## Context
 
-1363 builds the picture frames (engine nine-slice frame, `cargo xtask
+1380 builds the picture frames (engine nine-slice frame, `cargo xtask
 ui-import`, `assets/ui/frames.ron`, the frame name → `PanelLook`
 helper) and puts the battle's windows on them. The look is in
 `docs/design/look-and-feel.md`, *Windows (the picture look)*, decided
-by 1362. This ticket puts every other window of the PC game on the same
+by 1379. This ticket puts every other window of the PC game on the same
 frames. The game will then have one look outside the map.
 
 ## Nick input
 
-None (1362 decided the look). Pictures in the PR from `frame-png` with
+None (1379 decided the look). Pictures in the PR from `frame-png` with
 `private-assets`, kept local; anything left to judge by playing goes on
 the Act 1 playtest's checklist (1064).
 
 ## Scope
 
-**In:** each screen's boxes on 1363's helper, with the frame 1362 names
+**In:** each screen's boxes on 1380's helper, with the frame 1379 names
 for it:
 - **Dialogue:** the text box and the speaker's name plate, the two
   portrait frames and their name lines (`screens/dialogue/glyph*`), the
@@ -42,11 +42,11 @@ for it:
 - **Between battles:** preparations (its lists and shop), camp, town,
   results, class change, familiarity, lead select, chapter card, game
   over, world map's windows.
-- Frames 1362 named that 1363 didn't need, added to
+- Frames 1379 named that 1380 didn't need, added to
   `assets-src/ui/` and `frames.ron` (re-run `ui-import`, move the pin).
 
 **Out (do not do):**
-- Battle windows (1363); the cursor, gauges, icons (1365); the font.
+- Battle windows (1380); the cursor, gauges, icons (1382); the font.
 - The Playdate's skins; the title's logo and backdrop (ADR-0059);
   the world map's place icons (1082).
 - Any change to a window's contents, size or place.
@@ -65,7 +65,7 @@ for it:
 
 ## Lesser targets
 
-Playdate: unchanged. `reduced`/`minimal` tiers: as 1363 decided.
+Playdate: unchanged. `reduced`/`minimal` tiers: as 1380 decided.
 
 ## Acceptance criteria
 

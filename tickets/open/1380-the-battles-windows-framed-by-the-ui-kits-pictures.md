@@ -1,27 +1,27 @@
 ---
-id: "1363"
+id: "1380"
 title: "The battle's windows framed by the UI kit's pictures in the picture look"
 type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
 status: todo
-blocked_by: ["1362", "1238"]
+blocked_by: ["1379", "1238"]
 nick_input: none
 completed:
 ---
 
-# 1363 — The battle's windows framed by the UI kit's pictures
+# 1380 — The battle's windows framed by the UI kit's pictures
 
 ## Context
 
-1362 picks the art for the picture look's windows (Nick, 2026-11-26:
+1379 picks the art for the picture look's windows (Nick, 2026-11-26:
 "rework UI elements using assets from itch … from scratch like frames
 and such … keep the glyph look as an option but I want it to be more
 professional"). Its answers are in `docs/design/look-and-feel.md`,
 *Windows (the picture look)*. This ticket builds the first part: the
 picture frames themselves, and the battle's windows drawn with them.
-1364 does every other screen, 1365 the cursor, gauges and icons.
+1381 does every other screen, 1382 the cursor, gauges and icons.
 
 Today every box is a `GlyphBuffer::panel` with the engine's
 `PanelLook` (`style: BoxStyle`, border, title, text and fill
@@ -42,7 +42,7 @@ frame game-side behind a marked workaround as `engine-change` says.
 
 ## Nick input
 
-None: 1362 decides the look. Pictures of each window in the PR come
+None: 1379 decides the look. Pictures of each window in the PR come
 from `frame-png` with `private-assets`, kept local; only a cropped
 screenshot of the running game may go in the PR (ADR-0040, ADR-0118:
 no real map). What is left to judge by playing goes on the Act 1
@@ -64,23 +64,23 @@ playtest's checklist (1064).
   `game/ui/` by an importer (`cargo xtask ui-import`, its source list in
   `assets-src/ui/`, like `tileset-import`), and a public data file
   (`assets/ui/frames.ron`, its format in `assets/ui/README.md`) naming
-  each frame (`panel`, `menu`, `plate`, `forecast` or as 1362 names
+  each frame (`panel`, `menu`, `plate`, `forecast` or as 1379 names
   them) with its picture's path and slice sizes. Missing pictures mean
   glyph frames: a public build looks as today.
-- The **switch** as 1362 decided (starting rule: the look option
+- The **switch** as 1379 decided (starting rule: the look option
   switches the map and the windows; the entry renamed in every pack).
 - The battle's windows on the frames: the side panel, the unit menu
   and its sub-menus (Arts, Skill, Item, Equip), the forecast, the map
   menu, unit info (`glyph/info.rs`), the progress, guides, rewind and
   shop boxes, and the fight box (`glyph/fight_box.rs`).
 - Credits: the pack's line in `THIRD_PARTY_ASSETS.md` names what the
-  game uses and where (1362 adds the purchase), and the credits screen's
+  game uses and where (1379 adds the purchase), and the credits screen's
   data if the licence asks for credit.
 
 **Out (do not do):**
-- Screens outside the battle and the dialogue box (1364).
-- The menu cursor, gauges and icons (1365); the font (its own ticket if
-  1362 picked one).
+- Screens outside the battle and the dialogue box (1381).
+- The menu cursor, gauges and icons (1382); the font (its own ticket if
+  1379 picked one).
 - The Playdate (its one-bit skins stay; 1184, 1294).
 - Any change to a window's contents, size or place: only its frame and
   fill change.
@@ -123,7 +123,7 @@ completion notes.
       *In* draws the picture frame (a test reads the buffer's sprite
       items per window); with the glyph look or without the art, the
       snapshots are unchanged.
-- [ ] The look option switches the windows as 1362 decided.
+- [ ] The look option switches the windows as 1379 decided.
 - [ ] `THIRD_PARTY_ASSETS.md` names the pieces used.
 - [ ] All gates in the `run-gates` skill pass.
 

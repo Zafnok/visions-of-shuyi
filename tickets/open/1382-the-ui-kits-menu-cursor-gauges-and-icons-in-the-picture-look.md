@@ -1,25 +1,25 @@
 ---
-id: "1365"
+id: "1382"
 title: "The UI kit's menu cursor, gauges and icons in the picture look"
 type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
-blocked_by: ["1363"]
+blocked_by: ["1380"]
 nick_input: none
 completed:
 ---
 
-# 1365 — The UI kit's menu cursor, gauges and icons in the picture look
+# 1382 — The UI kit's menu cursor, gauges and icons in the picture look
 
 ## Context
 
-1362 decides, for the picture look, the menu cursor and focused row
+1379 decides, for the picture look, the menu cursor and focused row
 (question 3), the gauges (question 4: HP on the side panel, forecast and
 fight, EXP) and whether lists show icons (question 5).
 `docs/design/look-and-feel.md`, *Windows (the picture look)*, holds
-the answers. 1363 builds the importer (`cargo xtask ui-import`,
+the answers. 1380 builds the importer (`cargo xtask ui-import`,
 `assets-src/ui/`) and the data file (`assets/ui/frames.ron`) this
 ticket adds to.
 
@@ -30,7 +30,7 @@ icons in lists.
 
 ## Nick input
 
-None (1362 decided). If 1362 answered "no" to a part (for example no
+None (1379 decided). If 1379 answered "no" to a part (for example no
 icons), that part is dropped here and the completion notes say so.
 
 ## Scope
@@ -44,7 +44,7 @@ icons), that part is dropped here and the completion notes say so.
 - **Gauges:** the HP bars of the side panel, the forecast and the fight
   box, and the EXP bar (results and level-up), from the pack's bar
   pictures (frame + fill cut to the value).
-- **Icons** (only if 1362 said yes): weapon type, item or spell icon
+- **Icons** (only if 1379 said yes): weapon type, item or spell icon
   before the name in the item, equip, arts, skill and shop lists, and
   the stat names if picked. Each icon named in a data file
   (`assets/ui/icons.ron`: weapon type or item kind → picture), a
@@ -55,7 +55,7 @@ icons), that part is dropped here and the completion notes say so.
 - The map's cursor and range tiles (look-and-feel *Cursor*; MattWalkden's
   pieces are not this ticket).
 - The map's unit HP bars (0441's rules stay).
-- Frames (1363, 1364); the font; the world map's icons (1082); class
+- Frames (1380, 1381); the font; the world map's icons (1082); class
   icons (1006); button pictures in hints (0255).
 
 ## Implementation steps
