@@ -303,6 +303,20 @@ Nick can veto any of these.
 
 - The first-launch list shows each language by its own name (English,
   简体中文, 日本語), whatever language the screen is in.
+- The first launch asks only once the game has a language besides
+  English: while English is the only one, a list of one is skipped and
+  the player goes straight to the layout picker (0825).
+- The list's title is "Language", in the language already in use (the
+  computer's when the game has it), and its keys are the layout
+  picker's, since no layout is picked yet (0825).
+- A player who already played before the list existed (a layout saved,
+  no language) isn't asked: English stays, and Options changes it
+  (0825).
+- In Options the Language row sits just above Layout, starting the group
+  with Layout and Key bindings (0825).
+- On a computer with a keyboard, a player on a controller picks the
+  language, then sees the layout picker, which any button closes, as
+  before (0825).
 
 ## Chinese (Simplified)
 

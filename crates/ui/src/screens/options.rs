@@ -40,7 +40,7 @@ use trpg_content::Theme;
 use trpg_content::ambience::AMBIENCE;
 use trpg_core::{GameMode, TutorialLevel};
 
-use super::{key_bindings, layout_picker};
+use super::{key_bindings, language_list, layout_picker};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::map_view::{CursorStyle, has_pictures};
 use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
@@ -167,6 +167,9 @@ pub enum Row {
     /// [`ShuyiSettings::auto_advance`](crate::ShuyiSettings::auto_advance):
     /// "Auto-advance".
     AutoAdvance,
+    /// [`Settings::language`]: every language by its own name, a machine
+    /// translation with its pack's note (ticket 0825).
+    Language,
     /// The right- or left-handed layout: opens the layout picker.
     Layout,
     /// Opens the Key bindings screen.
@@ -183,7 +186,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 28] = [
+    pub const ALL: [Row; 29] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -206,6 +209,7 @@ impl Row {
         Row::VoiceVolume,
         Row::LogVoice,
         Row::AutoAdvance,
+        Row::Language,
         Row::Layout,
         Row::KeyBindings,
         Row::GameMode,
@@ -218,6 +222,7 @@ impl Row {
     /// which also names it on the engine's screen.
     pub const fn key(self) -> &'static str {
         match self {
+            Row::Language => LANGUAGE_ROW,
             Row::TextSpeed => "options.row.text_speed",
             Row::AnimSpeed => "options.row.anim_speed",
             Row::CombatAnimations => "options.row.combat_animations",
@@ -263,9 +268,15 @@ impl Row {
     }
 
     /// The row as the engine's screen takes it: its value, and the first
-    /// row of each group (`Layout`, `Reset tips`) after a blank one.
+    /// row of each group (`Language`, `Reset tips`) after a blank one.
     pub fn option(self) -> OptionRow {
         let row = match self {
+            Row::Language => OptionRow::new(
+                self.key(),
+                RowValue::names(language_list::names, language_list::in_use, |ctx, i| {
+                    language_list::pick(ctx, i, false)
+                }),
+            ),
             Row::TextSpeed => OptionRow::text_speed(),
             Row::Fullscreen => OptionRow::fullscreen(),
             Row::MusicVolume => OptionRow::music_volume(),
@@ -354,7 +365,7 @@ impl Row {
             Row::Tutorial => tutorial_row(),
             Row::ResetTips => reset_tips_row(),
         };
-        if matches!(self, Row::Layout | Row::ResetTips) {
+        if matches!(self, Row::Language | Row::ResetTips) {
             row.starting_group()
         } else {
             row

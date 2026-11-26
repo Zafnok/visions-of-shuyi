@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: ["0233", "0805"]
 nick_input: none
-completed:
+completed: 2026-11-25
 ---
 
 # 0825 — Options: Language, and however the first launch picks one
@@ -93,11 +93,11 @@ the game's own.
 
 ## Acceptance criteria
 
-- [ ] Choosing a language in Options changes the title screen's text at once and survives a restart (Harness test with the `test` pack).
-- [ ] Old saved settings load with English (test).
-- [ ] The first-launch behaviour matches the design doc (Harness test).
-- [ ] The machine-translation label appears as decided (snapshot).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Choosing a language in Options changes the title screen's text at once and survives a restart (Harness test with the `test` pack).
+- [x] Old saved settings load with English (test).
+- [x] The first-launch behaviour matches the design doc (Harness test).
+- [x] The machine-translation label appears as decided (snapshot).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -106,3 +106,46 @@ the game's own.
 
 ## Completion notes
 
+Engine friction: estimate 180 production lines (like the voices
+question and a settings field), measured 131: under 2×.
+
+Built on the engine's language API at the pin (`Settings::language`,
+`language_to_text`/`language_from_text`, `Ctx::languages_offered`,
+`RowValue::names`, the system-language pick); the game matches no
+language and reads no platform itself.
+
+- **Saved form**: `language` (its tag) in the settings record, version 4;
+  a version 1–3 save reads as none picked, so English.
+- **Options**: a Language row built with `RowValue::names` (not
+  `OptionRow::language`, which can't add the note): each language by its
+  own name, a `made_by: Machine` pack followed by its own
+  `language.machine_note` from its `ui.ron`. The test pack says
+  `(MACHINE TRANSLATION)`; the Chinese pack (0726) must say
+  `(机器翻译，母语者审校)` and the Japanese (0719) `(機械翻訳)`, as the
+  design doc decided. English's own text of the key is never shown.
+  Preview, Keep, Discard and Restore defaults behave as every row.
+- **First launch**: `screens/language_list.rs`. With no language and no
+  layout picked, `game::start` puts the layout picker (on a keyboard)
+  and the language list over the title, the list on top, starting on the
+  engine's pick from the system's languages. The engine's first-key hook
+  is unchanged.
+- **Step 5** (hide a pack whose name can't be drawn) is not built: 0236
+  landed, and its atlas test makes that case impossible.
+
+### The agent's starting rules (also in the design doc)
+
+- The list is skipped while English is the only language the game ships
+  (the `test` pack doesn't count), so today's players see nothing new
+  until 0719 or 0726 adds a pack.
+- Its title is "Language", in the language already in use; its keys are
+  the layout picker's.
+- A player whose settings are from before the list (a layout saved) isn't
+  asked: English stays; Options changes it.
+- The Options row sits just above Layout, starting that group.
+- On a computer with a keyboard, a controller player picks the language,
+  then sees the layout picker, which any button closes (as before).
+
+### For the Act 1 playtest (1064)
+
+- Only visible once a Chinese or Japanese pack exists: the list's look
+  with real wide names.

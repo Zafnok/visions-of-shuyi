@@ -3,7 +3,8 @@
 //! theme, the volumes and the layout picked) and this game's own
 //! ([`ShuyiSettings`]: animation and enemy-phase speeds, combat
 //! animations, auto-end, the cursor style, the map's look and zoom, and
-//! whether the dialogue log's cursor plays voices).
+//! whether the dialogue log's cursor plays voices). The language picked
+//! is the engine's too (`Settings::language`, ticket 0825).
 //! Saved as one RON record under [`SETTINGS_KEY`], whose form this game
 //! keeps (ADR-0050); [`Ctx`] loads them with its storage and saves them on
 //! every change ([`Ctx::change_settings`]). Key bindings are saved apart
@@ -23,7 +24,7 @@ use crate::map_view::CursorStyle;
 pub use shuyi_ui::settings::{
     Background, GameSettings, MAX_VOLUME, SETTINGS_KEY, TextSpeed, Volumes,
 };
-use shuyi_ui::settings::{old_volume, read_old_volumes};
+use shuyi_ui::settings::{language_from_text, language_to_text, old_volume, read_old_volumes};
 
 /// This game's settings: the engine's, with this game's
 /// ([`Settings::game`](shuyi_ui::settings::Settings::game)).
@@ -33,12 +34,13 @@ pub type Settings = shuyi_ui::settings::Settings<ShuyiSettings>;
 /// the volumes are each sound group's on the engine's loudness curve
 /// (engine #318). A version 1 save loads with the voices' defaults, and
 /// the linear volumes of a version 1 or 2 save are put where they sound
-/// the same.
-pub const SETTINGS_VERSION: u32 = 3;
+/// the same. 4 since the language picked (ticket 0825): a save from before
+/// it has none, so it shows English until the player picks one.
+pub const SETTINGS_VERSION: u32 = 4;
 
 /// The versions [`Settings::from_ron`] reads: each one's missing fields take
 /// their defaults.
-pub(crate) const READ_VERSIONS: [u32; 3] = [1, 2, SETTINGS_VERSION];
+pub(crate) const READ_VERSIONS: [u32; 4] = [1, 2, 3, SETTINGS_VERSION];
 
 /// The linear volume every group had by default before the loudness curve:
 /// a version 1 or 2 save always wrote its volumes, so one at this is read
@@ -511,6 +513,10 @@ struct SettingsFile {
     /// `intro` (ticket 0923).
     #[serde(skip_serializing_if = "Option::is_none")]
     range_style: Option<RangeStyle>,
+    /// The language the player picked, as its tag
+    /// ([`language_to_text`]); left out until they pick one (ticket 0825).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    language: Option<String>,
 }
 
 impl Default for SettingsFile {
@@ -549,6 +555,7 @@ fn file(s: &Settings) -> SettingsFile {
         threat_arrows: (game.threat_arrows != ThreatArrows::default())
             .then_some(game.threat_arrows),
         range_style: (game.range_style != RangeStyle::default()).then_some(game.range_style),
+        language: language_to_text(s.language.as_ref()),
     }
 }
 
@@ -567,7 +574,7 @@ impl GameSettings for ShuyiSettings {
     }
 
     /// Reads the saved form. Text that can't be read, or of a version
-    /// other than 1 to 3, gives `Err` with why (the caller then uses the
+    /// other than 1 to 4, gives `Err` with why (the caller then uses the
     /// defaults); a missing field takes its default, an unknown layout
     /// counts as none picked, a volume over [`MAX_VOLUME`] is brought
     /// down to it and an old linear volume is put where it sounds the
@@ -590,6 +597,7 @@ impl GameSettings for ShuyiSettings {
         let (music, sound) = (old(file.music_volume), old(file.sound_volume));
         read_old_volumes(&mut s.volumes, music, sound, old(file.voice_volume));
         s.voices = file.voices.unwrap_or(true);
+        s.language = language_from_text(file.language.as_deref());
         s.game = ShuyiSettings {
             anim_speed: file.anim_speed,
             combat_animations: file.combat_animations,
@@ -684,7 +692,7 @@ mod tests {
         off.volumes.set(VOICE, 0);
         off.game.log_voice = LogVoice::Off;
         let text = off.to_ron();
-        assert!(text.contains("version: 3,"), "{text}");
+        assert!(text.contains("version: 4,"), "{text}");
         assert!(text.contains("voices: Some(false),"), "{text}");
         assert!(text.contains("log_voice: Some(false),"), "{text}");
         assert_eq!(Settings::from_ron(&text), Ok(off));
@@ -709,7 +717,7 @@ mod tests {
         assert_eq!(read, [Some(85), None, Some(100)]);
         let text = s.to_ron();
         assert!(!text.contains("_volume"), "{text}");
-        assert!(text.contains("version: 3,"), "{text}");
+        assert!(text.contains("version: 4,"), "{text}");
         assert_eq!(Settings::from_ron(&text), Ok(s));
         let loud = r#"Settings(version: 3, volumes: {"music": 250})"#;
         let loud = Settings::from_ron(loud).unwrap();
@@ -874,9 +882,9 @@ mod tests {
 
     #[test]
     fn settings_saved_before_the_split_load_unchanged() {
-        // The form written now: version 3, with `volumes` last.
+        // The form written now: version 4, with `volumes` last.
         let as_now = |text: &str, volumes: &str| {
-            let text = text.replace("version: 1,", "version: 3,");
+            let text = text.replace("version: 1,", "version: 4,");
             let kept: Vec<&str> = (text.lines())
                 .filter(|line| !line.contains("_volume:"))
                 .collect();
@@ -979,10 +987,10 @@ mod tests {
     fn bad_text_and_other_versions_are_refused() {
         let unreadable = Settings::from_ron("nonsense").unwrap_err();
         assert!(unreadable.starts_with("unreadable: "), "{unreadable}");
-        for version in [0, 4] {
+        for version in [0, 5] {
             assert_eq!(
                 Settings::from_ron(&format!("Settings(version: {version})")),
-                Err(format!("version {version} isn't 3"))
+                Err(format!("version {version} isn't 4"))
             );
         }
     }
@@ -1043,6 +1051,35 @@ mod tests {
             EnemyPhaseSpeed::ALL.map(EnemyPhaseSpeed::key),
             ["normal", "fast"].map(value)
         );
+    }
+
+    /// Ticket 0825: the language picked is saved by its tag and read back;
+    /// none picked writes nothing, and a save from before it (version 3)
+    /// or with a tag that isn't one reads as none picked, so it shows
+    /// English (the engine's pick at start, with no system language).
+    #[test]
+    fn the_language_round_trips_and_an_old_save_has_none() {
+        use shuyi_assets::lang::LangCode;
+        assert!(!Settings::default().to_ron().contains("language"));
+        let mut picked = Settings::default();
+        picked.language = Some(LangCode::parse("zh-Hans").unwrap());
+        let text = picked.to_ron();
+        assert!(text.contains(r#"language: Some("zh-Hans"),"#), "{text}");
+        assert!(text.contains("version: 4,"), "{text}");
+        assert_eq!(Settings::from_ron(&text), Ok(picked));
+        let old = Settings::from_ron("Settings(version: 3, fullscreen: true)").unwrap();
+        assert_eq!(old.language, None);
+        assert!(old.fullscreen);
+        let bad = Settings::from_ron(r#"Settings(version: 4, language: Some("!"))"#);
+        assert_eq!(bad.map(|s| s.language), Ok(None));
+    }
+
+    /// Restore defaults keeps the language picked (the engine's rule).
+    #[test]
+    fn restoring_keeps_the_language() {
+        let mut s = changed();
+        s.language = Some(shuyi_assets::lang::LangCode::parse("ja").unwrap());
+        assert_eq!(s.restored().language, s.language);
     }
 
     #[test]

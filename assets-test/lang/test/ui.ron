@@ -122,6 +122,8 @@
     ),
     // The Options screen.
     (key: "options.title", source: "Options", text: "OPTIONS"),
+    (key: "options.row.language", source: "Language", text: "LANGUAGE"),
+    (key: "language.machine_note", source: "(machine translation)", text: "(MACHINE TRANSLATION)"),
     (key: "options.row.text_speed", source: "Text speed", text: "TEXT SPEED"),
     (key: "options.row.anim_speed", source: "Animation speed", text: "ANIMATION SPEED"),
     (key: "options.row.combat_animations", source: "Combat animations", text: "COMBAT ANIMATIONS"),

@@ -94,6 +94,14 @@
     "layout_picker.help_first": "{up} {down} choose · {confirm} pick",
     "layout_picker.help_change": "{CursorUp} {CursorDown} choose · {Confirm} pick · {Cancel} back",
 
+    // Picking a language (ticket 0825): the Options row, whose label is the
+    // first launch's list's title too, and the note a machine-translated
+    // pack puts after its own name wherever a language is picked. Each pack
+    // says it in its own language, and whether a person checks it: the
+    // English is never shown (a person wrote it).
+    "options.row.language": "Language",
+    "language.machine_note": "(machine translation)",
+
     // The game mode screen, after New Game.
     "mode_select.heading": "Choose a game mode",
     "mode_select.classic": "Classic",
