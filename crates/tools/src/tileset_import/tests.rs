@@ -449,8 +449,9 @@ fn more_tiles_than_a_row_holds_go_on_the_next_row() {
     let dir = temp.0.join("lib");
     let mut packer = Packer {
         dir: &dir,
-        colors: &fire,
         strips: &BTreeMap::new(),
+        recolours: &BTreeMap::new(),
+        colors: &fire,
         sheets: BTreeMap::new(),
         cells: Vec::new(),
         pixels: Vec::new(),
@@ -1348,4 +1349,192 @@ fn a_strip_and_a_patch_are_checked_with_the_mapping() {
     let text = list(&map);
     let line = format!("between tiles of lava: {PLAIN} patch from tile 0");
     assert!(text.contains(&line), "{text}");
+}
+
+/// A kit whose cells are numbered by what they are: outside corners 1–4,
+/// edges across 5–6, edges down 7–8, inside corners 9–12.
+const KIT: Kit = Kit {
+    outer: [1, 2, 3, 4],
+    across: [5, 6],
+    down: [7, 8],
+    inside: [9, 10, 11, 12],
+};
+
+/// Whether the tile at `(x, y)` of `rows` is in the layer (`#`); a place
+/// off `rows` is not.
+fn is_in(rows: &[&str], x: i32, y: i32) -> bool {
+    let row = usize::try_from(y).ok().and_then(|y| rows.get(y));
+    let at = usize::try_from(x).ok();
+    row.zip(at).and_then(|(r, x)| r.as_bytes().get(x)) == Some(&b'#')
+}
+
+/// The cell of quarter `(qx, qy)` (0 left or up, 1 right or down) of the
+/// tile at `(x, y)` of `rows`, as 0096's mockups chose it: by the tile's
+/// neighbour across, the one up or down, and the diagonal between them.
+fn by_tile(rows: &[&str], (x, y): (i32, i32), (qx, qy): (usize, usize)) -> Option<u32> {
+    let is = |x, y| is_in(rows, x, y);
+    if !is(x, y) {
+        return None;
+    }
+    let (dx, dy) = (if qx == 0 { -1 } else { 1 }, if qy == 0 { -1 } else { 1 });
+    let quarter = qy * 2 + qx;
+    match (is(x + dx, y), is(x, y + dy), is(x + dx, y + dy)) {
+        (false, false, _) => Some(KIT.outer[quarter]),
+        (true, false, _) => Some(KIT.across[qy]),
+        (false, true, _) => Some(KIT.down[qx]),
+        (true, true, false) => Some(KIT.inside[quarter]),
+        (true, true, true) => None,
+    }
+}
+
+#[test]
+fn a_quarters_picture_is_each_tiles_quarter_by_its_neighbours() {
+    // Some mixes: (up-left, up-right, down-left, down-right) in the
+    // layer, and the cell of each of the picture's four quarters.
+    let expected: [([u8; 4], [Option<u32>; 4]); 4] = [
+        // A lone tile down-right: its up-left quarter, an outside corner.
+        ([0, 0, 0, 1], [None, None, None, Some(1)]),
+        // Two below: the top edge.
+        ([0, 0, 1, 1], [None, None, Some(5), Some(5)]),
+        // Three: the one down-right's quarter is an inside corner, the
+        // others edges.
+        ([0, 1, 1, 1], [None, Some(7), Some(5), Some(9)]),
+        // Two diagonal: two outside corners.
+        ([1, 0, 0, 1], [Some(4), None, None, Some(1)]),
+    ];
+    for (places, cells) in expected {
+        assert_eq!(KIT.quarters(places.map(|p| p == 1)), cells, "{places:?}");
+    }
+    assert_eq!(KIT.quarters([false; 4]), [None; 4]);
+    assert_eq!(KIT.quarters([true; 4]), [None; 4]);
+    // On a plus, an L (their inside corners), a ring, an X and a blob, every
+    // quarter of every tile is the mockups' choice: the picture of the
+    // point at that quarter's corner shows it.
+    let shapes: [&[&str]; 5] = [
+        &[".....", "..#..", ".###.", "..#..", "....."],
+        &[".....", ".#...", ".#...", ".###.", "....."],
+        &[".....", ".###.", ".#.#.", ".###.", "....."],
+        &[".....", ".#.#.", "..#..", ".#.#.", "....."],
+        &[".....", ".##..", ".###.", "..##.", "....."],
+    ];
+    let mut mixes = BTreeSet::new();
+    for rows in shapes {
+        for (x, y) in (0..5).flat_map(|y| (0..5).map(move |x| (x, y))) {
+            for (qx, qy) in [(0, 0), (1, 0), (0, 1), (1, 1)] {
+                // The point at the quarter's corner, and the tiles round it.
+                let (px, py) = (x + i32::from(qx == 1), y + i32::from(qy == 1));
+                let round = [(px - 1, py - 1), (px, py - 1), (px - 1, py), (px, py)];
+                let places = round.map(|(x, y)| is_in(rows, x, y));
+                mixes.insert(trpg_content::tileset::mix(places));
+                // The tile's place round the point is opposite its quarter.
+                let shown = KIT.quarters(places)[(qy * 2 + qx) ^ 3];
+                let wanted = by_tile(rows, (x, y), (qx, qy));
+                assert_eq!(shown, wanted, "{rows:?} ({x}, {y}) quarter ({qx}, {qy})");
+            }
+        }
+    }
+    assert_eq!(mixes.len(), 16, "the shapes have every mix: {mixes:?}");
+}
+
+#[test]
+fn a_quartered_picture_takes_the_quarter_of_each_cell_nearest_its_middle() {
+    let temp = Temp::new("quarters");
+    // One tile, each quarter its own colour: up-left 0, up-right 1,
+    // down-left 2, down-right 3.
+    let shade = |q: u8| [40 * q + 10, 20, 30, 255];
+    let mut rgba = Vec::new();
+    for y in 0..16u8 {
+        for x in 0..16u8 {
+            rgba.extend(shade(2 * u8::from(y >= 8) + u8::from(x >= 8)));
+        }
+    }
+    temp.write("lib/pack/q.png", &encode_png(16, 16, &rgba).unwrap());
+    let sheet = Sheet::read(&temp.0.join("lib"), "pack/q.png").unwrap();
+    let px = |p: &[u8], x: usize, y: usize| p[(y * 16 + x) * 4..(y * 16 + x) * 4 + 4].to_vec();
+    let all = quartered(&sheet, [Some(0); 4]).unwrap();
+    // Each quarter of the picture is the cell's opposite quarter.
+    assert_eq!(px(&all, 0, 0), shade(3));
+    assert_eq!(px(&all, 15, 0), shade(2));
+    assert_eq!(px(&all, 7, 15), shade(1));
+    assert_eq!(px(&all, 8, 8), shade(0));
+    // A quarter with no cell is clear.
+    let some = quartered(&sheet, [None, Some(0), None, None]).unwrap();
+    assert_eq!(px(&some, 3, 3), [0; 4]);
+    assert_eq!(px(&some, 12, 3), shade(2));
+    assert_eq!(px(&some, 12, 12), [0; 4]);
+    assert!(quartered(&sheet, [None, None, None, Some(1)]).is_err());
+    // As a cut: its frames are each cell further along.
+    let cut = Cut::Quarters([Some(1), None, Some(8), Some(3)]);
+    assert_eq!(
+        cut.along(2),
+        Cut::Quarters([Some(3), None, Some(10), Some(5)])
+    );
+    assert_eq!(cut.right_column(6), 3);
+    assert_eq!(Cut::Quarters([None; 4]).right_column(6), 0);
+}
+
+#[test]
+fn a_recolour_changes_only_the_colours_it_names() {
+    let mut pixels = vec![
+        0, 0, 0, 255, // black: brown
+        29, 43, 83, 128, // half see-through blue: brown, as see-through
+        1, 2, 3, 255, // another colour: kept
+        0, 0, 0, 0, // nothing: kept
+    ];
+    recolour(
+        &mut pixels,
+        &[((0, 0, 0), (64, 51, 37)), ((29, 43, 83), (106, 84, 61))],
+    );
+    assert_eq!(
+        pixels,
+        [64, 51, 37, 255, 106, 84, 61, 128, 1, 2, 3, 255, 0, 0, 0, 0]
+    );
+}
+
+/// A quarters layer of `of` on the plain sheet, its cells numbered as
+/// [`KIT`]'s.
+fn rim(of: &str) -> String {
+    format!(
+        "\"rim\": Quarters(of: [{of}], sheet: \"{PLAIN}\", kit: (outer: (1, 2, 3, 4), \
+         across: (5, 6), down: (7, 8), inside: (9, 10, 11, 12))),"
+    )
+}
+
+#[test]
+fn a_quarters_layer_is_packed_recoloured_and_listed() {
+    let temp = Temp::new("quarters-layer").with_sheet("lib");
+    with_plain(&temp);
+    let layers = format!("{LAYERS} {}", rim("\"mountain\", \"peak\""));
+    let text = mapping_text(&layers, r#""outdoor": (layers: ["rim"]),"#);
+    let open = text.trim_end_matches(')');
+    // Tile 4's colour (an up-left quarter's outside corner) recoloured.
+    let [r, g, b, _] = plain_color(4);
+    let text = format!("{open}, recolour: {{ \"{PLAIN}\": [(({r}, {g}, {b}), (1, 2, 3))] }})");
+    let map: Mapping = ron::from_str(&text).unwrap();
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    let LayerText::Corners { of, tiles } = &imported.own.layers[0] else {
+        panic!("{:?}", imported.own.layers);
+    };
+    assert_eq!(of, &["mountain", "peak"]);
+    // Every mix but all four (the tiles' own picture shows there).
+    let mixes: Vec<u8> = tiles.iter().map(|(m, _)| *m).collect();
+    assert_eq!(mixes, (1..15).collect::<Vec<_>>());
+    // The up-left quarter of a point with only its up-left tile in the
+    // layer: that tile's down-right outside corner, tile 4, recoloured.
+    let lone = tiles.iter().find(|(m, _)| *m == 8).unwrap().1;
+    assert_eq!(cell_color(&imported.image, lone), [1, 2, 3, 255]);
+    // Two below (its lower half): the top edge, tile 5, as it is.
+    let top = tiles.iter().find(|(m, _)| *m == 3).unwrap().1;
+    let (width, _, rgba) = &imported.image;
+    let at = usize::try_from(((top.1 * 16 + 12) * width + top.0 * 16 + 5) * 4).unwrap();
+    assert_eq!(rgba[at..at + 4], plain_color(5));
+    // The list names the kit and says it is recoloured.
+    let listed = format!("between tiles of mountain, peak: {PLAIN} quarters, recoloured");
+    assert!(list(&map).contains(&listed), "{}", list(&map));
+    // A terrain of the layer must be ours.
+    let map = plain_mapping(&rim("\"lava\""), r#""outdoor": (layers: ["rim"]),"#, "");
+    assert_eq!(
+        check(&map, &terrains()).unwrap_err(),
+        "layer \"rim\": terrain \"lava\" is not in terrain.ron"
+    );
 }

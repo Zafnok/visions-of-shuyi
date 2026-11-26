@@ -256,4 +256,10 @@ table):
   (`….png` under `assets-private/library/`): a tile by its number, a
   `Patch` layer joined at corners from the usual three-by-three layout,
   and the sheet's moving tiles by the mapping's `moving` (each frame a
-  step along the row: the river's 8 frames).
+  step along the row: the river's 8 frames). A `Quarters` layer joins
+  each corner picture from quarters of a kit's cells, RPG Maker style
+  (an outside corner, an edge, an inside corner or nothing, by a tile's
+  two neighbours that way and the diagonal), so inside corners are round
+  too: Chapter 1's hills and peaks, one raised area with Electric
+  Lemon's *Lonesome Forest* rim round it (1359), its stones recoloured
+  by the mapping's `recolour` as the importer reads the sheet.

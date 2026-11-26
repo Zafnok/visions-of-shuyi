@@ -268,6 +268,48 @@ fn chapter_1s_ground_and_river_are_rogue_adventures() {
     assert_eq!(frames.picture(water, GraphicsTier::Reduced, 500), water);
 }
 
+/// Chapter 1's hills and peaks are one raised area (ticket 1359): a rim
+/// joined at corners round both, with a picture for every mix but all
+/// four (the grass of the hill's top), over the peaks' own rock; Tiny
+/// Tales' hills and peaks are gone from the look.
+#[test]
+fn chapter_1s_hills_and_peaks_are_one_raised_area_with_a_rim() {
+    use std::collections::BTreeSet;
+    use trpg_content::tileset::Layer;
+
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    let tileset = &content.tilesets["tiny_tales"];
+    let rogue = tileset.look("rogue_adventure").expect("no look");
+    let outdoor = tileset.look("outdoor").expect("no look");
+    let id = |name: &str| content.terrain.display.id_of(name).expect("no terrain");
+    let (mountain, peak) = (id("mountain"), id("peak"));
+    let corners_of = |look: &trpg_content::tileset::Look, of: &BTreeSet<_>| {
+        look.layers
+            .iter()
+            .position(|l| matches!(l, Layer::Corners(c) if c.of == *of))
+    };
+    let raised = BTreeSet::from([mountain, peak]);
+    let rim = corners_of(rogue, &raised).expect("no rim round hills and peaks");
+    let Layer::Corners(layer) = &rogue.layers[rim] else {
+        unreachable!()
+    };
+    let drawn: Vec<usize> = (0..16).filter(|&m| layer.tiles[m].is_some()).collect();
+    assert_eq!(drawn, (1..15).collect::<Vec<_>>());
+    // The peaks' rock, under the rim, isn't the outdoor look's.
+    let rock = corners_of(rogue, &BTreeSet::from([peak])).expect("no rock on the peaks");
+    assert!(rock < rim);
+    assert_ne!(
+        rogue.layers[rock],
+        outdoor.layers[corners_of(outdoor, &BTreeSet::from([peak])).expect("outdoor peaks")]
+    );
+    // Tiny Tales' hills are only outdoors.
+    assert!(corners_of(rogue, &BTreeSet::from([mountain])).is_none());
+    assert!(corners_of(outdoor, &BTreeSet::from([mountain])).is_some());
+}
+
 /// Every bought file in the build has a credit (ADR-0051), and the credits
 /// screen's list has the bought art's.
 #[test]
@@ -302,6 +344,8 @@ fn every_bought_file_has_a_credit() {
             "Fantasy Battle Pack",
             // Chapter 1's ground and river (ticket 1318).
             "Rogue Adventure World",
+            // Chapter 1's hills (ticket 1359).
+            "Lonesome Forest (modified: stones recolored)",
             // The title's campfire (ticket 0922).
             "Idylwild's Chromatic Campfires",
         ]
