@@ -211,10 +211,10 @@ pub(crate) mod tests {
         for m in 1..16 {
             tiles[usize::from(m)] = Some(mix_rect(m));
         }
-        let shore = CornerLayer {
-            of: BTreeSet::from([id("water"), id("sea"), id("bridge")]),
+        let shore = CornerLayer::new(
+            BTreeSet::from([id("water"), id("sea"), id("bridge")]),
             tiles,
-        };
+        );
         let mut sides = [None; MIXES];
         sides[0b0101] = Some(mix_rect(0));
         let bridge = TileLayer {
