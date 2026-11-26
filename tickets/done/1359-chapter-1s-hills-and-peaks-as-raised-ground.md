@@ -5,11 +5,11 @@ type: content
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: ["1318"]
 blocks: ["1064"]
 nick_input: none
-completed:
+completed: 2026-11-25
 ---
 
 # 1359 — Chapter 1's hills and peaks as raised ground with round edges
@@ -115,13 +115,14 @@ chapters' maps.
 
 ## Acceptance criteria
 
-- [ ] Chapter 1's hills and peaks are drawn as one raised area with a
-      round rim at every outside and inside corner, a face below and a
-      shadow.
-- [ ] Every other map looks as before.
-- [ ] Before/after pictures in the PR, with an inside corner zoomed.
-- [ ] The tileset import's tests pass; `assets-private.rev` moved.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Chapter 1's hills and peaks are drawn as one raised area with a
+      round rim at every outside and inside corner. **The face below and
+      the shadow are not**: they need an engine change, split to **1361**
+      (see the notes).
+- [x] Every other map looks as before.
+- [x] Before/after pictures in the PR, with an inside corner zoomed.
+- [x] The tileset import's tests pass; `assets-private.rev` moved.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -137,3 +138,53 @@ Nothing here moves. GBA: no target.
 
 ## Completion notes
 
+**Done in part (2026-11-25); the face and the shadow are 1361.**
+
+- **Split, with Nick's OK** (2026-11-25): the face hangs on the tile
+  below a hill and depends on the tiles beside the hill; the shadow
+  reaches a pixel past its piece; and Chapter 1's top-right hills and
+  peaks stand right above the fort's wall, where no face may hang. The
+  engine's corner layer draws exactly one tile round its point and on
+  every tile, and the tile layer sees four sides only, so neither can
+  draw them; and the layers are the engine's (`shuyi_assets::tileset`,
+  `shuyi_ui::grid::sprite::ground`), with 1219 not landed. Nick agreed to
+  an engine ticket and PR, **engine#3246** (a corner layer's pictures
+  of any size, off their point, skipping some terrains); **1361** adds
+  the face and the shadow once the pin moves past it. No format change
+  here, so no ADR (1361 writes it).
+- **The rim** (`crates/tools/src/tileset_import.rs`): a `Quarters` layer
+  in the mapping builds each corner picture from four quarters of a
+  kit's cells, RPG Maker style, as 0096's mockups did per tile: an
+  outside corner, an edge along the top or bottom, an edge down a side,
+  an inside corner (the kit's lobes) or nothing, by the tile's two
+  neighbours that way and the diagonal. Every corner, outside and
+  inside, is round; mix 15 draws nothing (the plain's grass is the
+  hill's top). The tileset file is unchanged in shape: ordinary
+  `Corners` rows.
+- **The recolour:** the mapping's `recolour` changes a sheet's colours
+  as the importer reads it (Lonesome Forest's four PICO-8 stones to
+  0096's sandy brown); no recoloured copy exists anywhere.
+- **The peaks:** Rogue Adventure's dark rock (`RA_Overworld_Ground.png`,
+  its patch and inside corners, joined at corners as 1318's ground),
+  under the rim; hills and peaks are one raised area, one rim round
+  both. Tiny Tales' hills and peaks stay in the other looks.
+- **Credits:** Electric Lemon's *Lonesome Forest* in `credits.ron`,
+  titled as modified ("stones recolored"); `THIRD_PARTY_ASSETS.md` has
+  its row (modified) and the ELV row names the overworld sheet.
+- **Tests:** the importer's (every mix's quarters checked against the
+  mockups' per-tile rule on a plus, an L, a ring, an X and a blob, all
+  16 mixes; the quarter placement; the recolour; a whole `Quarters`
+  layer packed, recoloured, listed and checked); the private test that
+  Chapter 1's look has the rim round hills and peaks over the peaks'
+  rock and no Tiny Tales hills.
+- **Checked:** Chapter 1 rendered before and after (crops and an inside
+  corner zoomed in the PR); the other 13 battle maps are pixel-identical
+  with the old and the new tileset.
+- **Edge of the map:** a hill on the map's bottom row carries on past
+  it (the engine counts a tile off the map as the nearest one on it),
+  where the mockups drew its bottom edge there; Chapter 1's hill at the
+  bottom shows it.
+
+**No gameplay rule decided.** Left to judge in play (1064): the hills
+without their face and shadow until 1361; the rim's sandy brown on the
+real map.

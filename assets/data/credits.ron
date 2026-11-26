@@ -105,6 +105,15 @@
          source: "https://elvgames.itch.io/rogue-adventure-world", license: "Custom (ElvGames)",
          private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),
 
+        // Electric Lemon's Lonesome Forest (1359): the stone rim round
+        // Chapter 1's hills and peaks, its stones recolored (a change, so
+        // the credit says so), packed into the same image.
+        (id: "electric_lemon_lonesome_forest", group: Art,
+         title: "Lonesome Forest (modified: stones recolored)", author: "Electric Lemon Games",
+         source: "https://itch.io/s/148198/fantasy-rpg-characters-tile-set-bundle-pixel-grit-series",
+         license: "Custom (Electric Lemon)",
+         private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),
+
         // The title screen's campfire (0922).
         (id: "idylwild_campfires", group: Art, title: "Idylwild's Chromatic Campfires",
          author: "Idylwild", source: "https://opengameart.org/content/idylwilds-chromatic-campfires",

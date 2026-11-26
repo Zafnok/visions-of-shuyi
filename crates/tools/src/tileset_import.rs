@@ -22,6 +22,11 @@
 //! usual three-by-three layout, and a sheet's moving tiles by `moving`
 //! (each frame a step along the row).
 //!
+//! A `Quarters` layer (ticket 1359) builds each corner picture from
+//! quarters of a kit's cells, RPG Maker style, so inside corners are round
+//! too; `recolour` changes a sheet's colours as it is read (Lonesome
+//! Forest's stones in a sandy brown): the recoloured art is never kept.
+//!
 //! It is the only reader of Tiled files: the game reads our RON and PNG.
 //! The XML it needs is three kinds of tag and their attributes, read by
 //! [`tags`]; no XML crate.
@@ -91,7 +96,15 @@ pub struct Mapping {
     /// one loops through its frames ([`Strip`]).
     #[serde(default)]
     pub moving: BTreeMap<String, Strip>,
+    /// Colours changed in a sheet as it is read, by sheet: each pixel of
+    /// a pair's first colour takes its second, its alpha kept (ticket
+    /// 1359: Lonesome Forest's stones in a sandy brown).
+    #[serde(default)]
+    pub recolour: BTreeMap<String, Vec<(Rgb, Rgb)>>,
 }
+
+/// A colour: red, green and blue.
+pub type Rgb = (u8, u8, u8);
 
 /// How a plain sheet draws its moving tiles: frame `k` of a tile is the
 /// tile `k × step` places to its right, each shown for `ms`.
@@ -183,6 +196,66 @@ pub enum LayerMap {
         #[serde(default = "yes")]
         full: bool,
     },
+    /// Pictures between tiles, as `Corners`, each joined from quarters of
+    /// a kit's cells the way RPG Maker joins them (ticket 1359). Each
+    /// quarter of a tile in the layer is the same quarter of one cell,
+    /// chosen by the tile's two neighbours that way and the diagonal
+    /// between them: neither in the layer, an outside corner; only the
+    /// one across, an edge along the top or the bottom; only the one up
+    /// or down, an edge down a side; both but not the diagonal, an inside
+    /// corner; all three, nothing (the tile's own picture shows). So
+    /// every corner, outside and inside, is the kit's round one.
+    Quarters {
+        /// Our terrains in the layer.
+        of: Vec<String>,
+        /// The kit's sheet.
+        sheet: String,
+        /// Which of its cells each kind of quarter comes from.
+        kit: Kit,
+    },
+}
+
+/// The cells of a [`LayerMap::Quarters`]: which cell each kind of quarter
+/// is taken from, counted as a sheet's tiles are.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Kit {
+    /// The outside corners, by quarter: up-left, up-right, down-left,
+    /// down-right.
+    pub outer: [u32; 4],
+    /// The edges along the top and along the bottom.
+    pub across: [u32; 2],
+    /// The edges down the left and down the right.
+    pub down: [u32; 2],
+    /// The inside corners, by quarter.
+    pub inside: [u32; 4],
+}
+
+impl Kit {
+    /// The four quarters of the picture of a point whose tiles (up-left,
+    /// up-right, down-left, down-right) are `places` in the layer, in
+    /// that order: the cell each tile's quarter nearest the point comes
+    /// from, or `None` where nothing is drawn.
+    pub fn quarters(&self, places: [bool; 4]) -> [Option<u32>; 4] {
+        // A tile's neighbour across is the place beside it (index ^ 1),
+        // the one up or down the place above or below it (^ 2), the
+        // diagonal the opposite place (^ 3); its quarter nearest the point
+        // is the opposite quarter (^ 3), counted the same way.
+        let mut out = [None; 4];
+        for (place, cell) in out.iter_mut().enumerate() {
+            let quarter = place ^ 3;
+            let (across, upright, diagonal) =
+                (places[place ^ 1], places[place ^ 2], places[place ^ 3]);
+            *cell = match (places[place], across, upright) {
+                (false, ..) => None,
+                (true, false, false) => Some(self.outer[quarter]),
+                (true, true, false) => Some(self.across[quarter >> 1]),
+                (true, false, true) => Some(self.down[quarter & 1]),
+                (true, true, true) => (!diagonal).then_some(self.inside[quarter]),
+            };
+        }
+        out
+    }
 }
 
 /// A mix of corners (up-left, up-right, down-left, down-right in the
@@ -535,6 +608,10 @@ enum Cut {
     /// Tile `over` drawn over tile `under` ([`LayerMap::Patch`]'s
     /// diagonal mixes).
     Pair { under: u32, over: u32 },
+    /// A picture joined from four quarters ([`LayerMap::Quarters`]): for
+    /// its up-left, up-right, down-left and down-right quarter, the cell
+    /// whose opposite quarter goes there, or nothing.
+    Quarters([Option<u32>; 4]),
 }
 
 impl Cut {
@@ -545,6 +622,12 @@ impl Cut {
             Self::Tile(tile) => tile % columns,
             Self::Joined { block, .. } => block % columns + 2,
             Self::Pair { under, over } => (under % columns).max(over % columns),
+            Self::Quarters(cells) => cells
+                .iter()
+                .flatten()
+                .map(|c| c % columns)
+                .max()
+                .unwrap_or(0),
         }
     }
 
@@ -561,6 +644,17 @@ impl Cut {
                 under: under + places,
                 over: over + places,
             },
+            Self::Quarters(cells) => {
+                let mut moved = cells;
+                let mut i = 0;
+                while i < moved.len() {
+                    if let Some(cell) = moved[i] {
+                        moved[i] = Some(cell + places);
+                    }
+                    i += 1;
+                }
+                Self::Quarters(moved)
+            }
         }
     }
 }
@@ -586,6 +680,40 @@ fn paired(sheet: &Sheet, under: u32, over: u32) -> Result<Vec<u8>, String> {
         }
     }
     Ok(out)
+}
+
+/// A picture joined from quarters of `sheet`'s cells: for each of its
+/// quarters (up-left, up-right, down-left, down-right), the opposite
+/// quarter of the cell `cells` names there, or nothing. RGBA8, row by row.
+fn quartered(sheet: &Sheet, cells: [Option<u32>; 4]) -> Result<Vec<u8>, String> {
+    let half = usize::try_from(TILE / 2).unwrap_or(0);
+    let line = usize::try_from(TILE * 4).unwrap_or(0);
+    let mut out = vec![0; line * half * 2];
+    for (to, cell) in cells.into_iter().enumerate() {
+        let Some(cell) = cell else {
+            continue;
+        };
+        let tile = sheet.tile(cell)?;
+        let from = to ^ 3;
+        let corner = |q: usize| (q >> 1) * half * line + (q & 1) * half * 4;
+        for y in 0..half {
+            let (src, dst) = (corner(from) + y * line, corner(to) + y * line);
+            out[dst..dst + half * 4].copy_from_slice(&tile[src..src + half * 4]);
+        }
+    }
+    Ok(out)
+}
+
+/// Changes each pixel of RGBA8 `pixels` whose colour is the first of one
+/// of `pairs` to the second, its alpha kept.
+pub fn recolour(pixels: &mut [u8], pairs: &[(Rgb, Rgb)]) {
+    let (pixels, _) = pixels.as_chunks_mut::<4>();
+    for pixel in pixels.iter_mut().filter(|p| p[3] != 0) {
+        let own = (pixel[0], pixel[1], pixel[2]);
+        if let Some(&(_, (r, g, b))) = pairs.iter().find(|(from, _)| *from == own) {
+            pixel[..3].copy_from_slice(&[r, g, b]);
+        }
+    }
 }
 
 /// A tile joined from the quarters of the block of `sheet` whose top-left
@@ -624,6 +752,8 @@ struct Packer<'a> {
     colors: &'a dyn Fn(&str) -> Option<[u8; 3]>,
     /// The plain sheets whose tiles move.
     strips: &'a BTreeMap<String, Strip>,
+    /// The colours changed in each sheet as it is read.
+    recolours: &'a BTreeMap<String, Vec<(Rgb, Rgb)>>,
     sheets: BTreeMap<String, Sheet>,
     /// The sheet, picture and tint of each cell, in the image's order.
     cells: Vec<(String, Cut, String)>,
@@ -635,7 +765,10 @@ impl Packer<'_> {
     /// Sheet `name`, read once.
     fn sheet(&mut self, name: &str) -> Result<&Sheet, String> {
         if !self.sheets.contains_key(name) {
-            let sheet = Sheet::read(self.dir, name)?;
+            let mut sheet = Sheet::read(self.dir, name)?;
+            if let Some(pairs) = self.recolours.get(name) {
+                recolour(&mut sheet.rgba, pairs);
+            }
             self.sheets.insert(name.to_owned(), sheet);
         }
         self.sheets.get(name).ok_or_else(|| name.to_owned())
@@ -662,6 +795,7 @@ impl Packer<'_> {
                 Cut::Tile(tile) => source.tile(tile),
                 Cut::Joined { block, ends } => joined(source, block, ends),
                 Cut::Pair { under, over } => paired(source, under, over),
+                Cut::Quarters(cells) => quartered(source, cells),
             };
             let mut pixels = pixels.map_err(|e| format!("{sheet}: {e}"))?;
             if !tint_name.is_empty() {
@@ -855,6 +989,7 @@ fn layer(packer: &mut Packer, layer: &LayerMap, terrains: &[String]) -> Result<L
             inside,
             full,
         } => patch_layer(packer, of, sheet, (*patch, *inside), *full),
+        LayerMap::Quarters { of, sheet, kit } => quarters_layer(packer, of, sheet, kit),
         LayerMap::Block {
             of,
             sheet,
@@ -887,6 +1022,27 @@ fn layer(packer: &mut Packer, layer: &LayerMap, terrains: &[String]) -> Result<L
             })
         }
     }
+}
+
+/// A [`LayerMap::Quarters`] as the tileset file has it, its pictures
+/// packed: one for each mix of corners that draws anything.
+fn quarters_layer(
+    packer: &mut Packer,
+    of: &[String],
+    sheet: &str,
+    kit: &Kit,
+) -> Result<LayerText, String> {
+    let mut tiles = Vec::new();
+    for mix in 1..16u8 {
+        let cells = kit.quarters([8, 4, 2, 1].map(|bit| mix & bit != 0));
+        if cells.iter().any(Option::is_some) {
+            tiles.push((mix, packer.packed(sheet, Cut::Quarters(cells), "")?));
+        }
+    }
+    Ok(LayerText::Corners {
+        of: of.to_vec(),
+        tiles,
+    })
 }
 
 /// A [`LayerMap::Patch`] as the tileset file has it, its pictures packed:
@@ -956,7 +1112,8 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
         match layer {
             LayerMap::Corners { of, .. }
             | LayerMap::Block { of, .. }
-            | LayerMap::Patch { of, .. } => {
+            | LayerMap::Patch { of, .. }
+            | LayerMap::Quarters { of, .. } => {
                 known(&what, of, terrains)?;
             }
             LayerMap::Tiles {
@@ -1024,6 +1181,7 @@ pub fn import(
         dir,
         colors,
         strips: &mapping.moving,
+        recolours: &mapping.recolour,
         sheets: BTreeMap::new(),
         cells: Vec::new(),
         pixels: Vec::new(),
@@ -1130,6 +1288,17 @@ pub fn list(mapping: &Mapping) -> String {
                     "between tiles of {}: {sheet} patch from tile {patch}",
                     of.join(", ")
                 ),
+                Some(LayerMap::Quarters { of, sheet, .. }) => {
+                    let recoloured = if mapping.recolour.contains_key(sheet) {
+                        ", recoloured"
+                    } else {
+                        ""
+                    };
+                    format!(
+                        "between tiles of {}: {sheet} quarters{recoloured}",
+                        of.join(", ")
+                    )
+                }
                 None => "(no such layer)".to_owned(),
             };
             let _ = writeln!(out, "  layer {layer_name:<10} {described}");
