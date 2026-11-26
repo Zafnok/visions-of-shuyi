@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: fable-5.1 / gpt-6-astra
 effort: high
 status: todo
-blocked_by: ["0234", "0239", "0243", "0716", "0725", "0825", "0728", "0737"]
+blocked_by: ["0234", "0239", "0243", "0716", "0725", "0825", "0728", "0737", "0934"]
 nick_input: none
 completed:
 ---
@@ -26,6 +26,34 @@ critical path*): a human writer is being hired (0766) and may reword
 every line. A line's id is a hash of its words, so a clip or a
 translation made before the rewrite is redone after it. Don't start
 this ticket while 0766 is open without asking Nick.
+
+**From 0725 (2026-11-25).** The pipeline's documents are in the private
+repository: this ticket's `docs/story/zh/` is `assets-private/story/zh/`.
+0725 made the lists and **did not add the pack**, because a `lang.ron`
+in the build makes the first launch ask every player for a language and
+Options offer 简体中文 (0825), with nothing translated behind it. So
+this ticket also:
+
+- creates the pack, in the two places `zh/README.md` (*The pack's
+  files*) names: `lang.ron` and `ui.ron` in `assets/lang/zhhans/`
+  (public), `data.ron` and `dialogue/` in
+  `assets-private/content/lang/zhhans/` (private, by the
+  `content-change` skill). `lang.ron`'s contents are in the README;
+- enters every row of `zh/names.md` in `data.ron` as `names.<id>`
+  (0725's trial pack showed no missing `names.*` key and every character
+  in the font);
+- says `language.machine_note` in `ui.ron` as `(机器翻译，母语者审校)`
+  (0825's completion notes);
+- changes the tests that expect English and the test pack to be the
+  only languages (`lang::tests::the_embedded_languages_load` lists the
+  codes; look for others that start the game with no settings, where the
+  first launch's language list now shows);
+- waits for **0934**: the Chapter 1 demo cuts the names table to
+  Chapter 1's names, and a pack entry for a name it lacks stops the
+  demo's content from loading (0725's trial: 115 errors);
+- decides, with the reader's word if she gave one, whether the stat
+  column's one-character labels (`zh/glossary.md`, *Stats and numbers*)
+  will do or the column needs four cells (a layout ticket).
 
 ## Nick input
 

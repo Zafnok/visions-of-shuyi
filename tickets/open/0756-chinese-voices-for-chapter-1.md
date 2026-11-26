@@ -33,6 +33,14 @@ bucket B1): 0180 is in `blocked_by`, since each clip under `voice/` is
 a hand-written line in `shuyi.ron`'s disclosure lists (3 per clip
 today) until 0180 writes them.
 
+**From 0725 (2026-11-25).** The pack's code is `zhhans`. A Chinese line
+that says `{lead}` needs the words the voice says for the name, in
+Chinese (`{lead|流亡者}` as the starting rule, as English has
+`{lead|the exile}`, 0754). A pack's token check doesn't allow a stand-in
+yet (`assets-private/story/zh/README.md`, *Tokens*): whichever of 0755
+and this ticket comes first makes the pack accept it and the voice tool
+read it, before any clip of such a line is made.
+
 ## Nick input
 
 **Decision:** one listening round before generating, as in 0755, of each Chapter

@@ -17,7 +17,9 @@ It checks them out into `assets-private/story/` (git-ignored here); start
 with its `README.md`. A change to them is a pull request in the private
 repository, then this repository's that moves `assets-private.rev`: the
 `content-change` skill. How the story is written: ADR-0011 and the
-`story-writing` skill.
+`story-writing` skill. How it is translated (ADR-0045 §6): the skill's
+*Translating* section; the Chinese pipeline, glossary, names and style
+sheets are in `assets-private/story/zh/` (ticket 0725).
 
 The game's own content is beside them, in the private repository's
 `content/` since ticket 0160: the scripts (`dialogue/*.dlg`), chapters,
