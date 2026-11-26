@@ -186,3 +186,17 @@ fn language_list_declares_its_actions() {
     let screen = h.screen::<LanguageListScreen>().unwrap();
     crate::screens::actions::assert_declares(screen, crate::screens::actions::LANGUAGE_LIST);
 }
+
+/// Picking says whether it changed anything, saved or previewed: a new
+/// language yes, the same one again no, one the game hasn't no.
+#[test]
+fn picking_says_whether_it_changed_the_language() {
+    let mut c = crate::screen::tests::ctx();
+    assert!(pick(&mut c, 1, true));
+    assert_eq!(c.settings().language, Some(code("test")));
+    assert!(!pick(&mut c, 1, true));
+    assert!(pick(&mut c, 0, false));
+    assert!(!pick(&mut c, 0, false));
+    assert!(!pick(&mut c, 9, true));
+    assert_eq!(c.settings().language, Some(code("en")));
+}
