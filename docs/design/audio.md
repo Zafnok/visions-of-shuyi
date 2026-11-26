@@ -259,7 +259,8 @@ Nick picked over three rounds of a listening page
 Chapter 1 battle with its track (`battle_bright`), a sound bed under it,
 passing calls on top, the map's light, and sliders for the music, the bed
 and the calls. His words are in the [appendix](#appendix-nicks-words).
-Which bed each place gets is each chapter's ticket (1324–1331).
+Which bed each place gets is each chapter's ticket (1324–1331); Chapter
+1's is [below](#chapter-1s-beds-ticket-1324-2026-11-26).
 
 - **A place has a sound bed**: one quiet loop of the place under its
   music (wind in a meadow, a river, a hall's hush), the way the title's
@@ -317,6 +318,57 @@ Bells_distant_in_town.wav (ivolipa, [266525](https://freesound.org/s/266525/),
 [73678](https://freesound.org/s/73678/), one toll, softened), Hooded
 crow.wav (straget, [404687](https://freesound.org/s/404687/)) and Owl Hoot
 (Breviceps, [465697](https://freesound.org/s/465697/)); all CC0.
+
+### Chapter 1's beds (ticket 1324, 2026-11-26)
+
+Nick set each of Chapter 1's places' mixes himself on a listening page
+with a slider per layer. Which place plays what, and why, tells the
+story: it is in the private repository's `story/design/audio.md`. What
+isn't story:
+
+- **The Summer Meadow is replaced.** It has an insect buzzing near the
+  microphone (steady tones near 145, 215 and 290 Hz) that Nick heard as
+  "a low beep"; filtered, he still heard it ("find a different sample
+  without this annoying buzz"). The day bed is now **Hungary Meadow
+  Afternoon** (many birds, crickets). Every bed is checked for a
+  buzz or hum before it is shown.
+- **One sound per layer.** A layer holds only its own kind of sound: the
+  1322 river was dropped because its birds moved with its slider ("some
+  birds volume is affected by the river").
+- **A bed can be several layers**, each at its own level against the
+  place's music, and a place's whole bed can sit lower than another's
+  (two of Chapter 1's are 6 dB lower).
+- **A scene over a battle's map can play a bed of its own**, not the
+  battle's.
+- **The bed matches what moves on the map** (Nick: "match the ambience to
+  the critters … the flowing river, and the wind causing the trees to
+  sway"): river and leaves where the map shows them. Rabbits and deer get
+  no sound of their own (they are near silent; a per-creature sound would
+  be a call, 1344).
+- **A river plays at one level** wherever the camera is: "for now A, but
+  we might revisit if we get spatial aware audio mixing in a good way".
+
+The sounds Chapter 1 uses (all on Freesound; credit them all):
+
+| Layer | Recording | Author | Source | License |
+| ----- | --------- | ------ | ------ | ------- |
+| Meadow: many birds, crickets | Hungary Meadow Afternoon Birds Crickets | Alcappuccino | [freesound 416206](https://freesound.org/s/416206/) | CC0 |
+| A river, no birds | Kervijen babbling creek travelling.wav | bruno.auzet | [freesound 690326](https://freesound.org/s/690326/) | CC0 |
+| Wind in the leaves, soft | Soft Wind in the Trees - Leaves rustle | Borgory | [freesound 751473](https://freesound.org/s/751473/) | CC0 |
+| Dawn chorus | Dawn chorus.wav (Wicklow) | Synge101 | [freesound 611453](https://freesound.org/s/611453/) | CC0 |
+| Fire crackle | Campfire 02 (the title's, already in the game) | HECKFRICKER | [freesound 729396](https://freesound.org/s/729396/) | CC0 |
+| Wind in trees, crows | Wind in forest with crows | Cinetony | [freesound 563572](https://freesound.org/s/563572/) | CC0 |
+| A hall's hush | AMB_Wind_Howling_empty Church close to window | Tonmeister88 | [freesound 557380](https://freesound.org/s/557380/) | CC0 |
+| A clock ticking | Kitchen Wall Clock Ticking 2 | giddster | [freesound 434841](https://freesound.org/s/434841/) | CC0 |
+
+Heard and not picked: Summer afternoon Meadow (DanGasior,
+[414907](https://freesound.org/s/414907/), the quieter meadow, kept for
+another place), wind_forest_08_strong (teadrinker,
+[403051](https://freesound.org/s/403051/), "no gusty wind trees"), wind
+open field (Globofonia, [553733](https://freesound.org/s/553733/)) and
+AMBIENCE NIGHT FIELD CRICKET 01 (above); all CC0. Dropped for a hum before
+Nick heard them: a wood stove in a room (Yulathh,
+[767875](https://freesound.org/s/767875/), CC-BY 4.0).
 
 ## Sound effects
 
