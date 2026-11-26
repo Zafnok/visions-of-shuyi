@@ -164,9 +164,28 @@ credit everyone).
 ## Scope
 
 **In:**
-- Round 1: the ELV bundle's GUI kit and icons first (owned), the Code
-  Ark kit recoloured, then the bought-pack candidates and the Japanese
-  sites, rendered on the four screens.
+- **First, before any search for new packs: check every bought asset
+  for UI candidates** (Nick, 2026-11-26: "we should ensure all bought
+  assets are checked for ui candidates before ruling them out and
+  scouring for more"). Go through **every** purchase, by its store
+  page's full product list, not only what is downloaded into the
+  private repository. That means every private row of
+  `THIRD_PARTY_ASSETS.md` and every folder of the private repository's
+  `library/` and `originals/`. Today those are the Tiny Tales bundle
+  (all 37 products), the ELV Game Assets Mega Bundle (all of it), the
+  Electric Lemon *Pixel Grit* bundle, MattWalkden's *Fantasy Battle
+  Pack*, Pixel Flag, Shironejiya and Bytewright. For each pack, write
+  down what UI it holds (frames, plates, buttons, cursor, bars, icons,
+  fonts, dialogue box, portrait frame) or "none", in a table in the
+  completion notes. Nick downloads the packs not yet downloaded
+  (**Setup**).
+- Only for a part no bought pack covers (or that Nick rules out after
+  seeing it) look further: the itch candidates above, then the
+  Japanese sites. The completion notes name the gap each new pack
+  fills.
+- Round 1 renders: the bought candidates first (the ELV GUI kit and
+  icons, the Code Ark kit recoloured, whatever the check finds), then
+  new packs only for the gaps, on the four screens.
 - The `ask-nick` rounds until each question has an answer.
 - `docs/design/look-and-feel.md`: a new section *Windows (the picture
   look)* with each answer, Nick's words, and Claude's starting rules
@@ -193,6 +212,8 @@ draw the glyph windows there unless a picture costs nothing.
 
 ## Acceptance criteria
 
+- [ ] The completion notes hold the table of every bought pack and the
+      UI it holds (or "none"), made before any new pack was searched.
 - [ ] Each of the 8 questions answered by Nick, his words quoted in
       `docs/design/look-and-feel.md`, *Windows (the picture look)*.
 - [ ] Any pack chosen is bought or downloaded by Nick, sorted into the
