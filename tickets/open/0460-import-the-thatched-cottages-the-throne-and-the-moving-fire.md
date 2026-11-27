@@ -5,7 +5,7 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: blocked
+status: in-progress
 blocked_by: []
 blocks: ["1064"]
 nick_input: setup

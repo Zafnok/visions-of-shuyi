@@ -147,7 +147,10 @@ mod tests {
                 "mattwalkden",
                 "elv_games",
                 "electric_lemon_lonesome_forest",
-                "electric_lemon_classic_dungeons"
+                "electric_lemon_classic_dungeons",
+                "edermunizz_castle_and_village",
+                "armm1998_tilefantasy_castle",
+                "minifantasy_raided_village",
             ]
         );
         // Rogue Adventure's tiles share Tiny Tales' packed image (1318).

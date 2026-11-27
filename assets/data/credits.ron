@@ -127,6 +127,25 @@
          license: "Custom (Electric Lemon)",
          private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),
 
+        // The battle map's house, throne and burning wood (0460, chosen in
+        // 0471), packed into the same image. edermunizz and ArMM1998 ask no
+        // credit for these paid packs; Minifantasy's licence requires one
+        // naming Krishna Palacio.
+        (id: "edermunizz_castle_and_village", group: Art,
+         title: "Castle and Village", author: "edermunizz (Eder Muniz)",
+         source: "https://edermunizz.itch.io/castle-and-village-pixel-art-pack",
+         license: "Custom (edermunizz)",
+         private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),
+        (id: "armm1998_tilefantasy_castle", group: Art,
+         title: "Tile Fantasy: Castle", author: "ArMM1998",
+         source: "https://armm1998.itch.io/tilefantasy-castle", license: "Custom (ArMM1998)",
+         private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),
+        (id: "minifantasy_raided_village", group: Art,
+         title: "Minifantasy: Raided Village", author: "Krishna Palacio",
+         source: "https://krishna-palacio.itch.io/minifantasy-raided-village",
+         license: "Custom (Krishna Palacio)",
+         private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),
+
         // The title screen's campfire (0922).
         (id: "idylwild_campfires", group: Art, title: "Idylwild's Chromatic Campfires",
          author: "Idylwild", source: "https://opengameart.org/content/idylwilds-chromatic-campfires",

@@ -502,3 +502,61 @@ fn chapter_three_speakers_have_their_own_faces_and_the_prior_his_picture() {
     let shown = display_path(prior.image.path());
     assert!(is_private(&shown), "{shown}");
 }
+
+/// A burning wood (ticket 0460, 0471's answer) is the burnt wood's bare
+/// trees with Minifantasy's flames over them, in every look: a tile layer
+/// of the burning wood alone whose picture moves through its frames,
+/// stands on its first frame at time 0 (what idle motion off shows) and on
+/// a lesser tier. The throne stands two tiles tall with its sides on the
+/// tiles beside it (Nick, 2026-11-27: "A: whole, 2 tall").
+#[test]
+fn a_burning_wood_has_moving_flames_and_the_throne_stands_tall() {
+    use std::collections::BTreeSet;
+    use trpg_content::map::TILE_LOOKS;
+    use trpg_content::motion::GraphicsTier;
+    use trpg_content::tileset::Layer;
+
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    let tileset = &content.tilesets["tiny_tales"];
+    let id = |name: &str| content.terrain.display.id_of(name).expect("no terrain");
+    let (burning, throne) = (
+        BTreeSet::from([id("burning")]),
+        BTreeSet::from([id("throne")]),
+    );
+    let frames = &tileset.frames;
+    for name in TILE_LOOKS {
+        let look = tileset.look(name).expect("no look");
+        let flames: Vec<_> = look
+            .layers
+            .iter()
+            .filter_map(|layer| match layer {
+                Layer::Tiles(t) if t.of == burning && frames.iter().any(|m| m.still == t.tile) => {
+                    Some(t.tile)
+                }
+                _ => None,
+            })
+            .collect();
+        let [flames] = flames.as_slice() else {
+            panic!("look {name}: no moving flames on the burning wood: {flames:?}");
+        };
+        let at = |t| frames.picture(*flames, GraphicsTier::Full, t);
+        assert_eq!(at(0), *flames, "look {name}");
+        let shown: BTreeSet<_> = (0..800).step_by(100).map(|t| (at(t).x, at(t).y)).collect();
+        assert_eq!(shown.len(), 8, "look {name}: the strip's 8 frames");
+        assert_eq!(frames.picture(*flames, GraphicsTier::Reduced, 300), *flames);
+        // The throne: its middle and both sides, each two tiles tall,
+        // one a tile left of the other.
+        let standing: Vec<i32> = look
+            .layers
+            .iter()
+            .filter_map(|layer| match layer {
+                Layer::Corners(c) if c.of == throne => Some(c.offset.0),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(standing, [8, -8, 24], "look {name}");
+    }
+}

@@ -459,6 +459,7 @@ fn more_tiles_than_a_row_holds_go_on_the_next_row() {
         pixels: Vec::new(),
         slots: Vec::new(),
         taken: BTreeSet::new(),
+        layouts: Vec::new(),
     };
     // No picture yet: one empty row.
     assert_eq!(packer.image().0, 256);
@@ -2309,5 +2310,203 @@ fn a_looks_trees_are_checked_with_the_mapping() {
     assert_eq!(
         check_of(&tree("forest", 1)),
         Err("look \"indoor\": trees need a sheet, 2 frames or more and a time".to_owned())
+    );
+}
+
+/// A strip of 4 frames of 4 × 4 px side by side (ticket 0460), as
+/// `pack/flames.png`: frame `f` all [`flame`]`(f)`, but frame 1's
+/// top-left pixel see-through.
+fn with_flames(temp: &Temp) {
+    let mut rgba = Vec::new();
+    for y in 0..4u32 {
+        for x in 0..16u32 {
+            let f = x / 4;
+            rgba.extend(if (f, x % 4, y) == (1, 0, 0) {
+                [0; 4]
+            } else {
+                flame(f)
+            });
+        }
+    }
+    temp.write("lib/pack/flames.png", &encode_png(16, 4, &rgba).unwrap());
+}
+
+/// The colour of frame `f` of the strip.
+fn flame(f: u32) -> [u8; 4] {
+    [u8::try_from(40 * f + 40).unwrap(), 60, 0, 255]
+}
+
+/// Two flames on a burning tile: one in the top-left corner from frame 0,
+/// one in the bottom-right corner from frame 2.
+const FLAMES: &str = r#"
+    "fire": Sprites(of: ["burning"], sheet: "pack/flames.png", frame: (4, 4), frames: 4,
+                    ms: 100, at: [(0, 0, 0), (12, 12, 2)]),
+"#;
+
+/// The colour of the packed image's pixel `(x, y)` of cell `at`.
+fn pixel_of(image: &(u32, u32, Vec<u8>), (column, row): At, (x, y): (u32, u32)) -> [u8; 4] {
+    let (width, _, rgba) = image;
+    let at = usize::try_from(((row * 16 + y) * width + column * 16 + x) * 4).unwrap();
+    rgba[at..at + 4].try_into().unwrap()
+}
+
+#[test]
+fn sprites_lie_on_their_tile_each_on_its_own_frame_and_move() {
+    let temp = Temp::new("sprites").with_sheet("lib");
+    with_flames(&temp);
+    let look = r#""outdoor": (layers: ["fire"]),"#;
+    let map = plain_mapping(FLAMES, look, "");
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    let [
+        LayerText::Tiles {
+            of,
+            at,
+            beside,
+            sides,
+        },
+    ] = imported.own.layers.as_slice()
+    else {
+        panic!("{:?}", imported.own.layers);
+    };
+    assert_eq!(
+        (of.as_slice(), beside.is_empty()),
+        (["burning".to_owned()].as_slice(), true)
+    );
+    assert_eq!(sides, &[]);
+    let px = |cell, xy| pixel_of(&imported.image, cell, xy);
+    // Frame 0: the first flame on frame 0, the second on frame 2, nothing
+    // between them.
+    assert_eq!((px(*at, (0, 0)), px(*at, (3, 3))), (flame(0), flame(0)));
+    assert_eq!((px(*at, (12, 12)), px(*at, (15, 15))), (flame(2), flame(2)));
+    assert_eq!((px(*at, (4, 4)), px(*at, (11, 11))), ([0; 4], [0; 4]));
+    // It moves through the strip's 4 frames, 100 ms each, each flame a
+    // frame further on, round the loop; a see-through pixel shows nothing.
+    let [moving] = imported.moving.as_slice() else {
+        panic!("{:?}", imported.moving);
+    };
+    assert_eq!(moving.at, *at);
+    assert_eq!(moving.frames[0].0, *at);
+    assert_eq!(
+        moving.frames.iter().map(|f| f.1).collect::<Vec<_>>(),
+        [100; 4]
+    );
+    for (k, &(cell, _)) in (0..).zip(&moving.frames) {
+        let (first, second) = (k, (k + 2) % 4);
+        assert_eq!(px(cell, (3, 3)), flame(first), "frame {k}");
+        assert_eq!(px(cell, (15, 15)), flame(second), "frame {k}");
+        let corner = if first == 1 { [0; 4] } else { flame(first) };
+        assert_eq!(px(cell, (0, 0)), corner, "frame {k}");
+    }
+    // Each frame is a cell of its own.
+    let cells: BTreeSet<At> = moving.frames.iter().map(|f| f.0).collect();
+    assert_eq!(cells.len(), 4);
+    assert!(list(&map).contains("moving on burning: pack/flames.png, 2 sprites of 4×4 px"));
+    let cut = Cut::Sprites {
+        layout: 3,
+        frame: 1,
+    };
+    assert_eq!(
+        cut.along(2),
+        Cut::Sprites {
+            layout: 3,
+            frame: 3
+        }
+    );
+    assert_eq!((cut.right_column(6), cut.down()), (0, 1));
+}
+
+#[test]
+fn a_sprite_is_checked_whole_inside_its_tile_and_its_strip() {
+    let sprites = |at: &str, frames: u32, sheet: &str| {
+        format!(
+            "\"fire\": Sprites(of: [\"burning\"], sheet: \"{sheet}\", frame: (4, 4), \
+             frames: {frames}, ms: 100, at: [{at}]),"
+        )
+    };
+    let check_of = |layers: &str| check(&mapping(layers, "\"outdoor\": (layers: [])"), &terrains());
+    assert_eq!(check_of(&sprites("(12, 12, 3)", 4, "p/f.png")), Ok(()));
+    for (at, frames, sheet, problem) in [
+        (
+            "(13, 0, 0)",
+            4,
+            "p/f.png",
+            "a 4×4 px sprite at (13, 0) spills out of the 16×16 tile",
+        ),
+        (
+            "(0, 13, 0)",
+            4,
+            "p/f.png",
+            "a 4×4 px sprite at (0, 13) spills out of the 16×16 tile",
+        ),
+        (
+            "(0, 0, 4)",
+            4,
+            "p/f.png",
+            "the sprite at (0, 0) starts on frame 4 of 4",
+        ),
+        (
+            "(0, 0, 0)",
+            1,
+            "p/f.png",
+            "sprites need 2 frames or more, a size and a time",
+        ),
+        ("", 4, "p/f.png", "no sprite on the tile"),
+        (
+            "(0, 0, 0)",
+            4,
+            "set/Made",
+            "sprites come from a plain sheet (….png)",
+        ),
+    ] {
+        assert_eq!(
+            check_of(&sprites(at, frames, sheet)),
+            Err(format!("layer \"fire\": {problem}")),
+            "{at}"
+        );
+    }
+    // A strip with fewer frames than the layer says, found when imported.
+    let temp = Temp::new("sprites-short").with_sheet("lib");
+    with_flames(&temp);
+    let map = plain_mapping(
+        &sprites("(0, 0, 0)", 5, "pack/flames.png"),
+        "\"outdoor\": (layers: [\"fire\"]),",
+        "",
+    );
+    let err = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap_err();
+    assert_eq!(
+        err,
+        "pack/flames.png: frame 4 of 4×4 px is outside the 16×4 px image"
+    );
+}
+
+#[test]
+fn a_standing_picture_may_be_moved_across_onto_the_tiles_beside() {
+    let temp = Temp::new("shift").with_sheet("lib");
+    with_plain(&temp);
+    let layers = r#"
+        "left": Standing(of: ["throne"], sheet: "pack/plain.png", cells: (0, 6), shift: -1),
+        "right": Standing(of: ["throne"], sheet: "pack/plain.png", cells: (2, 8), shift: 1),
+    "#;
+    let map = plain_mapping(layers, r#""outdoor": (layers: ["left", "right"]),"#, "");
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    let offsets: Vec<(i32, i32)> = imported
+        .own
+        .layers
+        .iter()
+        .map(|layer| match layer {
+            LayerText::Corners { place, .. } => place.offset,
+            LayerText::Tiles { .. } => panic!("{layer:?}"),
+        })
+        .collect();
+    // A tile left of the tile above (8 - 16), a tile right of it.
+    assert_eq!(offsets, [(-8, -8), (24, -8)]);
+    let listed = list(&map);
+    assert!(
+        listed.contains("tiles 0 over 6, moved -1 tiles across"),
+        "{listed}"
+    );
+    assert!(
+        listed.contains("tiles 2 over 8, moved 1 tiles across"),
+        "{listed}"
     );
 }
