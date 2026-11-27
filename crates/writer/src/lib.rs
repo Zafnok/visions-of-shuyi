@@ -382,3 +382,4 @@ mod probe_0150 {
         let _ = super::zz_probe_0150_missed();
     }
 }
+// Ticket 0150's probe, push B (reverted before merge).
