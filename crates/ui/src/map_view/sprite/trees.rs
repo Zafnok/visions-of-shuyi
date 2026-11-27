@@ -393,13 +393,23 @@ mod tests {
         assert!(ground.opacity > 0);
         let wash = |s: &Sprite| (s.paint, s.opacity);
         assert_eq!(wash(washed[0]), wash(ground));
-        // The range's outline, again over the tree.
+        // The range's outline the ground drew on the tile, each line again
+        // over the tree.
         let inside = |r: PxRect| tile(ranged).intersect(&r) == Some(r);
-        assert!(
-            after
+        let outline: Vec<PxRect> = buf.items()[..at]
+            .iter()
+            .filter_map(|i| match i {
+                Item::Rect(o) if inside(o.rect) => Some(o.rect),
+                _ => None,
+            })
+            .collect();
+        assert_ne!(outline.len(), 0, "the ground outlines the range");
+        for line in &outline {
+            let again = after
                 .iter()
-                .any(|i| matches!(i, Item::Rect(o) if inside(o.rect)))
-        );
+                .any(|i| matches!(i, Item::Rect(o) if o.rect == *line));
+            assert!(again, "{line:?} isn't painted over the tree");
+        }
         // The brigand's picture is painted after the tree.
         let on_tile = |r: PxRect| tile(ranged).intersect(&r).is_some();
         let unit = after

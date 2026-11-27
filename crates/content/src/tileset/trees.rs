@@ -387,6 +387,35 @@ mod tests {
         assert_eq!(placed(&[".#.", ".#.", ".#."]), [(1, 0, Half), (1, 2, Half)]);
     }
 
+    /// A look's trees stand on the terrains it names, and only there.
+    #[test]
+    fn a_looks_trees_stand_on_its_own_forest() {
+        let mut t = trees();
+        let (forest, grass) = (TerrainId(7), TerrainId(8));
+        t.of = [forest].into_iter().collect();
+        let woods = |p: Pos| Some(if p.y < 3 { forest } else { grass });
+        let placed: Vec<(i32, i32, Footprint)> = t
+            .place(3, 4, woods)
+            .into_iter()
+            .map(|tr| (tr.trunk.x, tr.trunk.y, tr.footprint))
+            .collect();
+        assert_eq!(placed, [(1, 2, Big)]);
+        assert_eq!(t.place(3, 4, |_| Some(grass)), []);
+    }
+
+    /// Only the map's tiles get trees, whatever the forest says of the
+    /// tiles round it.
+    #[test]
+    fn a_forest_that_runs_off_the_map_gets_trees_only_on_it() {
+        assert_eq!(
+            place(2, 3, |_| true)
+                .into_iter()
+                .map(|t| (t.trunk.x, t.trunk.y, t.footprint))
+                .collect::<Vec<_>>(),
+            [(0, 0, Half), (1, 0, Half), (0, 2, Half), (1, 2, Half)]
+        );
+    }
+
     #[test]
     fn big_trees_come_first_and_half_size_ones_take_what_is_left() {
         // Five across, three down: a big tree on the left three, then the
@@ -541,6 +570,33 @@ mod tests {
                 .collect();
             assert_eq!(frames, again);
         }
+    }
+
+    /// On the full tier a tree moves: a frame (100 ms) later it shows the
+    /// next; with no clock (idle motion off) it stands on its first.
+    #[test]
+    fn a_tree_moves_on_the_full_tier_and_stands_with_no_clock() {
+        let t = trees();
+        let tree = Tree {
+            trunk: Pos::new(1, 2),
+            footprint: Footprint::Big,
+        };
+        let at = |t_ms| t.picture(tree, Full, t_ms).unwrap().1;
+        assert_ne!(at(Some(0)), at(Some(100)));
+        assert_eq!(at(None), t.kind(tree).unwrap().frames[0].0);
+    }
+
+    /// A footprint the look has no kind of gets no tree.
+    #[test]
+    fn a_look_with_no_kind_of_a_footprint_draws_none() {
+        let mut t = trees();
+        t.half.clear();
+        let half = Tree {
+            trunk: Pos::new(0, 0),
+            footprint: Footprint::Half,
+        };
+        assert_eq!(t.kind(half), None);
+        assert_eq!(t.picture(half, Full, Some(0)), None);
     }
 
     #[test]

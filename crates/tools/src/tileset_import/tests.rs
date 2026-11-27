@@ -2168,6 +2168,13 @@ fn a_halved_picture_keeps_its_edge_crisp_and_its_shadow_soft() {
     // One solid pixel of four: its colour, a quarter as opaque.
     assert_eq!(at(2), [200, 100, 0, 63]);
     assert_eq!(at(3), [0, 0, 0, 50]);
+    // One solid pixel below a shadow's: the two averaged, as clear as the
+    // block on the whole.
+    let low: Vec<u8> = [c, c, o, shade].into_iter().flatten().collect();
+    assert_eq!(halved(&low, (2, 2)), [100, 50, 0, 88]);
+    // A block nearly clear (one pixel at alpha 3) is clear.
+    let faint: Vec<u8> = [[90, 90, 90, 3], c, c, c].into_iter().flatten().collect();
+    assert_eq!(halved(&faint, (2, 2)), [0, 0, 0, 0]);
 }
 
 #[test]
@@ -2274,6 +2281,9 @@ fn trees_whose_frames_dont_fit_their_sheet_are_refused() {
             format!("look \"indoor\": trees: a frame of {w}×{h} px doesn't halve or doesn't fit")
         );
     }
+    // A frame as wide as the packed image fits.
+    let widest = tree_looks("t.png", 2).replace("frame: (64, 20)", "frame: (256, 20)");
+    assert!(import(&dir, &mapping(LAYERS, &widest), &terrains(), &fire).is_ok());
     // A sheet narrower than a frame holds none.
     assert_eq!(
         refused("narrow.png", 2),

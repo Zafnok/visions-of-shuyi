@@ -1853,11 +1853,9 @@ impl<'a> TreePacker<'a> {
         self.at.1 += across;
         self.shelf = self.shelf.max(down);
         let (width, height, rgba) = &mut *self.image;
-        let bottom = (row + down) * TILE;
-        if bottom > *height {
-            rgba.resize(usize::try_from(bottom * *width * 4).unwrap_or(0), 0);
-            *height = bottom;
-        }
+        // The image grows down to the frame's bottom, if it isn't there.
+        *height = (*height).max((row + down) * TILE);
+        rgba.resize(usize::try_from(*height * *width * 4).unwrap_or(0), 0);
         let line = usize::try_from(size.0 * 4).unwrap_or(0);
         for (y, src) in (0..).zip(pixels.chunks_exact(line.max(1))) {
             let x = column * TILE;
@@ -1959,7 +1957,8 @@ pub fn halved(pixels: &[u8], (w, h): (u32, u32)) -> Vec<u8> {
                 let sum: u32 = block.iter().map(|p| u32::from(p[3])).sum();
                 (seen, u8::try_from(sum / 4).unwrap_or(u8::MAX))
             };
-            if picked.is_empty() || alpha == 0 {
+            // A block with no solid pixel and nearly clear is clear.
+            if alpha == 0 {
                 out.extend_from_slice(&[0; 4]);
                 continue;
             }

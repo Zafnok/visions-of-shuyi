@@ -81,14 +81,15 @@ kept private (ticket 0158), and the game is played on password-protected
 pages only (ticket 0920). Today **New Game** plays the first five chapters of
 Act 1:
 
-- **Chapters 1 to 3** run one after another: scenes, a battle, more
-  scenes. New Game asks how familiar you are with games like this, and in
-  Chapter 1 a guide, Vix, teaches by doing: tips as new things come up,
-  lessons to tick off, and Guides to read again from the battle menu.
-  Chapter 1's lines are voiced, and so is Vix.
+- **Chapters 1 to 3** run one after another: a title card, scenes, a
+  battle, more scenes. New Game asks how familiar you are with games like
+  this, and in Chapter 1 a guide, Vix, teaches by doing: tips as new
+  things come up, lessons to tick off, and Guides to read again from the
+  battle menu. Chapter 1's lines are voiced, and so is Vix.
 - **From Chapter 4** the army travels a world map: towns with an armory, a
   vendor, an alchemist, a tailor and a blacksmith; a camp; random
-  skirmishes; and the first two side quests, which open only while a
+  skirmishes; Chapters 4 and 5's four fixed skirmishes, one of them a
+  recruitment; and the first two side quests, which open only while a
   certain companion lives.
 - After **Chapter 5** the game says "To be continued".
 
@@ -120,9 +121,6 @@ off; rebinding for keys and controller buttons; a credits screen; music
 and sound throughout. Leave the title screen alone for 15 seconds and it
 plays the intro cinematic above, in time with the title music.
 
-The build also has a **Quick Battle** on the title screen, a test battle
-for checking changes.
-
 <table>
 <tr>
 <td width="33%"><img src="docs/img/title.png" alt="The title screen: the Visions of Shuyi logo over a forest meadow, with the title menu." width="100%"></td>
@@ -140,17 +138,17 @@ for checking changes.
 
 - Chapters 6 to 8's battles and the end of Act 1 (their scripts are
   drafted).
-- Three more side quests, the eight fixed skirmishes, and support
+- Three more side quests, Chapters 6 and 7's fixed skirmishes, and support
   conversations and camp events.
-- Promoting and changing class between battles.
-- Faces and close-up pictures for the cast who join after Chapter 1, and
-  for mounted units (stand-ins for now).
-- Voices after Chapter 1.
-- Chapter title cards and transitions between screens.
+- Promoting and changing class from the between-battle menu.
+- Faces and close-up pictures for some of the cast who join from Chapter 2
+  on (stand-ins for now).
+- Voices after Chapter 1, and ambient sound on the battle maps.
+- Transitions between screens.
 
 ### Progress
 
-*As of 2026-11-09. Work is tracked as tickets in [`tickets/`](tickets/README.md);
+*As of 2026-11-26. Work is tracked as tickets in [`tickets/`](tickets/README.md);
 the numbers below count finished tickets out of all tickets written so far.*
 
 | Act 1 | Done |
@@ -158,30 +156,30 @@ the numbers below count finished tickets out of all tickets written so far.*
 | Chapter scripts drafted | 8 / 8 |
 | Chapter battles built | 5 / 8 |
 | Side quests | 2 / 5 |
-| Fixed skirmishes | 0 / 8 |
+| Fixed skirmishes | 4 / 8 |
 | Chapters voiced | 1 / 8 |
 
 | Area | Progress | Done |
 | ---- | -------- | ---: |
-| Game-design decisions | `████████████░░░░░░░░` | 52 / 84 |
-| Project foundation | `██████████████░░░░░░` | 39 / 54 |
-| Drawing, input and audio | `██████████████████░░` | 48 / 52 |
-| Battle rules | `██████████████████░░` | 30 / 34 |
-| Battle screens | `███████████████░░░░░` | 67 / 91 |
-| Enemy AI and playtest bots | `███████████████░░░░░` | 21 / 28 |
+| Game-design decisions | `██████████░░░░░░░░░░` | 60 / 119 |
+| Project foundation | `█████████████░░░░░░░` | 65 / 98 |
+| Drawing, input and audio | `██████████████████░░` | 62 / 69 |
+| Battle rules | `████████████████░░░░` | 30 / 37 |
+| Battle screens | `█████████████████░░░` | 106 / 127 |
+| Enemy AI and playtest bots | `██████████████░░░░░░` | 18 / 26 |
 | Level ups and classes | `██████████████░░░░░░` | 7 / 10 |
-| Story and dialogue | `███████████████░░░░░` | 48 / 66 |
-| Chapters and game flow | `██████████████░░░░░░` | 50 / 70 |
-| Release | `████████████░░░░░░░░` | 8 / 13 |
-| World map and later plans | `████░░░░░░░░░░░░░░░░` | 9 / 44 |
-| Playdate version | `████████████░░░░░░░░` | 27 / 46 |
-| Shuyi Engine and tooling | `███████████░░░░░░░░░` | 67 / 126 |
-| **Total** | `█████████████░░░░░░░` | **473 / 718** |
+| Story and dialogue | `████████████████░░░░` | 73 / 91 |
+| Chapters and game flow | `█████████████░░░░░░░` | 58 / 88 |
+| Release | `██████████████░░░░░░` | 31 / 45 |
+| World map and later plans | `████░░░░░░░░░░░░░░░░` | 11 / 59 |
+| Playdate version | `███████████░░░░░░░░░` | 37 / 67 |
+| Shuyi Engine and tooling | `████████████░░░░░░░░` | 86 / 145 |
+| **Total** | `█████████████░░░░░░░` | **644 / 981** |
 
-Many open tickets are for things planned after Act 1 (other languages,
-modding, replay modes), which is why the bars look emptier than Act 1
-really is. Shuyi Engine's own tickets are counted in
-[its repository](https://github.com/Zafnok/shuyi-engine), not here.
+Many open tickets are for after Act 1 (other languages, modding, replay
+modes), which is why the bars look emptier than Act 1 really is. Shuyi
+Engine's own tickets are counted in
+[its repository](https://github.com/Zafnok/shuyi-engine).
 
 ## Roadmap
 
@@ -204,15 +202,17 @@ Act 1 is eight chapters, and it ends with one playtest of the whole act by
 Nick, on the web and on his Playdate. Before that:
 
 1. **The rest of the act:** Chapters 6 to 8's battles, the act's closing
-   scene, the remaining side quests and the fixed skirmishes.
+   scene, the remaining side quests and fixed skirmishes, and each
+   chapter's ambient sound and map effects.
 2. **Two playtests of the Act 1 build** (a friend's, and Nick's on
-   2026-11-08) became tickets: an easier-to-read forecast and stats, the
-   objective shown when a battle starts, some units weaker or stronger,
-   enemies that close in instead of waiting, and more.
+   2026-11-08) became tickets. The easier-to-read forecast and stats and
+   the objective shown when a battle starts are in; enemies that close in
+   instead of waiting, a way through armor, riders who dismount and more
+   are next.
 3. **A human writer.** The script is drafted for all eight chapters, but
    it will be rewritten by a person: no new dialogue is written until a
-   writer is found. A script preview that runs without the game's tools,
-   and a guide for an outside writer, come first.
+   writer is found. The script preview and the guide for an outside
+   writer are ready; finding the writer is next.
 4. **The bots play all of Act 1** as a Casual, a Normal and a Hardcore
    player: no softlocks, every battle inside its balance bands, and a save
    and load at every stop.
@@ -244,17 +244,6 @@ fit. It will be sold on itch.io first, then on Playdate's Catalog.
 It shares the game's code, and nothing in the Windows or browser game
 waits for it.
 
-### Shuyi Engine
-
-The parts of this code that aren't about this game (drawing, input,
-audio, screens, cinematics, the turn-based grid kit, the playtest bots and
-the testing tools) are **Shuyi Engine**, an open-source 2D engine under
-MIT or Apache-2.0, at
-[`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine). The game
-is built on it, pinned to one of its commits (`shuyi-engine.rev`), and a
-watcher on the engine asks for the pin to move when its API changes. How the two work together
-is in [`docs/engine/`](docs/engine/README.md).
-
 ### Planned after Act 1
 
 - **Reasons to replay:** star ratings with optional challenges on each
@@ -285,6 +274,13 @@ Casual, a Normal and a Hardcore player: their results are checked against
 bands for each battle, and CI plays them again whenever a balance number
 changes.
 
+The parts that aren't about this game (drawing, input, audio, screens,
+cinematics, the turn-based grid kit, the bots and the testing tools) are
+[**Shuyi Engine**](https://github.com/Zafnok/shuyi-engine), open source
+under MIT or Apache-2.0. The game pins one of its commits
+(`shuyi-engine.rev`); [`docs/engine/`](docs/engine/README.md) says how the
+two work together.
+
 | Where | What |
 | ----- | ---- |
 | [`tickets/`](tickets/README.md) | The backlog. Each ticket is a Markdown file; finished ones move to `tickets/done/` |
@@ -306,5 +302,4 @@ non-commercial teaching, make free non-commercial mods, and stream or post
 videos of the game (monetized is fine). You may not redistribute or sell it or
 games made from it. See [`LICENSE`](LICENSE) for the exact terms, and
 [`THIRD_PARTY_ASSETS.md`](THIRD_PARTY_ASSETS.md) for third-party material.
-Shuyi Engine, in its own repository, is open source under its own license
-(MIT or Apache-2.0).
+Shuyi Engine is open source under its own license.
