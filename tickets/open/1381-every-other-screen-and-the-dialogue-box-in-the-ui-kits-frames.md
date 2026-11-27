@@ -22,6 +22,27 @@ helper) and puts the battle's windows on them. The look is in
 by 1379. This ticket puts every other window of the PC game on the same
 frames. The game will then have one look outside the map.
 
+**What 1379 picked for these screens** (the table and Nick's words in
+*Windows (the picture look)*; pictures in the private repository's
+`library/`):
+
+| Window | Picture | Slices (l, t, r, b) | Fill |
+| ------ | ------- | ------------------- | ---- |
+| Menus and other screens' boxes | Pixel Quest `F-UI_Panel_H.png` (as the side panel) | 22, 33, 22, 32 | its plum |
+| Full-screen Options | Pixel Quest `F-UI_Panel_H.png` | 22, 33, 22, 32 | **slate grey-blue**: the panel's cool pixels recoloured, the gold kept (1379's mock: hue 215 degrees, saturation x0.45) |
+| Dialogue box | Pixel Quest `F-UI_Panel_G.png` | 22, 29, 22, 27 | its plum |
+| Dialogue portraits | tiopalada's *Dragon Regalia* `library/tiopalada/ui/dragon-regalia/20240707dragon9SlicesA.png` (CC0): its blue fill made the windows' plum, its top-right 72x72 corner mirrored to the other three | 34, 38, 34, 38 | plum |
+| Speaker, portrait and title name plates | Post-Baroque `UI_TitleB1.png`: 16-pixel end caps, a plain body (column 60, rows 8 to 24) as wide as the name | | its dark |
+
+Nick on the portraits: *"dragon regalia 1.5x mirrored as shown but with
+the portraits pushed up a bit so they dont overlap the dialogue box. also
+ensure the names fit inside the nameplates"*. So: the portrait frames are
+drawn at **1.5x the font's pixel** (at window scale 2; the nearest whole
+screen pixel at other scales, the font's pixel at scale 1); the portrait
+windows move up (1379's mock: 40 screen pixels at scale 2) so their
+frames clear the dialogue box; each name and its plate sit inside the
+portrait's frame, the name between the plate's caps. Fills are solid.
+
 ## Nick input
 
 None (1379 decided the look). Pictures in the PR from `frame-png` with
@@ -33,7 +54,7 @@ the Act 1 playtest's checklist (1064).
 **In:** each screen's boxes on 1380's helper, with the frame 1379 names
 for it:
 - **Dialogue:** the text box and the speaker's name plate, the two
-  portrait frames and their name lines (`screens/dialogue/glyph*`), the
+  portrait frames and their name plates (`screens/dialogue/glyph*`), the
   log (`dialogue/log/glyph.rs`), the guide's tip and lesson box.
 - **Menus:** title menu, options (the engine's `screens/options.rs`
   skin: if it can't take a frame name, that is an engine-ergonomics
@@ -73,7 +94,9 @@ Playdate: unchanged. `reduced`/`minimal` tiers: as 1380 decided.
       (a Harness test per screen reads its sprite items).
 - [ ] Glyph-look and no-art snapshots unchanged.
 - [ ] The longest speaker name of every language pack fits its plate
-      (a test).
+      between the caps (a test).
+- [ ] The portrait frames clear the dialogue box (a test of their
+      rects).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

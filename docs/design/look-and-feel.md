@@ -6,7 +6,8 @@ Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 effect marks, the glyph look as an option, busts in dialogue: 0039; which
 bought tiles each terrain is: 0437; threat arrows: 0055; the title
 screen: 0811; descriptions in lists: 0429; places behind conversations:
-0029; arrows at the map's edges: 0449; Act 1's new cast: 0070)
+0029; arrows at the map's edges: 0449; Act 1's new cast: 0070; the
+picture look's windows: 1379)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -2343,6 +2344,140 @@ Gotisch) he liked Jacquard 24, Cinzel and IM Fell English best, picked
 As built: [`0812-chapter-card.png`](../screenshots/0812-chapter-card.png)
 and, on the Playdate,
 [`0812-chapter-card-playdate.png`](../screenshots/0812-chapter-card-playdate.png).
+
+### Windows (the picture look)
+
+Decided 2026-11-26/27, ticket 1379, over eleven rounds of mockups: the
+game's own frames (`frame-png` of the unit menu, the forecast, a
+dialogue line and Options, later the map menu) with each candidate's
+pictures laid over them, kept local (ADR-0040). Nick (2026-11-26): *"I
+want to rework UI elements using assets from itch … We need to go from
+scratch like frames and such. We can again keep the glyph look as an
+option but I want it to be more professional"*. Built by 1380 (the
+battle's windows), 1381 (every other screen and the dialogue box) and
+1382 (cursor, gauges, icons). Every pack used was checked for a licence
+that allows a sold game (ADR-0013) and for an AI disclosure (packs
+marked AI-assisted were set aside).
+
+**What was looked at.** First every pack already bought (the audit table
+in 1379's completion notes): eleven kits from Tiny Tales, ELV Games and
+ByteWright on the four screens. Nick: *"out of these I like royal,
+parchment, elv4, and crystal the best, but I don't wanna settle on any of
+these. keep them as fallbacks but lets keep looking"*. Then itch.io (BOOTH
+and the Japanese free sites had nothing that fit): fifteen kits, of which
+he picked five to try (*"A, B, D, M, O look best"*); he bought Barely
+Games' *2D Pixel Quest Vol.3* and *Post-Baroque UI/GUI Kit* and unTied
+Games' *Royal Crown* (skipping its twin *Viking Hearth*: *"royal crown
+looked better and they are almost identical"*), and tiopalada's *Dragon
+Regalia* is free. Of the mixes: *"the screenshot from 'pixel quest panels
+and post baroque filigree' has the best bars and potentially best look
+overall"*.
+
+**1. Frames.** One kit everywhere (*"probably one everywhere but could
+reconsider"*), Barely Games' **2D Pixel Quest Vol.3** panels, with three
+exceptions:
+
+| Window | Frame | Fill |
+| ------ | ----- | ---- |
+| Side panel, forecast, unit info and the battle's other boxes | Pixel Quest `F-UI_Panel_H` (gold corner studs) | its plum |
+| Unit menu and its sub-menus | Pixel Quest `F-UI_Panel_E` | its plum |
+| Map menu (opened with Cancel on the map) | `F-UI_Panel_H`, as the side panel | **royal blue** |
+| Full-screen Options | `F-UI_Panel_H`, as the side panel | **slate grey-blue** |
+| Dialogue box | Pixel Quest `F-UI_Panel_G` (round corner studs) | its plum |
+| Dialogue portraits | tiopalada's **Dragon Regalia** `20240707dragon9SlicesA`, its flourished corner mirrored to all four, its blue fill made the windows' plum | plum |
+| Title, speaker and portrait name plates | Barely Games' **Post-Baroque** `UI_TitleB1` (gold end caps, dark body) | its dark |
+
+Nick's words: of the map menu and Options, *"probably make the frame for
+the press D map options menu and the fullscreen options menu the same as
+the side panel even tho the background is different"*, *"keep it
+minimal so no scrollwork but im thinking a diff color might make sense
+like the background color maybe like blue"*, then *"Royal blue"* for the
+map menu and, for Options (*"idk if the full screen options menu should
+be blue like the map options menu is. maybe diff color"*), *"Slate
+grey-blue"*. Of the dialogue: *"dialogue box should be pixel quest G.
+portraits should prob be ornate"*; after four rounds of ornate frames
+(Pixel Quest's knot corners, Post-Baroque's scrollwork, Royal Crown's gem
+corners, Hypnobius's *Dark Ages UI*): *"dragon regalia 1.5x mirrored as
+shown but with the portraits pushed up a bit so they dont overlap the
+dialogue box. also ensure the names fit inside the nameplates"*, and
+earlier *"dont like the names overflowing from their spaces"*.
+
+- Every frame is a nine-slice cut where its edge is plain, so the corner
+  ornaments show once and the edges stretch without repeating a pattern.
+- Text stays on its cells inside the frame; a kit with wide corners has
+  its frame drawn a little outside the window rather than over the text.
+- A name always sits inside its plate's body, between its end caps; a
+  plate is as wide as its name.
+- The portraits sit higher than today so their frames clear the dialogue
+  box, and each name plate sits inside its portrait's frame.
+
+**2. Inside a window: solid.** Of solid, see-through at 82% and at 65%
+(Fire Emblem's menus) over the map: *"Solid"*.
+
+**3. The menu cursor: a pointing hand and a highlighted row.** *"yes hand
++ highlighted row"*. The row sits on Pixel Quest's dark red
+`F-UI_Title C` bar, its text white. The hand is a white glove pointing
+right at the row, nudging left and right a pixel at a time (*"the nudge
+is good"*), half the size of the first mockup (*"the half size looks
+better"*). After searching itch.io, OpenGameArt and the Japanese RPG
+Maker sites for a hand-made one (*"a simple hand pointing right to the
+option, and probably blinking in some way or going up and down or moving
+the finger"*; the one he liked best, Harning's, is AI-assisted), the
+pick is andreyin's CC0 **"Hand cursor"** on OpenGameArt: *"CC0 glove for
+now"*. He still wants *"something bit more professional"* if one turns
+up; swapping the picture is a small job.
+
+**4. Gauges.** HP everywhere (side panel, forecast, the fight) on Pixel
+Quest's `F-UI_DynamicBar_A1`, made symmetric (its right half mirrored, so
+the slot runs between two matching caps), cut at its plain middle so the
+caps show once. Its fill by the HP left: *"HP green for high hp, yellow
+mid hp, red low hp"*. The **EXP bar and the Options' volume sliders**
+are not decided: *"exp bar probably different?"*, *"volume slider I didnt
+like the pick you had. probably new ticket for volume and exp bar"*
+(ticket 1388).
+
+**5. Icons.** *"yes, weapons and items"*: an icon before a weapon's or an
+item's name wherever it is listed (the side panel, the Item, Equip and
+shop lists), from ELV Games' **Rogue Adventure item icons** (the map's
+artist). **Stat icons** too, but not the ones shown (ByteWright's): *"yes
+stat icons but not these. new ticket"* (ticket 1387).
+
+**6. The font.** No owned font with lower case fits the 8×16 cell
+(ByteWright's Kingsrune and Crypt fit it but are capitals only). *"new
+ticket to search for new font, with today's font as frontrunner"*
+(ticket 1386). Until then the windows keep today's font.
+
+**7. The option: two entries.** *"Two separate entries"*: Options keeps
+*Map look: Pictures / Glyphs* and gains *Window look: Pictures / Glyphs*,
+so either can be mixed with the other.
+
+**8. The glyph look** keeps today's box-drawn windows and borrows
+nothing: *"Nothing"*.
+
+*The agent's starting rules (Nick can veto):*
+
+- **The HP colours' thresholds:** green above half, yellow from half down
+  to a quarter, red at a quarter or less (*tunable*). Today's `hp_high`
+  and `hp_low` palette colours stay for the map's unit bars (*Units on
+  the map*).
+- **The nudge:** the hand steps 0, 1, 2, 3, 2, 1 screen pixels toward
+  the row and back, about 0.6 s a cycle (*tunable*); it stands still
+  while a key is held to scroll.
+- **Sizes:** at the default window scale (2) the frames are drawn at the
+  font's pixel, the portrait frames at 1.5× it and the hand at half
+  of it. At another scale each rounds to the nearest whole screen
+  pixel; at scale 1 the hand and the portrait frames are drawn at the
+  font's pixel.
+- The map menu's and Options' fills are the side panel's frame with its
+  fill recoloured (an edit, credited as one).
+- The two new Options entries are added to every language pack; *Window
+  look* starts on *Pictures* when *Map look* is *Pictures*, and a
+  public build without the bought art shows the glyph windows whatever
+  it says.
+- The `reduced` and `minimal` graphics tiers (ADR-0131) draw the picture
+  windows if they cost no more than the box lines, else the glyph
+  windows (1380 decides by measuring).
+- The Playdate keeps its one-bit windows (1184, 1294).
 
 ### Screen layout
 
