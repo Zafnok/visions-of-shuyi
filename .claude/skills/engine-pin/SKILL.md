@@ -89,7 +89,9 @@ does steps 4 to 7 for the engine PRs its move passes, in its own PR.
    Then two questions decide between a new ticket and changing an open one:
    - Does the game already have code doing this job? Search `crates/`,
      the rows of `docs/engine/friction.md` for that area, and
-     `docs/engine/boundary.md`.
+     `docs/engine/boundary.md`. For the engine's side (what the new
+     piece is called, how a game uses it), run `cargo shuyi docs <the
+     piece>` before reading the engine's source.
    - Does an open ticket plan to write code for it?
      `grep -rln "<the piece's name or job>" tickets/open`.
 
