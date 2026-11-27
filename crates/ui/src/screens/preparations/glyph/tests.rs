@@ -428,3 +428,22 @@ fn a_face_is_drawn_48_pixels_keeping_its_shape() {
     assert_eq!(face_size((32, 32)), (48, 48));
     assert_eq!(face_size((64, 32)), (48, 24));
 }
+
+/// A list longer than its box shows only the rows that fit, from the
+/// view's first row: the bottom border stays whole (1238).
+#[test]
+fn a_long_list_shows_only_the_rows_that_fit_from_its_first() {
+    let c = ctx();
+    let mut buf = stale(&c);
+    let rows: Vec<UnitRowView> = (0..40).map(|i| unit(&format!("u{i}"), true)).collect();
+    let mut view = list("Units", rows, 20, ListState::Focused);
+    view.first = 5;
+    paint_list(&c, &mut buf, UNITS_BOX, &view, |u| {
+        (u.name.clone(), u.deployed)
+    });
+    let (top, bottom) = (UNITS_BOX.y + 1, UNITS_BOX.y + UNITS_BOX.h - 1);
+    assert!(row(&buf, top).contains("u5 "));
+    assert!(row(&buf, bottom - 1).contains("u27"));
+    assert!(!row(&buf, bottom - 1).contains("u28"));
+    assert!(row(&buf, bottom).contains('└'), "the border is whole");
+}
