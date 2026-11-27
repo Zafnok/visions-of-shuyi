@@ -445,5 +445,6 @@ fn a_long_list_shows_only_the_rows_that_fit_from_its_first() {
     assert!(row(&buf, top).contains("u5 "));
     assert!(row(&buf, bottom - 1).contains("u27"));
     assert!(!row(&buf, bottom - 1).contains("u28"));
-    assert!(row(&buf, bottom).contains('└'), "the border is whole");
+    assert!(!row(&buf, bottom).contains('u'), "nothing over the border");
+    assert!(row(&buf, bottom).contains("──"), "the border is whole");
 }
