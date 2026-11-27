@@ -503,6 +503,11 @@ pub struct LookMap {
     pub terrain: BTreeMap<String, TileRef>,
     /// Its layers by name, the first undermost.
     pub layers: Vec<String>,
+    /// The pictures a map may place on its tiles, by the name it gives
+    /// (ticket 1378: Chapter 1's lamps): each the top cell of a picture
+    /// two tiles tall, the cell below it its bottom.
+    #[serde(default)]
+    pub props: BTreeMap<String, TileRef>,
     /// The trees standing on its forest (ticket 1356), if it has any.
     #[serde(default, deserialize_with = "some")]
     pub trees: Option<TreesMap>,
@@ -1736,6 +1741,9 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
         if let Some(layer) = lacking {
             return Err(format!("{what}: no layer \"{layer}\""));
         }
+        if look.props.contains_key("") {
+            return Err(format!("{what}: a prop needs a name"));
+        }
         if let Some(trees) = &look.trees {
             known(&format!("{what}: trees"), &trees.of, terrains)?;
             if name == DEFAULT_TILES {
@@ -1797,6 +1805,11 @@ pub fn import(
             text.layers
                 .push(made.map_err(|e| format!("layer \"{layer_name}\": {e}"))?);
         }
+        for (prop, (sheet, top)) in &look.props {
+            let at = prop_cell(&mut packer, sheet, *top);
+            let at = at.map_err(|e| format!("{what}: prop \"{prop}\": {e}"))?;
+            text.props.push((prop.clone(), at, PROP_PX));
+        }
         looks.push((name.clone(), text));
     }
     let moving = packer.moving()?;
@@ -1817,6 +1830,17 @@ pub fn import(
         others: looks.collect(),
         moving,
     })
+}
+
+/// A prop's size in pixels (ticket 1378): a tile across, two down.
+pub const PROP_PX: (u32, u32) = (TILE, 2 * TILE);
+
+/// Where the prop whose top is tile `top` of `sheet` is packed: the tile
+/// over the one below it, a picture two tiles tall ([`Cut::Stacked`]),
+/// its frames packed with it if its sheet moves.
+fn prop_cell(packer: &mut Packer, sheet: &str, top: u32) -> Result<At, String> {
+    let columns = packer.sheet(sheet)?.tsx.columns;
+    packer.packed(sheet, Cut::Stacked([top, top + columns]), "")
 }
 
 /// The trees' frames (ticket 1356), packed below the tiles of an image
@@ -2087,6 +2111,12 @@ pub fn list(mapping: &Mapping) -> String {
                 None => "(no such layer)".to_owned(),
             };
             let _ = writeln!(out, "  layer {layer_name:<10} {described}");
+        }
+        for (prop, (sheet, top)) in &look.props {
+            let _ = writeln!(
+                out,
+                "  prop  {prop:<10} {sheet} tile {top} and the one below"
+            );
         }
     }
     out

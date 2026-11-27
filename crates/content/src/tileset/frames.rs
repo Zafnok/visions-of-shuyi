@@ -1,8 +1,10 @@
 //! Moving tiles (ticket 1315, ADR-0131): a cell of a tileset's image that
 //! loops through frames, each shown for its own time. Every row of the
 //! tileset that draws the cell (a terrain's own tile, a corner layer's
-//! mix, a tile layer's picture, in any look) moves with it, so the rows
-//! themselves stay as they are written.
+//! mix, a tile layer's picture, a prop a map places, in any look) moves
+//! with it, so the rows themselves stay as they are written. A cell is
+//! the size of what draws it: a lamp two tiles tall (ticket 1378) moves
+//! as a picture two tiles tall, each frame that size from its own cell.
 //!
 //! The frames are drawn from the time alone (the `shuyi-animate` skill):
 //! the picture for a time is [`MovingTile::frame_at`], never stepped. Each
@@ -110,7 +112,8 @@ impl TileFrames {
             .any(|tile| self.picture(tile.still, tier, t_ms) != tile.still)
     }
 
-    /// `look` with each picture as [`picture`](Self::picture) says.
+    /// `look` with each picture as [`picture`](Self::picture) says, its
+    /// props' too.
     pub fn look_at(&self, look: &Look, tier: GraphicsTier, t_ms: u64) -> Look {
         let at = |r: ImageRect| self.picture(r, tier, t_ms);
         let mut out = look.clone();
@@ -126,7 +129,18 @@ impl TileFrames {
                 }
             }
         }
+        for rect in out.props.values_mut() {
+            *rect = at(*rect);
+        }
         out
+    }
+}
+
+/// The moving cells `tiles`, by the rectangle that stands still: what a
+/// test builds a tileset's frames from.
+impl FromIterator<MovingTile> for TileFrames {
+    fn from_iter<I: IntoIterator<Item = MovingTile>>(tiles: I) -> Self {
+        Self(tiles.into_iter().map(|t| (key(t.still), t)).collect())
     }
 }
 
@@ -135,6 +149,7 @@ fn drawn(terrain: &TerrainTiles) -> BTreeSet<Key> {
     let mut out = BTreeSet::new();
     for look in core::iter::once(&terrain.look).chain(terrain.looks.values()) {
         out.extend(look.tiles.values().map(|&r| key(r)));
+        out.extend(look.props.values().map(|&r| key(r)));
         for layer in &look.layers {
             match layer {
                 Layer::Corners(c) => out.extend(c.tiles.iter().flatten().map(|&r| key(r))),
@@ -146,6 +161,18 @@ fn drawn(terrain: &TerrainTiles) -> BTreeSet<Key> {
         }
     }
     out
+}
+
+/// The size of the picture that moves from `cell`'s top-left: the cell's
+/// own if anything draws it, else that of a picture `drawn` draws from
+/// there (ticket 1378: a lamp two tiles tall), else the cell's.
+fn size_at(drawn: &BTreeSet<Key>, cell: ImageRect) -> (u32, u32) {
+    let own = (cell.w, cell.h);
+    if drawn.contains(&key(cell)) {
+        return own;
+    }
+    let from = |k: &&Key| k[0] == cell.x && k[1] == cell.y;
+    drawn.iter().find(from).map_or(own, |k| (k[2], k[3]))
 }
 
 /// The moving cells `files` write, checked (problems into `check`)
@@ -169,7 +196,12 @@ pub(super) fn read(
     for file in files {
         let (x, y) = file.at;
         let what = format!("frames of cell ({x}, {y})");
-        let rect = |at| grid_rect(at, tile_px, (0, 0));
+        let size = size_at(&drawn, grid_rect(file.at, tile_px, (0, 0)));
+        let rect = |at| ImageRect {
+            w: size.0,
+            h: size.1,
+            ..grid_rect(at, tile_px, (0, 0))
+        };
         let still = rect(file.at);
         if out.contains_key(&key(still)) {
             check
@@ -178,7 +210,7 @@ pub(super) fn read(
             continue;
         }
         if !drawn.contains(&key(still)) {
-            let problem = format!("{what}: no terrain or layer draws the cell");
+            let problem = format!("{what}: no terrain, layer or prop draws the cell");
             check.problems.push(problem);
         }
         if file.frames.len() < 2 {
@@ -398,6 +430,41 @@ mod tests {
         assert_eq!(&tileset.frames.look_at(look, Reduced, 100), look);
     }
 
+    /// A lamp two tiles tall (ticket 1378) moves as a picture its size:
+    /// each frame that size from its own cell.
+    #[test]
+    fn a_prop_moves_at_its_own_size() {
+        let f = Fixture::new();
+        let props = "{ \"lamp\": (at: (1, 2), size: (16, 32)) }";
+        let frames = format!("[(at: (1, 2), frames: [((1, 2), 150), ((2, 2), 150)], {STILLS})]");
+        let t = f
+            .parse(&file(&f, &[("props", props), ("frames", &frames)]))
+            .unwrap();
+        let tall = |x, y| ImageRect {
+            h: 32,
+            ..cell(x, y)
+        };
+        let tile = t.frames.iter().next().unwrap();
+        assert_eq!(tile.still, tall(1, 2));
+        assert_eq!(tile.frames, [(tall(1, 2), 150), (tall(2, 2), 150)]);
+        let look = &t.terrain.as_ref().unwrap().look;
+        assert_eq!(t.frames.look_at(look, Full, 150).props["lamp"], tall(2, 2));
+        assert_eq!(t.frames.look_at(look, Full, 0).props["lamp"], tall(1, 2));
+        assert_eq!(
+            t.frames.look_at(look, Reduced, 150).props["lamp"],
+            tall(1, 2)
+        );
+        // Each frame is checked at the lamp's size.
+        let low = format!("[(at: (1, 2), frames: [((1, 2), 150), ((1, 3), 150)], {STILLS})]");
+        assert_eq!(
+            f.errors(&file(&f, &[("props", props), ("frames", &low)])),
+            ["frames of cell (1, 2): its 16×32 px at (16, 48) lies outside the 64×64 px image"]
+        );
+        // Built from its moving cells, as a test does: the same frames.
+        let built: TileFrames = t.frames.iter().cloned().collect();
+        assert_eq!(built, t.frames);
+    }
+
     #[test]
     fn the_rows_are_named_for_the_stills_check() {
         let f = Fixture::new();
@@ -427,7 +494,7 @@ mod tests {
         let cases = [
             (
                 "[(at: (3, 0), frames: [((3, 0), 100), ((2, 0), 100)], STILLS)]",
-                "frames of cell (3, 0): no terrain or layer draws the cell",
+                "frames of cell (3, 0): no terrain, layer or prop draws the cell",
             ),
             (
                 "[(at: (1, 0), frames: [((1, 0), 100)], STILLS)]",

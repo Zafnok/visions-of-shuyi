@@ -5,11 +5,11 @@ type: content
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 blocks: ["1064"]
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1378 — The lamps at Harl's gate and the road bridge in Rogue Adventure
@@ -95,15 +95,17 @@ the ground around it.
 
 ## Acceptance criteria
 
-- [ ] Four lamps stand at Harl's south gate and beside the road bridge,
+- [x] Four lamps stand at Harl's south gate and beside the road bridge,
       reaching a tile up, burning (moving) on the PC and still on the
       Playdate's tier.
-- [ ] A map placing a name its tileset's look lacks fails the content
+- [x] A map placing a name its tileset's look lacks fails the content
       check with its line.
-- [ ] Every other map looks as before.
-- [ ] Before/after pictures in the PR.
-- [ ] The tileset import's tests pass; `assets-private.rev` moved.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every other map looks as before.
+- [x] Before/after pictures in the PR. (Made, cropped and described
+      there; kept local as 1384's were, since they show bought art and a
+      real map.)
+- [x] The tileset import's tests pass; `assets-private.rev` moved.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -120,3 +122,57 @@ the lamps' stills are their first frame. GBA: no target.
 
 ## Completion notes
 
+- **The format (either order with 1219: 1219 isn't done).** A look's
+  `props`, at a tileset's top for its own look and in each look of
+  `looks`, written with the engine's own `PropAt`
+  (`shuyi_assets::tileset::PropAt`, engine PR #620): `"lamp": (at: (7,
+  24), size: (16, 32))`, the size a tile's if left out. Checked: a name,
+  the size's sides 8 to 64 px, the picture inside the image; `props`
+  need `terrain`. 1219's Context has a dated line: it deletes the
+  game's props reading with the rest of `look.rs`.
+- **The maps.** `map::check_props`, run with the tilesets: every name a
+  map's look places must be a prop of that look in each tileset that has
+  the look, reported at the map's line and column (`ch01.map:14:13: look:
+  prop "lantern" at (21, 5) is not a prop of tileset "tiny_tales"'s look
+  "rogue_adventure" (its props: "lamp")`). A tileset without the look
+  (the test tilesets have no `rogue_adventure`) paints the map with its
+  own and isn't asked. The engine already reports a prop off the map.
+- **Moving props.** `TileFrames::look_at` swaps `Look::props` with the
+  rest, so the existing `frame_skin` (`moving.rs`) paints a lamp's frame
+  at the clock and its first frame on a lesser tier or with idle motion
+  off. A moving cell drawn only as a prop moves at the prop's size (each
+  frame 16 × 32 from its own cell); a cell drawn at a tile's size keeps
+  moving as before. `TileFrames` collects from `MovingTile`s, for tests.
+  1357's Context has a dated line (engine#2359 covers props).
+- **The importer.** A look's `props` in the mapping name each prop's top
+  cell; it is packed over the cell below (`Cut::Stacked`), and its
+  sheet's `moving` strip moves both. The lamp: `RA_Jungle_Animation.png`
+  tile 256, `(frames: 4, step: 32, ms: 150)`. **Deviation:** the ticket
+  says the frames are "32 pixels apart"/"2 tiles apart"; they run down
+  the column (2 rows apart, as the fire pit's), not across (the cells to
+  the right are other lamps). Checked on the sheet.
+- **Content:** Zafnok/visions-of-shuyi-assets#44 (the four lamps in
+  `ch01.map`, the re-packed `tiny_tales.png`/`.ron`). The lamp is packed
+  at (7, 24); the moving cells after it moved one place down the image
+  and the rows naming them moved with them. Pinned to its branch commit
+  while it is open; moves to its merge on `main` before this merges.
+- **Credits:** the ELV row's comment and `THIRD_PARTY_ASSETS.md` name the
+  lamp (`RA_Jungle_Animation.png`); the packed image was already credited.
+- **README shots** (1389): `battle-forecast`, `battle-ranges`,
+  `spell-menu` and `dialogue` remade. The three battle shots differ only
+  in two 32-px columns, the bridge lamps. `dialogue` was already stale
+  on `main`: 1384 (merged after 1389) gave the place behind a talk the
+  screen clock.
+- **Checked:** `frame-png` of `ch01` (picture look, at 1× and 2×): the
+  two lamps either side of the keep's south gate on the faces below its
+  wall, the two on the river either side of the road bridge, each a tile
+  tall above its tile. The pictures stay local (bought art, ADR-0040; a
+  real map, ADR-0118).
+- **No ADR:** the format's new field is the engine's shape, already
+  decided there; the frames' size rule extends ADR-0131 and is written
+  in `assets/tilesets/README.md`.
+
+**No gameplay rule decided.** Left to judge in play (1064): the lamps'
+look on the river (standing in the water beside the bridge's planks, as
+0096's mockups placed them) and on the wall faces at the gate; no light
+on the ground around them (out of scope).

@@ -8,8 +8,9 @@
 //! yet (engine#2359), so for each frame in which a cell moves this paints
 //! with a copy of the skin whose look has each moving cell's picture
 //! swapped for its frame then. Every row that draws the cell (a terrain's
-//! tile, a corner piece, a tile layer's picture, and the tint wash over
-//! it) shows the same frame.
+//! tile, a corner piece, a tile layer's picture, a prop a map places such
+//! as a lamp, ticket 1378, and the tint wash over it) shows the same
+//! frame.
 //!
 //! A cell stands still, on its first frame, below the lowest graphics tier
 //! it moves at (`ctx.platform.graphics`: the Playdate is `Reduced`) and
@@ -53,7 +54,9 @@ pub fn frame_skin(
 
 #[cfg(test)]
 mod tests {
+    use trpg_content::ImageRect;
     use trpg_content::motion::GraphicsTier;
+    use trpg_content::tileset::MovingTile;
     use trpg_core::Pos;
 
     use crate::glyph_buffer::{GlyphBuffer, Item, PxRect, Rect};
@@ -167,6 +170,92 @@ mod tests {
                     still.items(),
                     "{tier}, {clock_ms} ms"
                 );
+            }
+        }
+    }
+
+    /// The lamp's frames: two tiles tall, from cells (4, 6), (5, 6) and
+    /// (6, 6), 150 ms each (ticket 1378).
+    fn lamp_frames() -> [ImageRect; 3] {
+        [4, 5, 6].map(|x| ImageRect {
+            x: x * 16,
+            y: 96,
+            w: 16,
+            h: 32,
+        })
+    }
+
+    /// The test tileset with a lamp a map may place, which burns.
+    fn lit(c: &Ctx) -> MapSkin {
+        let mut tileset = c.game.content.tilesets["test_auto"].clone();
+        let terrain = tileset.terrain.as_mut().expect("test_auto has terrain");
+        let [still, ..] = lamp_frames();
+        terrain.look.props.insert("lamp".to_owned(), still);
+        let water = tileset.frames.iter().next().expect("the water moves");
+        let lamp = MovingTile {
+            at: (4, 6),
+            still,
+            frames: lamp_frames().map(|r| (r, 150)).to_vec(),
+            motion: water.motion.clone(),
+        };
+        tileset.frames = tileset.frames.iter().cloned().chain([lamp]).collect();
+        MapSkin::sprite(tileset)
+    }
+
+    /// The source and the place of each lamp picture `skin` paints, a
+    /// lamp placed on (1, 1) of 2 × 2 tiles of grass, `clock_ms` into the
+    /// clock.
+    fn lamps(c: &Ctx, skin: &MapSkin, clock_ms: u64) -> Vec<(PxRect, PxRect)> {
+        let id = c.game.content.terrain.display.id_of("plain");
+        let mut scene = MapScene::new(Pos::new(0, 0), (2, 2));
+        scene.set_terrain(|_| id);
+        scene.clock_ms = clock_ms;
+        scene.look.props.insert((1, 1), "lamp".to_owned());
+        let mut buf: GlyphBuffer = blank();
+        skin.paint(c, &scene, Rect::new(0, 0, 4, 2), &mut buf);
+        let frames = lamp_frames().map(src_rect);
+        buf.items()
+            .iter()
+            .filter_map(|item| match item {
+                Item::Sprite(s) if frames.contains(&s.src) => Some((s.src, s.dest)),
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// A lamp stands on its tile, its bottom on the tile's bottom, reaching
+    /// a tile up, and burns through its frames by the scene's clock.
+    #[test]
+    fn a_placed_lamp_burns_through_its_frames_by_the_clock() {
+        let c = moving_ctx(IdleMotion::On, GraphicsTier::Full);
+        let skin = lit(&c);
+        let frames = lamp_frames().map(src_rect);
+        let standing = Rect::new(16, 0, 16, 32);
+        for (clock_ms, frame) in [(0, 0), (149, 0), (150, 1), (300, 2), (450, 0)] {
+            assert_eq!(
+                lamps(&c, &skin, clock_ms),
+                [(frames[frame], standing)],
+                "{clock_ms} ms"
+            );
+        }
+    }
+
+    /// On the Playdate's tier, and with idle motion off, the lamp stands
+    /// still on its first frame.
+    #[test]
+    fn a_placed_lamp_stands_still_on_a_lesser_tier() {
+        let first = src_rect(lamp_frames()[0]);
+        for (idle, tier) in [
+            (IdleMotion::On, GraphicsTier::Reduced),
+            (IdleMotion::On, GraphicsTier::Minimal),
+            (IdleMotion::Off, GraphicsTier::Full),
+        ] {
+            let c = moving_ctx(idle, tier);
+            let skin = lit(&c);
+            for clock_ms in [0, 150, 300] {
+                let drawn = lamps(&c, &skin, clock_ms);
+                assert_eq!(drawn.len(), 1, "{tier}, {clock_ms} ms");
+                assert_eq!(drawn[0].0, first, "{tier}, {clock_ms} ms");
             }
         }
     }
