@@ -70,6 +70,7 @@ mod class_change;
 mod controller;
 mod crash_reports;
 mod credits;
+mod debug_pause;
 mod debug_view;
 mod demo;
 mod dialogue;
