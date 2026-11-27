@@ -1052,6 +1052,34 @@ fn the_screen_opts_into_being_found_by_type() {
     assert_eq!(found.map(PreparationsScreen::tab), Some(Tab::Loadouts));
 }
 
+/// Up from the last line of a list longer than its box keeps the first
+/// line shown, in the Shop tab's Sell list and in a plain list's step
+/// (1238).
+#[test]
+fn up_from_the_last_line_keeps_the_window() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    let copy = s.prep.setup.stock.weapons[0].clone();
+    s.prep.setup.stock.weapons = vec![copy; 40];
+    in_shop(&mut c, &mut s, 1);
+    update(&mut s, &mut c, &[CursorUp]);
+    let (n, rows) = (s.deals().len(), PreparationsScreen::DEAL_ROWS);
+    assert!(n > rows, "the list must be longer than its box");
+    let first = shop_of(&s.view(&c)).first;
+    assert_eq!(first, n - rows, "the focus is on the bottom row");
+    update(&mut s, &mut c, &[CursorUp]);
+    let view = s.view(&c);
+    assert_eq!((shop_of(&view).focus, shop_of(&view).first), (n - 2, first));
+
+    // The units, spare and pack lists step the same way.
+    let mut cursor = ListCursor::new(30);
+    let rows = glyph::LIST_ROWS;
+    PreparationsScreen::step_list(&mut cursor, 30, false, rows, &mut c);
+    assert_eq!(cursor.first_shown(), 30 - rows);
+    PreparationsScreen::step_list(&mut cursor, 30, false, rows, &mut c);
+    assert_eq!((cursor.focus(), cursor.first_shown()), (28, 30 - rows));
+}
+
 /// The screen on its Shop tab's lists, on shop tab `tab` (0 Buy, 1 Sell,
 /// 2 Repair).
 fn in_shop(c: &mut Ctx, s: &mut PreparationsScreen, tab: usize) {
@@ -1502,7 +1530,7 @@ fn next_and_previous_unit_wrap_at_both_ends() {
     assert_eq!(on(&s, &c), ("Test Lord".to_owned(), 0, 0, Focus::Slots));
     // Not on the tabs, nor on the Pack tab.
     update(&mut s, &mut c, &[Cancel, Cancel, Action::NextUnit]);
-    assert_eq!((s.focus(), s.unit), (Focus::Tabs, 0));
+    assert_eq!((s.focus(), s.unit.focus()), (Focus::Tabs, 0));
 }
 
 /// Ticket 0487: in the stock, Next unit keeps the stock and its row,

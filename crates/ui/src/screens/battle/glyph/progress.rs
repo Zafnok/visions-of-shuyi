@@ -7,7 +7,7 @@
 
 use super::fight_box::BOX;
 use crate::color::{Rgb, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::portrait::draw_portrait;
 use crate::prelude::*;
 use crate::screen::Ctx;
@@ -90,8 +90,12 @@ pub fn paint(ctx: &Ctx, view: &ProgressView, buf: &mut GlyphBuffer) {
 fn paint_exp(ctx: &Ctx, page: &ExpView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    buf.fill_rect(EXP_BOX, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(EXP_BOX, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
+    buf.panel(
+        EXP_BOX,
+        &look.with_border(c(UiColor::PanelBorderFocus)),
+        None,
+    );
     let y = EXP_BOX.y + 1;
     let x = EXP_BOX.x + 2;
     // check-text: not a data name (the view's own)
@@ -110,9 +114,9 @@ fn paint_exp(ctx: &Ctx, page: &ExpView, buf: &mut GlyphBuffer) {
 fn paint_gains(ctx: &Ctx, page: &GainsView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    buf.fill_rect(LEVEL_PANEL, Cell::new(' ', c(UiColor::Text), bg));
     let focus = c(UiColor::PanelBorderFocus);
-    buf.draw_box(LEVEL_PANEL, BoxStyle::Double, focus, bg);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
+    buf.panel(LEVEL_PANEL, &look.with_border(focus), None);
     let border = c(UiColor::PanelBorder);
     buf.draw_box(PORTRAIT_FRAME, BoxStyle::Single, border, bg);
     let drawn = page.face.as_ref().is_some_and(|face| {
@@ -166,8 +170,8 @@ fn paint_class(ctx: &Ctx, page: &ClassProgressView, buf: &mut GlyphBuffer) {
     let mastery = i32::from(page.mastered.is_some());
     let h = 3 + mastery + i32::try_from(page.lines.len()).unwrap_or(0);
     let rect = Rect::new(BOX.x, BOX.y, BOX.w, h);
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
+    buf.panel(rect, &look.with_border(c(UiColor::PanelBorderFocus)), None);
     let x = rect.x + 2;
     let mut y = rect.y + 1;
     // check-text: not a data name (the view's own)

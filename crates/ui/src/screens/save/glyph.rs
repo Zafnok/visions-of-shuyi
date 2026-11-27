@@ -7,7 +7,7 @@
 
 use super::view::{SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView};
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::clip;
@@ -74,11 +74,11 @@ pub fn paint_slots(ctx: &Ctx, view: &SlotPickerView, buf: &mut GlyphBuffer) {
     let (black, bg) = (c(UiColor::Black), c(UiColor::PanelBg));
     let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
     buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
-    buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-    buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
     // In the top border, its text over the slot numbers.
-    let title = format!(" {} ", view.title);
-    buf.print(SLOT_X - 1, PANEL.y, &title, c(UiColor::TextHighlight), bg);
+    let look = PanelLook::new(BoxStyle::Single, text, bg)
+        .with_border(c(UiColor::PanelBorder))
+        .with_title(c(UiColor::TextHighlight));
+    buf.panel(PANEL, &look, Some(&view.title));
     paint_columns(ctx, &view.columns, buf);
     // Which slots are on show, in the bottom border.
     let range = format!(" {} ", view.range);

@@ -38,9 +38,15 @@ fn colours(buf: &GlyphBuffer, x: i32, y: i32) -> (crate::color::Rgb, crate::colo
 }
 
 fn list<Row>(title: &str, rows: Vec<Row>, cursor: usize, state: ListState) -> ListView<Row> {
+    // A window as a fresh cursor on `cursor` shows it.
+    let first = crate::widgets::ListCursor::new(rows.len())
+        .at(cursor)
+        .window(LIST_ROWS)
+        .start;
     ListView {
         title: title.to_owned(),
         rows,
+        first,
         cursor,
         state,
     }
@@ -275,15 +281,6 @@ fn the_leave_question_takes_the_messages_place() {
     view.leave_question = None;
     view.message = None;
     assert_eq!(row(&painted(&c, &view), 29).trim(), "");
-}
-
-#[test]
-fn a_window_moves_only_once_the_cursor_leaves_it() {
-    // A window of 3 rows over 5.
-    let starts: Vec<usize> = (0..5).map(|f| window_start(f, 5, 3)).collect();
-    assert_eq!(starts, [0, 0, 0, 1, 2]);
-    assert_eq!(window_start(1, 2, 3), 0);
-    assert_eq!(window_start(0, 0, 3), 0);
 }
 
 /// Row `y` of the screen as drawn.

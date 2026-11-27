@@ -13,7 +13,7 @@ use trpg_core::Pos;
 
 use super::view::{PlaceMark, WorldMapView};
 use crate::color::{Rgb, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, PxRect, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, PanelLook, PxRect, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::widgets::menu::glyph as menu_glyph;
@@ -349,13 +349,12 @@ pub(super) fn corner_arms(rect: PxRect) -> [PxRect; 8] {
 pub(super) fn paint_panel(ctx: &Ctx, view: &WorldMapView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let (border, bg) = (c(UiColor::PanelBorderFocus), c(UiColor::PanelBg));
-    buf.fill_rect(PANEL, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(PANEL, BoxStyle::Double, border, bg);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg).with_border(border);
+    buf.panel(PANEL, &look, None);
     let panel = &view.panel;
     let title = format!(" {} ", panel.title);
-    let width = buf.text_cells(&title);
-    let x = PANEL.x + (PANEL.w - width).max(0) / 2;
-    buf.print(x, PANEL.y, &title, c(UiColor::TextHighlight), bg);
+    let top = Rect::new(PANEL.x, PANEL.y, PANEL.w, 1);
+    buf.print_centred(top, &title, c(UiColor::TextHighlight));
     let x = PANEL.x + 2;
     buf.print(x, PANEL.y + 1, &panel.act, c(UiColor::TextDim), bg);
     buf.print(x, PANEL.y + 3, &panel.kind, c(UiColor::TextHighlight), bg);
