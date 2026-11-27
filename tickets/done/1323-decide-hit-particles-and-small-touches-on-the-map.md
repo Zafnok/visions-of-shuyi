@@ -5,11 +5,11 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 blocks: ["1064"]
 nick_input: decision
-completed:
+completed: 2026-11-27
 ---
 
 # 1323 — Decide: hit particles in the fight and small touches on the map
@@ -105,12 +105,12 @@ changes the rules.
 
 ## Acceptance criteria
 
-- [ ] `look-and-feel.md` has a *Particles and small touches* part
+- [x] `look-and-feel.md` has a *Particles and small touches* part
       answering questions 1–7, Nick's words quoted.
-- [ ] The art picked for each effect is named with its license.
-- [ ] 1333 and 1334 match the answer (or are closed as not needed, with
+- [x] The art picked for each effect is named with its license.
+- [x] 1333 and 1334 match the answer (or are closed as not needed, with
       the reason, if Nick picks none for them).
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -121,3 +121,46 @@ None (a decision).
 Question 7 decides the Playdate's; GBA: no target (1314).
 
 ## Completion notes
+
+Asked over five rounds of moving mockups (2026-11-23 to 2026-11-27): real
+Chapter 1 fights, walks and a fight with combat animations off, captured
+with `frame-png` from staged throwaway battles (`zz_1323_*`, never
+committed) and composited with the candidate effects by a throwaway
+script. The mockups show bought art, so none is committed (ADR-0040).
+Recorded in `docs/design/look-and-feel.md`, *Particles and small
+touches*, and a row in `docs/design/README.md`.
+
+- **Round 1** (Ninja Adventure, CC0, both looks): "look for other asset
+  packs with these particle effects these look bad", "probably I want a
+  high quality pack", and "dont need to render glyphs look option for
+  now". Nick then bought ByteWright's *Everything So Far* (2026-11-24,
+  for 0096 and this ticket).
+- **Rounds 2–5** (ByteWright): fights C with "many bursts but crit gets
+  the star"; the arrow's splinters and the fire's ember pop replaced (a
+  flying arrow and a star; a small explosion, two notches bigger); a heal's
+  crosses and a level up's rays on the unit's tile; light dust, leaves
+  and splashes underfoot; with animations off, one drawn frame of a small
+  star per landed blow; critters startle and run; none on the Playdate.
+- **Art:** ByteWright's *Pixel VFX & SFX Mega Pack* and *Ambient
+  Critters* (bought; any number of games, commercial or not; edits
+  allowed; credit optional, and we credit ByteWright; no redistribution,
+  no AI training), already in `THIRD_PARTY_ASSETS.md`, now with what 1323
+  picked.
+- **Downstream:** 1333 (the fight) and 1334 (the map, now with the heal,
+  the level up and the map hit) rewritten to the answer. The effects are
+  drawn flipbooks, not emitters, so both no longer wait on 1316's engine
+  particles (1316's *Out* says so); 1334 reuses 1333's effect table and
+  waits on it. 1333 is ready to work.
+
+**Claude's starting rules** (not shown to Nick; judge them in the Act 1
+playtest, 1064):
+
+- The glyph look shows the same moments with the font's marks (`*` `+`
+  `•` `°`), snapped to the grid and darkening, like the title's embers.
+- An ice spell plays the fire's small explosion in the pack's ice
+  colours; a spell with no element in its arcane colours.
+- An Absorb strike plays its burst on the target and the heal's crosses
+  on the striker; a strike that does no damage still plays its burst.
+- Thicket counts as forest underfoot; bridge, floor, fort, hills, peaks
+  and buildings have no touch.
+- With combat animations off, a miss shows no star.
