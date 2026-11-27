@@ -109,4 +109,6 @@ fn the_embedded_ambiences_are_what_a_scene_may_name() {
     let refs = PlaceRefs::default().with_ambiences(Some(ids));
     let (parsed, _) = parse_dlg("t.dlg", "@scene s\n@ambience meadow\n> x\n@end\n");
     assert_eq!(check_places(&parsed[0], &refs), []);
+    let (parsed, _) = parse_dlg("t.dlg", "@scene s\n@ambience marsh\n> x\n@end\n");
+    assert_eq!(check_places(&parsed[0], &refs).len(), 1, "marsh is none");
 }
