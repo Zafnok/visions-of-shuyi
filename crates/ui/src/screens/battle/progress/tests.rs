@@ -727,3 +727,46 @@ fn a_promotion_plays_nothing_and_doesnt_wait_for_the_fanfare() {
     };
     assert_eq!(heard(&listen(&mut pb, 1.0 / 60.0, false)), []);
 }
+
+/// The class box sounds for a mastery or something learned, either alone,
+/// and not for a class level alone.
+#[test]
+fn the_class_box_sounds_for_a_mastery_or_something_learned() {
+    let Page::Class(cl) = progress().pages()[2].clone() else {
+        panic!()
+    };
+    let box_sounds = |mastered: bool, learned: Vec<String>| {
+        let page = ClassPage {
+            mastered,
+            learned,
+            ..cl.clone()
+        };
+        let mut pb = Progress {
+            pages: vec![Page::Class(page)],
+            page: 0,
+            t: 0.0,
+            timings: T,
+            heard: super::sounds::Heard::default(),
+        };
+        pb.take_sounds()
+    };
+    let mastered = [ProgressSound::Play(CLASS_MASTERED)];
+    assert_eq!(box_sounds(true, vec![]), mastered);
+    assert_eq!(box_sounds(false, vec!["Leadership 1".into()]), mastered);
+    assert_eq!(box_sounds(false, vec![]), []);
+}
+
+/// Only Confirm held while the clock runs hurries a page: a held frame of
+/// no time doesn't, and a hurried frame after the fill's end has nothing
+/// left to stop.
+#[test]
+fn only_a_hurried_pass_over_the_fills_end_stops_it() {
+    use ProgressSound::{Play, Start};
+    let mut pb = progress();
+    assert_eq!(pb.take_sounds(), [Start(EXP_FILL)]);
+    pb.tick(0.0, true);
+    pb.tick(T.exp_fill, false);
+    assert_eq!(pb.take_sounds(), [Play(EXP_FULL)]);
+    pb.tick(0.1, true);
+    assert_eq!(pb.take_sounds(), []);
+}
