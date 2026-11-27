@@ -150,7 +150,7 @@ completion notes.
 ## Acceptance criteria
 
 - [ ] The engine's picture frame merged, the pin moved past it.
-- [ ] `cargo xtask ui-import` writes the pieces; the private repository
+- [x] `cargo xtask ui-import` writes the pieces; the private repository
       holds them and `assets-private.rev` names that commit.
 - [x] `assets/ui/frames.ron` loads and validates; a content test fails
       on a missing frame name.
@@ -183,7 +183,7 @@ completion notes.
   the inside, never past the screen's edge) and a `TitlePlate` behind the
   title (`GlyphBuffer::title_plate` for a title a skin prints itself); the
   menu widget's `glyph::look` and `glyph::paint_with` take a caller's look.
-  ADR-0161 (engine): only a panel's border becomes a picture. engine#2338
+  ADR-0163 (engine): only a panel's border becomes a picture. engine#2338
   keeps the rest (tiled pictures, every engine panel asking the game for
   its frame), engine#2235 the file format.
 - **Game:** `cargo xtask ui-import` (`crates/tools/src/ui_import.rs`, its
@@ -211,10 +211,10 @@ completion notes.
 - **Credits:** two *Shipped items* rows (one per kit, each with its own
   link) and two entries in `credits.ron` (`barely_pixel_quest`, its recolor
   said; `barely_post_baroque`, its plate cut down), author "Barely Apes".
-- **The private pictures:** pushed as the private repository's PR #43 from
-  the current pin (`b68863cc`), so the pin moves by these four files only.
-  `cargo shuyi private-assets --pin` accepts only a commit on its `main`,
-  so the pin moves once #43 merges (see the PR).
+- **The private pictures:** the private repository's PR #43, merged;
+  `assets-private.rev` names its merge (`80e6e856`), which also carries
+  1384's content (its game PR merged first) and not the later #44 (1378's
+  lamps, whose game PR moves the pin past it).
 - Friction: game production lines about 880 added against an estimate of
   900 (under 2×). PR size about 1,560 lines of this ticket's own (the
   branch also carries 1238's, under it).
