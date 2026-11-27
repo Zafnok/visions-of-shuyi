@@ -5,6 +5,8 @@
 use crate::prelude::*;
 use shuyi_ui::text::StyledText;
 
+use trpg_core::{Grid, TerrainId};
+
 use crate::map_view::MapScene;
 use crate::tips::LessonView;
 
@@ -16,6 +18,10 @@ use crate::tips::LessonView;
 pub struct RewindScreenView {
     /// What is on the visible map (ADR-0038): the map skin paints it.
     pub scene: MapScene,
+    /// The whole map's terrain (ticket 1356): where what stands on more
+    /// than one tile (a tree) is placed, however the view is scrolled.
+    /// `None`: the scene's own tiles.
+    pub map: Option<Grid<TerrainId>>,
     /// The list.
     pub list: RewindView,
     /// The lesson about rewinding, while one is on screen.

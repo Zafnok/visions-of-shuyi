@@ -12,6 +12,7 @@ use crate::prelude::*;
 
 mod frames;
 mod look;
+mod trees;
 
 use alloc::collections::{BTreeMap, BTreeSet};
 use core::fmt;
@@ -35,6 +36,7 @@ pub use shuyi_assets::image::{ImageRect, Picture};
 /// A tileset's terrain tiles: its image, tile size and looks (ticket
 /// 1115: the engine's, painted by its sprite skin).
 pub use shuyi_assets::tileset::TerrainTiles;
+pub use trees::{Footprint, Tree, TreeKind, Trees, place};
 
 /// The directory of tileset files inside the bundle.
 pub const TILESETS_DIR: &str = "tilesets";
@@ -82,6 +84,9 @@ pub struct Tileset {
     /// The cells of its terrain tiles that loop through frames (ticket
     /// 1315): every row that draws one moves with it.
     pub frames: TileFrames,
+    /// The trees standing on the forest of each look that has them, by
+    /// the look's name (ticket 1356).
+    pub trees: BTreeMap<String, Trees>,
 }
 
 impl Tileset {
@@ -99,6 +104,12 @@ impl Tileset {
     /// tileset has it, else its own. `None` without terrain tiles.
     pub fn look(&self, name: &str) -> Option<&Look> {
         Some(self.terrain.as_ref()?.look(name))
+    }
+
+    /// The trees of the look a map naming `name` is painted as, if it has
+    /// any (ticket 1356).
+    pub fn trees(&self, name: &str) -> Option<&Trees> {
+        self.trees.get(name)
     }
 
     /// The picture of a unit of `class`, the named `character` if any: the
@@ -345,6 +356,51 @@ impl Checker<'_> {
     }
 }
 
+/// A tileset file's terrain looks, checked: its own (if it has terrain),
+/// the others by name, and the trees of each that has them.
+struct ReadLooks {
+    own: Option<Look>,
+    looks: BTreeMap<String, Look>,
+    trees: BTreeMap<String, Trees>,
+}
+
+/// The looks of `def`, checked (problems into `check`, names that don't
+/// exist into `unknown`).
+fn read_looks<'c>(
+    def: &TilesetFile,
+    check: &mut Checker<'c>,
+    unknown: &mut Vec<String>,
+    refs: &TilesetRefs<'c>,
+) -> ReadLooks {
+    let tile_px = def.tile_px.unwrap_or_default();
+    let mut looking = |name, terrain, layers, trees: Option<&trees::TreesFile>| {
+        let mut looking = look::Looking {
+            check: &mut *check,
+            unknown: &mut *unknown,
+            refs,
+            tile_px,
+            name,
+        };
+        let look = looking.look(terrain, layers);
+        (look, trees.map(|t| looking.trees(t)))
+    };
+    let own = def
+        .terrain
+        .as_ref()
+        .map(|t| looking(None, t, &def.layers, None).0);
+    let mut looks = BTreeMap::new();
+    let mut trees = BTreeMap::new();
+    for (name, file) in &def.looks {
+        let name_str = Some(name.as_str());
+        let (look, written) = looking(name_str, &file.terrain, &file.layers, file.trees.as_ref());
+        looks.insert(name.clone(), look);
+        if let Some(written) = written {
+            trees.insert(name.clone(), written);
+        }
+    }
+    ReadLooks { own, looks, trees }
+}
+
 /// Parses tileset `source` (errors attributed to `file`, whose stem is
 /// `stem`) and checks it against `refs`, reporting every problem.
 pub fn parse_tileset(
@@ -367,22 +423,7 @@ pub fn parse_tileset(
     }
     let mut unknown = Vec::new();
     let tile_px = def.tile_px.unwrap_or_default();
-    let mut looking = |name, terrain, layers| {
-        let mut looking = look::Looking {
-            check: &mut check,
-            unknown: &mut unknown,
-            refs,
-            tile_px,
-            name,
-        };
-        looking.look(terrain, layers)
-    };
-    let own = def.terrain.as_ref().map(|t| looking(None, t, &def.layers));
-    let mut looks = BTreeMap::new();
-    for (name, file) in &def.looks {
-        let look = looking(Some(name.as_str()), &file.terrain, &file.layers);
-        looks.insert(name.clone(), look);
-    }
+    let ReadLooks { own, looks, trees } = read_looks(&def, &mut check, &mut unknown, refs);
     let mut classes = BTreeMap::new();
     for (name, entry) in &def.units.classes {
         let id = ClassId(name.clone());
@@ -445,6 +486,7 @@ pub fn parse_tileset(
             on_foot,
             walking,
             frames,
+            trees,
         }),
         _ => Err(problems
             .into_iter()

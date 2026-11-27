@@ -241,8 +241,10 @@ impl RewindScreen {
     /// The whole screen (ADR-0054): the map, the list, the lesson, the
     /// help and the debug hint.
     pub fn view(&self, ctx: &Ctx) -> RewindScreenView {
+        let shown = self.focused().map_or(&self.now, |e| &e.before);
         RewindScreenView {
             scene: self.scene(ctx),
+            map: Some(shown.map().tiles.clone()),
             list: self.list_view(ctx.words()),
             lesson: self.lesson.clone(),
             help: self.help(ctx),

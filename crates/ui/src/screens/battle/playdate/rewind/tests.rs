@@ -22,6 +22,7 @@ fn list(entries: &[&str], focus: usize) -> RewindView {
 fn screen(list: RewindView) -> RewindScreenView {
     RewindScreenView {
         scene: plains(&ctx()),
+        map: None,
         list,
         lesson: None,
         help: "A rewind · B back".into(),

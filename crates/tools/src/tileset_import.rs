@@ -49,7 +49,9 @@ use trpg_content::map::{DEFAULT_TILES, TILE_LOOKS};
 use trpg_content::tileset::parse_mix;
 
 use crate::map_sprite_import::{self, GAME_DIR, MapSprite, TILESET_ID};
-use crate::tileset_ron::{self, At, FramesText, LayerText, LookText, Place};
+use crate::tileset_ron::{
+    self, At, FramesText, LayerText, LookText, Place, TreeKindText, TreesText,
+};
 use shuyi_cli::codec::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
@@ -83,6 +85,8 @@ pub const COLUMNS: u32 = 16;
 /// What a moving tile still needs for the `Minimal` tier (a GBA one day:
 /// `TODO(gba)`), listed by the content's stills check (ADR-0131).
 pub const MINIMAL_TODO: &str = "a one-bit tile";
+/// What a tree still needs for the `Minimal` tier (ticket 1356).
+pub const MINIMAL_TREE_TODO: &str = "a one-bit tree";
 
 /// A tile of a bought sheet: the sheet and the tile's id in it, counting
 /// its 16×16 tiles row by row from 0. A sheet is a Tiled file (its `.tsx`
@@ -496,6 +500,29 @@ pub struct LookMap {
     pub terrain: BTreeMap<String, TileRef>,
     /// Its layers by name, the first undermost.
     pub layers: Vec<String>,
+    /// The trees standing on its forest (ticket 1356), if it has any.
+    #[serde(default, deserialize_with = "some")]
+    pub trees: Option<TreesMap>,
+}
+
+/// A look's trees in the mapping (ticket 1356): plain sheets of frames,
+/// each a kind of big tree, and each also halved for a half-size one.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TreesMap {
+    /// Our terrains they stand on.
+    pub of: Vec<String>,
+    /// The sheets, by path under [`LIBRARIES_DIR`]: each one kind, its
+    /// frames row by row from the top-left.
+    pub sheets: Vec<String>,
+    /// A frame's size in pixels (even, so it halves).
+    pub frame: (u32, u32),
+    /// How many frames a sheet has.
+    pub frames: u32,
+    /// How long each frame shows, in ms.
+    pub ms: u32,
+    /// The pixel of a frame on the middle of its trunk tile's bottom edge.
+    pub foot: (u32, u32),
 }
 
 /// Every tag of `xml` that opens an element, with its attributes. Enough
@@ -1702,6 +1729,17 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
         if let Some(layer) = lacking {
             return Err(format!("{what}: no layer \"{layer}\""));
         }
+        if let Some(trees) = &look.trees {
+            known(&format!("{what}: trees"), &trees.of, terrains)?;
+            if name == DEFAULT_TILES {
+                return Err(format!("{what}: only a look a map names has trees"));
+            }
+            if trees.sheets.is_empty() || trees.frames < 2 || trees.ms == 0 {
+                return Err(format!(
+                    "{what}: trees need a sheet, 2 frames or more and a time"
+                ));
+            }
+        }
     }
     Ok(())
 }
@@ -1754,16 +1792,178 @@ pub fn import(
         }
         looks.push((name.clone(), text));
     }
+    let moving = packer.moving()?;
+    let mut image = packer.image();
+    let mut trees = TreePacker::below(&mut image);
+    for (name, text) in &mut looks {
+        if let Some(map) = mapping.looks.get(name).and_then(|l| l.trees.as_ref()) {
+            let made = trees.look(dir, map);
+            text.trees = Some(made.map_err(|e| format!("look \"{name}\": trees: {e}"))?);
+        }
+    }
     let mut looks = looks.into_iter();
     let own = looks.next().filter(|(name, _)| name == DEFAULT_TILES);
     let (_, own) = own.ok_or_else(|| format!("the mapping has no look \"{DEFAULT_TILES}\""))?;
-    let moving = packer.moving()?;
     Ok(Imported {
-        image: packer.image(),
+        image,
         own,
         others: looks.collect(),
         moving,
     })
+}
+
+/// The trees' frames (ticket 1356), packed below the tiles of an image
+/// [`COLUMNS`] cells wide: each frame from the top-left of the next free
+/// cells along a shelf as tall as its tallest frame.
+struct TreePacker<'a> {
+    image: &'a mut (u32, u32, Vec<u8>),
+    /// The shelf's top row and the next free column, in cells.
+    at: (u32, u32),
+    /// The shelf's height in cells.
+    shelf: u32,
+}
+
+impl<'a> TreePacker<'a> {
+    /// A packer adding to `image`, below what it holds.
+    fn below(image: &'a mut (u32, u32, Vec<u8>)) -> Self {
+        let rows = image.1 / TILE;
+        Self {
+            image,
+            at: (rows, 0),
+            shelf: 0,
+        }
+    }
+
+    /// Packs `pixels` (RGBA8, `size` px) and returns its top-left cell.
+    fn pack(&mut self, size: (u32, u32), pixels: &[u8]) -> At {
+        let cells = |px: u32| px.div_ceil(TILE);
+        let (across, down) = (cells(size.0), cells(size.1));
+        if self.at.1 + across > COLUMNS {
+            self.at = (self.at.0 + self.shelf, 0);
+            self.shelf = 0;
+        }
+        let (row, column) = self.at;
+        self.at.1 += across;
+        self.shelf = self.shelf.max(down);
+        let (width, height, rgba) = &mut *self.image;
+        let bottom = (row + down) * TILE;
+        if bottom > *height {
+            rgba.resize(usize::try_from(bottom * *width * 4).unwrap_or(0), 0);
+            *height = bottom;
+        }
+        let line = usize::try_from(size.0 * 4).unwrap_or(0);
+        for (y, src) in (0..).zip(pixels.chunks_exact(line.max(1))) {
+            let x = column * TILE;
+            let at = usize::try_from(((row * TILE + y) * *width + x) * 4).unwrap_or(0);
+            rgba[at..at + line].copy_from_slice(src);
+        }
+        (column, row)
+    }
+
+    /// Packs the trees of `map` from the sheets under `dir`: each sheet's
+    /// frames as a kind of big tree, and each halved as a half-size one.
+    fn look(&mut self, dir: &Path, map: &TreesMap) -> Result<TreesText, String> {
+        let (fw, fh) = map.frame;
+        if fw % 2 != 0 || fh % 2 != 0 || fw == 0 || fh == 0 || fw > COLUMNS * TILE {
+            return Err(format!(
+                "a frame of {fw}×{fh} px doesn't halve or doesn't fit"
+            ));
+        }
+        let mut sheets = Vec::new();
+        for name in &map.sheets {
+            let sheet = Sheet::read(dir, name)?;
+            let frames = tree_frames(&sheet, map).map_err(|e| format!("{name}: {e}"))?;
+            sheets.push(frames);
+        }
+        let ms = map.ms.max(1);
+        let mut kind = |size, foot, frames: &[Vec<u8>]| TreeKindText {
+            size,
+            foot,
+            frames: frames.iter().map(|f| (self.pack(size, f), ms)).collect(),
+        };
+        let big: Vec<TreeKindText> = sheets
+            .iter()
+            .map(|frames| kind(map.frame, map.foot, frames))
+            .collect();
+        let half_foot = (map.foot.0 / 2, map.foot.1 / 2);
+        let half = sheets
+            .iter()
+            .map(|frames| {
+                let halved: Vec<Vec<u8>> = frames.iter().map(|f| halved(f, map.frame)).collect();
+                kind((fw / 2, fh / 2), half_foot, &halved)
+            })
+            .collect();
+        Ok(TreesText {
+            of: map.of.clone(),
+            big,
+            half,
+            minimal_todo: Some(MINIMAL_TREE_TODO.to_owned()),
+        })
+    }
+}
+
+/// The frames of a tree `sheet` as `map` lays them out: `map.frames` of
+/// `map.frame` px, row by row from the top-left, as RGBA8 pixels.
+fn tree_frames(sheet: &Sheet, map: &TreesMap) -> Result<Vec<Vec<u8>>, String> {
+    let (fw, fh) = map.frame;
+    let (width, height) = sheet.size;
+    let across = width / fw;
+    if across == 0 || map.frames == 0 || map.frames.div_ceil(across) * fh > height {
+        return Err(format!(
+            "{} frames of {fw}×{fh} px don't fit the {width}×{height} px image",
+            map.frames
+        ));
+    }
+    let line = usize::try_from(fw * 4).unwrap_or(0);
+    let frame = |k: u32| {
+        let (left, top) = ((k % across) * fw, (k / across) * fh);
+        let mut out = Vec::new();
+        for y in top..top + fh {
+            let at = usize::try_from((y * width + left) * 4).unwrap_or(0);
+            out.extend_from_slice(&sheet.rgba[at..at + line]);
+        }
+        out
+    };
+    Ok((0..map.frames).map(frame).collect())
+}
+
+/// `pixels` (RGBA8, `w` × `h` px, both even) at half the size, each two by
+/// two block one pixel (ticket 1356: ELV's trees, halved). A block of two
+/// or more solid pixels is solid, their colours averaged, so the
+/// picture's edge stays crisp; any other is its pixels' colour as clear as
+/// the block is on the whole (the shadow's soft edge).
+pub fn halved(pixels: &[u8], (w, h): (u32, u32)) -> Vec<u8> {
+    let at = |x: u32, y: u32| {
+        let i = usize::try_from((y * w + x) * 4).unwrap_or(0);
+        pixels
+            .get(i..i + 4)
+            .map_or([0; 4], |p| [p[0], p[1], p[2], p[3]])
+    };
+    let mut out = Vec::new();
+    for y in (0..h).step_by(2) {
+        for x in (0..w).step_by(2) {
+            let block = [at(x, y), at(x + 1, y), at(x, y + 1), at(x + 1, y + 1)];
+            let solid: Vec<[u8; 4]> = block.iter().copied().filter(|p| p[3] == 255).collect();
+            let (picked, alpha) = if solid.len() >= 2 {
+                (solid, 255)
+            } else {
+                let seen: Vec<[u8; 4]> = block.iter().copied().filter(|p| p[3] > 0).collect();
+                let sum: u32 = block.iter().map(|p| u32::from(p[3])).sum();
+                (seen, u8::try_from(sum / 4).unwrap_or(u8::MAX))
+            };
+            if picked.is_empty() || alpha == 0 {
+                out.extend_from_slice(&[0; 4]);
+                continue;
+            }
+            let n = u32::try_from(picked.len()).unwrap_or(1);
+            let mean = |c: usize| {
+                let sum: u32 = picked.iter().map(|p| u32::from(p[c])).sum();
+                u8::try_from(sum / n).unwrap_or(u8::MAX)
+            };
+            out.extend_from_slice(&[mean(0), mean(1), mean(2), alpha]);
+        }
+    }
+    out
 }
 
 /// The bundle path of the packed image.

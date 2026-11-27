@@ -88,7 +88,10 @@ pub const BANNER_H: i32 = 6;
 /// Paints `view`: the map, then what is over it, then the bars.
 pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     clear(ctx, buf);
-    ctx.game.map_skin.paint(ctx, &view.scene, MAP_VIEW, buf);
+    let map = view.map.as_ref();
+    ctx.game
+        .map_skin
+        .paint_on(ctx, &view.scene, map, MAP_VIEW, buf);
     if let Some(m) = &view.menu
         && let MenuPlace::Beside(tile) = m.place
     {
