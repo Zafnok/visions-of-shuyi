@@ -7,7 +7,7 @@
 
 use super::view::{ResultsBody, ResultsView, TallyView, UnitView};
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::glyph::progress::{self, EXP_BAR_CELLS};
@@ -70,10 +70,10 @@ fn paint_tally(ctx: &Ctx, tally: &TallyView, buf: &mut GlyphBuffer) {
         c(UiColor::TextDim),
         c(UiColor::TextHighlight),
     );
-    buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-    buf.draw_box(PANEL, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-    let heading = format!(" {} ", tally.heading);
-    buf.print(PANEL.x + 2, PANEL.y, &heading, hi, bg);
+    let look = PanelLook::new(BoxStyle::Double, text, bg)
+        .with_border(c(UiColor::PanelBorderFocus))
+        .with_title(hi);
+    buf.panel(PANEL, &look, Some(&tally.heading));
     if let Some(gold) = &tally.gold {
         buf.print(X, GOLD_ROW, &gold.label, text, bg);
         let n = buf.print(VALUE_X, GOLD_ROW, &format!("+{}", gold.gained), hi, bg);

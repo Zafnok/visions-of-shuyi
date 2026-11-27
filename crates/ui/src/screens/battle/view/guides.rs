@@ -27,6 +27,9 @@ pub struct GuidesView {
     pub topics: Vec<String>,
     /// Which topic is highlighted.
     pub focus: usize,
+    /// The first topic shown: the window keeps its place until the focus
+    /// leaves it.
+    pub first: usize,
     /// The highlighted topic's title, over its text.
     pub heading: String,
     /// The highlighted topic's text, its keys named, one entry per line;

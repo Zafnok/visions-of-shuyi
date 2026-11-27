@@ -6,8 +6,7 @@
 
 use super::view::CampView;
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
-use crate::prelude::*;
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::screen::Ctx;
 use crate::screens::print_centred;
 use crate::widgets::menu::glyph as menu_glyph;
@@ -38,12 +37,12 @@ pub fn paint(ctx: &Ctx, view: &CampView, buf: &mut GlyphBuffer) {
     } else {
         UiColor::PanelBorder
     };
-    buf.draw_box(PANEL, BoxStyle::Single, c(border), black);
+    let look = PanelLook::new(BoxStyle::Single, c(UiColor::Text), black)
+        .with_border(c(border))
+        .with_title(c(UiColor::TextHighlight));
+    let title = Some(view.list_title.as_str()).filter(|t| !t.is_empty());
+    buf.panel(PANEL, &look, title);
     let x = PANEL.x + 2;
-    if !view.list_title.is_empty() {
-        let title = format!(" {} ", view.list_title);
-        buf.print(x, PANEL.y, &title, c(UiColor::TextHighlight), black);
-    }
     match &view.list {
         Some(list) => menu_glyph::paint(ctx, list, buf, x, PANEL.y + 1),
         None => {

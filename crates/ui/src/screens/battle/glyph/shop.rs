@@ -11,12 +11,11 @@
 
 use super::{clear, paint_help};
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
 use crate::screens::battle::view::{SellConfirmView, ShopScreenView};
-use crate::widgets::ListCursor;
 use crate::widgets::ask::glyph as ask_glyph;
 use shuyi_assets::font::CellWidths;
 use shuyi_assets::lang::text_width;
@@ -109,8 +108,8 @@ pub fn paint_box(ctx: &Ctx, view: &ShopScreenView, area: Rect, buf: &mut GlyphBu
     let lit = c(UiColor::TextHighlight);
     let focus_bg = c(UiColor::PanelBorderFocus);
     let (list_x, top_row, rows) = (list_x(area), top_row(area), list_rows(area));
-    buf.fill_rect(area, Cell::new(' ', text, bg));
-    buf.draw_box(area, BoxStyle::Double, c(UiColor::PanelBorder), bg);
+    let look = PanelLook::new(BoxStyle::Double, text, bg).with_border(c(UiColor::PanelBorder));
+    buf.panel(area, &look, None);
     buf.print(list_x, area.y, &format!(" {} ", view.shop), lit, bg);
     let gold = format!(" {} ", view.gold);
     let gold_x = area.x + area.w - 3 - cells(&gold, buf.widths());
@@ -130,8 +129,7 @@ pub fn paint_box(ctx: &Ctx, view: &ShopScreenView, area: Rect, buf: &mut GlyphBu
     if view.lines.is_empty() {
         buf.print(list_x, top_row, &view.empty, c(UiColor::TextDim), bg);
     }
-    let first = first_shown(view.focus, rows);
-    let shown = view.lines.iter().enumerate().skip(first);
+    let shown = view.lines.iter().enumerate().skip(view.first);
     for ((i, line), y) in shown.zip(top_row..top_row + rows) {
         let fg = if line.enabled {
             text
@@ -193,8 +191,8 @@ fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, sell_box: Rect, buf: &mut Glyph
     let bg = c(UiColor::PanelBg);
     let text = c(UiColor::Text);
     let dim = c(UiColor::TextDim);
-    buf.fill_rect(sell_box, Cell::new(' ', text, bg));
-    buf.draw_box(sell_box, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
+    let look = PanelLook::new(BoxStyle::Double, text, bg).with_border(c(UiColor::PanelBorderFocus));
+    buf.panel(sell_box, &look, None);
     let centred = |buf: &mut GlyphBuffer, y: i32, line: &str, fg| {
         let x = sell_box.x + (sell_box.w - cells(line, buf.widths())) / 2;
         buf.print(x, y, line, fg, bg);
@@ -217,12 +215,6 @@ fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, sell_box: Rect, buf: &mut Glyph
 /// How many cells `text` takes as `widths` measure them.
 fn cells(text: &str, widths: &CellWidths) -> i32 {
     i32::try_from(text_width(text, widths)).unwrap_or(0)
-}
-
-/// The first line shown so that `focus` is within `rows` rows.
-fn first_shown(focus: usize, rows: i32) -> usize {
-    let rows = usize::try_from(rows).unwrap_or(1);
-    ListCursor::new(focus + 1).at(focus).window(rows).start
 }
 
 #[cfg(test)]
@@ -250,6 +242,10 @@ mod tests {
             tab: 1,
             lines: (0..n).map(line).collect(),
             focus,
+            first: crate::widgets::ListCursor::new(n)
+                .at(focus)
+                .window(LIST_ROWS as usize)
+                .start,
             empty: "Nothing here.".into(),
             selling: None,
             special: None,
@@ -322,10 +318,6 @@ mod tests {
         assert_eq!(text(&top, LIST_X, last + 2, 3), "═══");
         let first = 40 - rows;
         assert_eq!(text(&buf, LIST_X, TOP_ROW, 3), format!("l{first}"));
-        assert_eq!(first_shown(0, 5), 0);
-        assert_eq!(first_shown(4, 5), 0);
-        assert_eq!(first_shown(5, 5), 1);
-        assert_eq!(first_shown(9, 5), 5);
     }
 
     /// An arrow dims at its end: ▼ at 1, ▲ at all of them.

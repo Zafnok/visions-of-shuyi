@@ -58,7 +58,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
-use crate::widgets::{Ask, wrap_step};
+use crate::widgets::{Ask, ListCursor, wrap_step};
 use crate::words::Words;
 
 /// Text key of the question Cancel asks on the tabs, when leaving is
@@ -213,19 +213,19 @@ pub struct PreparationsScreen {
     tab: Tab,
     focus: Focus,
     /// The chosen unit, among the army's ([`Preparations::units`]).
-    unit: usize,
+    unit: ListCursor,
     /// The chosen slot, among the unit's slots.
     slot: usize,
     /// The row of the stock list beside the slots.
     stock: usize,
     /// The row of the stock's consumables.
-    spare: usize,
+    spare: ListCursor,
     /// The row of the pack.
-    pack: usize,
+    pack: ListCursor,
     /// The shop's tab, among [`shop`]'s.
     shop_tab: usize,
     /// The highlighted line of the shop.
-    deal: usize,
+    deal: ListCursor,
     /// The sale being asked about, if any.
     selling: Option<crate::screens::battle::shop::SellConfirm>,
     /// The sale of a special weapon being asked about: its Sell line and
@@ -251,13 +251,13 @@ impl PreparationsScreen {
             can_leave,
             tab: Tab::Loadouts,
             focus: Focus::Tabs,
-            unit: 0,
+            unit: ListCursor::new(0),
             slot: 0,
             stock: 0,
-            spare: 0,
-            pack: 0,
+            spare: ListCursor::new(0),
+            pack: ListCursor::new(0),
             shop_tab: 0,
-            deal: 0,
+            deal: ListCursor::new(0),
             selling: None,
             special: None,
             message: None,
@@ -314,7 +314,7 @@ impl PreparationsScreen {
 
     /// Which unit is chosen.
     fn who(&self) -> Option<PrepUnit> {
-        self.units().get(self.unit).map(|(who, _)| *who)
+        self.units().get(self.unit.focus()).map(|(who, _)| *who)
     }
 
     /// The chosen unit's slots.
@@ -728,13 +728,31 @@ impl PreparationsScreen {
         next
     }
 
+    /// Steps `cursor` over a list of `len` rows shown `rows` at a time,
+    /// wrapping, with the move sound if it moved. The window keeps its
+    /// place until the cursor leaves it.
+    fn step_list(cursor: &mut ListCursor, len: usize, down: bool, rows: usize, ctx: &mut Ctx) {
+        cursor.set_len(len);
+        if cursor.step(down, true, |_| true) {
+            ctx.audio.menu(MenuSound::Move);
+        }
+        cursor.window(rows);
+    }
+
+    /// Keeps `cursor` on a list of `len` rows after rows came or went.
+    fn resize_list(cursor: &mut ListCursor, len: usize, rows: usize) {
+        cursor.set_len(len);
+        cursor.window(rows);
+    }
+
     /// Previous or Next unit on the Loadouts tab (ticket 0487): the unit
     /// before or after the chosen one, wrapping, with the move sound. The
     /// focus and the rows stay (clamped to the new unit's lists); in the
     /// stock, a slot with nothing to take goes back to the slots.
     fn step_unit(&mut self, forward: bool, ctx: &mut Ctx) {
         self.message = None;
-        self.unit = Self::moved(self.unit, self.units().len(), forward, ctx);
+        let len = self.units().len();
+        Self::step_list(&mut self.unit, len, forward, glyph::LIST_ROWS, ctx);
         self.slot = self.slot.min(self.slots().len().saturating_sub(1));
         if self.focus == Focus::Stock {
             match self.stock_rows(ctx).len() {
@@ -774,7 +792,7 @@ impl PreparationsScreen {
 
     /// Confirm on the highlighted consumable of the stock: packs one.
     fn pack_one(&mut self, ctx: &mut Ctx) {
-        let Some((item, _)) = self.spare().into_iter().nth(self.spare) else {
+        let Some((item, _)) = self.spare().into_iter().nth(self.spare.focus()) else {
             return;
         };
         match self.prep.setup.pack_from_stock(&item) {
@@ -790,7 +808,7 @@ impl PreparationsScreen {
             }
         }
         let left = self.spare().len();
-        self.spare = self.spare.min(left.saturating_sub(1));
+        Self::resize_list(&mut self.spare, left, glyph::LIST_ROWS);
         if left == 0 {
             self.focus = Focus::Pack;
         }
@@ -798,14 +816,14 @@ impl PreparationsScreen {
 
     /// Confirm on the highlighted pack item: puts one back in the stock.
     fn unpack_one(&mut self, ctx: &mut Ctx) {
-        let Some((item, _)) = self.packed().into_iter().nth(self.pack) else {
+        let Some((item, _)) = self.packed().into_iter().nth(self.pack.focus()) else {
             return;
         };
         if self.prep.setup.pack_to_stock(&item).is_ok() {
             ctx.audio.menu(MenuSound::Select);
         }
         let left = self.packed().len();
-        self.pack = self.pack.min(left.saturating_sub(1));
+        Self::resize_list(&mut self.pack, left, glyph::LIST_ROWS);
         if left == 0 {
             self.focus = Focus::Spare;
         }
@@ -870,7 +888,8 @@ impl PreparationsScreen {
             }
 
             (Focus::Units, CursorUp | CursorDown) => {
-                self.unit = Self::moved(self.unit, self.units().len(), down, ctx);
+                let len = self.units().len();
+                Self::step_list(&mut self.unit, len, down, glyph::LIST_ROWS, ctx);
                 self.slot = 0;
             }
             (Focus::Units, Confirm) => {
@@ -906,11 +925,13 @@ impl PreparationsScreen {
             (Focus::Stock, Cancel) => self.back(Focus::Slots, ctx),
 
             (Focus::Spare, CursorUp | CursorDown) => {
-                self.spare = Self::moved(self.spare, self.spare().len(), down, ctx);
+                let len = self.spare().len();
+                Self::step_list(&mut self.spare, len, down, glyph::LIST_ROWS, ctx);
             }
             (Focus::Spare, Confirm) => self.pack_one(ctx),
             (Focus::Pack, CursorUp | CursorDown) => {
-                self.pack = Self::moved(self.pack, self.packed().len(), down, ctx);
+                let len = self.packed().len();
+                Self::step_list(&mut self.pack, len, down, glyph::LIST_ROWS, ctx);
             }
             (Focus::Pack, Confirm) => self.unpack_one(ctx),
             (Focus::Spare | Focus::Pack, CursorLeft | CursorRight) => self.switch_side(ctx),
@@ -973,7 +994,8 @@ impl PreparationsScreen {
         let units = ListView {
             title: ctx.text("prep.units").to_owned(),
             rows: rows.collect(),
-            cursor: self.unit,
+            cursor: self.unit.focus(),
+            first: self.unit.first_shown(),
             state: self.list_state(Focus::Units, &[Focus::Slots, Focus::Stock]),
         };
         let gear = self.unit().map(|unit| self.gear_view(ctx, unit));
@@ -1004,6 +1026,7 @@ impl PreparationsScreen {
             title: format!("{} · {class}", words.unit(unit)),
             rows: rows.collect(),
             cursor: self.slot,
+            first: 0,
             state: self.list_state(Focus::Slots, &[Focus::Stock]),
         };
         let speed = self.speed_line(ctx);
@@ -1025,6 +1048,7 @@ impl PreparationsScreen {
             title: title.to_owned(),
             rows: rows.collect(),
             cursor: self.stock,
+            first: 0,
             state: self.list_state(Focus::Stock, &[]),
         };
         GearView {
@@ -1059,13 +1083,15 @@ impl PreparationsScreen {
             spare: ListView {
                 title: ctx.text("prep.stock").to_owned(),
                 rows: spare.collect(),
-                cursor: self.spare,
+                cursor: self.spare.focus(),
+                first: self.spare.first_shown(),
                 state: self.list_state(Focus::Spare, &[]),
             },
             pack: ListView {
                 title: self.pack_header(ctx),
                 rows: packed.collect(),
-                cursor: self.pack,
+                cursor: self.pack.focus(),
+                first: self.pack.first_shown(),
                 state: self.list_state(Focus::Pack, &[]),
             },
         }

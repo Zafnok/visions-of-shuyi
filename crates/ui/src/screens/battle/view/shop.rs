@@ -24,6 +24,9 @@ pub struct ShopScreenView {
     pub lines: Vec<ShopLineView>,
     /// Which line is highlighted.
     pub focus: usize,
+    /// The first line shown: the window keeps its place until the focus
+    /// leaves it.
+    pub first: usize,
     /// What a tab with no lines says.
     pub empty: String,
     /// The confirmation of a sale, while one is asked about.
