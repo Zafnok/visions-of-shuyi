@@ -42,6 +42,17 @@ once and an edge never repeats a pattern. Fills are **solid** (Nick:
 pixel; a frame whose border would cover the text is drawn a little
 outside the window instead (1379's mock: 10 to 16 screen pixels).
 
+**The kits are in the private repository from commit `b68863cc` on**
+(its PR #42, `library/barely-games/`, `library/tiopalada/`,
+`library/opengameart/`, `library/untied/`, `library/hypnobius/`). When
+1379 merged, `assets-private.rev` was older (moving it then would have
+carried other tickets' unmerged content), and `cargo shuyi private-assets
+--library` checks out the pinned commit. So first check that the pin is at
+or past `b68863cc`; if not, check out the private repository's `main` in
+`assets-private/` and move the pin (`cargo shuyi private-assets --pin`) in
+this ticket's PR, once no open public PR still needs an older pin for its
+private content.
+
 Today every box is a `GlyphBuffer::panel` with the engine's
 `PanelLook` (`style: BoxStyle`, border, title, text and fill
 colours). The engine's `crates/ui/src/frame/draw.rs` holds it, and the

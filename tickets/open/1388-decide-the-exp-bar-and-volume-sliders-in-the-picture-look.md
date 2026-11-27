@@ -28,6 +28,17 @@ The EXP bar shows on the results and level-up screens; the sliders on
 Options (every volume sound layer has one, memory: listening-page
 sliders, and they are percentages, 0882).
 
+**The kits are in the private repository from commit `b68863cc` on**
+(its PR #42, `library/barely-games/`, `library/tiopalada/`,
+`library/opengameart/`, `library/untied/`, `library/hypnobius/`). When
+1379 merged, `assets-private.rev` was older (moving it then would have
+carried other tickets' unmerged content), and `cargo shuyi private-assets
+--library` checks out the pinned commit. So first check that the pin is at
+or past `b68863cc`; if not, check out the private repository's `main` in
+`assets-private/` and move the pin (`cargo shuyi private-assets --pin`) in
+this ticket's PR, once no open public PR still needs an older pin for its
+private content.
+
 ## Nick input
 
 **Decision**, with the `ask-nick` skill over mockups in the picture look

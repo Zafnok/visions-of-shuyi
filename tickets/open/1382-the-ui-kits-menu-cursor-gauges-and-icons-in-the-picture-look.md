@@ -48,6 +48,17 @@ ticket adds to.
   icons (`library/elv-games/icons/rogue-adventure-items/`), 16x16 at the
   font's pixel, before each weapon or item name.
 
+**The kits are in the private repository from commit `b68863cc` on**
+(its PR #42, `library/barely-games/`, `library/tiopalada/`,
+`library/opengameart/`, `library/untied/`, `library/hypnobius/`). When
+1379 merged, `assets-private.rev` was older (moving it then would have
+carried other tickets' unmerged content), and `cargo shuyi private-assets
+--library` checks out the pinned commit. So first check that the pin is at
+or past `b68863cc`; if not, check out the private repository's `main` in
+`assets-private/` and move the pin (`cargo shuyi private-assets --pin`) in
+this ticket's PR, once no open public PR still needs an older pin for its
+private content.
+
 Today the focused row is a gold bar behind the text (`Wait` in the unit
 menu). HP is a flat green bar on the side panel (the map's unit bars
 have their own rules, look-and-feel *Units on the map*). There are no

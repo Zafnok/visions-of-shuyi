@@ -351,5 +351,9 @@ two Options entries); 1382 leaves the EXP bar, sliders and stat icons to
   systems". The game's AI-voiced lines (Qwen3-TTS, Chatterbox) are not
   such a project (the clause is aimed at AI products and training); noted
   for the record.
-- No code or skin changed. The private repository's PR #42 only adds to
-  `library/`, which no build reads, so `assets-private.rev` stays.
+- No code or skin changed. The private repository's PR #42 (merged as
+  `b68863cc`) only adds to `library/`, which no build reads. The pin stays
+  at `047a358c`: moving it to `b68863cc` would also carry 0882's and
+  1356's private content, whose public PRs were not merged. 1380-1382 and
+  1386-1388 each say to move it to `b68863cc` or later first, since
+  `private-assets --library` checks out the pinned commit.
