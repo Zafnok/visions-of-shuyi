@@ -180,12 +180,23 @@ pub fn place(width: i32, height: i32, forest: impl Fn(Pos) -> bool) -> Vec<Tree>
     trees
 }
 
-/// A number from `trunk`'s place, mixed by `salt`: which kind a tree is,
-/// and how far into its loop it starts, without a random number.
-fn mixed(trunk: Pos, salt: u32) -> u32 {
+/// What a number from a tree's place picks: each a number of its own, so
+/// a tree's kind doesn't follow from its phase.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Pick {
+    /// Which of its footprint's kinds it is.
+    Kind = 1,
+    /// How far into its loop it starts.
+    Phase = 2,
+}
+
+/// A number from `trunk`'s place for `pick`, the same on every run: a
+/// tree's look varies over a forest without a random number (nothing
+/// secret: a scramble of the coordinates, not cryptography).
+fn mixed(trunk: Pos, pick: Pick) -> u32 {
     #[allow(clippy::cast_sign_loss)]
     let (x, y) = (trunk.x as u32, trunk.y as u32);
-    let mut h = x.wrapping_mul(0x9E37_79B1) ^ y.wrapping_mul(0x85EB_CA77) ^ salt;
+    let mut h = x.wrapping_mul(0x9E37_79B1) ^ y.wrapping_mul(0x85EB_CA77) ^ pick as u32;
     h ^= h >> 15;
     h = h.wrapping_mul(0x2C1B_3C6D);
     h ^= h >> 12;
@@ -201,14 +212,14 @@ impl Trees {
             Footprint::Half => &self.half,
         };
         let len = u32::try_from(kinds.len()).ok().filter(|&n| n > 0)?;
-        kinds.get(usize::try_from(mixed(tree.trunk, 1) % len).ok()?)
+        kinds.get(usize::try_from(mixed(tree.trunk, Pick::Kind) % len).ok()?)
     }
 
     /// How far into its loop tree `tree` of kind `kind` is when the
     /// scene's clock is at 0, in ms: from its place.
     pub fn phase_ms(tree: Tree, kind: &TreeKind) -> u64 {
         let cycle = kind.cycle_ms();
-        u64::from(mixed(tree.trunk, 2))
+        u64::from(mixed(tree.trunk, Pick::Phase))
             .checked_rem(cycle)
             .unwrap_or(0)
     }
