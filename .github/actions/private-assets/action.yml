@@ -42,6 +42,13 @@ inputs:
       tests of the names registry and the writer's guide do (0159).
     required: false
     default: "false"
+  history:
+    description: >-
+      'true' fetches the whole history of every branch (commits and trees,
+      no file contents), for `cargo xtask assets-pin --check`, which reads
+      whether the pin only moved forward (ticket 0194).
+    required: false
+    default: "false"
 
 outputs:
   features:
@@ -125,6 +132,8 @@ runs:
         ssh-key: ${{ inputs.key }}
         path: assets-private
         sparse-checkout: ${{ steps.plan.outputs.folders }}
+        fetch-depth: ${{ inputs.history == 'true' && '0' || '1' }}
+        filter: ${{ inputs.history == 'true' && 'blob:none' || '' }}
         persist-credentials: false
     - name: Check the content is there
       if: steps.plan.outputs.rev != '' && inputs.content == 'true'

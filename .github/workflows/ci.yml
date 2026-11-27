@@ -392,13 +392,15 @@ jobs:
           persist-credentials: false
           fetch-depth: 2
       # The game's content from the private repository (ADR-0117): this
-      # job reads the real one, laid over assets/ by the build.
+      # job reads the real one, laid over assets/ by the build. With its
+      # history, for the check that the pin only moves forward (0194).
       - uses: ./.github/actions/private-assets
         with:
           key: ${{ secrets.PRIVATE_ASSETS_KEY }}
           art: "false"
           content: "true"
           required: "true"
+          history: "true"
       - run: rustup show
       # No target/ in the cache (ticket 0171): this job checks out the private
       # content (ADR-0117). xtask embeds none of it (ADR-0129), but the cache
@@ -437,6 +439,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cargo xtask engine-pin --check
+      # assets-private.rev only moves forward from the base's (HEAD^1: the
+      # base's tip on a PR, the previous main on a push), so two PRs that
+      # both move it can't merge main back onto older content (0194).
+      - name: Check the assets pin only moves forward
+        run: cargo xtask assets-pin --check --base HEAD^1
 
   # The checks that run the game's tool program, trpg-tools (ADR-0129):
   # Shuyi's tools with the game's, which build the game. Split from
