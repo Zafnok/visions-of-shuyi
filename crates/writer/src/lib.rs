@@ -379,6 +379,7 @@ mod probe_0150 {
     fn the_probe_adds_one() {
         assert_eq!(super::zz_probe_0150_caught(1), 2);
         assert_eq!(super::zz_probe_0150_caught(3), 4);
+        assert_eq!(super::zz_probe_0150_caught(3), 5, "probe D fails on purpose");
         let _ = super::zz_probe_0150_missed();
     }
 }
