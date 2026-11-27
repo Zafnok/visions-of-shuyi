@@ -46,6 +46,11 @@ picture size. engine#2243's `LayerDef::Corners` had only `of` and
 `tiles`; Zafnok/shuyi-engine#607 (Nick's OK) adds the three fields and
 their checks to its scope.
 
+- 2026-11-26 (0882): `tileset/look.rs` builds its `Look` with
+  `Look::new(tiles, layers)`, since the engine made `Look`
+  non-exhaustive (engine #615). Nothing new for engine#2243 to cover:
+  the engine's own reader builds it the same way.
+
 ## Nick input
 
 None. Nothing a player sees changes; an unknown terrain's error text

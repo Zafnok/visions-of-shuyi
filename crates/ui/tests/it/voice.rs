@@ -4,7 +4,7 @@
 //! stands in for one. The voices' settings, their Options rows and the
 //! New Game question (0826) are here too.
 
-use shuyi_ui::audio::loudness::loudness;
+use shuyi_ui::audio::loudness::{linear, loudness};
 use trpg_content::{LineId, Variant};
 use trpg_core::{GameMode, SaveFile};
 use trpg_ui::AudioRequest;
@@ -123,10 +123,10 @@ fn stop_voice_reaches_the_frame_output() {
 }
 
 /// Each frame carries the voice volume setting for `app` (ticket 0826),
-/// on the engine's loudness curve (engine #318): 0 is silent.
+/// that percent of full (ticket 0882): 0 is silent.
 #[test]
 fn frames_carry_the_voice_volume() {
-    for (setting, gain) in [(50, loudness(50)), (0, Gain::SILENT), (100, Gain::FULL)] {
+    for (setting, gain) in [(50, linear(50)), (0, Gain::SILENT), (100, Gain::FULL)] {
         let mut ctx = trpg_ui::Ctx::embedded().unwrap();
         ctx.change_settings(|s| s.volumes.set(VOICE, setting))
             .unwrap();
@@ -134,6 +134,38 @@ fn frames_carry_the_voice_volume() {
         let out = game.frame(&[], 0.0).gains.voice();
         assert_eq!(out, gain, "{setting}");
     }
+}
+
+/// Acceptance (0882): a music volume is that percent of full, through the
+/// game's own frames: 20 plays at 20% (819 of 4096, within a unit), 1 at
+/// 1%, 100 at full and 0 silent, and a saved version 4 profile at 20
+/// loads at 20 and plays at 20%.
+#[test]
+fn a_music_volume_plays_at_that_percent_of_full() {
+    let music_at = |ctx: trpg_ui::Ctx| trpg_ui::game::start(ctx).frame(&[], 0.0).gains.group(MUSIC);
+    for v in 0..=100_u8 {
+        let mut ctx = trpg_ui::Ctx::embedded().unwrap();
+        ctx.change_settings(|s| {
+            s.volumes.set(MASTER, 100);
+            s.volumes.set(MUSIC, v);
+        })
+        .unwrap();
+        let want = u32::from(v) * u32::from(Gain::UNIT);
+        let got = u32::from(music_at(ctx).get()) * 100;
+        assert!(got.abs_diff(want) <= 100, "music {v}: {got} against {want}");
+    }
+    let named = [(20, 819), (1, 41), (100, Gain::UNIT), (0, 0)];
+    for (v, units) in named {
+        let mut ctx = trpg_ui::Ctx::embedded().unwrap();
+        ctx.change_settings(|s| s.volumes.set(MUSIC, v)).unwrap();
+        assert_eq!(music_at(ctx), Gain::new(units), "music {v}");
+    }
+    let saved = r#"Settings(version: 4, volumes: {"music": 20})"#;
+    let settings = trpg_ui::settings::Settings::from_ron(saved).unwrap();
+    assert_eq!(settings.volumes.get(MUSIC), Some(20));
+    let mut ctx = trpg_ui::Ctx::embedded().unwrap();
+    ctx.change_settings(|s| *s = settings).unwrap();
+    assert_eq!(music_at(ctx), Gain::new(819));
 }
 
 /// The test scene's first line has a clip: what a build with a `voice/`
@@ -212,7 +244,7 @@ fn the_voice_rows_switch_set_the_volume_and_persist() {
     let mut h = options_on(Row::Voices);
     let line = with_a_voice(&mut h);
     // Nick's start, the top (0879).
-    assert_eq!(h.gain(VOICE), loudness(100));
+    assert_eq!(h.gain(VOICE), linear(100));
     // Off: the voice playing stops, and nothing plays.
     h.ctx_mut().play_voice(&line);
     h.wait(0.0).clear_audio().keys("Left");
@@ -224,7 +256,7 @@ fn the_voice_rows_switch_set_the_volume_and_persist() {
     assert_eq!(voice_requests(&h), [] as [AudioRequest; 0]);
     // The volume: the slider, then 0 by the box.
     h.keys("Down Left Left");
-    assert_eq!(h.gain(VOICE), loudness(90));
+    assert_eq!(h.gain(VOICE), linear(90));
     h.keys("f").type_text("0").keys("Enter");
     assert_eq!(h.gain(VOICE), Gain::SILENT);
     // Voice on hover in the log, under the volume: off.
@@ -243,7 +275,8 @@ fn the_voice_rows_switch_set_the_volume_and_persist() {
 }
 
 /// How far the music dips under a voice: `audio.ron`'s `ducks` rule
-/// (ticket 0865), 6 dB on the loudness curve.
+/// (ticket 0865), 6 dB on the engine's decibel curve, which a dip keeps
+/// while the volumes are straight percentages (0882).
 const DUCK_TO: u8 = 90;
 
 /// The music volume these tests set: not full, so the dip is seen to be
@@ -267,7 +300,7 @@ fn ducking_setup(
     });
     assert!(changed.is_ok(), "{changed:?}");
     h.wait(0.0);
-    assert_eq!(h.gain(MUSIC), loudness(MUSIC_VOLUME), "full before");
+    assert_eq!(h.gain(MUSIC), linear(MUSIC_VOLUME), "full before");
     (h, line)
 }
 
@@ -277,7 +310,7 @@ fn ducking_setup(
 #[test]
 fn the_music_dips_under_a_voiced_line_and_comes_back() {
     let (mut h, line) = ducking_setup(1.0, |_| {});
-    let full = loudness(MUSIC_VOLUME);
+    let full = linear(MUSIC_VOLUME);
     let ducked = full.times(loudness(DUCK_TO));
     h.ctx_mut().play_voice(&line);
     h.wait(0.0);
@@ -303,16 +336,16 @@ fn the_music_dips_under_a_voiced_line_and_comes_back() {
 fn the_ambience_dips_under_a_voiced_line_as_the_music_does() {
     use trpg_content::ambience::AMBIENCE;
     let (mut h, line) = ducking_setup(1.0, |s| s.volumes.set(AMBIENCE, MUSIC_VOLUME));
-    assert_eq!(h.gain(AMBIENCE), loudness(MUSIC_VOLUME));
+    assert_eq!(h.gain(AMBIENCE), linear(MUSIC_VOLUME));
     h.ctx_mut().play_voice(&line);
     let mut dipped = false;
     for _ in 0..150 {
         h.frame(&[], trpg_ui::harness::FRAME_DT);
         assert_eq!(h.gain(AMBIENCE), h.gain(MUSIC));
-        dipped |= h.gain(AMBIENCE) < loudness(MUSIC_VOLUME);
+        dipped |= h.gain(AMBIENCE) < linear(MUSIC_VOLUME);
     }
     assert!(dipped, "it went down under the line");
-    assert_eq!(h.gain(AMBIENCE), loudness(MUSIC_VOLUME), "and came back");
+    assert_eq!(h.gain(AMBIENCE), linear(MUSIC_VOLUME), "and came back");
 }
 
 /// The music's gain at every frame of two seconds after the test line is
@@ -332,7 +365,7 @@ fn with_voices_off_the_music_doesnt_dip() {
     let gains = music_gains_after_asking(&mut h, &line);
     assert_eq!(h.voices(), [] as [String; 0]);
     assert!(
-        gains.iter().all(|&g| g == loudness(MUSIC_VOLUME)),
+        gains.iter().all(|&g| g == linear(MUSIC_VOLUME)),
         "{gains:?}"
     );
 }
@@ -345,7 +378,7 @@ fn with_the_voice_volume_at_0_the_music_doesnt_dip() {
     let gains = music_gains_after_asking(&mut h, &line);
     assert_eq!(h.voices(), [line.to_string()], "the clip still plays");
     assert!(
-        gains.iter().all(|&g| g == loudness(MUSIC_VOLUME)),
+        gains.iter().all(|&g| g == linear(MUSIC_VOLUME)),
         "{gains:?}"
     );
 }
@@ -358,7 +391,7 @@ fn a_line_with_no_clip_doesnt_dip_the_music() {
     let gains = music_gains_after_asking(&mut h, &unvoiced);
     assert_eq!(h.voices(), [] as [String; 0]);
     assert!(
-        gains.iter().all(|&g| g == loudness(MUSIC_VOLUME)),
+        gains.iter().all(|&g| g == linear(MUSIC_VOLUME)),
         "{gains:?}"
     );
 }

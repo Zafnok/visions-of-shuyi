@@ -5,7 +5,7 @@ type: tuning
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: in-progress
 blocked_by: []
 blocks: ["1064"]
 nick_input: none
@@ -142,5 +142,32 @@ design docs, the pin), and about as much in the engine.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Engine** (engine ticket 3248, `Zafnok/shuyi-engine#617`, ADR-0157):
+  a game picks its volume curve in its audio manifest,
+  `volume_curve: Linear` (each number that percent of full) or
+  `Decibels` (the 0.6 dB steps, still the engine's default for other
+  games). A ducking rule's `to` stays on the decibel curve on both, so
+  the dip under a voice keeps its 6 dB. The baked pack moves to version
+  25 for the new field.
+- **Game:** `volume_curve: Linear` in the public stand-in
+  `assets/audio/audio.ron` and in the private manifest
+  (`Zafnok/visions-of-shuyi-assets`, branch
+  `t0882-volumes-straight-percentage`). `settings.rs` reads a version
+  1–2 save's volumes as the same numbers (no more `read_old_volumes`);
+  version 3 and 4 saves were already read as they are. No settings
+  version bump: the saved form is unchanged.
+- **Deviation:** a version 1–2 save's 80 (the old default it always
+  wrote) still reads as "the default" (100 since 0879), as before; any
+  other number keeps its number.
+- **Deviation:** the pin move passes 21 engine PRs besides #617
+  (engine-pin issue #851), so this PR also adapts the game to their API
+  changes (constructors replaced, `MapLook` and `Look` non-exhaustive).
+- Tests: the engine's position → gain for all 101 volumes on both
+  curves; `voice.rs`'s `a_music_volume_plays_at_that_percent_of_full`
+  (every volume through the game's frames, and a saved version 4
+  profile at 20 playing at 819 of 4096); the settings readers of
+  versions 1–4; the options and ducking tests now expect straight-line
+  gains with the dip still `loudness(90)`.
+- **For the Act 1 playtest (1064):** the beds now start about 1 dB under
+  the music (90% against 100), where they were 6 dB under; 1064's
+  checklist asks whether they sit well.

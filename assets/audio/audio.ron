@@ -11,6 +11,10 @@
 // because Nick found them far too loud at 100 (ticket 0222).
 (
     music_fade_ms: 500,
+    // A volume's number is that percent of full: 20 plays at 20% (ticket
+    // 0882, Nick: options.md, Volumes). The ducks' `to` stays in the
+    // engine's decibels (90 is 6 dB down) on either curve.
+    volume_curve: Linear,
     // A new player's Music, Sound and Voice volumes start at the top
     // (ticket 0879, Nick: options.md, Volumes).
     groups: [
