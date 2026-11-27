@@ -30,7 +30,7 @@ pub mod view;
 
 use crate::prelude::*;
 use alloc::rc::Rc;
-use trpg_content::{MusicLine, Names, OpeningDef, PlaceLine, Present, Scene};
+use trpg_content::{AmbienceLine, MusicLine, Names, OpeningDef, PlaceLine, Present, Scene};
 use trpg_core::{LEAD_ID, LeadProfile};
 
 use crate::audio::MenuSound;
@@ -573,20 +573,23 @@ impl Screen<Shuyi> for DialogueScreen {
 
 impl DialogueScreen {
     /// The place's sound bed this frame (ticket 1332): the bed of the
-    /// place behind the text, none in black. A scene over the battle with
-    /// no place of its own leaves the battle's bed playing. Leaving fades
-    /// out the bed the scene started.
+    /// place behind the text, none in black; or the one the scene's last
+    /// `@ambience` line named since its last `@place` (ticket 1383). A
+    /// scene over the battle with no place or ambience of its own leaves
+    /// the battle's bed playing. Leaving fades out the bed the scene
+    /// started.
     fn ambience(&self, ctx: &mut Ctx, transition: &Transition, dt: f32) {
         if !matches!(transition, Transition::None | Transition::Push(_)) {
             crate::ambience::leave(ctx, Self::NAME);
             return;
         }
-        let place = self.player.current().place;
-        if self.overlay && place.is_none() {
+        let view = self.player.current();
+        let place = view.place;
+        if self.overlay && place.is_none() && view.ambience.is_none() {
             return;
         }
         let content = &ctx.game.content;
-        let (ambience, light) = match place {
+        let (own, light) = match place {
             Some(PlaceLine::Map { map, .. }) => {
                 let light = content.maps.get(map).map(|m| m.look.light.as_str());
                 (content.ambience.places.get(map).map(String::as_str), light)
@@ -598,6 +601,7 @@ impl DialogueScreen {
             }
             _ => (None, None),
         };
+        let ambience = view.ambience.map_or(own, AmbienceLine::id);
         let light = light.unwrap_or(trpg_content::lighting::NOON).to_owned();
         let cue = crate::ambience::bed(ctx, ambience, &light);
         crate::ambience::play(ctx, Self::NAME, cue.as_deref(), false, dt);

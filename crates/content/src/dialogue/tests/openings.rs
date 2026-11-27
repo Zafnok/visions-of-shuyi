@@ -143,6 +143,7 @@ fn opening_errors(src: &str, known: bool) -> Vec<String> {
         battles: None,
         elsewhere: BTreeSet::new(),
         openings: known.then_some(openings),
+        ambiences: None,
     };
     let (parsed, errors) = parse_dlg("t.dlg", src);
     assert_eq!(errors, []);

@@ -1,8 +1,8 @@
 //! Dialogue scripts (`assets/dialogue/*.dlg`): scenes of portraits, speech
 //! and narration. The format is documented in `assets/dialogue/README.md`
 //! (ADR-0005) and is the engine's (`shuyi_assets::dialogue`, ticket 1105);
-//! this module adds the game's four directives ([`Stage`]: `@place`,
-//! `@opening`, `@dies` and `@joins`) and its rules ([`check_scene`]: the cast, portraits, the
+//! this module adds the game's five directives ([`Stage`]: `@place`,
+//! `@ambience`, `@opening`, `@dies` and `@joins`) and its rules ([`check_scene`]: the cast, portraits, the
 //! lead and the music cues). Every line that shows text has a [`LineId`]
 //! (ADR-0045). Lines in an `@if` block play only while a character is there
 //! ([`Present`], ADR-0055); [`check_presence`] keeps those who may be gone
@@ -124,6 +124,12 @@ pub enum Stage {
     /// talk from this line on, until the next one
     /// (`docs/design/look-and-feel.md`, *Places behind conversations*).
     Setting(PlaceLine),
+    /// `@ambience <id>` or `@ambience none`: the ambience played under the
+    /// talk from this line on, an id of `data/ambience.ron`'s
+    /// `ambiences` ([`AmbienceLine::None`]: no bed, the music goes on), until the next
+    /// `@ambience` or `@place` line (ticket 1383, `docs/design/audio.md`,
+    /// *Chapter 1's beds*). Before one, a scene plays its place's bed.
+    Ambience(AmbienceLine),
     /// `@opening <id>`: before the next text box, the opening of
     /// `assets/openings/<id>.ron` plays on the place (its characters move
     /// at full brightness, then the place darkens): ticket 0734.
@@ -288,6 +294,48 @@ fn parse_place(args: &str) -> Parsed<Stage> {
     Parsed::step(Stage::Setting(place))
 }
 
+/// What an `@ambience` line asks for: the bed under the talk.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AmbienceLine {
+    /// `@ambience <id>`: that ambience of `data/ambience.ron`.
+    Bed(String),
+    /// `@ambience none`: no bed.
+    None,
+}
+
+impl AmbienceLine {
+    /// What follows `@ambience` for [`AmbienceLine::None`].
+    pub const NONE: &'static str = "none";
+
+    /// The ambience's id; `None` for no bed.
+    pub fn id(&self) -> Option<&str> {
+        match self {
+            AmbienceLine::Bed(id) => Some(id),
+            AmbienceLine::None => None,
+        }
+    }
+}
+
+/// `@ambience` with `args`: one ambience id, or `none`.
+fn parse_ambience(args: &str) -> Parsed<Stage> {
+    let args: Vec<&str> = args.split_whitespace().collect();
+    let [id] = args[..] else {
+        return Parsed::error(format!(
+            "@ambience needs one ambience id (one of data/ambience.ron's ambiences), or \
+             \"{}\" for none",
+            AmbienceLine::NONE
+        ));
+    };
+    if id == AmbienceLine::NONE {
+        return Parsed::step(Stage::Ambience(AmbienceLine::None));
+    }
+    let mut parsed = Parsed::step(Stage::Ambience(AmbienceLine::Bed(id.into())));
+    if !is_id(id) {
+        parsed.errors.push(engine::bad_id(id));
+    }
+    parsed
+}
+
 /// `@dies` or `@joins` (`name`) with `args`: one character id, made a
 /// stage by `stage`.
 fn parse_roster(name: &str, args: &str, stage: fn(CharacterId) -> Stage) -> Parsed<Stage> {
@@ -323,6 +371,7 @@ impl Directive for Stage {
     fn parse(name: &str, args: &str) -> Option<Parsed<Self>> {
         match name {
             "place" => Some(parse_place(args)),
+            "ambience" => Some(parse_ambience(args)),
             "opening" => Some(parse_opening(args)),
             "dies" => Some(parse_roster(name, args, Stage::Dies)),
             "joins" => Some(parse_roster(name, args, Stage::Joins)),
@@ -333,6 +382,9 @@ impl Directive for Stage {
     fn print(&self) -> String {
         match self {
             Stage::Setting(place) => format!("place {}", place.args()),
+            Stage::Ambience(line) => {
+                format!("ambience {}", line.id().unwrap_or(AmbienceLine::NONE))
+            }
             Stage::Opening(id) => format!("opening {id}"),
             Stage::Dies(character) => format!("dies {}", character.0),
             Stage::Joins(character) => format!("joins {}", character.0),
@@ -342,6 +394,7 @@ impl Directive for Stage {
     fn kind(&self) -> Option<&'static str> {
         match self {
             Stage::Setting(_) => Some("place"),
+            Stage::Ambience(_) => Some("ambience"),
             Stage::Opening(_) | Stage::Dies(_) | Stage::Joins(_) => None,
         }
     }
