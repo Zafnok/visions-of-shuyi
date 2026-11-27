@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1389 — The README's still pictures are shots in shuyi.ron
@@ -96,13 +96,13 @@ Expected size: about 40 lines of `shuyi.ron`, 20 of test, and the docs.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi frame-png --shots` (with the bought art) writes the
+- [x] `cargo shuyi frame-png --shots` (with the bought art) writes the
   nine stills to `shots/`, and `README.md` shows them from there.
-- [ ] The private-assets test that runs `check_shots` passes, and fails
+- [x] The private-assets test that runs `check_shots` passes, and fails
   when one shot's keys change (checked once by hand).
-- [ ] `docs/img/README.md` has no hand-written table of keys for the
+- [x] `docs/img/README.md` has no hand-written table of keys for the
   stills.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -111,5 +111,29 @@ Expected size: about 40 lines of `shuyi.ron`, 20 of test, and the docs.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `shuyi.ron` has a `shots` part with the README's nine stills, at
+  `frame-png`'s scale 2 (1600×1024, 17–70 KiB each); `cargo run -p
+  trpg-tools --features private-assets -- shuyi frame-png --shots` drew
+  them to `shots/`, each checked by eye against the screen its old row
+  described. `README.md` shows them from `shots/`; the nine old
+  `docs/img/*.png` are gone.
+- `the_readme_s_shots_are_what_the_game_draws`
+  (`crates/tools/src/game_tools/tests.rs`, only with `--features
+  private-assets`) runs `check_shots`. It passes, and failed when
+  `lead-select`'s keys gained a `Right` (checked once by hand, then put
+  back). `run-gates` names it beside the other private-assets test, and
+  `docs/img/README.md` says how to remake the stills and run it.
+- **Deviations: shorter, current keys.** The old hand-written keys no
+  longer reach their screens (the 80 `f`s of Chapter 1's start stop short
+  of the battle, and Key bindings is now 23 rows down Options, not 13).
+  The battle's five shots open with the game's `--battle ch01` and the
+  dialogue with `--scene ch01_prebattle`, the same screens as before (the
+  dialogue shows Maud and Ellery in the scene before the battle rather
+  than Rue's line, which is further into the chapter's talk).
+  `battle-glyphs` can't be a build without the feature inside one
+  `--shots` run, so it sets Map look to Glyphs in the map menu's Options
+  first (Keep on leaving) and then plays `battle-forecast`'s keys.
+- A stale shot's error names `cargo shuyi frame-png --shot <name>`, which
+  draws without the bought art; `docs/img/README.md` says to add the
+  feature.
+- No gameplay rules decided. No follow-up tickets.
