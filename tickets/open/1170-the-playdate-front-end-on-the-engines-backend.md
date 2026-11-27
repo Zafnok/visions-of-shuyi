@@ -145,11 +145,6 @@ runtime audio/report helpers and verifies the physical frontend's
 under-200-line target, and 1206 removes the retired exporter. They depend
 on this cutover and remove only sources already disconnected here.
 
-- 2026-11-26 (0882): `pads.rs` calls `PadState::new(buttons)` and
-  `StickDef::DEFAULT.with_press_percent(50).with_release_percent(35)`,
-  the engine's new constructors (engine #594); what it does is
-  unchanged, so engine#3097 still covers it.
-
 ## Nick input
 
 **Setup, only for the required device measurements:** connect Nick's
