@@ -234,6 +234,32 @@ fn the_debug_key_is_refused_while_capturing() {
     }
 }
 
+/// Ticket 1390: the pause and step keys are kept like the Debug key. In a
+/// build with the debug menu, pressed at `Press a key…` with the debug
+/// tools off they are refused and the slot keeps waiting; with them on,
+/// the pause key holds the game (the screen with it) and runs it again,
+/// and the slot is still waiting. Neither ends on a slot.
+#[test]
+fn the_pause_and_step_keys_are_refused_while_capturing() {
+    for key in ["F3", "F4"] {
+        let mut h = open(RIGHT_HANDED);
+        h.ctx_mut().debug_tools = false;
+        h.keys(&format!("f {key}"));
+        assert_eq!(h.top_screen(), "key_bindings");
+        if trpg_ui::screen::DEBUG_TOOLS {
+            assert_eq!(message(&h), "That key can't be used", "{key}");
+            assert!(shows(&h, Action::CursorUp, "Press a key…"), "{key}");
+        }
+        assert_eq!(bindings(&h, RIGHT_HANDED), defaults(&h, RIGHT_HANDED));
+    }
+    let mut h = open(RIGHT_HANDED);
+    h.keys("f F3 F4 F3");
+    assert!(!h.ctx().debug_view.paused());
+    assert_eq!(h.top_screen(), "key_bindings");
+    assert!(shows(&h, Action::CursorUp, "Press a key…"));
+    assert_eq!(bindings(&h, RIGHT_HANDED), defaults(&h, RIGHT_HANDED));
+}
+
 /// Acceptance: the keys the screen was opened with steer it, even after
 /// every cursor key has been moved to other actions.
 #[test]
