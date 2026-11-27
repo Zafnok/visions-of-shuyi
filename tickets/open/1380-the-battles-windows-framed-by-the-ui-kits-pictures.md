@@ -23,6 +23,36 @@ professional"). Its answers are in `docs/design/look-and-feel.md`,
 picture frames themselves, and the battle's windows drawn with them.
 1381 does every other screen, 1382 the cursor, gauges and icons.
 
+**What 1379 picked** (2026-11-27; the full table and Nick's words in
+*Windows (the picture look)*): Barely Games' *2D Pixel Quest Vol.3*
+panels, in the private repository's
+`library/barely-games/ui/pixel-quest-vol3/Panels/Panels/` (licence
+`library/barely-games/licences/barely-apes__eula.txt`):
+
+| Battle window | Picture | Slices (left, top, right, bottom) | Fill |
+| ------------- | ------- | --------------------------------- | ---- |
+| Side panel, forecast, unit info, the progress, guides, rewind and shop boxes, the fight box | `F-UI_Panel_H.png` | 22, 33, 22, 32 | its plum |
+| Unit menu and its sub-menus | `F-UI_Panel_E.png` | 22, 22, 22, 22 | its plum |
+| Map menu (Cancel on the map) | `F-UI_Panel_H.png` | 22, 33, 22, 32 | **royal blue**: the panel's cool pixels recoloured, the gold kept (1379's mock: hue 218 degrees) |
+| Title plates (`Forecast`) | Post-Baroque `library/barely-games/ui/post-baroque/Titles/UI_TitleB1.png`: 16-pixel end caps, a plain body (column 60, rows 8 to 24) stretched to the title's width | | its dark |
+
+The slices are cut where each edge is plain, so a corner ornament shows
+once and an edge never repeats a pattern. Fills are **solid** (Nick:
+"Solid"). At the default window scale (2) a frame is drawn at the font's
+pixel; a frame whose border would cover the text is drawn a little
+outside the window instead (1379's mock: 10 to 16 screen pixels).
+
+**The kits are in the private repository from commit `b68863cc` on**
+(its PR #42, `library/barely-games/`, `library/tiopalada/`,
+`library/opengameart/`, `library/untied/`, `library/hypnobius/`). When
+1379 merged, `assets-private.rev` was older (moving it then would have
+carried other tickets' unmerged content), and `cargo shuyi private-assets
+--library` checks out the pinned commit. So first check that the pin is at
+or past `b68863cc`; if not, check out the private repository's `main` in
+`assets-private/` and move the pin (`cargo shuyi private-assets --pin`) in
+this ticket's PR, once no open public PR still needs an older pin for its
+private content.
+
 Today every box is a `GlyphBuffer::panel` with the engine's
 `PanelLook` (`style: BoxStyle`, border, title, text and fill
 colours). The engine's `crates/ui/src/frame/draw.rs` holds it, and the
@@ -67,15 +97,20 @@ playtest's checklist (1064).
   each frame (`panel`, `menu`, `plate`, `forecast` or as 1379 names
   them) with its picture's path and slice sizes. Missing pictures mean
   glyph frames: a public build looks as today.
-- The **switch** as 1379 decided (starting rule: the look option
-  switches the map and the windows; the entry renamed in every pack).
+- The **switch** as 1379 decided (Nick: "Two separate entries"):
+  Options keeps *Map look: Pictures / Glyphs* and gains *Window look:
+  Pictures / Glyphs*, in every language pack; it starts on *Pictures*
+  when *Map look* is *Pictures* (starting rule), and a build without the
+  bought art draws the glyph windows whatever it says.
 - The battle's windows on the frames: the side panel, the unit menu
   and its sub-menus (Arts, Skill, Item, Equip), the forecast, the map
   menu, unit info (`glyph/info.rs`), the progress, guides, rewind and
   shop boxes, and the fight box (`glyph/fight_box.rs`).
-- Credits: the pack's line in `THIRD_PARTY_ASSETS.md` names what the
-  game uses and where (1379 adds the purchase), and the credits screen's
-  data if the licence asks for credit.
+- Credits: Barely Games' *Shipped items* row in `THIRD_PARTY_ASSETS.md`
+  (1379 recorded the purchases) names the pieces used, where, and the
+  recoloured map-menu fill as a modification; the credits screen's data
+  (`assets/data/credits.ron`, "Barely Apes") with the new files' path
+  under `private` (ADR-0051).
 
 **Out (do not do):**
 - Screens outside the battle and the dialogue box (1381).
@@ -123,7 +158,8 @@ completion notes.
       *In* draws the picture frame (a test reads the buffer's sprite
       items per window); with the glyph look or without the art, the
       snapshots are unchanged.
-- [ ] The look option switches the windows as 1379 decided.
+- [ ] *Window look* switches the windows and *Map look* the map, each
+      on its own, in every language pack.
 - [ ] `THIRD_PARTY_ASSETS.md` names the pieces used.
 - [ ] All gates in the `run-gates` skill pass.
 

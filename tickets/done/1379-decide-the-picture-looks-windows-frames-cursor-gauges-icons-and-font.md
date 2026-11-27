@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-27
 ---
 
 # 1379 — Decide: the picture look's windows (frames, cursor, gauges, icons, font)
@@ -229,4 +229,131 @@ check-leaks` on the PR.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Decided 2026-11-26/27 over eleven rounds with Nick; the answers, his
+words and the starting rules are in `docs/design/look-and-feel.md`,
+*Windows (the picture look)*, and in the table of `docs/design/README.md`.
+
+### Every bought pack's UI, checked before any new search
+
+Read from each pack's files: the private repository's `library/` and
+`originals/`, and the releases `originals-elv-games` and
+`originals-bytewright` (every download as bought). The ELV and ByteWright
+downloads were already in those releases, so the **Setup** step (Nick
+downloading the ELV UI packs) was not needed.
+
+| Seller, pack | UI it holds |
+| ------------ | ----------- |
+| Tiny Tales (Mega Tiles bundle, 37 products) — *Code Ark UI Assets* | Sci-fi kit: 9-slice frames in 3 sizes, square and chamfered, `mono` versions to recolour, window textures, 3 gauge styles, cursors (a cyan-tinted glove and arrows), icons in 4 colours, keyboard and gamepad buttons |
+| Tiny Tales — *Heroes 1: A New Beginning* | RPG Maker window skin (`Window_1x/2x/3x`: frame, fill, cursor, arrows, text colours) |
+| Tiny Tales — *Heroes 2*, *WorldMap* | Battle weapon animations only; the world map's place icons (1082) |
+| Tiny Tales — the other 33 products (battlers, NPC sprites, tilesets, battlebacks, generators) | none |
+| ELV Games bundle — *GUI KIT Pixelart* | 4 styles (orange neon, cyan neon, steel/navy, light wood): 9-slice inventory frames, slots, buttons, health bars (styles 1–2), 335 icons in 4 styles; no cursor, font or plates |
+| ELV — *Free Inventory*, *Retro Inventory*, *Free SciFi Inventory* | Farm/retro inventory frames, hearts, health bars; sci-fi boxes |
+| ELV — *Keyboard UI*, *Controller Buttons* | Hint keys and buttons (0255) |
+| ELV — *Item Icons* (Rogue Adventure ~1000, Fantasy Dreamland extras, enchanted 16 px, 32 px weapons and armour) | Icons |
+| ELV — *Neatpixels* fonts (4) | 5–7 px fonts |
+| ELV — the other ~280 products (tilesets, characters, monsters, effects, sounds, tools) | none |
+| ByteWright bundle (33 packs) — *Quest UI Megapack* (= *Parchment*, *Tavern*, *Dungeon*, *Royal*, *Arcane*, *Neon UI*) | 24 colourways: 9-slice panels, inset, plate, ribbon, portrait frame, divider, dialogue box, choices (focus bar and arrow), mouse cursors (hand, arrow), bars (health, mana, XP, stamina…), buttons, slots, controls, key and pad pictures, HUD pieces, banners, title fonts, 4 text fonts, 72 icons (10 stat icons, 62 items) |
+| ByteWright — *Pixel Loot Megapack* | 858 item icons, 16/32/64 px |
+| ByteWright — *Fantasy RPG Fonts*, *Pixel Font Megapack*, *Horror & Dungeon*, *Arcade*, *Sci-Fi*, *Coin-Op*, *Slime & Cute* fonts | Fonts (Kingsrune and Crypt fit 8×16, capitals only) |
+| ByteWright — *Pixel TCG Card Frames* | Card frames |
+| ByteWright — the other packs (tilesets, creatures, effects, sounds, weather, hero maker) | none |
+| Electric Lemon *Pixel Grit* (18 downloads) | none (tilesets, characters, creatures) |
+| MattWalkden *Fantasy Battle Pack* | Map pieces only: selection cursor, range tiles, movement arrows, grid; no windows |
+| Pixel Flag (64 TRPG pieces), Shironejiya (*monster_s*) | none |
+
+### The rounds
+
+1. Eleven owned kits (ByteWright Royal, Royal Obsidian, Stone, Oak,
+   Ebony, Parchment, Crystal; ELV GUI kit steel and wood; Code Ark in
+   gold; the Heroes window skin) on the four screens: *"I like royal,
+   parchment, elv4, and crystal the best, but I don't wanna settle"*.
+2. BOOTH and Japanese free sites (nothing fit: streaming overlays and
+   modern sets); itch.io browsed in Nick's Chrome (the built-in browser
+   was stopped by itch's bot check): 15 kits' store previews. He picked
+   A, B, D, M, O; bought A, D, O (skipped B); M is free. Asked about
+   unTied's sale bundle ($49.99 for 75 packs): worth it only for its
+   effects and skill icons, not for the windows.
+3. The bought kits alone and two mixes. *"do a better job of stretching
+   the hp bars … it has the frames copied twice"* and *"the dragon
+   regalia gold pointer looks out of place"*: the mockup now cuts each
+   bar at its plain middle and draws no pointer; Mix 1 led.
+4–5. A pointing glove (Code Ark's, its tint removed: *"looks ugly"*), the
+   map menu and Options in three frames and then four blues, seven
+   hand-cursor packs.
+6–7. The CC0 hand with a nudge (GIF); Options fills; five dialogue and
+   portrait frames; the hand at two sizes.
+8–10. Ornate portrait frames: Pixel Quest's knot corners, Post-Baroque's
+   scrollwork, Royal Crown's gem corners, Dragon Regalia larger and
+   mirrored, Hypnobius's *Dark Ages UI* (free); a mockup bug fixed on
+   Nick's catch (*"why are there black pixels where there should be
+   transparent?"*: the mock had painted dark where a frame doesn't
+   reach); names kept inside their plates and frames.
+11. The set; solid vs see-through; weapon and stat icons; the two owned
+   fonts that fit the cell; the option; the glyph look.
+
+### New packs and the gap each fills
+
+All bought or downloaded by Nick's choice, recorded in
+`THIRD_PARTY_ASSETS.md` (purchase record) and sorted into the private
+repository by its PR #42 (`library/barely-games/`, `library/untied/`,
+`library/tiopalada/`, `library/hypnobius/`, `library/opengameart/`; the
+downloads in the release `originals-ui-kits-1379`):
+
+- Barely Games' *2D Pixel Quest Vol.3* ($9.99): the frames, focus bar and
+  HP gauge — none of the owned kits was settled on (round 1).
+- Barely Games' *Post-Baroque UI/GUI Kit* ($8.99): the name and title
+  plates.
+- tiopalada's *Dragon Regalia* (CC0, free): the ornate portrait frames.
+- andreyin's *Hand cursor* (OpenGameArt, CC0): the menu hand — the owned
+  hands were mouse pointers or Code Ark's (rejected).
+- unTied Games' *Royal Crown* ($3.49) and Hypnobius's *Dark Ages UI*
+  (free): looked at, not chosen.
+- Set aside as AI-assisted (memory: AI art only sparingly): Harning's
+  *Classic RPG UI Kit* (the hand Nick liked most), heyheythere's kits,
+  marcomyly's portrait frames, SiriusForge's *Brass Parley* and *Gilded
+  Saga*, Pixel Bruja's *Mystic*, zql01's *Eclipse Atelier*, Catau Games'
+  *Fantasy UI Pack*, Gridwright's ornate UI. Lumixy's *Handy Handz* hand:
+  its page licence says non-commercial (the artist's comment says
+  otherwise); not used.
+
+### Follow-up tickets filed
+
+- **1386** — Decide: a text font for the picture look (today's font the
+  frontrunner).
+- **1387** — Decide: the stat icons.
+- **1388** — Decide: the EXP bar and the volume sliders.
+
+1380, 1381 and 1382 carry the answers (files, slices, fills, sizes, the
+two Options entries); 1382 leaves the EXP bar, sliders and stat icons to
+1387 and 1388, which add them to it if it is still open.
+
+### The agent's starting rules (Nick can veto; listed in the doc)
+
+- HP colours: green above half, yellow from half to a quarter, red at a
+  quarter or less.
+- The hand's nudge: 0, 1, 2, 3, 2, 1 screen pixels, about 0.6 s a cycle,
+  still while a key is held.
+- Sizes at other window scales round to whole screen pixels; at scale 1
+  the hand and portrait frames use the font's pixel.
+- *Window look* starts on *Pictures* when *Map look* does; a build
+  without the bought art shows glyph windows.
+- The recoloured map-menu and Options fills are credited as edits.
+
+### Notes
+
+- The mockups were composited over real `frame-png` pictures of a staged
+  fight (a throwaway `zz_mock` battle in the private checkout, deleted,
+  never committed) by a local script (`target/ui-audit/tools/mock.py` in
+  this worktree), never committed (ADR-0040). The script can be reused by
+  1386–1388 while the worktree exists.
+- Barely Games' EULA forbids use in projects "related to … generative AI
+  systems". The game's AI-voiced lines (Qwen3-TTS, Chatterbox) are not
+  such a project (the clause is aimed at AI products and training); noted
+  for the record.
+- No code or skin changed. The private repository's PR #42 (merged as
+  `b68863cc`) only adds to `library/`, which no build reads. The pin stays
+  at `047a358c`: moving it to `b68863cc` would also carry 0882's and
+  1356's private content, whose public PRs were not merged. 1380-1382 and
+  1386-1388 each say to move it to `b68863cc` or later first, since
+  `private-assets --library` checks out the pinned commit.

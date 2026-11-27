@@ -183,6 +183,52 @@ from another seller gets its own row and credit.
     jungle, overworld and ruins sheets and two of its animated trees,
     Chapter 1's map (tickets 1318, 1359, 1360, 1356).
 
+- **Barely Games (Barely Apes), two UI kits**: *2D Pixel Quest Vol.3 –
+  The UI/GUI*, <https://barely-games.itch.io/2d-pixel-quest-the-uigui>
+  (**$9.99**), and *Post-Baroque UI/GUI Kit*,
+  <https://barely-games.itch.io/post-baroque-uigui-kit> (**$8.99**, 10%
+  off). Bought by Nick on **2026-11-26** for ticket 1379 (the picture
+  look's windows). *Private*: the downloads as received in the private
+  repository's release `originals-ui-kits-1379`; lean copies and the
+  licence in `library/barely-games/`.
+  - **Licence**, the store's EULA (<https://barely-games.itch.io/end-user-license-agreement-eula>,
+    version 1.0, February 2026): edit and modify; use in personal,
+    educational or commercial projects and in finished works, free or
+    paid. Not allowed: reselling, sublicensing, sharing or redistributing
+    the assets, original or edited; NFT, blockchain or crypto projects; AI
+    (training, datasets, generative AI systems). The packs ask, optionally,
+    for a mention of "Barely Apes"; we credit them anyway.
+  - **AI-assisted:** no ("No generative AI was used" on both pages).
+  - **Chosen by 1379** (`docs/design/look-and-feel.md`, *Windows (the
+    picture look)*): Pixel Quest's panels, focus bar and HP gauge;
+    Post-Baroque's name and title plate. Built by 1380–1382.
+- **unTied Games (Will Tice), *Super Pixel Fantasy UI: Royal Crown***,
+  <https://untiedgames.itch.io/super-pixel-fantasy-ui-royal-crown>.
+  Bought by Nick on **2026-11-26** for **$3.49** (50% off) for ticket
+  1379. *Private*: as above, `library/untied/`.
+  - **Licence** (<http://untiedgames.com/files/license.txt>, kept in
+    `library/untied/licences/`): commercial and non-commercial use; no
+    distribution of the files but inside a game; **attribution to Will
+    Tice / unTied Games required**; not to be bundled with a game-making
+    tool or engine; no AI training.
+  - **AI-assisted:** no ("No generative AI was used").
+  - **Not chosen** (round 3's "Mix 2"); a candidate.
+- **Free packs fetched for ticket 1379** (2026-11-26; downloaded without
+  paying; *private*, with the bought ones, though their licences would
+  allow the public repository):
+  - tiopalada (Gabriel Lima), *Tiny RPG – Dragon Regalia GUI* v1.0,
+    <https://tiopalada.itch.io/tiny-rpg-dragon-regalia-gui>: **CC0 1.0**
+    (the page asks, without making it a condition, that it not feed AI
+    models or crypto). Not AI-assisted (a 2024 jam entry). **Chosen** for
+    the dialogue portraits' frames. `library/tiopalada/`.
+  - andreyin, *Hand cursor* (2018-10-21), <https://opengameart.org/content/hand-cursor>:
+    **CC0**. **Chosen** for the menu hand. `library/opengameart/`.
+  - Hypnobius, *Dark Ages UI* v1.0, <https://hypnobius.itch.io/dark-ages-ui>:
+    commercial and personal use, edits allowed, credit optional; no
+    reselling, redistributing or packing into other packs; no NFTs,
+    blockchain games or AI training datasets. "No generative AI was
+    used". Not chosen. `library/hypnobius/`.
+
 ## Shipped items
 
 | Item | Source URL | Version | License | License file | Used for | Added by ticket |
