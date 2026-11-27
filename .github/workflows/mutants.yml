@@ -15,6 +15,11 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  # Every proptest in a mutants run draws from CI's one seed (keep it the
+  # same as ci.yml's), so a mutant is caught or missed by the same cases
+  # on every push (ticket 0150). `proptest-explore.yml` tries random
+  # seeds on main.
+  PROPTEST_RNG_SEED: "150"
 
 jobs:
   changes:
@@ -22,8 +27,18 @@ jobs:
     name: changes
     uses: ./.github/workflows/changes.yml
 
-  # Counts the mutants in the PR's diff and picks how many shards to run
-  # them on. Nothing is built here: `--list` only reads the sources.
+  # Counts the mutants in the PR's diff that no earlier push of the PR
+  # caught, and picks how many shards to run them on. Nothing is built
+  # here: `--list` only reads the sources.
+  #
+  # What earlier pushes caught (ticket 0150, ADR-0100's notes) is one
+  # Actions cache per run, `mutants-iterate-pr<N>-<base>-<run>`, holding
+  # only the lists `cargo mutants --iterate` reads (caught, unviable,
+  # previously caught: mutant names, from the public sources), never
+  # `mutants.out`'s logs, which can quote the private content (ADR-0117,
+  # ticket 0171). `<base>` is the merge base of the PR's head with its
+  # base branch, so a rebase or a merge of main drops it, and the next
+  # run tests every mutant again.
   plan:
     needs: changes
     if: needs.changes.outputs.code == 'true'
@@ -34,6 +49,8 @@ jobs:
       mutants: ${{ steps.count.outputs.mutants }}
       shards: ${{ steps.count.outputs.shards }}
       of: ${{ steps.count.outputs.of }}
+      base: ${{ steps.base.outputs.base }}
+      iterate-key: ${{ steps.iterate.outputs.cache-matched-key }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -55,6 +72,28 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: git diff "origin/$BASE_REF...HEAD" -- '*.rs' > git.diff
+      - name: Name the PR's base
+        id: base
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: echo "base=$(git merge-base "origin/$BASE_REF" "$HEAD_SHA")" >> "$GITHUB_OUTPUT"
+      # The latest list this PR saved on this base, if any. The key itself
+      # never exists yet: only the prefix can match.
+      - name: Restore what earlier pushes caught
+        id: iterate
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: mutants-iterate
+          key: mutants-iterate-pr${{ github.event.pull_request.number }}-${{ steps.base.outputs.base }}-${{ github.run_id }}
+          restore-keys: mutants-iterate-pr${{ github.event.pull_request.number }}-${{ steps.base.outputs.base }}-
+      - name: Hand them to cargo mutants
+        run: |
+          if [ -f mutants-iterate/previously_caught.txt ]; then
+            mkdir -p mutants.out
+            cp mutants-iterate/previously_caught.txt mutants.out/
+            echo "$(wc -l < mutants.out/previously_caught.txt) mutants caught by earlier pushes"
+          fi
       # 1 shard up to 40 mutants, 4 up to 160, 8 up to 480, then one shard
       # per 60 mutants, at most 20 (ADR-0100): every shard pays for its own
       # setup and first full build, so a small diff gets one, and a shard
@@ -64,10 +103,13 @@ jobs:
         run: |
           set -euo pipefail
           mutants=0
+          all=0
           if [ -s git.diff ]; then
-            cargo mutants --in-diff git.diff --list > mutants.txt
+            all=$(cargo mutants --in-diff git.diff --list | wc -l)
+            cargo mutants --in-diff git.diff --list --iterate > mutants.txt
             mutants=$(wc -l < mutants.txt)
           fi
+          echo "$mutants of the diff's $all mutants left to test" >> "$GITHUB_STEP_SUMMARY"
           if [ "$mutants" -le 40 ]; then
             of=1
           elif [ "$mutants" -le 160 ]; then
@@ -121,11 +163,52 @@ jobs:
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           tool: cargo-nextest
+      - name: Name the proptest seed
+        run: echo "proptest seed $PROPTEST_RNG_SEED (PROPTEST_RNG_SEED=$PROPTEST_RNG_SEED cargo test reproduces this run)"
       - name: Run the tests unmutated
         run: cargo nextest run --workspace --exclude trpg-app --exclude trpg-story-preview --profile mutants
 
+  # fmt and clippy, which the shards wait for with `baseline` (ticket
+  # 0150, ADR-0100's notes): a PR whose code doesn't pass them, or whose
+  # tests fail, runs no shard. The same commands as CI's `fmt` and
+  # `clippy`, here so `mutants (diff)` stays the one required check of
+  # this workflow (ADR-0014) without waiting on another workflow's run.
+  gate:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    name: mutants (diff, gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The game's content from the private repository (ADR-0117): this
+      # job reads the real one, laid over assets/ by the build.
+      - uses: ./.github/actions/private-assets
+        with:
+          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          art: "false"
+          content: "true"
+          required: "true"
+      - run: rustup show
+      # No target/ in the cache (ticket 0171): this job checks out the private
+      # content (ADR-0117), a build here embeds it, and a fork's pull request
+      # can restore main's cache.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          cache-targets: false
+      - run: cargo fmt --all --check
+      - name: Install macroquad system libraries
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+  # Each shard starts only once `gate` and `baseline` pass (ticket 0150):
+  # fmt, clippy and the unmutated tests.
   pr:
-    needs: [changes, plan]
+    needs: [changes, plan, gate, baseline]
     if: needs.plan.outputs.mutants != '0'
     name: mutants (diff, shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
@@ -164,6 +247,20 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: git diff "origin/$BASE_REF...HEAD" -- '*.rs' > git.diff
+      # The list the plan job restored, by its exact key, so every shard
+      # leaves out the same mutants and the round-robin split is the plan's.
+      - name: Restore what earlier pushes caught
+        if: needs.plan.outputs.iterate-key != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: mutants-iterate
+          key: ${{ needs.plan.outputs.iterate-key }}
+      - name: Hand them to cargo mutants
+        run: |
+          if [ -f mutants-iterate/previously_caught.txt ]; then
+            mkdir -p mutants.out
+            cp mutants-iterate/previously_caught.txt mutants.out/
+          fi
       # Round-robin: mutant i runs on shard i % n, so one slow crate is
       # spread over every shard. nextest stops at the first failing test, so
       # a caught mutant does not pay for the whole suite. Two mutants at a
@@ -178,6 +275,10 @@ jobs:
       # job, so the timeout is fixed: 720 s is the 705 s that
       # `timeout_multiplier = 3.0` gave on the 232 s unmutated `ui` run,
       # rounded up. Raise it if that run grows past about 240 s.
+      #
+      # Ticket 0150: `--iterate` leaves out the mutants an earlier push of
+      # this PR caught (or found unviable), before the shards split the
+      # rest, as the plan counted them.
       - name: Run cargo mutants on this shard of the diff
         env:
           SHARD: ${{ matrix.shard }}
@@ -185,7 +286,7 @@ jobs:
           NEXTEST_PROFILE: mutants
         run: >
           CARGO_INCREMENTAL=1
-          cargo mutants --in-diff git.diff --jobs 2
+          cargo mutants --in-diff git.diff --iterate --jobs 2
           --shard "$SHARD/$OF" --sharding round-robin
           --test-tool=nextest --baseline=skip --timeout 720 -vV
       - name: Upload mutants.out
@@ -195,6 +296,65 @@ jobs:
           name: mutants-pr-${{ matrix.shard }}-${{ github.run_id }}
           path: mutants.out
           if-no-files-found: ignore
+      # The outcome lists alone, for the save job's cache and the missed
+      # list in `mutants (diff)`'s summary: mutant names, no logs. Also on
+      # a shard a newer push cancelled, so what it caught before then
+      # isn't tested again.
+      - name: Keep the outcome lists
+        if: always()
+        run: |
+          mkdir -p outcomes
+          for list in caught unviable previously_caught missed timeout; do
+            if [ -f "mutants.out/$list.txt" ]; then cp "mutants.out/$list.txt" outcomes/; fi
+          done
+      - name: Upload the outcome lists
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutants-outcomes-${{ matrix.shard }}-${{ github.run_id }}
+          path: outcomes
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Saves what this run's shards caught, with what earlier pushes did, for
+  # the next push's `--iterate` (ticket 0150). It runs on a cancelled run
+  # too: that is the push a newer one replaced, the case it is for.
+  save:
+    needs: [changes, plan, pr]
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.mutants != '0'
+    name: mutants (diff, save)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: mutants-outcomes-*-${{ github.run_id }}
+          path: outcomes
+      - name: Restore what earlier pushes caught
+        if: needs.plan.outputs.iterate-key != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: mutants-iterate
+          key: ${{ needs.plan.outputs.iterate-key }}
+      - name: Join the lists
+        id: join
+        run: |
+          mkdir -p mutants-iterate
+          touch mutants-iterate/previously_caught.txt
+          shopt -s nullglob
+          cat mutants-iterate/previously_caught.txt \
+            outcomes/*/caught.txt outcomes/*/unviable.txt outcomes/*/previously_caught.txt \
+            | sort -u > joined.txt
+          mv joined.txt mutants-iterate/previously_caught.txt
+          count=$(wc -l < mutants-iterate/previously_caught.txt)
+          echo "$count mutants caught or unviable so far"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+      - name: Save them for the next push
+        if: steps.join.outputs.count != '0'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: mutants-iterate
+          key: mutants-iterate-pr${{ github.event.pull_request.number }}-${{ needs.plan.outputs.base }}-${{ github.run_id }}-${{ github.run_attempt }}
 
   # Single required check for the PR run (ADR-0014): the shards are matrix
   # legs, so branch protection requires this job. It keeps the name the
@@ -202,18 +362,63 @@ jobs:
   mutants-result:
     name: mutants (diff)
     if: always() && github.event_name == 'pull_request'
-    needs: [changes, plan, baseline, pr]
+    needs: [changes, plan, gate, baseline, pr]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # To read the pull request's head now (scripts/ci-result.sh).
+      pull-requests: read
     steps:
-      - name: Fail if any needed job failed or was cancelled
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci-result.sh
+          sparse-checkout-cone-mode: false
+      # Every MISSED mutant, by file, line and replacement, in the job's
+      # summary (ticket 0150), so the fix needn't open each shard's log.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: needs.pr.result != 'skipped'
+        with:
+          pattern: mutants-outcomes-*-${{ github.run_id }}
+          path: outcomes
+      - name: List the missed mutants
+        if: needs.pr.result != 'skipped'
+        run: |
+          shopt -s nullglob
+          cat /dev/null outcomes/*/missed.txt | sort -u > missed.txt
+          cat /dev/null outcomes/*/timeout.txt | sort -u > timeout.txt
+          {
+            echo "### Missed mutants: $(wc -l < missed.txt)"
+            echo
+            if [ -s missed.txt ]; then
+              echo "Each needs an assertion that fails under it (the run-gates skill)."
+              echo
+              echo '```'
+              cat missed.txt
+              echo '```'
+            fi
+            if [ -s timeout.txt ]; then
+              echo
+              echo "### Timed out: $(wc -l < timeout.txt)"
+              echo
+              echo '```'
+              cat timeout.txt
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          sed 's/^/MISSED /' missed.txt
+      # A cancelled leg is red only on the commit still at the head: a run
+      # a newer push cancelled passes with a notice (ticket 0150).
+      - name: Fail if a needed job failed, or was cancelled on the head commit
         env:
           NEEDS: ${{ toJSON(needs) }}
-        run: |
-          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
-          if echo "$NEEDS" | jq -e '[.[].result] | any(. == "failure" or . == "cancelled")' > /dev/null; then
-            echo "::error::A mutation job failed or was cancelled."
-            exit 1
-          fi
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/ci-result.sh
 
   weekly-baseline:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

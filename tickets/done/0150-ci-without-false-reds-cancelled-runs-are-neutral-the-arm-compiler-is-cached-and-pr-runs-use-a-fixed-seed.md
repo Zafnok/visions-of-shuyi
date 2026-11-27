@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 0150 — CI without false reds: cancelled runs are neutral, the ARM compiler is cached, and PR runs use a fixed seed

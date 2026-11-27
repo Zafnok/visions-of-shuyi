@@ -125,9 +125,31 @@ environment.
 
 CI's `mutants (diff)` check (`.github/workflows/mutants.yml`, ADR-0073,
 ADR-0100) runs `cargo mutants` on every PR's diff, split over up to 20
-`mutants (diff, shard N)` jobs of at most about 60 mutants each; the `MISSED` lines are in the log of each red
-shard. `mutants (diff, baseline)` runs the tests once on the unmutated
-tree; when it is red, the tests fail under nextest without any mutant.
+`mutants (diff, shard N)` jobs of at most about 60 mutants each. Every
+`MISSED` mutant (file, line, replacement) is listed in the summary of
+the `mutants (diff)` job, and in the log of its red shard. `mutants
+(diff, baseline)` runs the tests once on the unmutated tree; when it is
+red, the tests fail under nextest without any mutant. The shards start
+only once it and `mutants (diff, gate)` (fmt, clippy) pass, so a push
+whose tests fail runs no shard (ticket 0150). A later push of the same
+PR tests only the mutants no earlier push caught (`--iterate`); a
+rebase or a merge of `main` starts over.
+
+**Before the first push of a change to Rust code**, list its mutants.
+`--list` only reads the sources: it builds and runs nothing, so it is
+allowed on Nick's machine (bash shown; on PowerShell write the diff to
+`$env:TEMP\pr.diff`):
+
+```bash
+git diff origin/main... -- '*.rs' > "$TEMP/pr.diff"
+cargo mutants --in-diff "$TEMP/pr.diff" --list
+```
+
+For each mutant in code this change added, name the test assertion that
+fails under it (`replace f -> bool with true`: the assert that `f` is
+false for some input). One you can't name is a missed mutant in CI: add
+the assertion before pushing. Most PRs that needed a second round of
+pushes (14 of 44 in the 2026-11-08 retro) needed it for this.
 CI runs the tests with `cargo-nextest`, which does not run doc tests: a
 mutant only a doc test would catch counts as missed, so cover it with a
 unit test. A new test that takes 5 s or more goes in the slow list of

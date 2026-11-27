@@ -15,6 +15,11 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -D warnings
+  # Every proptest in a PR or main run draws from this one seed, so a red
+  # is about the change and is reproduced with the same variable locally
+  # (ticket 0150). `proptest-explore.yml` tries random seeds on main and
+  # files an issue with the case it finds.
+  PROPTEST_RNG_SEED: "150"
 
 jobs:
   changes:
@@ -94,6 +99,8 @@ jobs:
       - name: Install macroquad system libraries
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
+      - name: Name the proptest seed
+        run: echo "proptest seed $PROPTEST_RNG_SEED (PROPTEST_RNG_SEED=$PROPTEST_RNG_SEED cargo test reproduces this run)"
       - run: cargo test --workspace --locked
 
   # A docs-only PR that changes a Markdown file the code reads runs the
@@ -253,10 +260,20 @@ jobs:
           debs="$HOME/arm-debs"
           if ! compgen -G "$debs/*.deb" > /dev/null; then
             mkdir -p "$debs/partial"
+            # One retry of the whole download (ticket 0150): a mirror that
+            # trickles is given up on after 3 minutes and asked again, so
+            # the step's 8 minutes hold two tries. apt keeps what the
+            # first try finished.
+            fetch() {
+              sudo timeout 180 apt-get install -y --no-install-recommends --download-only \
+                -o Acquire::Retries=3 -o Dir::Cache::archives="$debs" \
+                gcc-arm-none-eabi libnewlib-arm-none-eabi
+            }
             sudo apt-get update
-            sudo apt-get install -y --no-install-recommends --download-only \
-              -o Acquire::Retries=3 -o Dir::Cache::archives="$debs" \
-              gcc-arm-none-eabi libnewlib-arm-none-eabi
+            if ! fetch; then
+              echo "::warning::The ARM compiler's download failed or stalled; trying once more."
+              fetch
+            fi
             sudo rm -rf "$debs/partial" "$debs/lock"
             sudo chown -R "$(id -u):$(id -g)" "$debs"
           fi
@@ -616,13 +633,25 @@ jobs:
     # then it runs, posts its table and shows red without blocking.
     needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets, shuyi-checks, export]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # To read the pull request's head now (scripts/ci-result.sh).
+      pull-requests: read
     steps:
-      - name: Fail if any needed job failed or was cancelled
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci-result.sh
+          sparse-checkout-cone-mode: false
+      # A cancelled leg is red only on the commit still at the head: a run
+      # a newer push cancelled passes with a notice (ticket 0150).
+      - name: Fail if a needed job failed, or was cancelled on the head commit
         env:
           NEEDS: ${{ toJSON(needs) }}
-        run: |
-          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
-          if echo "$NEEDS" | jq -e '[.[].result] | any(. == "failure" or . == "cancelled")' > /dev/null; then
-            echo "::error::A required job failed or was cancelled."
-            exit 1
-          fi
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/ci-result.sh
