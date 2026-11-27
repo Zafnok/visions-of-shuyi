@@ -2101,24 +2101,33 @@ fn tree_color(k: u32) -> [u8; 4] {
     [u8::try_from(40 + 20 * k).unwrap(), 120, 30, 255]
 }
 
-/// Writes a made-up tree sheet, `lib/trees/t.png`: four frames of 32 ×
-/// 20 px, two across, each one colour.
+/// Writes a made-up tree sheet, `lib/trees/t.png`: eight frames of 64 ×
+/// 20 px, four across, each one colour; and `lib/trees/narrow.png`, 32 px
+/// wide, narrower than a frame.
 fn with_tree_sheet(temp: &Temp) {
     let mut rgba = Vec::new();
     for y in 0..40u32 {
-        for x in 0..64u32 {
-            rgba.extend(tree_color((y / 20) * 2 + x / 32));
+        for x in 0..256u32 {
+            rgba.extend(tree_color((y / 20) * 4 + x / 64));
         }
     }
-    temp.write("lib/trees/t.png", &encode_png(64, 40, &rgba).unwrap());
+    temp.write("lib/trees/t.png", &encode_png(256, 40, &rgba).unwrap());
+    let narrow = vec![0; 32 * 40 * 4];
+    temp.write(
+        "lib/trees/narrow.png",
+        &encode_png(32, 40, &narrow).unwrap(),
+    );
 }
 
-/// The look `indoor` with trees of the made-up sheet on the forest.
-const TREE_LOOKS: &str = r#"
-    "outdoor": (layers: ["mud", "span", "fort"]),
-    "indoor": (layers: ["edge"], trees: (of: ["forest"], sheets: ["trees/t.png"],
-               frame: (32, 20), frames: 4, ms: 160, foot: (16, 18))),
-"#;
+/// The look `indoor` with `frames` frames of the made-up sheet `sheet` as
+/// trees on the forest.
+fn tree_looks(sheet: &str, frames: u32) -> String {
+    format!(
+        r#""outdoor": (layers: ["mud", "span", "fort"]),
+           "indoor": (layers: ["edge"], trees: (of: ["forest"], sheets: ["trees/{sheet}"],
+                      frame: (64, 20), frames: {frames}, ms: 160, foot: (32, 18))),"#
+    )
+}
 
 #[test]
 fn a_halved_picture_keeps_its_edge_crisp_and_its_shadow_soft() {
@@ -2146,20 +2155,28 @@ fn a_halved_picture_keeps_its_edge_crisp_and_its_shadow_soft() {
 fn a_looks_trees_are_packed_whole_and_halved_below_the_tiles() {
     let temp = Temp::new("trees").with_sheet("lib");
     with_tree_sheet(&temp);
-    let map = mapping(LAYERS, TREE_LOOKS);
+    let map = mapping(LAYERS, &tree_looks("t.png", 8));
     let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
     let (_, indoor) = &imported.others[0];
     let trees = indoor.trees.as_ref().expect("the look's trees");
     assert_eq!(trees.of, ["forest"]);
     let (big, half) = (&trees.big[0], &trees.half[0]);
-    assert_eq!((big.size, big.foot), ((32, 20), (16, 18)));
-    assert_eq!((half.size, half.foot), ((16, 10), (8, 9)));
-    // Below every tile packed: a frame two cells wide, then the next.
-    let tiles_below = big.frames[0].0.1;
-    assert!(tiles_below > 0);
-    let cells: Vec<At> = big.frames.iter().map(|&(at, _)| at).collect();
-    let row = tiles_below;
-    assert_eq!(cells, [(0, row), (2, row), (4, row), (6, row)]);
+    assert_eq!((big.size, big.foot), ((64, 20), (32, 18)));
+    assert_eq!((half.size, half.foot), ((32, 10), (16, 9)));
+    // Below every tile packed: four frames four cells wide fill a row of
+    // the image, then the next four two cells down (a frame is 20 px
+    // tall); then the eight halves, two cells wide, fill one row.
+    let row = big.frames[0].0.1;
+    assert!(row > 0);
+    let cells = |kind: &tileset_ron::TreeKindText| -> Vec<At> {
+        kind.frames.iter().map(|&(at, _)| at).collect()
+    };
+    let shelf =
+        |top: u32, step: u32, n: u32| -> Vec<At> { (0..n).map(|k| (k * step, top)).collect() };
+    let mut whole = shelf(row, 4, 4);
+    whole.extend(shelf(row + 2, 4, 4));
+    assert_eq!(cells(big), whole);
+    assert_eq!(cells(half), shelf(row + 4, 2, 8));
     assert!(big.frames.iter().all(|&(_, ms)| ms == 160));
     // Each frame its picture, whole and halved.
     for (k, (&(whole, _), &(halved, _))) in (0..).zip(big.frames.iter().zip(&half.frames)) {
@@ -2201,7 +2218,7 @@ fn a_looks_trees_are_packed_whole_and_halved_below_the_tiles() {
     let trees = read.trees("indoor").expect("the game reads the trees");
     assert_eq!(
         (trees.big[0].frames.len(), trees.half[0].frames.len()),
-        (4, 4)
+        (8, 8)
     );
     let rows = trpg_content::tileset::moving_rows([&read]);
     let report = trpg_content::motion::check(rows);
@@ -2210,6 +2227,39 @@ fn a_looks_trees_are_packed_whole_and_halved_below_the_tiles() {
         report.todo.iter().any(|t| t.contains("a one-bit tree")),
         "{:?}",
         report.todo
+    );
+}
+
+#[test]
+fn trees_whose_frames_dont_fit_their_sheet_are_refused() {
+    let temp = Temp::new("tree-fit").with_sheet("lib");
+    with_tree_sheet(&temp);
+    let dir = temp.0.join("lib");
+    let refused = |sheet: &str, frames: u32| {
+        let map = mapping(LAYERS, &tree_looks(sheet, frames));
+        import(&dir, &map, &terrains(), &fire).unwrap_err()
+    };
+    // Nine frames of 20 px need three rows of four: 60 px of a 40 px sheet.
+    assert_eq!(
+        refused("t.png", 9),
+        "look \"indoor\": trees: trees/t.png: 9 frames of 64×20 px don't fit the 256×40 px image"
+    );
+    // A frame of an odd side doesn't halve; one of no side, or wider than
+    // the packed image, can't be packed.
+    for (w, h) in [(63, 20), (64, 21), (0, 20), (64, 0), (512, 20)] {
+        let looks =
+            tree_looks("t.png", 8).replace("frame: (64, 20)", &format!("frame: ({w}, {h})"));
+        let map = mapping(LAYERS, &looks);
+        assert_eq!(
+            import(&dir, &map, &terrains(), &fire).unwrap_err(),
+            format!("look \"indoor\": trees: a frame of {w}×{h} px doesn't halve or doesn't fit")
+        );
+    }
+    // A sheet narrower than a frame holds none.
+    assert_eq!(
+        refused("narrow.png", 2),
+        "look \"indoor\": trees: trees/narrow.png: 2 frames of 64×20 px don't fit the 32×40 px \
+         image"
     );
 }
 

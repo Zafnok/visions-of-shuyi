@@ -1908,7 +1908,8 @@ fn tree_frames(sheet: &Sheet, map: &TreesMap) -> Result<Vec<Vec<u8>>, String> {
     let (fw, fh) = map.frame;
     let (width, height) = sheet.size;
     let across = width / fw;
-    if across == 0 || map.frames == 0 || map.frames.div_ceil(across) * fh > height {
+    // `check` has made sure there are two frames or more.
+    if across == 0 || map.frames.div_ceil(across) * fh > height {
         return Err(format!(
             "{} frames of {fw}×{fh} px don't fit the {width}×{height} px image",
             map.frames

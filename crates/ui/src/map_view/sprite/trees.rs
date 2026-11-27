@@ -155,7 +155,7 @@ fn ground_tints(items: &[Item]) -> (Vec<Wash>, Vec<Overlay>) {
                 paint: s.paint,
                 opacity: s.opacity,
             }),
-            Item::Rect(o) if o.layer == Layer::Under => outlines.push(*o),
+            Item::Rect(o) => outlines.push(*o),
             _ => {}
         }
     }
@@ -408,6 +408,55 @@ mod tests {
         assert!(unit, "the unit is painted over the tree");
     }
 
+    /// A tree is shaded by the map's light, as the ground is: the image's
+    /// own colours in a plain light, the light's at dusk.
+    #[test]
+    fn a_tree_is_in_the_maps_light() {
+        let c = moving_ctx(IdleMotion::Off, GraphicsTier::Full);
+        let m = map(&c, &WOOD);
+        let mut scene = view(&m, Pos::new(0, 0), (5, 5), 0);
+        let paint_of = |scene: &MapScene| tree_sprites(&c, &paint(&c, scene, Some(&m)))[0].1.paint;
+        assert_eq!(paint_of(&scene), Paint::Image);
+        "dusk".clone_into(&mut scene.look.light);
+        let dusk = c.game.content.lighting.get("dusk").expect("the dusk light");
+        assert_eq!(paint_of(&scene), Paint::Shaded(dusk));
+    }
+
+    /// A tree wider than its tile, or reaching below it (as the bought
+    /// ones do, by their shadows), is cut at the map's edges: nothing of
+    /// it is drawn off the map.
+    #[test]
+    fn a_tree_is_cut_at_the_maps_edges() {
+        let c = moving_ctx(IdleMotion::Off, GraphicsTier::Full);
+        let m = map(&c, &["#..", "..#"]);
+        let mut tileset: Tileset = c.game.content.tilesets["test_auto"].clone();
+        let mut wide = trees(&c);
+        wide.half = vec![TreeKind {
+            foot: (16, 28),
+            ..kind((0, 300), (32, 32), 2)
+        }];
+        tileset.trees.insert(LOOK.to_owned(), wide);
+        // The map in the middle of a view a tile bigger all round.
+        let scene = view(&m, Pos::new(-1, -1), (5, 4), 0);
+        let mut buf = blank();
+        MapSkin::sprite(tileset).paint_on(&c, &scene, Some(&m), area(scene.size), &mut buf);
+        let clips: Vec<PxRect> = buf
+            .items()
+            .iter()
+            .filter_map(|i| match i {
+                Item::Sprite(s) if s.src.w == 32 && s.src.y == 300 => Some(s.clip),
+                _ => None,
+            })
+            .collect();
+        // The map's pixels: (16, 16) to (64, 48). The top-left tree, drawn
+        // from (8, 4), stops at the map's left and top; the bottom-right
+        // one, drawn to (72, 52), at its right and bottom.
+        assert_eq!(
+            clips,
+            [Rect::new(16, 16, 24, 20), Rect::new(40, 20, 24, 28)]
+        );
+    }
+
     /// Where the trees stand is the whole map's: a view that shows only
     /// the lower two rows of a 3 × 3 wood still shows its big tree, as it
     /// stands on the map, where the scene alone would have half-size ones.
@@ -422,7 +471,11 @@ mod tests {
         // view's top.
         assert_eq!(on_map[0].1.dest, Rect::new(0, -16, 48, 48));
         assert_eq!(on_map[0].1.clip, Rect::new(0, 0, 48, 32));
+        // The scene alone sees two rows of forest: a half-size tree on each
+        // of its lower row's three tiles (map row 2), its crown above.
         let alone = tree_sprites(&c, &paint(&c, &scrolled, None));
-        assert!(alone.iter().all(|(_, s)| s.dest.w == 16), "{alone:?}");
+        let dests: Vec<PxRect> = alone.iter().map(|(_, s)| s.dest).collect();
+        let half = |x| Rect::new(x, 0, 16, 32);
+        assert_eq!(dests, [half(0), half(16), half(32)]);
     }
 }

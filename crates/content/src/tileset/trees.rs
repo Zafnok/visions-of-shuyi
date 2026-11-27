@@ -142,8 +142,9 @@ pub fn place(width: i32, height: i32, forest: impl Fn(Pos) -> bool) -> Vec<Tree>
         on_map && forest(p) && index(p).is_some_and(|i| !taken[i])
     };
     let mut trees = Vec::new();
-    for y in 2..h {
-        for x in 1..w - 1 {
+    // A footprint off the map is never free, so every tile is tried.
+    for y in 0..h {
+        for x in 0..w {
             let footprint =
                 (y - 2..=y).flat_map(|fy| (x - 1..=x + 1).map(move |fx| Pos::new(fx, fy)));
             if footprint.clone().all(|p| free(&taken, p)) {
@@ -480,6 +481,34 @@ mod tests {
         }
     }
 
+    /// `mixed` of three places for the phase, and of one for the kind.
+    const MIXED_PHASES: [u32; 3] = [1_479_801_789, 2_116_403_790, 3_682_769_428];
+    const MIXED_KIND: u32 = 41_153_166;
+
+    /// A tree's phase lies inside its loop and differs from tree to tree;
+    /// it and its kind are fixed numbers of its place, the same on every
+    /// build (a change would move every tree of every forest).
+    #[test]
+    fn a_trees_kind_and_phase_are_fixed_numbers_of_its_place() {
+        let t = trees();
+        let tree = |x, y| Tree {
+            trunk: Pos::new(x, y),
+            footprint: Footprint::Big,
+        };
+        let kind = &t.big[0];
+        let phases: BTreeSet<u64> = (0..6)
+            .flat_map(|x| (0..4).map(move |y| tree(x, y)))
+            .map(|tr| Trees::phase_ms(tr, kind))
+            .collect();
+        assert!(phases.len() > 6, "{phases:?}");
+        assert!(phases.iter().all(|&p| p < kind.cycle_ms()), "{phases:?}");
+        assert_eq!(
+            [(0, 0), (1, 2), (5, 3)].map(|(x, y)| mixed(Pos::new(x, y), Pick::Phase)),
+            [MIXED_PHASES[0], MIXED_PHASES[1], MIXED_PHASES[2]]
+        );
+        assert_eq!(mixed(Pos::new(1, 2), Pick::Kind), MIXED_KIND);
+    }
+
     #[test]
     fn a_frame_is_the_one_for_the_time_into_the_loop() {
         let k = kind(&[300, 100, 200], 0);
@@ -621,5 +650,15 @@ mod tests {
                 format!("{what}: `big` has no kind of tree"),
             ]
         );
+        // A frame with no width (or no height) has no pixels.
+        let flat = "(size: (0, 32), foot: (0, 30), frames: [((0, 0), 160), ((2, 0), 160)])";
+        assert_eq!(
+            errors(&written("\"forest\"", flat, STILLS)),
+            [format!("{what}, big 1: a frame of no pixels")]
+        );
+        // A foot on the frame's bottom-right corner is inside it.
+        let corner = "(size: (32, 32), foot: (32, 32), frames: [((0, 0), 160), ((2, 0), 160)])";
+        let corner = with_trees(&f, &written("\"forest\"", corner, STILLS));
+        assert!(f.parse(&corner).is_ok());
     }
 }
