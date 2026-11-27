@@ -15,6 +15,7 @@ mod prelude {
 
 pub mod ai;
 pub mod art;
+pub mod bare_id;
 pub mod battle;
 pub mod camp;
 pub mod campaign;

@@ -7,7 +7,7 @@ use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::{
-    CharacterDef, CharacterId, ClassDef, ClassId, ClassTable, Faction, ItemId, ItemTable, Level,
+    CharacterDef, CharacterId, ClassDef, ClassId, ClassTable, Faction, ItemTable, Level,
     LoadoutDef, Pos, SpellId, StatKind, StatValue, Stats, Unit, UnitError, UnitId,
     is_valid_map_label,
 };
@@ -141,29 +141,7 @@ struct RawCharacter {
     #[serde(default)]
     map_label: Option<String>,
     #[serde(default)]
-    loadout: RawLoadout,
-}
-
-/// A loadout as data files write it (characters, generics, battle files).
-#[derive(Deserialize, Default)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct RawLoadout {
-    #[serde(default)]
-    weapons: Vec<String>,
-    #[serde(default)]
-    armour: Option<String>,
-    #[serde(default)]
-    accessory: Option<String>,
-}
-
-impl RawLoadout {
-    pub(crate) fn to_def(&self) -> LoadoutDef {
-        LoadoutDef {
-            weapons: self.weapons.iter().map(|w| ItemId::new(w)).collect(),
-            armour: self.armour.as_deref().map(ItemId::new),
-            accessory: self.accessory.as_deref().map(ItemId::new),
-        }
-    }
+    loadout: LoadoutDef,
 }
 
 #[derive(Deserialize)]
@@ -175,7 +153,7 @@ struct RawGeneric {
     #[serde(default)]
     map_label: Option<String>,
     #[serde(default)]
-    loadout: RawLoadout,
+    loadout: LoadoutDef,
 }
 
 /// Loads and validates the embedded character file. Class references are
@@ -298,7 +276,7 @@ pub fn from_source(
             class: ClassId(g.class.clone()),
             level: g.level,
             map_label: g.map_label.clone(),
-            loadout: g.loadout.to_def(),
+            loadout: g.loadout.clone(),
         };
         if let (Some(classes), Some(items)) = (v.classes, v.items)
             && let Err(UnitError::Loadout(e)) =
@@ -454,7 +432,7 @@ impl<'a> Validator<'a> {
                 .map(|(level, s)| (*level, SpellId(s.clone())))
                 .collect(),
             map_label: c.map_label.clone(),
-            loadout: c.loadout.to_def(),
+            loadout: c.loadout.clone(),
         };
         if let (Some(class), Some(classes)) = (class, self.classes) {
             self.against_class(&def, &what, class, &classes.hard_ceilings);
@@ -520,7 +498,7 @@ impl<'a> Validator<'a> {
 
 #[cfg(test)]
 mod tests {
-    use trpg_core::{Faction, Pos, Unit, UnitId, WeaponKind, WeaponRank};
+    use trpg_core::{Faction, ItemId, Pos, Unit, UnitId, WeaponKind, WeaponRank};
 
     use super::*;
 
@@ -1172,6 +1150,21 @@ mod tests {
     #[test]
     fn empty_source_is_a_syntax_error() {
         assert_eq!(load_src("").err().map(|e| e.len()), Some(1));
+    }
+
+    /// A loadout is read as the core's `LoadoutDef` (ticket 1392): what
+    /// doesn't parse still names the file and the line.
+    #[test]
+    fn a_loadout_that_does_not_parse_names_its_line() {
+        for extra in [
+            "loadout: (weapons: [3])",
+            "loadout: (armour: Some(4))",
+            "loadout: (shield: Some(\"iron_shield\"))",
+        ] {
+            let errors = errors(&file(&[character("a", "swordsman", extra)], ""));
+            assert_eq!(errors.len(), 1, "{extra}: {errors:?}");
+            assert!(errors[0].starts_with("ch.ron:5:"), "{extra}: {errors:?}");
+        }
     }
 
     #[test]
