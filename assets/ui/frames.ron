@@ -1,0 +1,41 @@
+// The windows' picture frames (ticket 1380; docs/design/look-and-feel.md,
+// *Windows (the picture look)*). Format: README.md beside this file.
+// The pictures are bought art in the private assets' game/ui/ (ADR-0040),
+// cut there by `cargo xtask ui-import`; without them the windows keep
+// their glyph lines.
+(
+    frames: {
+        // The side panel, the forecast, unit info and the battle's other
+        // boxes: Pixel Quest's F-UI_Panel_H, its plum inside.
+        "panel": (
+            picture: "panel.png",
+            borders: (left: 22, top: 33, right: 22, bottom: 32),
+            fill: "#3a2c36",
+            outset: 5,
+        ),
+        // The unit menu and its sub-menus: F-UI_Panel_E.
+        "menu": (
+            picture: "menu.png",
+            borders: (left: 22, top: 22, right: 22, bottom: 22),
+            fill: "#382b33",
+            outset: 5,
+        ),
+        // The map menu: the side panel's frame, its inside royal blue.
+        "map_menu": (
+            picture: "map_menu.png",
+            borders: (left: 22, top: 33, right: 22, bottom: 32),
+            fill: "#263857",
+            outset: 5,
+        ),
+    },
+    plates: {
+        // A window's title (the forecast's): Post-Baroque's UI_TitleB1,
+        // its gold caps and its dark body stretched to the title.
+        "title": (
+            picture: "plate.png",
+            caps: (left: 16, right: 16),
+            pad: 6,
+            text_top: 8,
+        ),
+    },
+)

@@ -37,6 +37,7 @@ mod enums;
 pub mod error;
 pub mod font;
 pub mod formats;
+pub mod frames;
 pub mod image;
 pub mod item;
 pub mod keymap;
@@ -193,6 +194,9 @@ pub struct Content {
     pub battle_lights: BTreeMap<String, String>,
     /// The title screen's logo and backdrops (ADR-0059).
     pub title: TitleArt,
+    /// The windows' picture frames whose pictures this build has (ticket
+    /// 1380): none without the bought art.
+    pub frames: frames::UiFrames,
     /// Cinematics by id (file stem), ADR-0060.
     pub cinematics: BTreeMap<String, CinematicDef>,
     /// World maps by id (file stem), one an act (ticket 1007, ADR-0099).
@@ -548,6 +552,7 @@ impl Early {
             ai: ai::load(),
             credits: credits::load(audio.as_ref().ok()),
             audio,
+            frames: load_frames(images.as_ref().ok()),
             images,
             tilesets,
             battles,
@@ -1086,6 +1091,12 @@ fn load_battlers(
 
 /// The title screen's art (ADR-0059): none if the images failed to load
 /// (their errors are reported once, by the image table).
+/// The windows' frames, checked against `images`; none if the images
+/// failed to load.
+fn load_frames(images: Option<&ImageTable>) -> Result<frames::UiFrames, Vec<ContentError>> {
+    images.map_or_else(|| Ok(frames::UiFrames::default()), frames::load)
+}
+
 fn load_title(images: Option<&ImageTable>) -> Result<TitleArt, Vec<ContentError>> {
     match images {
         Some(images) => title::load(images),
@@ -1192,6 +1203,7 @@ struct Loaded {
     lighting: Result<Lighting, Vec<ContentError>>,
     battle_lights: Result<BTreeMap<String, String>, Vec<ContentError>>,
     title: Result<TitleArt, Vec<ContentError>>,
+    frames: Result<frames::UiFrames, Vec<ContentError>>,
     cinematics: Result<BTreeMap<String, CinematicDef>, Vec<ContentError>>,
     openings: Result<BTreeMap<String, OpeningDef>, Vec<ContentError>>,
     worldmaps: Result<BTreeMap<String, WorldMapDef>, Vec<ContentError>>,
@@ -1250,6 +1262,7 @@ fn assemble(
         lighting: take(units.lighting, &mut errors),
         battle_lights: take(units.battle_lights, &mut errors),
         title: take(units.title, &mut errors),
+        frames: take(units.frames, &mut errors),
         cinematics: take(units.cinematics, &mut errors),
         lessons: take(units.lessons, &mut errors),
         openings: take(units.openings, &mut errors),
