@@ -12,8 +12,8 @@ use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::save::SUSPEND_KEY;
-use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::{Ctx, MemoryStorage, Storage};
+use crate::support::battle;
 
 /// The test lesson.
 const TEST_LESSON: &str = "test_cursor";
@@ -77,11 +77,6 @@ fn from_the_lead(h: &mut Harness) {
         .wait(0.1)
         .keys("f")
         .wait(0.1);
-}
-
-fn battle(h: &Harness) -> &BattleScreen {
-    let battle = h.battle();
-    battle.unwrap_or_else(|| panic!("no battle"))
 }
 
 fn lessons_done(h: &Harness) -> Vec<String> {

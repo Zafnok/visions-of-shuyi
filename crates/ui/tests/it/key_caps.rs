@@ -11,12 +11,12 @@ use trpg_core::{CharacterId, LEAD_ID};
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, LEFT_HANDED, PadKind, RIGHT_HANDED};
-use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::layout::{HELP_BAR, MAP_VIEW};
 use trpg_ui::screens::dialogue::DialogueScreen;
 use trpg_ui::screens::{PreparationsScreen, WorldMapScreen};
 use trpg_ui::widgets::help::{cursor_keys_name, key_name, key_spans, spans_of};
 use trpg_ui::{MemoryStorage, Storage};
+use crate::support::battle;
 
 /// The keys of `text`, in order: `!` for the arrows picture.
 fn keys(text: &StyledText) -> Vec<String> {
@@ -48,11 +48,6 @@ fn battle_in(layout: trpg_ui::input::Layout, tips: bool) -> Harness {
     ));
     h.wait(0.5);
     h
-}
-
-fn battle(h: &Harness) -> &BattleScreen {
-    h.screen::<BattleScreen>()
-        .unwrap_or_else(|| panic!("no battle: {:?}", h.screens()))
 }
 
 /// Acceptance (0254): the battle's help bar and toggles hold each key the

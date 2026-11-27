@@ -34,6 +34,7 @@ use trpg_ui::{
     ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, RawInputEvent, ShuyiCtx,
     Storage, UiColor,
 };
+use crate::support::battle;
 
 /// The context as `crates/playdate` sets it up (the tips and lessons
 /// are turned on below), with the Playdate's own buttons (ticket 1034).
@@ -444,10 +445,6 @@ fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
-}
-
-fn battle(h: &Harness) -> &BattleScreen {
-    h.battle().unwrap_or_else(|| panic!("no battle"))
 }
 
 /// Ends the turn (A + B, then A on its question) and plays on to the

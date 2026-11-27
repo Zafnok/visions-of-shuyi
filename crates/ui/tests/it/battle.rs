@@ -10,6 +10,7 @@ use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::range;
 use trpg_ui::screens::BattleScreen;
 use trpg_ui::screens::battle::layout::MAP_VIEW;
+use crate::support::skip_scenes;
 
 /// At the title with the right-handed layout, then Quick Battle, still
 /// under its objective's banner (0481).
@@ -823,22 +824,6 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
     assert_eq!(tip(&h), Some(TipTrigger::FirstBattleStart));
     assert!(shows(&h, "Your move"));
     assert!(shows(&h, " Vix "));
-}
-
-/// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
-fn skip_scenes(h: &mut Harness) {
-    for _ in 0..8 {
-        // A chapter's title card first (0812): Confirm closes it.
-        if h.top_screen() == "chapter_card" {
-            h.keys("f");
-            continue;
-        }
-        if h.top_screen() != "dialogue" {
-            return;
-        }
-        h.keys("d f");
-    }
-    panic!("the scenes never end: {:?}", h.screens());
 }
 
 /// The Quick Battle's dialogue triggers (0705): its rogue arrives on the

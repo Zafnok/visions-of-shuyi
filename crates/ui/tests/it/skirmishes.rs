@@ -22,7 +22,8 @@
 use trpg_content::bundle::skip_without_the_game;
 use trpg_core::{BattleState, CharacterId, ItemId, NodeKind, Outcome, WorldCommand, WorldEvent};
 
-use crate::playthrough::{self, lost, skip_scenes};
+use crate::playthrough::{self, lost};
+use crate::support::skip_scenes;
 use crate::side_quests::{act1_from_a_save, army_for, campaign, content, on_act1};
 
 const MILLHAVEN_ROAD: &str = include_str!("fixtures/millhaven_road_winning.ron");

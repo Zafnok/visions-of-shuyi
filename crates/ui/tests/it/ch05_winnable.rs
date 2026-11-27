@@ -33,7 +33,8 @@ use trpg_ui::input::RIGHT_HANDED;
 use crate::ch04_winnable::{
     chapter_4, chapter_4_won, win_on_the_way, winning_commands as chapter_4_commands, won,
 };
-use crate::playthrough::{self, battle, lost, skip_scenes};
+use crate::playthrough::{self, lost};
+use crate::support::{skip_scenes, state as battle};
 
 const FIXTURE: &str = include_str!("fixtures/ch05_winning.ron");
 const SALT_ROAD: &str = include_str!("fixtures/salt_road_winning.ron");

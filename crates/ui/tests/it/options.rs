@@ -33,6 +33,7 @@ use trpg_ui::screens::options::{LeaveChoice, OptionsScreen, Row, ValueView};
 use trpg_ui::settings::{AnimSpeed, EnemyPhaseSpeed, MapLook, Settings, TextSpeed};
 use trpg_ui::storage::Storage;
 use trpg_ui::tips::TIPS_SEEN_KEY;
+use crate::support::title;
 
 /// From the first row down to each row.
 const TO_AUTO_END: &str = "Down Down Down Down";
@@ -46,11 +47,6 @@ const TO_LAYOUT: &str = "Down Down Down Down Down Down Down Down Down Down Down 
 /// Leaves Options with its changes kept: Cancel asks, the cursor starts on
 /// Back, two left is Keep (ticket 0839).
 const KEEP: &str = "d Left Left f";
-
-/// A launch after the right-handed layout was picked.
-fn title() -> Harness {
-    Harness::with_layout(RIGHT_HANDED)
-}
 
 /// Options, from the title: two rows under New Game (past Quick Battle).
 fn options() -> Harness {

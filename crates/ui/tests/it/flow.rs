@@ -8,7 +8,7 @@
 use insta::assert_snapshot;
 use trpg_content::TipTrigger;
 use trpg_core::{
-    BattleState, Command, GameMode, LeadGender, LeadProfile, Outcome, Pos, TutorialLevel,
+    Command, GameMode, LeadGender, LeadProfile, Outcome, Pos, TutorialLevel,
     UnitAction, UnitId,
 };
 use trpg_ui::ShuyiCtx;
@@ -16,15 +16,12 @@ use trpg_ui::audio::pick_from_pool;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::layout::MAP_VIEW;
+use crate::support::{state as battle, title};
 
 /// The lead's unit in the test battle (its first slot).
 const LEAD: UnitId = UnitId(1);
 /// The seize tile.
 const FORT: Pos = Pos::new(5, 5);
-
-fn title() -> Harness {
-    Harness::with_layout(RIGHT_HANDED)
-}
 
 /// From the title: New Game, the mode (`Down` for Casual), "Not familiar",
 /// then the lead screen's `keys`, which must end on Start.
@@ -91,15 +88,6 @@ fn notes_open(h: &Harness) -> bool {
 fn send(h: &mut Harness, cmd: &Command) {
     let battle = h.battle_mut();
     battle.unwrap_or_else(|| panic!("no battle")).send(cmd);
-}
-
-/// The battle on screen.
-fn battle(h: &Harness) -> BattleState {
-    let battle = h.battle();
-    battle
-        .unwrap_or_else(|| panic!("no battle"))
-        .state()
-        .clone()
 }
 
 /// Rewind charges left in the battle on screen.

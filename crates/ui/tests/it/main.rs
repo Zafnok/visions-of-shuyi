@@ -108,6 +108,7 @@ mod split_keys;
 mod sprite_test;
 mod story_preview;
 mod streamed_pack;
+mod support;
 mod threat;
 mod title;
 mod title_cinematic;

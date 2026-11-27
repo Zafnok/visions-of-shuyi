@@ -7,6 +7,7 @@ use trpg_core::{BattleState, ItemId, UnitId};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, Chord, LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screens::preparations::PrepBody;
+use crate::support::state as battle;
 
 /// The lord's unit (the first slot).
 const LORD: UnitId = UnitId(1);
@@ -17,15 +18,6 @@ fn preparations() -> Harness {
     h.keys("Down f");
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h
-}
-
-/// The battle on screen.
-fn battle(h: &Harness) -> BattleState {
-    let battle = h.battle();
-    battle
-        .unwrap_or_else(|| panic!("no battle"))
-        .state()
-        .clone()
 }
 
 /// The lord's weapons in the battle on screen, by slot.

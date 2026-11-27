@@ -16,11 +16,7 @@ use trpg_ui::input::Layout;
 use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screens::title::TitleView;
 use trpg_ui::screens::{LayoutPickerScreen, TitleScreen};
-
-/// A launch after the right-handed layout was picked.
-fn title() -> Harness {
-    Harness::with_layout(RIGHT_HANDED)
-}
+use crate::support::title;
 
 /// The title screen on the stack, as it shows itself now.
 fn view(h: &Harness) -> TitleView {

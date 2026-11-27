@@ -8,6 +8,7 @@ use trpg_core::{Phase, Pos};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::ThreatView;
+use crate::support::{self, skip_scenes};
 
 fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)
@@ -39,22 +40,6 @@ fn go(h: &mut Harness, to: Pos) {
     }
 }
 
-/// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
-fn skip_scenes(h: &mut Harness) {
-    for _ in 0..8 {
-        // A chapter's title card first (0812): Confirm closes it.
-        if h.top_screen() == "chapter_card" {
-            h.keys("f");
-            continue;
-        }
-        if h.top_screen() != "dialogue" {
-            return;
-        }
-        h.keys("d f");
-    }
-    panic!("the scenes never end: {:?}", h.screens());
-}
-
 /// Chapter 1's battle from New Game, on turn 1 with its scenes skipped and
 /// its banners closed: the cursor on the lead at (4, 12).
 fn chapter_1() -> Harness {
@@ -72,9 +57,7 @@ fn chapter_1() -> Harness {
 /// The Quick Battle on turn 1, its banners closed: the cursor on the lord
 /// at (3, 5).
 fn quick_battle() -> Harness {
-    let mut h = Harness::with_layout(RIGHT_HANDED);
-    h.keys("Down f Left f f f");
-    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    let h = support::quick_battle();
     assert_eq!(h.cursor_tile(), Some(p(3, 5)));
     h
 }
