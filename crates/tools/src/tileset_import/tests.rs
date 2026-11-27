@@ -1299,6 +1299,23 @@ fn a_plain_sheets_tiles_move_along_its_strip() {
         let past = format!("{PLAIN}: the frames of {cut} run past the image's right edge");
         assert_eq!(err, past, "{strip}");
     }
+    // A step of whole rows runs down the column (1384): the water's own
+    // tile (7) shows 19, then 31; a fourth frame (43) is below the image.
+    let looks_down =
+        format!(r#""outdoor": (terrain: {{ "water": ("{PLAIN}", 7) }}, layers: []),"#);
+    let map = plain_mapping("", &looks_down, "(frames: 3, step: 12, ms: 150)");
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    let [moving] = &imported.moving[..] else {
+        panic!("{:?}", imported.moving);
+    };
+    let colors: Vec<_> = (moving.frames.iter())
+        .map(|&(at, ms)| (cell_color(&imported.image, at), ms))
+        .collect();
+    let expected = [7, 19, 31].map(|id| (plain_color(id), 150));
+    assert_eq!(colors, expected);
+    let map = plain_mapping("", &looks_down, "(frames: 4, step: 12, ms: 150)");
+    let err = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap_err();
+    assert!(err.contains("tile 43 is outside the 96×96 px image (frame 3"), "{err}");
     // A loop whose frames are all one picture doesn't move.
     let mut flat = Vec::new();
     for _ in 0..16 * 64 {

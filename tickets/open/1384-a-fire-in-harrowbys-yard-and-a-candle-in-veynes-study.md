@@ -5,7 +5,7 @@ type: content
 milestone: Post–Chapter 1
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: in-progress
 blocked_by: []
 blocks: ["1064"]
 nick_input: none
