@@ -5,11 +5,11 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: ["1322"]
 blocks: ["1064"]
 nick_input: decision
-completed:
+completed: 2026-11-26
 ---
 
 # 1324 — Decide: Chapter 1's ambient sounds
@@ -87,10 +87,10 @@ the script (dialogue writing is paused, AGENTS.md rule 3).
 
 ## Acceptance criteria
 
-- [ ] Every place listed above has a recorded bed (or "none"), Nick's
+- [x] Every place listed above has a recorded bed (or "none"), Nick's
       words quoted, and every sound named with its license.
-- [ ] 1335 lists exactly those picks.
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] 1335 lists exactly those picks.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -102,3 +102,40 @@ What the Playdate plays follows 1322's answer; this ticket only notes a
 place that should differ there.
 
 ## Completion notes
+
+Asked in one round of a listening page
+(https://claude.ai/artifact/UcFuQDHFE19pg1qLxWYycr; throwaway, never
+committed: it shows bought art). It had the five places, each with its
+`frame-png` frame in the picture look (the battle as a moving loop of its
+river and trees) and its music, the beds split into layers with a slider
+each. Nick set every mix himself and sent screenshots of the sliders.
+Recorded in the private `story/design/audio.md`, *Chapter 1's ambience*
+(picks per place, his words), and publicly in `docs/design/audio.md`,
+*Chapter 1's beds* (the sounds, licenses and the rules that aren't story).
+
+- **Deviation from the starting list:** Nick asked mid-round to match
+  the sound to what moves on the map (river, swaying trees, critters),
+  so the battle's options were built from layers. No chapel bell or
+  passing call in the battle (1322).
+- **The 1322 Summer Meadow is replaced.** Nick heard its insect buzz as
+  "a low beep" and rejected even a filtered copy. A spectrum scan found
+  steady tones at 145, 215 and 290 Hz. Six other recordings were scored
+  frame by frame for buzz, and the Hungary meadow (Alcappuccino 416206)
+  replaced it. The 1322 river (BurghRecords) was also dropped, because
+  its birds moved with its slider. 1335 swaps both in the game.
+- **A wood-stove recording** (Yulathh 767875, CC-BY 4.0) was dropped
+  for a hum before Nick heard it.
+- **Follow-up tickets:**
+  - 1383, an `@ambience` directive, needed by 1335 for the two scenes
+    that play over the battle map with their own beds.
+  - 1384, a fire in the yard and a candle in the study, so the picture
+    matches the crackle (Nick: don't block on it).
+  - 1385, the chapel bell in the yard scene (Nick: don't block on it).
+- **Claude's choices (technical):** 1335 imports one premixed loop per
+  place, so 1332's format stays as it is.
+- **Recorded on Nick's "sure", to confirm in 1385:** the dawn chorus stops
+  when the bell rings.
+- **Open:** a river that gets louder near the camera ("we might revisit
+  if we get spatial aware audio mixing").
+- **Lesser targets:** none differs. The Playdate plays no bed unless the
+  bench allows (1322).
