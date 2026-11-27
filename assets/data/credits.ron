@@ -99,8 +99,8 @@
          private: ["units/lance_cavalier.", "units/mounted_archer."]),
 
         // ELV Games' Rogue Adventure (1318): Chapter 1's ground, river and
-        // bridges, Harl's keep and Harrowby's tower (1360) and its swaying
-        // trees (1356), packed into the same image as Tiny Tales' tiles. A
+        // bridges, Harl's keep and Harrowby's tower (1360), its swaying
+        // trees (1356) and the fire in Harrowby's yard (1384), packed into the same image as Tiny Tales' tiles. A
         // wall running up and down is a cell's half mirrored, and the
         // half-size trees are the trees' frames halved (changes, so the
         // credit says so).
@@ -115,6 +115,14 @@
         // the credit says so), packed into the same image.
         (id: "electric_lemon_lonesome_forest", group: Art,
          title: "Lonesome Forest (modified: stones recolored)", author: "Electric Lemon Games",
+         source: "https://itch.io/s/148198/fantasy-rpg-characters-tile-set-bundle-pixel-grit-series",
+         license: "Custom (Electric Lemon)",
+         private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),
+
+        // Electric Lemon's Classic Dungeons (1384): the candle on the
+        // desk in Veyne Hall's study, packed into the same image.
+        (id: "electric_lemon_classic_dungeons", group: Art,
+         title: "Classic Dungeons", author: "Electric Lemon Games",
          source: "https://itch.io/s/148198/fantasy-rpg-characters-tile-set-bundle-pixel-grit-series",
          license: "Custom (Electric Lemon)",
          private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),

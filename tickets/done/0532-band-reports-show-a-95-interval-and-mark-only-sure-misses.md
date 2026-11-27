@@ -5,10 +5,10 @@ type: feature
 milestone: M4 Enemy AI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 0532 — Band reports show a 95% interval and mark only sure misses
@@ -116,16 +116,16 @@ Expected size: about 40 game lines, mostly tests and docs (the engine's
 
 ## Acceptance criteria
 
-- [ ] The pin is past engine#2149, whose table shows `95% lo–hi%` on
+- [x] The pin is past engine#2149, whose table shows `95% lo–hi%` on
       every rate line.
-- [ ] `cargo xtask playtest ch04 --bot all` on the moved pin prints the
+- [x] `cargo xtask playtest ch04 --bot all` on the moved pin prints the
       interval; a ✗ or ⚠ appears only when the whole interval is outside.
-- [ ] A playtest run on `main` still fails a battle exactly when Casual
+- [x] A playtest run on `main` still fails a battle exactly when Casual
       is under its floor (`band_check_flags_too_easy_and_too_hard`
       covers 19 and 20).
-- [ ] `docs/playtesting.md` and the `work-ticket` skill carry the new
+- [x] `docs/playtesting.md` and the `work-ticket` skill carry the new
       text; `scripts/sync-agent-skills.ps1 -Check` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -135,5 +135,21 @@ Expected size: about 40 game lines, mostly tests and docs (the engine's
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- The engine half (engine#2149 part A) and the game's two tests
+  (step 4) came with the pin move of 2026-11-24 (`b69585ee`, #824); the
+  pin, `10cbb98b`, is past it. This PR is the rest: docs and the skill.
+- `docs/playtesting.md`, *Reading the report*: the rate line's new
+  `· 95% lo–hi%` and the ✓ / ✗ / ⚠ / ~ maybe marks, and a paragraph on
+  how sure a count is (about ±10 points at 100 tries, ±7 at 200), when
+  to run another seed range (`--seed 101`) instead of retuning, and
+  that the floor and autobalance still judge the share itself.
+- `work-ticket` §1: the *Balance upstream first* bullet; the loaders
+  synced (`sync-agent-skills.ps1 -Check` passes).
+- `cargo xtask playtest ch04 --bot all` at the pin: Casual 60/100,
+  95% 51–69 against 30–55, `~ maybe too easy`; Normal 37/100, 95%
+  29–46 against 50–75, `✗ too hard`; Hardcore 55/100, 95% 46–64,
+  `✓`. (Read from `target/playtest-history/ch04-all.jsonl`.)
+- No code, no starting rules, no follow-up tickets. Gates run locally: the
+  skill sync check, ticket-lint, check-skills, check-leaks,
+  check-mentions, typos, pr-size; the build and test gates were not
+  re-run, since no Rust or data changed (CI runs them).

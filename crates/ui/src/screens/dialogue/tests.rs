@@ -7,6 +7,7 @@ use trpg_core::CharacterId;
 
 use super::*;
 use crate::audio::AudioRequest;
+use crate::screen::IdleMotion;
 use crate::screen::tests::ctx;
 use crate::settings::TextSpeed;
 
@@ -1036,6 +1037,26 @@ fn a_jump_in_the_log_shows_that_lines_place() {
     press(&mut s, &mut c, Action::Confirm);
     assert_eq!(s.page_lines(), ["One."]);
     assert_eq!(s.view(&c).place, green);
+}
+
+/// The place behind the talk keeps the screens' clock, so its moving
+/// tiles move (1384: the fire in Harrowby's yard); a test's frame, with
+/// idle motion off, stays at 0.
+#[test]
+fn the_place_keeps_the_clock_while_idle_motion_is_on() {
+    let mut c = ctx();
+    let small = PlaceLine::Map {
+        map: "test_small".into(),
+        at: at(3, 6),
+        bright: None,
+    };
+    let s = full(&scene(vec![setting(small), narrate("One.")]));
+    c.clock_s = 2.25;
+    let clock = |c: &Ctx| s.view(c).place.map(|p| p.clock_ms);
+    c.idle_motion = IdleMotion::Off;
+    assert_eq!(clock(&c), Some(0));
+    c.idle_motion = IdleMotion::On;
+    assert_eq!(clock(&c), Some(2250));
 }
 
 /// A key that reaches an `@opening` starts it (0734); the rest of that

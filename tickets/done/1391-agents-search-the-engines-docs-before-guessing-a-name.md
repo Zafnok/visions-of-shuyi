@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1391 — Agents search the engine's docs before guessing a name
@@ -66,13 +66,13 @@ Expected size: about 15 lines of docs.
 
 ## Acceptance criteria
 
-- [ ] `AGENTS.md` names `cargo shuyi docs <query>` and says to run it
+- [x] `AGENTS.md` names `cargo shuyi docs <query>` and says to run it
   before guessing an engine name.
-- [ ] `engine-change`, `engine-friction` and `engine-pin` point at it where
+- [x] `engine-change`, `engine-friction` and `engine-pin` point at it where
   they look an engine piece up.
-- [ ] `sync-agent-skills.ps1 -Check` and `cargo shuyi check-skills
+- [x] `sync-agent-skills.ps1 -Check` and `cargo shuyi check-skills
   .claude/skills` pass.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -80,5 +80,15 @@ Expected size: about 15 lines of docs.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `cargo shuyi docs play a sound` and `cargo shuyi docs MapLook` both
+  answer at the pin (the settings Learn page and `hello-grid`'s sound,
+  settings and skin files), so the pointer names them as examples.
+- `AGENTS.md`: a paragraph under *Shared instructions and skills* (it
+  reaches Codex too, which has no MCP server instructions).
+- `engine-change` step 1 (check the engine doesn't have it already),
+  `engine-friction` step 5 (outcome 1 or 2 turns on whether the engine has
+  the piece) and `engine-pin` step 4 (the engine side of "Does the game
+  already have code doing this job?"): one pointer each.
+- The Codex loaders didn't change (they read the shared source);
+  `sync-agent-skills.ps1 -Check` and `check-skills` pass.
+- No code, no follow-up tickets, nothing for Nick.

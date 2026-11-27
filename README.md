@@ -46,24 +46,24 @@ and one hand acting. Every key and button can be rebound.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/img/battle-forecast.png" alt="Chapter 1's battle map in pixel art: a river with two bridges, forest and a road. The lead stands next to a brigand; the forecast panel shows hit, crit and damage for both sides, and that the lead strikes twice." width="100%"></td>
-<td width="50%"><img src="docs/img/combat-scene.png" alt="The close-up combat scene: the lead, a young swordsman, lunges at an archer on a meadow; the panels below show both sides' HP, hit and crit." width="100%"></td>
+<td width="50%"><img src="shots/battle-forecast.png" alt="Chapter 1's battle map in pixel art: a river with two bridges, forest and a road. The lead stands next to a brigand; the forecast panel shows hit, crit and damage for both sides, and that the lead strikes twice." width="100%"></td>
+<td width="50%"><img src="shots/combat-scene.png" alt="The close-up combat scene: the lead, a young swordsman, lunges at an archer on a meadow; the panels below show both sides' HP, hit and crit." width="100%"></td>
 </tr>
 <tr>
 <td align="center"><sub>The forecast before an attack</sub></td>
 <td align="center"><sub>The close-up combat scene</sub></td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/img/battle-ranges.png" alt="The lead selected at the start of Chapter 1: shaded tiles show where they can move, and the tiles they could attack from there." width="100%"></td>
-<td width="50%"><img src="docs/img/spell-menu.png" alt="A mage's spell menu on the battle map: Cinder Oath and Fire, each with uses left, might, hit, crit and range." width="100%"></td>
+<td width="50%"><img src="shots/battle-ranges.png" alt="The lead selected at the start of Chapter 1: shaded tiles show where they can move, and the tiles they could attack from there." width="100%"></td>
+<td width="50%"><img src="shots/spell-menu.png" alt="A mage's spell menu on the battle map: Cinder Oath and Fire, each with uses left, might, hit, crit and range." width="100%"></td>
 </tr>
 <tr>
 <td align="center"><sub>Move and attack ranges</sub></td>
 <td align="center"><sub>Spells</sub></td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/img/dialogue.png" alt="A dialogue scene before the battle: two portraits face each other above a text box." width="100%"></td>
-<td width="50%"><img src="docs/img/battle-glyphs.png" alt="The same battle and forecast as the first picture, with the map drawn in colored glyphs: two letters for each unit." width="100%"></td>
+<td width="50%"><img src="shots/dialogue.png" alt="A dialogue scene before the battle: two portraits face each other above a text box." width="100%"></td>
+<td width="50%"><img src="shots/battle-glyphs.png" alt="The same battle and forecast as the first picture, with the map drawn in colored glyphs: two letters for each unit." width="100%"></td>
 </tr>
 <tr>
 <td align="center"><sub>Dialogue scenes</sub></td>
@@ -123,9 +123,9 @@ plays the intro cinematic above, in time with the title music.
 
 <table>
 <tr>
-<td width="33%"><img src="docs/img/title.png" alt="The title screen: the Visions of Shuyi logo over a forest meadow, with the title menu." width="100%"></td>
-<td width="33%"><img src="docs/img/lead-select.png" alt="Choosing your lead: two portraits, a young man and a young woman, with the lead's name under them." width="100%"></td>
-<td width="33%"><img src="docs/img/key-bindings.png" alt="The key bindings screen: each action with up to three keys, a tab for the keyboard layout and one for the controller." width="100%"></td>
+<td width="33%"><img src="shots/title.png" alt="The title screen: the Visions of Shuyi logo over a forest meadow, with the title menu." width="100%"></td>
+<td width="33%"><img src="shots/lead-select.png" alt="Choosing your lead: two portraits, a young man and a young woman, with the lead's name under them." width="100%"></td>
+<td width="33%"><img src="shots/key-bindings.png" alt="The key bindings screen: each action with up to three keys, a tab for the keyboard layout and one for the controller." width="100%"></td>
 </tr>
 <tr>
 <td align="center"><sub>The title screen</sub></td>

@@ -28,6 +28,9 @@ Words used here:
 
 Both tests must pass. If either fails, it is a game change: stop here and
 do it in the game (a game-side structure, `engine-friction` outcome 3).
+First check the engine doesn't have it already: `cargo shuyi docs <the
+job>` searches the pinned engine's docs, skills and examples; run it
+before reading the engine's source.
 
 1. **What goes where** (ADR-0063 §5): *would a platformer or a farming
    game want this unchanged?* → engine. *Would another grid-tactics

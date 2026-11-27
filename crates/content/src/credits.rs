@@ -147,6 +147,7 @@ mod tests {
                 "mattwalkden",
                 "elv_games",
                 "electric_lemon_lonesome_forest",
+                "electric_lemon_classic_dungeons",
                 "barely_pixel_quest",
                 "barely_post_baroque"
             ]

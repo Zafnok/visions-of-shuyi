@@ -81,6 +81,14 @@ pub enum Action {
     Menu,
     /// Debug overlay (developer).
     Debug,
+    /// Pause the game, or let it run again (developer, ADR-0153 of the
+    /// engine): its clock and screens stand while the debug screens run.
+    /// Only in builds with debug tools; like [`Debug`](Self::Debug), keyboard
+    /// only and not rebindable.
+    DebugPause,
+    /// While the game is paused, play one frame of it (developer). As
+    /// [`DebugPause`](Self::DebugPause).
+    DebugStep,
     /// Toggle auto-end of the player phase (`docs/design/turn-structure.md`).
     ToggleAutoEnd,
     /// Open the turn rewind (`docs/design/death-and-difficulty.md`).
@@ -145,7 +153,7 @@ impl KeyGroup {
 
 impl Action {
     /// Every action, in declaration order.
-    pub const ALL: [Action; 24] = [
+    pub const ALL: [Action; 26] = [
         Self::CursorLeft,
         Self::CursorDown,
         Self::CursorUp,
@@ -159,6 +167,8 @@ impl Action {
         Self::EndTurn,
         Self::Menu,
         Self::Debug,
+        Self::DebugPause,
+        Self::DebugStep,
         Self::ToggleAutoEnd,
         Self::Rewind,
         Self::Select,
@@ -174,7 +184,7 @@ impl Action {
 
     /// The name used in keymap files (the variant name).
     pub fn name(self) -> &'static str {
-        const NAMES: [&str; 24] = [
+        const NAMES: [&str; 26] = [
             "CursorLeft",
             "CursorDown",
             "CursorUp",
@@ -188,6 +198,8 @@ impl Action {
             "EndTurn",
             "Menu",
             "Debug",
+            "DebugPause",
+            "DebugStep",
             "ToggleAutoEnd",
             "Rewind",
             "Select",
@@ -243,11 +255,14 @@ impl Action {
         }
     }
 
-    /// Whether the player can rebind this action. The developer Debug key
-    /// can't (`docs/design/controls.md`: it is not on the Key bindings
-    /// screen), nor can Options, which has no key.
+    /// Whether the player can rebind this action. The developer's Debug,
+    /// pause and step keys can't (`docs/design/controls.md`: they are not
+    /// on the Key bindings screen), nor can Options, which has no key.
     pub fn is_rebindable(self) -> bool {
-        !matches!(self, Self::Debug | Self::Options)
+        !matches!(
+            self,
+            Self::Debug | Self::DebugPause | Self::DebugStep | Self::Options
+        )
     }
 }
 
@@ -291,6 +306,8 @@ impl ActionSet for Action {
             Self::Confirm => Some(UiAction::Confirm),
             Self::Cancel => Some(UiAction::Cancel),
             Self::Debug => Some(UiAction::Debug),
+            Self::DebugPause => Some(UiAction::DebugPause),
+            Self::DebugStep => Some(UiAction::DebugStep),
             Self::Info
             | Self::DangerZone
             | Self::NextUnit
@@ -380,12 +397,15 @@ mod tests {
             // The world map's group: Unit info's and Danger zone's buttons.
             (Action::WorldArmy, vec![North]),
             (Action::WorldFind, vec![West]),
-            // No button: the map menu, the optional split keys, Debug,
+            // No button: the map menu, the optional split keys, the debug
+            // keys (Debug, pause, step),
             // the Playdate's crank and system menu.
             (Action::Menu, vec![]),
             (Action::Select, vec![]),
             (Action::ConfirmEndTurn, vec![]),
             (Action::Debug, vec![]),
+            (Action::DebugPause, vec![]),
+            (Action::DebugStep, vec![]),
             (Action::RewindBack, vec![]),
             (Action::RewindForward, vec![]),
             (Action::Options, vec![]),
@@ -461,8 +481,10 @@ mod tests {
         assert_eq!(ui(Action::Confirm), Some(UiAction::Confirm));
         assert_eq!(ui(Action::Cancel), Some(UiAction::Cancel));
         assert_eq!(ui(Action::Debug), Some(UiAction::Debug));
+        assert_eq!(ui(Action::DebugPause), Some(UiAction::DebugPause));
+        assert_eq!(ui(Action::DebugStep), Some(UiAction::DebugStep));
         let mapped = Action::ALL.iter().filter(|&&a| ui(a).is_some()).count();
-        assert_eq!(mapped, 7);
+        assert_eq!(mapped, 9);
         assert_eq!(Action::for_ui(UiAction::Cancel), Some(Action::Cancel));
         assert_eq!(
             <Action as ActionSet>::fixed_keys(),
@@ -514,6 +536,8 @@ mod tests {
         assert_eq!(get("Space"), Some(Action::EndTurn));
         assert_eq!(get("Shift+Space"), Some(Action::ToggleAutoEnd));
         assert_eq!(get("F2"), Some(Action::Debug));
+        assert_eq!(get("F3"), Some(Action::DebugPause));
+        assert_eq!(get("F4"), Some(Action::DebugStep));
         assert_eq!(get("r"), Some(Action::Rewind));
         assert_eq!(get("q"), Some(Action::ZoomMap));
         let log = embedded_in(RIGHT_HANDED, KeyGroup::DialogueLog);
@@ -541,6 +565,8 @@ mod tests {
         assert_eq!(get("Space"), Some(Action::EndTurn));
         assert_eq!(get("Shift+Space"), Some(Action::ToggleAutoEnd));
         assert_eq!(get("F2"), Some(Action::Debug));
+        assert_eq!(get("F3"), Some(Action::DebugPause));
+        assert_eq!(get("F4"), Some(Action::DebugStep));
         assert_eq!(get("u"), Some(Action::Rewind));
         assert_eq!(get("p"), Some(Action::ZoomMap));
         let log = embedded_in(LEFT_HANDED, KeyGroup::DialogueLog);
@@ -553,16 +579,16 @@ mod tests {
 
     #[test]
     fn embedded_keymap_has_exactly_the_design_bindings() {
-        // 15 chords per layout: nothing bound beyond the design table.
+        // 17 chords per layout: nothing bound beyond the design table.
         let k = load_keymap().unwrap_or_default();
         for layout in [RIGHT_HANDED, LEFT_HANDED] {
             let general = k.bindings(layout, KeyGroup::General);
-            assert_eq!(general.map(|b| b.len()), Some(15), "{layout}");
+            assert_eq!(general.map(|b| b.len()), Some(17), "{layout}");
             let log = k.bindings(layout, KeyGroup::DialogueLog);
             assert_eq!(log.map(|b| b.len()), Some(1), "{layout}");
             let world = k.bindings(layout, KeyGroup::WorldMap);
             assert_eq!(world.map(|b| b.len()), Some(2), "{layout}");
-            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(24));
+            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(26));
             // The crank's and the system menu's actions: no key (1035).
             for none in [Action::RewindBack, Action::RewindForward, Action::Options] {
                 assert_eq!(k.chords(layout, none), [], "{layout} {none}");
@@ -626,6 +652,20 @@ mod tests {
             .filter(|a| !a.is_rebindable())
             .collect();
         // Options has no key at all (the Playdate's system menu, 1035).
-        assert_eq!(fixed, [Action::Debug, Action::Options]);
+        assert_eq!(
+            fixed,
+            [
+                Action::Debug,
+                Action::DebugPause,
+                Action::DebugStep,
+                Action::Options
+            ]
+        );
+        // The three debug keys share the Debug key's group (ticket 1390).
+        for debug in [Action::DebugPause, Action::DebugStep] {
+            assert_eq!(debug.group(), Action::Debug.group());
+            assert!(!debug.is_required());
+            assert!(!debug.is_repeatable());
+        }
     }
 }

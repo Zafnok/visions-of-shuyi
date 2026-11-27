@@ -32,35 +32,31 @@ are in `crates/xtask/src/readme_pictures.rs`. Picking other moments means
 changing that file's `CLIPS`; the cinematic's cuts are in
 `assets-private/content/cinematics/title.ron`.
 
-## The other pictures
+## The stills, `shots/`
 
-From ticket 0125's notes, 1600×1024 (`frame-png`'s scale 2), each made by
-one command written to `docs/img/<name>.png`. They have not been drawn again
-since 0125 (2026-10-15): the keys below follow Chapter 1's start as it was
-then, so check each picture against the game before committing it.
+The README's nine stills are `shuyi.ron`'s **shots** (ticket 1389): its
+`shots` part names each and holds the `frame-png` arguments that draw it,
+and shot `<name>` is always `shots/<name>.png`, 1600×1024 (scale 2). Make
+them all again, with the bought art:
 
 ```bash
-cargo run -q -p xtask --features private-assets -- frame-png docs/img/<name>.png <steps>
+cargo run -q -p trpg-tools --features private-assets -- shuyi frame-png --shots
 ```
 
-With `N="f f Down Down f f Down f"` (New Game, Classic, "familiar with this
-game", the lead as offered, Start), `B` = `--keys "$N" --wait 6 --keys "<80
-× f>" --wait 3` (the opening scene clicked through to the battle), and
-`A="f Right Right Right Up Up f"` (turn 2: the lead steps up to the brigand
-who came down in the enemy phase):
+or one with `--shot <name>` in place of `--shots`. Plain `cargo shuyi
+frame-png --shot <name>`, which a stale shot's error names, draws without
+the bought art: add the feature as above. Look at a remade picture before
+committing it. Changing a picture's moment means changing its arguments in
+`shuyi.ron` (its comment says what each shows).
 
-| Picture | Steps |
-| ------- | ----- |
-| `battle-forecast` | `$B --keys "Space f" --wait 15 --keys "$A" --wait 1.5 --keys "f Down" --wait 0.5` |
-| `battle-glyphs` | the same, built without `--features private-assets` |
-| `combat-scene` | the same, then `--keys "f f" --wait 1.0` instead of the last keys (the archer) |
-| `battle-ranges` | `$B --keys f --wait 0.5` |
-| `spell-menu` | `$B --keys "Down f f" --wait 1 --keys "Down f" --wait 0.5` |
-| `dialogue` | `--keys "$N" --wait 6 --keys "<60 × f>" --wait 4` |
-| `lead-select` | `--keys "f f Down Down f" --wait 0.5` |
-| `title` | `--wait 3` |
-| `key-bindings` | `--keys "Down Down f"`, thirteen `Down`s, then `f` |
+A test checks that each file is still what its arguments draw, pixel for
+pixel, under 256 KiB, and that `shots/` holds nothing else. It needs the
+bought art, so the gates never run it (ADR-0040); run it after a change
+the stills show (the title, a screen, Chapter 1's battle, the art):
 
-`<80 × f>` is the key `f` written 80 times, space-separated. The README's
-Playdate picture, `docs/design/playdate/q3r2-e-grey.png`, is 0061's chosen
-mockup, not a screenshot.
+```bash
+cargo test -p trpg-tools --features private-assets the_readme_s_shots
+```
+
+The README's Playdate picture, `docs/design/playdate/q3r2-e-grey.png`, is
+0061's chosen mockup, not a screenshot.

@@ -130,6 +130,42 @@
         dist: "dist/web",
     ),
 
+    // `cargo shuyi frame-png --shots` (with `--features private-assets`, as
+    // docs/img/README.md says): `shots/`, the README's still pictures, each
+    // `shots/<name>.png`, 1600 × 1024 (scale 2), a screenshot of the game
+    // with the bought art (AGENTS.md, Bought art). A test fails when one is
+    // stale (`crates/tools/src/game_tools/tests.rs`, with
+    // `--features private-assets` only). These are
+    // `frame-png`'s arguments after the output path. The battle's shots
+    // open on Chapter 1's battle (`--battle ch01`); `battle-forecast` ends
+    // turn 1 and steps the lead up to the brigand who came down,
+    // `combat-scene` attacks the archer there instead, `battle-glyphs` is
+    // `battle-forecast` with the map look set to glyphs in Options first.
+    shots: {
+        "title": (args: ["--wait", "3"]),
+        "lead-select": (args: ["--keys", "f f Down Down f", "--wait", "0.5"]),
+        "dialogue": (args: ["--scene", "ch01_prebattle", "--wait", "5"]),
+        "battle-ranges": (args: ["--battle", "ch01", "--keys", "f", "--wait", "0.5"]),
+        "battle-forecast": (args: ["--battle", "ch01", "--keys", "Space f", "--wait", "15",
+                         "--keys", "f Right Right Right Up Up f", "--wait", "1.5",
+                         "--keys", "f Down", "--wait", "0.5"]),
+        "battle-glyphs": (args: ["--battle", "ch01",
+                         "--keys", "d Down Down Down f", "--wait", "0.5",
+                         "--keys", "Down Down Down Down Down Down Down f", "--wait", "0.5",
+                         "--keys", "d Up Up f", "--wait", "0.5", "--keys", "d", "--wait", "0.5",
+                         "--keys", "Space f", "--wait", "15",
+                         "--keys", "f Right Right Right Up Up f", "--wait", "1.5",
+                         "--keys", "f Down", "--wait", "0.5"]),
+        "combat-scene": (args: ["--battle", "ch01", "--keys", "Space f", "--wait", "15",
+                         "--keys", "f Right Right Right Up Up f", "--wait", "1.5",
+                         "--keys", "f f", "--wait", "1.0"]),
+        "spell-menu": (args: ["--battle", "ch01", "--keys", "Down f f", "--wait", "1",
+                              "--keys", "Down f", "--wait", "0.5"]),
+        "key-bindings": (args: ["--keys", "Down Down f", "--wait", "0.5",
+                                "--keys", "Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down Down f",
+                                "--wait", "0.5"]),
+    },
+
     // What `NOTICES.txt` adds to the crates and the engine's files (ticket
     // 0909): the game's own works and their license texts. An xtask test
     // keeps them in step with THIRD_PARTY_ASSETS.md and the audio manifest.

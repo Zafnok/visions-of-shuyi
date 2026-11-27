@@ -29,6 +29,11 @@ Harness-specific hooks do not run everywhere: execute the workflow's
 required checks explicitly. Do not alter another harness's settings to
 make a shared instruction work.
 
+`cargo shuyi docs <query>` searches the pinned engine's book, skills,
+examples and problem codes (`play a sound`, `MapLook`; the MCP tool
+`docs` is the same). Run it before guessing an engine type's or
+function's name, and before reading the engine's source.
+
 ## Who decides what
 
 - **Nick (owner)** decides *game design*: stats, combat, magic, progression,

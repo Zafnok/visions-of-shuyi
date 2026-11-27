@@ -67,6 +67,9 @@ needed). Key choices are Nick's; the defaults below are his.
 | Zoom map (ticket 0439) | `Q` | `P` | Nick, 2026-10-12: see *Zoom map* below |
 | Open the dialogue log (ticket 0729) | `B` | `N` | Nick, 2026-10-14: see *Dialogue log* below. In its own group: may share a key |
 | Map menu | `Cancel` with nothing to cancel, or `Confirm` on an empty tile | same | Unchanged from before |
+| Debug menu *(developer)* | `F2` | `F2` | Only in builds with debug tools; not rebindable |
+| Pause / run the game *(developer, ticket 1390)* | `F3` | `F3` | Nick, 2026-11-27. Only in builds with debug tools; not rebindable. Holds the whole game (its clock, walks, hits, cinematics, typing text) while the debug screens still run; pressed again, it runs on |
+| Step one frame *(developer, ticket 1390)* | `F4` | `F4` | Nick, 2026-11-27. While paused, plays one frame. Same rules as pause |
 
 *Proposed by Claude, approved by Nick:*
 
@@ -299,7 +302,10 @@ keys in its slots. Only one slot needs a key.
 | Cancel | Previous / next ready unit |
 | End turn | Unit info, danger zone, auto-end on/off, rewind, map menu, zoom map *(0439)*, open the dialogue log *(0729)* |
 
-The developer Debug key is not on the screen.
+The developer's three keys are not on the screen: Debug (`F2`), and pause
+(`F3`) and step (`F4`), which hold the game and play it one frame at a time
+(ticket 1390). They are keyboard only, exist only in builds with debug
+tools, never reach a screen, and do nothing in a release.
 
 **Binding a key.**
 
@@ -393,8 +399,8 @@ nothing changed.
 - On that screen, up/down wrap round (the row after Map menu is Restore
   defaults, then Cursor up again); left/right stop at the first and third
   slot.
-- A key the game keeps for itself (only the developer debug key, in builds
-  that have the debug menu) shows `That key can't be used` and the slot
+- A key the game keeps for itself (only the developer's debug, pause and
+  step keys, in builds that have the debug menu) shows `That key can't be used` and the slot
   keeps waiting. Example: Mia presses the debug key at `Press a key…`;
   the message appears and she presses `g` instead.
 - When a key moves, the action that lost it lights up white for 1.5
@@ -478,7 +484,7 @@ the PlayStation / Switch name) for each position.
 | Map menu | *no button*: Cancel with nothing to cancel, or Confirm on an empty tile | | | | Same as the keyboard |
 | Select *(optional, 0218)* | *no button* | | | | Starts empty, as on the keyboard |
 | Confirm end turn *(optional, 0218)* | *no button* | | | | Starts empty: Start pressed again accepts |
-| Debug | *no button* | | | | Keyboard only |
+| Debug, pause, step *(developer)* | *no button* | | | | Keyboard only |
 
 Unused by default: right stick, pressing either stick. (The right trigger
 was unused until ticket 0439 put Zoom map on it.)

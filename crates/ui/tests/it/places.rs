@@ -130,8 +130,12 @@ fn chapter_1s_intro_is_drawn_over_its_place_after_its_captions() {
     let ctx = h.game().ctx();
     assert_eq!(ctx.game.map_skin.name(), "glyph");
     let yard = map_place(ctx, "harrowby_yard", Pos::new(12, 8));
-    assert_eq!(bare(place(&h)), Some(yard));
+    assert_eq!(bare(place(&h)), Some(yard.clone()));
     assert_eq!(ctx.game.content.maps["harrowby_yard"].look.light, "dawn");
+    // The fire Hollis sits by (1384).
+    let display = &ctx.game.content.terrain.display;
+    let fire = yard.tile(Pos::new(15, 8)).and_then(|t| t.terrain);
+    assert_eq!(fire, display.id_of("campfire"));
     h.wait(5.5);
     assert_private_snapshot!(dir, h.snapshot_of(PLACE));
 }
@@ -146,7 +150,11 @@ fn chapter_1s_last_scene_is_drawn_over_its_place() {
     let h = preview("ch01_tbc");
     let ctx = h.game().ctx();
     let study = map_place(ctx, "veyne_study", Pos::new(12, 7));
-    assert_eq!(bare(place(&h)), Some(study));
+    assert_eq!(bare(place(&h)), Some(study.clone()));
+    // The candle on the desk (1384).
+    let display = &ctx.game.content.terrain.display;
+    let candle = study.tile(Pos::new(14, 5)).and_then(|t| t.terrain);
+    assert_eq!(candle, display.id_of("candle"));
     let look = &ctx.game.content.maps["veyne_study"].look;
     assert_eq!(
         (look.tiles.as_str(), look.light.as_str()),

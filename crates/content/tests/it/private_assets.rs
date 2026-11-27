@@ -436,6 +436,8 @@ fn every_bought_file_has_a_credit() {
             "Rogue Adventure World (modified: a wall mirrored, trees halved)",
             // Chapter 1's hills (ticket 1359).
             "Lonesome Forest (modified: stones recolored)",
+            // The candle in Veyne Hall's study (ticket 1384).
+            "Classic Dungeons",
             // The windows' frames and title plate (ticket 1380).
             "2D Pixel Quest Vol.3 – The UI/GUI (modified: a panel recolored)",
             "Post-Baroque UI/GUI Kit (modified: a plate cut down)",

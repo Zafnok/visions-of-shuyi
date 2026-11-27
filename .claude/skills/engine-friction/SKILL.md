@@ -129,6 +129,11 @@ No trigger: stop here.
 4. **Accept**: the job really is that big. Say why. If the estimate
    was the problem, say what you'll estimate differently next time.
 
+Outcome 1 or 2 turns on whether the engine has the piece: look it up
+with `cargo shuyi docs <the job or a name>` (the pinned engine's docs,
+skills and examples) before guessing a name or reading the engine's
+source.
+
 **Leak test** for outcomes 1 and 2: the engine change must not name a
 class, unit, faction, Combat Art, chapter, character, story beat, or any
 id from the game's data. If the only shape that helps is game-shaped, it

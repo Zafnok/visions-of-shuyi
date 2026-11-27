@@ -5,10 +5,10 @@ type: infra
 milestone: M1 Engine
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-11-27
 ---
 
 # 1390 — Pause the game and step it one frame from two debug keys
@@ -82,14 +82,14 @@ reservation), plus the keymap file, the design tables and tests.
 
 ## Acceptance criteria
 
-- [ ] With debug tools on, the pause key holds the game and the step key
+- [x] With debug tools on, the pause key holds the game and the step key
   plays one frame (a Harness test reading the clock or the scene).
-- [ ] Neither key reaches a screen, with debug tools on or off.
-- [ ] The Key bindings screen refuses both keys in builds with the debug
+- [x] Neither key reaches a screen, with debug tools on or off.
+- [x] The Key bindings screen refuses both keys in builds with the debug
   menu, as it refuses the Debug key.
-- [ ] `keymap.ron` and `docs/design/controls.md` agree, and a test pins
+- [x] `keymap.ron` and `docs/design/controls.md` agree, and a test pins
   each default.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -99,5 +99,32 @@ reservation), plus the keymap file, the design tables and tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Nick, 2026-11-27 (asked with `ask-nick`): **`F3` pauses and runs again,
+`F4` steps one frame**, beside the Debug key's `F2` (the engine's sample
+keys).
+
+- `Action::DebugPause` and `Action::DebugStep` follow `Action::Debug` in
+  `crates/content/src/keymap.rs`: `ui()` maps them to
+  `UiAction::DebugPause` and `UiAction::DebugStep`, `is_rebindable()` is
+  false, their group is the Debug key's (`General`), no button, not
+  required, not repeated. `F3` and `F4` in both layouts of
+  `assets/data/keymap.ron`; `[]` in `pad` and `playdate`.
+- The Key bindings screen needed no code: the engine reserves the keys of
+  every action that can't be rebound (`LayoutBindings::from_def`), in
+  builds with the debug menu. A test pins it. With the debug tools on,
+  `F3` pressed at `Press a key…` pauses the whole game (that screen too)
+  before the screen sees it, so the slot keeps waiting and no message
+  shows until it runs again; with them off the screen says
+  `That key can't be used`. That is the engine's order (the pause acts
+  first), and either way the key never lands on a slot.
+- `docs/design/controls.md`: rows for the three developer keys in
+  *Bindings* (`F2` was never in that table; added beside the new two),
+  the line under *Rebinding keys*, the reserved keys line, and the
+  controller table's "Keyboard only" row.
+- Tests: the keymap unit tests (mapping, not rebindable, group, the
+  defaults in both layouts, 17 keys per layout); `tests/it/debug_pause.rs`
+  (the pause holds the lord's walk, a step moves it one frame, running
+  again ends in the same state hash as a straight walk; with the tools
+  off the keys change nothing; neither key reaches the battle screen,
+  tools on or off); `key_bindings_screen.rs`'s refusal of both keys.
+- No gameplay rule decided. No follow-up tickets.
