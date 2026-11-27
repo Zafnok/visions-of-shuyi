@@ -1280,10 +1280,8 @@ mod tests {
         let map = content.maps["test_small"].map.clone();
         // The test map names no look.
         assert_eq!(content.map_look(&map), MapLook::default());
-        let indoor = MapLook {
-            tiles: "indoor".to_owned(),
-            ..MapLook::default()
-        };
+        let mut indoor = MapLook::default();
+        indoor.tiles = "indoor".to_owned();
         if let Some(def) = content.maps.get_mut("test_small") {
             def.look = indoor.clone();
         }
@@ -1299,10 +1297,7 @@ mod tests {
     fn a_battles_look_is_its_maps_in_its_own_light_if_it_names_one() {
         let mut content = load_embedded().unwrap();
         let battle = content.battles["test"].clone();
-        let dusk = MapLook {
-            tiles: "indoor".to_owned(),
-            light: "dusk".to_owned(),
-        };
+        let dusk = MapLook::new("indoor", "dusk");
         for def in content.maps.values_mut().filter(|d| d.map == battle.map) {
             def.look = dusk.clone();
         }

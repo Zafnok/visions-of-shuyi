@@ -712,7 +712,7 @@ pub(crate) mod tests {
             audio.sounds.insert(cue.to_owned(), sound);
         }
         for &cue in music {
-            let track = MusicCue::new(format!("{cue}.ogg"), 100, 10_000, CreditRef::Own);
+            let track = MusicCue::new(format!("{cue}.ogg"), 10_000, CreditRef::Own);
             audio.music.insert(cue.to_owned(), track);
         }
         ctx

@@ -5,8 +5,8 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: blocked
-blocked_by: ["engine#2246"]
+status: todo
+blocked_by: []
 nick_input: none
 completed:
 ---
@@ -40,7 +40,7 @@ None. Nothing a player sees changes.
 ## Scope
 
 **In:**
-- The pin past engine#2246.
+- ~~The pin past engine#2246.~~ Done by the pin move of 2026-11-27 (`docs/engine/pins.md`).
 - `portrait.rs` down to `PORTRAITS_DIR`, `FRAME_PX`, one `EXPRESSIONS`
   list, `RULES`, `pub type Portrait = PictureSet; pub type Expression =
   NamedPicture;`, `load_all` and one `expression_problem` worded for
@@ -70,8 +70,7 @@ None. Nothing a player sees changes.
 
 ## Implementation steps
 
-1. **Pin** past engine#2246 (`engine-change` §7, `engine-pin` skill),
-   unless an open `engine-pin` PR has; read its API.
+1. ~~**Pin** past engine#2246~~ (done by the pin move of 2026-11-27 (`docs/engine/pins.md`)); read its API.
 2. `portrait.rs`: `RULES = PictureRules::new(&EXPRESSIONS, FRAME_PX)`;
    `load_all` is `bundle::load_each(PORTRAITS_DIR, "ron", |f|
    PictureSetDef::from_source(f.path, f.stem, f.text, &RULES)?.resolve(

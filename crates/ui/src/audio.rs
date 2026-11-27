@@ -95,7 +95,7 @@ mod tests {
         let mut m = trpg_content::AudioManifest::default();
         let cues = ["one", "two", "three"];
         for cue in cues {
-            let track = MusicCue::new(format!("{cue}.ogg"), 100, 10_000, CreditRef::Own);
+            let track = MusicCue::new(format!("{cue}.ogg"), 10_000, CreditRef::Own);
             m.music.insert(cue.to_owned(), track);
         }
         m.pools

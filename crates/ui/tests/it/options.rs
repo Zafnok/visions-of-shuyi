@@ -17,7 +17,7 @@
 //! glyph look.
 
 use insta::assert_snapshot;
-use shuyi_ui::audio::loudness::loudness;
+use shuyi_ui::audio::loudness::linear;
 use trpg_content::Theme;
 use trpg_core::{GameMode, TutorialLevel};
 use trpg_ui::ShuyiCtx;
@@ -300,10 +300,10 @@ fn heard(h: &Harness) -> (Gain, Gain) {
     (h.gain(MUSIC), h.gain(SFX))
 }
 
-/// The gains of a music and a sound volume, on the engine's loudness
-/// curve (engine #318).
+/// The gains of a music and a sound volume: each number that percent of
+/// full (ticket 0882).
 fn at(music: u8, sound: u8) -> (Gain, Gain) {
-    (loudness(music), loudness(sound))
+    (linear(music), linear(sound))
 }
 
 /// Acceptance: the volumes change what `app` is told to play at, 0
@@ -661,7 +661,7 @@ fn restore_defaults_asks_first_and_keeps_the_layout_and_the_keys() {
     assert_eq!(settings(&h), Settings::default().with_layout(RIGHT_HANDED));
     // The volumes are back at Nick's start, the top (0879).
     assert_eq!(heard(&h), at(100, 100));
-    assert_eq!(h.gain(VOICE), loudness(100));
+    assert_eq!(h.gain(VOICE), linear(100));
     // Custom keys are reset on the Key bindings screen, not here.
     assert_eq!(h.game().ctx().layout_bindings(RIGHT_HANDED), keys);
     h.keys(KEEP);
@@ -893,7 +893,7 @@ fn leaving_asks_and_each_answer_does_its_part(open: fn() -> Harness, under: &[&s
     h.keys("Right").keys("Down Down Down Down Down Right");
     h.keys("Down Down Down Down Down Down Down Left");
     assert!(h.fullscreen());
-    assert_eq!(h.gain(MUSIC), loudness(95));
+    assert_eq!(h.gain(MUSIC), linear(95));
     assert_eq!(stored(&h), saved_before, "nothing saved yet");
     // Leaving asks, on Back.
     h.keys("d");
@@ -913,7 +913,7 @@ fn leaving_asks_and_each_answer_does_its_part(open: fn() -> Harness, under: &[&s
     assert_eq!(h.screens(), under);
     assert_eq!(settings(&h), before);
     assert!(!h.fullscreen());
-    assert_eq!(h.gain(MUSIC), loudness(100));
+    assert_eq!(h.gain(MUSIC), linear(100));
     assert_eq!(stored(&h), saved_before);
     // Again, and Keep: saved.
     h.keys("f Right d Left Left f");

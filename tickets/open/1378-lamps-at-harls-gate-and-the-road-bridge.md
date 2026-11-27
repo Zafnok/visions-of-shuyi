@@ -5,8 +5,8 @@ type: content
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: blocked
-blocked_by: ["engine#3247"]
+status: todo
+blocked_by: []
 blocks: ["1064"]
 nick_input: none
 completed:
@@ -50,8 +50,16 @@ checklist.
 ## Scope
 
 **In:**
-- The pin moved past engine#3247 (its first step, `engine-change` §7,
-  or the open `engine-pin` PR's merge).
+- ~~The pin moved past engine#3247~~: done by the pin move of 2026-11-27 (`docs/engine/pins.md`).
+- **The format's props, either order with 1219.** Engine PR #620
+  (2281), in the pin since the same move, reads a look's `props` in the
+  engine's terrain-tiles format (`shuyi_assets::tileset::LookDef`). If
+  1219 is done, the game's tileset is on that format: its props are the
+  engine's, and the step below is only the game's checks of them (the
+  names the maps place, the frames). If not, write `props` in
+  `LookFile` with the engine's field names and shape, so 1219 swaps it
+  for the engine's without a change to the files, and add a line to
+  1219 that it deletes the game's props too.
 - The tileset format (`trpg_content::tileset`, `look.rs`'s `LookFile`):
   a look's `props`, by name, each a picture of the image (its size in
   pixels, inside the image), checked; `assets/tilesets/README.md`; an
@@ -74,9 +82,10 @@ the ground around it.
 
 ## Implementation steps
 
-1. Move the pin past engine#3247 (`engine-change` §7; the `engine-pin`
-   skill's review for the engine PRs it passes).
-2. `props` in the tileset format and its checks; the map check of the
+1. ~~Move the pin past engine#3247~~: done by the pin move of
+   2026-11-27 (`docs/engine/pins.md`).
+2. `props` in the tileset format (either order with 1219, *Scope*) and
+   its checks; the map check of the
    names placed; READMEs.
 3. Frames for a prop's picture in `moving.rs` (the look's `props`
    swapped as its tiles are).

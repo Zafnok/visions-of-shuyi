@@ -5,11 +5,11 @@ type: tuning
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 blocks: ["1064"]
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 0882 — Volumes are a straight percentage of full: 20 plays at 20%
@@ -58,12 +58,19 @@ judged by playing: it goes on the Act 1 playtest's checklist (1064).
 - A volume number `n` (0–100) plays at gain `n / 100` of full, for every
   sound group the volume rows set, on every target (desktop, web,
   Playdate).
-- The change in the engine, by the `engine-change` skill (engine PR,
-  then the pin move in this ticket's PR), **with Nick's OK before the
-  engine ticket and PR are made** (his standing rule). The engine
-  never names this game: if another engine game may want the dB curve,
-  the engine offers both and this game picks the straight line; the
-  session decides which and records it in the engine's ticket.
+- The straight line in the game's audio manifest: `volume_curve: Linear`
+  in `assets/audio/audio.ron` (and the private layer's manifest, if it
+  has its own). ~~The change in the engine, by the `engine-change`
+  skill~~: done by engine PR #617 (engine ticket 3248, engine ADR-0158),
+  in the pin since the pin move of 2026-11-27 (`docs/engine/pins.md`).
+  It adds `shuyi_assets::audio::VolumeCurve` (`Decibels`, the default,
+  and `Linear`, gain `volume / 100`), read from the manifest's optional
+  `volume_curve`, and `SoundGroups` works every group's gain on it. A
+  ducking rule's floor stays `loudness(to)` on both curves, so the dip
+  under a voice keeps its dB (below, *Out*). Check that the Playdate's
+  sound (`crates/playdate/src/audio.rs`, its own players) takes its
+  groups' gains from the same `SoundGroups`; if it works them out
+  itself, give it the straight line there.
 - Saved settings: **a saved number keeps its number** (a profile at
   music 20 plays at 20% after this, which is Nick's example). No
   conversion of version 3 or 4 saves, and no settings version bump
@@ -91,18 +98,13 @@ judged by playing: it goes on the Act 1 playtest's checklist (1064).
 
 ## Implementation steps
 
-1. Ask Nick (one line) whether to go ahead with the engine change; the
-   `engine-change` skill then files the engine ticket and makes the
-   engine PR.
-2. In the engine, `shuyi_ui::audio::loudness`: the gain of a position is
-   `position / 100` of `Gain::FULL` (4096 units, rounded), or a choice
-   between that and the current table that a game sets, as the session
-   decides (step 1's ticket says which). Update `position_of_linear` to
-   the identity on the straight line, and the engine's tests and docs
-   that state 0.6 dB a step.
-3. Move the engine pin (`cargo xtask engine-pin`, or the `engine-change`
-   skill's §7) and, if the engine made it a choice, pick the straight
-   line in the game where `GameSettings` / the app's config is set.
+1. ~~Ask Nick whether to go ahead with the engine change~~ and
+2. ~~the engine change~~: done by engine PR #617 (3248), and
+3. ~~move the engine pin~~: done by the pin move of 2026-11-27. Pick
+   the straight line: `volume_curve: Linear` in the audio manifest
+   (`assets/audio/audio.ron`; read `shuyi_assets::audio::VolumeCurve`
+   and `loudness::gain_on` at the pin), and the Playdate's gains as
+   *Scope* says.
 4. `crates/ui/src/settings.rs`: check that a version 3 and 4 save's
    numbers are read as they are, and that the version 1–2 path gives the
    same number it was saved with. Fix the module and function docs that
@@ -112,29 +114,28 @@ judged by playing: it goes on the Act 1 playtest's checklist (1064).
    listening line to `tickets/open/1064-nick-plays-act-1-on-web-and-playdate.md`.
 6. Update the tests and snapshots that read a gain; run `run-gates`.
 
-Expected size: about 100–200 lines in the game (settings docs and tests,
-design docs, the pin), and about as much in the engine.
+Expected size: about 100–200 lines in the game (the manifest's line,
+settings docs and tests, design docs); nothing in the engine.
 
 ## Acceptance criteria
 
-- [ ] A group at volume 20 plays at a gain of 0.20 of full (±1 unit of
-  4096), at 1 at 0.01, at 100 at full, at 0 silent: an engine unit test
-  over every position 0–100 and a game test through `Ctx`/the audio
-  queue for the music group.
-- [ ] A saved version 4 profile with `volumes: { "music": 20 }` loads
+- [x] A group at volume 20 plays at a gain of 0.20 of full (±1 unit of
+  4096), at 1 at 0.01, at 100 at full, at 0 silent: a game test through
+  `Ctx`/the audio queue for the music group (the engine's unit test over
+  every position is engine 3248's).
+- [x] A saved version 4 profile with `volumes: { "music": 20 }` loads
   with music at 20 and plays it at 20% (a `settings.rs` test).
-- [ ] A version 1–2 save's linear volume loads as the same number.
-- [ ] `options.md` and `audio.md` say volumes are percentages of full;
+- [x] A version 1–2 save's linear volume loads as the same number.
+- [x] `options.md` and `audio.md` say volumes are percentages of full;
   no design document says 0.6 dB a step.
-- [ ] 1064's checklist has the line to listen to the beds under the
+- [x] 1064's checklist has the line to listen to the beds under the
   music at the new numbers.
-- [ ] The engine PR is merged and the pin points at it.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `assets/audio/audio.ron` says `volume_curve: Linear`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: the engine's position → gain for all 101 positions; the game's
-  settings reading (versions 1–4).
+- Unit: the game's settings reading (versions 1–4).
 - Property: gain is non-decreasing in the position and equals
   `position / 100` within rounding.
 - Snapshot / integration: any snapshot that prints a gain or a dB level
@@ -142,5 +143,37 @@ design docs, the pin), and about as much in the engine.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Engine** (engine ticket 3248, `Zafnok/shuyi-engine#617`, ADR-0158):
+  a game picks its volume curve in its audio manifest,
+  `volume_curve: Linear` (each number that percent of full) or
+  `Decibels` (the 0.6 dB steps, still the engine's default for other
+  games). A ducking rule's `to` stays on the decibel curve on both, so
+  the dip under a voice keeps its 6 dB. The baked pack moves to version
+  26 for the new field.
+- **Game:** `volume_curve: Linear` in the public stand-in
+  `assets/audio/audio.ron` and in the private manifest
+  (`Zafnok/visions-of-shuyi-assets`, branch
+  `t0882-volumes-straight-percentage`). `settings.rs` reads a version
+  1–2 save's volumes as the same numbers (no more `read_old_volumes`);
+  version 3 and 4 saves were already read as they are. No settings
+  version bump: the saved form is unchanged.
+- **Deviation:** a version 1–2 save's 80 (the old default it always
+  wrote) still reads as "the default" (100 since 0879), as before; any
+  other number keeps its number.
+- **Deviation:** the pin itself moved on `main` in #866 (engine
+  `96eb097c` → `10cbb98b`, past #617's merge `877a4d0`), which also
+  adapted the game to the other engine PRs it passed, so this PR moves
+  no engine pin; it moves `assets-private.rev` to the private
+  repository's merge of `Zafnok/visions-of-shuyi-assets#40`.
+- Tests: the engine's position → gain for all 101 volumes on both
+  curves; `voice.rs`'s `a_music_volume_plays_at_that_percent_of_full`
+  (every volume through the game's frames, and a saved version 4
+  profile at 20 playing at 819 of 4096); the settings readers of
+  versions 1–4; the options and ducking tests now expect straight-line
+  gains with the dip still `loudness(90)`.
+- Friction: estimate 20 production lines (the settings reader and the
+  manifest line), measured 16 added: under 2×. Engine side about 210
+  lines of code in #617.
+- **For the Act 1 playtest (1064):** the beds now start about 1 dB under
+  the music (90% against 100), where they were 6 dB under; 1064's
+  checklist asks whether they sit well.
