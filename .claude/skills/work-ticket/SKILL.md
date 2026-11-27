@@ -25,6 +25,13 @@ discipline here is the whole quality system.
   names in `blocks` (`tickets/README.md`). Prefer the lowest number on
   the Act 1 critical path in `docs/ROADMAP.md`. Tell the user which one you
   picked and why in one sentence.
+- **Balance upstream first** (ticket 0532, retro 2026-11-17 T2): a
+  `tuning` ticket, or any ticket that re-records the winning playthroughs
+  (`crates/ui/tests/it/fixtures/*_winning.ron`), lists in its PR the open
+  balance tickets upstream of the chapters it tunes (their order is in
+  0876's `blocked_by` and `docs/ROADMAP.md` Lane I). Any of them that
+  waits on no Nick decision goes first, or the PR says why not. Ones
+  waiting on Nick don't hold it.
 - **An `engine#NNNN` in `blocked_by`** is a Shuyi Engine ticket. It is done
   only when it is in the engine's `tickets/done/` **and** the game's pin is
   at or past the commit that closed it. Check both, for a ticket you picked
