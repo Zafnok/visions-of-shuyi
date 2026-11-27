@@ -387,6 +387,22 @@ mod tests {
         assert_eq!(placed(&[".#.", ".#.", ".#."]), [(1, 0, Half), (1, 2, Half)]);
     }
 
+    /// A look's trees stand on the terrains it names, and only there.
+    #[test]
+    fn a_looks_trees_stand_on_its_own_forest() {
+        let mut t = trees();
+        let (forest, grass) = (TerrainId(7), TerrainId(8));
+        t.of = [forest].into_iter().collect();
+        let woods = |p: Pos| Some(if p.y < 3 { forest } else { grass });
+        let placed: Vec<(i32, i32, Footprint)> = t
+            .place(3, 4, woods)
+            .into_iter()
+            .map(|tr| (tr.trunk.x, tr.trunk.y, tr.footprint))
+            .collect();
+        assert_eq!(placed, [(1, 2, Big)]);
+        assert_eq!(t.place(3, 4, |_| Some(grass)), []);
+    }
+
     /// Only the map's tiles get trees, whatever the forest says of the
     /// tiles round it.
     #[test]

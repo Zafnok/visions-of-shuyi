@@ -1846,11 +1846,9 @@ impl<'a> TreePacker<'a> {
         self.at.1 += across;
         self.shelf = self.shelf.max(down);
         let (width, height, rgba) = &mut *self.image;
-        let bottom = (row + down) * TILE;
-        if bottom > *height {
-            rgba.resize(usize::try_from(bottom * *width * 4).unwrap_or(0), 0);
-            *height = bottom;
-        }
+        // The image grows down to the frame's bottom, if it isn't there.
+        *height = (*height).max((row + down) * TILE);
+        rgba.resize(usize::try_from(*height * *width * 4).unwrap_or(0), 0);
         let line = usize::try_from(size.0 * 4).unwrap_or(0);
         for (y, src) in (0..).zip(pixels.chunks_exact(line.max(1))) {
             let x = column * TILE;
