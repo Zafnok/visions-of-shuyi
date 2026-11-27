@@ -100,6 +100,8 @@ The Playdate shows the still frame (1314).
 - **Stacked on 1356** (PR #859): 1356's re-packed tileset was already on
   the private repository's `main`, so this branch merges #859's and
   re-packs on it; it merges after #859.
+- **Content:** merged as Zafnok/visions-of-shuyi-assets#41;
+  `assets-private.rev` is at its merge on `main` (`41d6283e`).
 - **Checked:** `frame-png` of `ch01_intro` (picture look, after the
   captions) shows the fire pit beside Hollis; of `ch01_tbc` the candle on
   the desk; both in the glyph look too. The pictures stay local (bought
