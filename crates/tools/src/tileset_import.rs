@@ -20,7 +20,7 @@
 //! A pack with no Tiled files (ELV Games' *Rogue Adventure*, ticket 1318)
 //! is read as plain sheets: a tile by its place, a `Patch` layer from the
 //! usual three-by-three layout, and a sheet's moving tiles by `moving`
-//! (each frame a step along the row).
+//! (each frame a step along the row, or whole rows down the column).
 //!
 //! A `Quarters` layer (ticket 1359) builds each corner picture from
 //! quarters of a kit's cells, RPG Maker style, so inside corners are round
@@ -119,13 +119,16 @@ pub struct Mapping {
 pub type Rgb = (u8, u8, u8);
 
 /// How a plain sheet draws its moving tiles: frame `k` of a tile is the
-/// tile `k × step` places to its right, each shown for `ms`.
+/// tile `k × step` places on, counted as ids are, each shown for `ms`: a
+/// step shorter than a row runs along the row, a whole number of rows
+/// down the column (ticket 1384: Rogue Adventure's fire pit).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Strip {
     /// How many frames, the tile itself the first.
     pub frames: u32,
-    /// Tiles from one frame to the next, along the row.
+    /// Tiles from one frame to the next: along the row, or a whole
+    /// number of rows (the sheet's columns times that) down the column.
     pub step: u32,
     /// How long each frame shows, in ms.
     pub ms: u32,
@@ -1241,7 +1244,11 @@ impl Packer<'_> {
     ) -> Result<Option<FramesText>, String> {
         let columns = self.sheet(sheet)?.tsx.columns;
         let last = (strip.frames.max(1) - 1) * strip.step;
-        if cut.right_column(columns) + last >= columns {
+        // Down the column, a frame past the bottom is outside the image
+        // when it is packed; along the row, one past the right edge would
+        // wrap onto the next row, so it is caught here.
+        let across = !strip.step.is_multiple_of(columns);
+        if across && cut.right_column(columns) + last >= columns {
             return Err(format!(
                 "{sheet}: the frames of {cut:?} run past the image's right edge"
             ));

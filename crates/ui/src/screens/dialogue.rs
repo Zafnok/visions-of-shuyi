@@ -942,8 +942,8 @@ impl DialogueScreen {
 
     /// The part of the place `line` names that the whole screen shows with
     /// `ctx`'s map skin, centred on the line's tile, with the characters of
-    /// the `opening` played on it where it has them now, and the whole
-    /// map's terrain. `None` for no place, a map the content hasn't got
+    /// the `opening` played on it where it has them now, on the screens'
+    /// clock (its moving tiles move: 1384), and the whole map's terrain. `None` for no place, a map the content hasn't got
     /// (the validator rules it out) and the battle when the screen has none.
     fn place_scene(
         &self,
@@ -952,6 +952,11 @@ impl DialogueScreen {
         opening: Option<&OpeningDef>,
     ) -> Option<(MapScene, Grid<TerrainId>)> {
         let view = screen_tiles(ctx);
+        let scene = |place: &Place, at: trpg_core::Pos| {
+            let mut scene = place.scene(at, view);
+            scene.clock_ms = crate::screen::loop_clock_ms(ctx);
+            scene
+        };
         match line {
             PlaceLine::Map { map, at, .. } => {
                 let def = ctx.game.content.maps.get(map)?;
@@ -959,11 +964,11 @@ impl DialogueScreen {
                 if let Some(opening) = opening.filter(|o| o.map == *map) {
                     place.units = self.opening_cast(ctx, opening);
                 }
-                Some((place.scene(*at, view), place.tiles))
+                Some((scene(&place, *at), place.tiles))
             }
             PlaceLine::Battle { at, .. } => {
                 let place = self.battle.as_ref()?;
-                Some((place.scene(*at, view), place.tiles.clone()))
+                Some((scene(place, *at), place.tiles.clone()))
             }
             PlaceLine::None => None,
         }

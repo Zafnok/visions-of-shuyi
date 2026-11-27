@@ -158,6 +158,12 @@
             move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
             defense: 0, avoid: 0, heal_percent: 0,
         ),
+        (
+            // The fire Hollis sits by (ticket 1384), on the yard's earth.
+            id: "campfire", name: "Fire", glyphs: "^^", fg: "fire", bg: "road_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
         // The study (veyne_study.map).
         (
             id: "desk", name: "Desk", glyphs: "╤╤", fg: "wood", bg: "wood_bg", decoration: true,
@@ -167,6 +173,12 @@
         (
             // A desk with papers on it.
             id: "papers", name: "Desk", glyphs: "≡≡", fg: "peak", bg: "wood_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            // A desk with a lit candle on it (ticket 1384).
+            id: "candle", name: "Desk", glyphs: "╤i", fg: "fire", bg: "wood_bg", decoration: true,
             move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
             defense: 0, avoid: 0, heal_percent: 0,
         ),

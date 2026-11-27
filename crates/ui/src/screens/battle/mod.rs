@@ -111,7 +111,7 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{CursorView, MapScene, MapSkin, Place, UnitView, range};
 use crate::screen::{
-    Ctx, FrameInput, IdleMotion, Screen, ScreenResult, Shuyi, SkinSet, Transition, loop_clock_s,
+    Ctx, FrameInput, IdleMotion, Screen, ScreenResult, Shuyi, SkinSet, Transition,
 };
 use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
@@ -2308,9 +2308,7 @@ fn fit_camera(
 /// Whole milliseconds of `ctx`'s clock, which only goes forward: a map
 /// scene's clock. 0 when idle motion is off ([`loop_clock_s`]).
 fn clock_ms(ctx: &Ctx) -> u64 {
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    let ms = (loop_clock_s(ctx).max(0.0) * 1000.0) as u64;
-    ms
+    crate::screen::loop_clock_ms(ctx)
 }
 
 /// Where and when the ranges opened, now that they would spread `from`
