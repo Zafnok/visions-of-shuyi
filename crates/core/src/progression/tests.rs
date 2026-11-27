@@ -6,38 +6,28 @@ use std::collections::BTreeMap;
 use proptest::prelude::*;
 
 use super::*;
-use crate::class::{ClassId, UnitTags};
+use crate::class::ClassId;
 use crate::geom::Pos;
 use crate::rng::{ScriptedRng, SimRng};
-use crate::skill::{SkillDef, SkillId, SkillKind};
+use crate::skill::{SkillDef, SkillId};
 use crate::spell::SpellId;
 use crate::stats::{Growths, Stats};
-use crate::terrain::MovementTypeId;
 use crate::unit::{Faction, UnitId};
 
+use crate::testing;
 use CombatResult::{Damaged, Killed, NoDamage};
 
 /// `progression.md`'s tier-1 Swordsman (growths 70 40 10 55 60 25 20).
 fn swordsman() -> ClassDef {
     ClassDef {
-        id: ClassId("swordsman".into()),
         name: "Swordsman".into(),
-        tier: 1,
-        movement_type: MovementTypeId(0),
         move_points: 5,
         base: Stats::from_growable([18, 5, 0, 7, 8, 3, 1], 5),
         growths: Growths([70, 40, 10, 55, 60, 25, 20]),
-        weapons: vec![],
-        max_armour: None,
-        tags: UnitTags::default(),
-        promotes_to: vec![],
         active: Some(SkillId::new("keen_edge")),
         passives: vec![SkillId::new("sword_focus_1"), SkillId::new("parry")],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
         spells: vec![(1, SpellId::new("spark")), (5, SpellId::new("frost"))],
-        affinities: vec![],
+        ..testing::class("swordsman")
     }
 }
 
@@ -75,11 +65,9 @@ fn table() -> ClassTable {
 
 fn skills() -> SkillTable {
     let passive = |id: &str, family: &str, rank| SkillDef {
-        id: SkillId::new(id),
-        name: id.into(),
         family: family.into(),
         rank,
-        kind: SkillKind::Passive(vec![]),
+        ..testing::skill(id)
     };
     SkillTable {
         skills: [

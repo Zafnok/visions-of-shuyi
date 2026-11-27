@@ -245,6 +245,7 @@ pub fn check_references(
 
 #[cfg(test)]
 mod tests {
+    use trpg_core::testing;
     use trpg_core::{CharacterDef, CharacterId, ClassDef, ClassId};
 
     use super::*;
@@ -280,7 +281,6 @@ mod tests {
         effect: Option<TerrainEffect>,
     ) -> SpellDef {
         SpellDef {
-            id: SpellId::new(id),
             name: name.into(),
             kind: SpellKind::Attack {
                 might,
@@ -289,25 +289,19 @@ mod tests {
                 effective: vec![],
             },
             element,
-            min_range: 1,
             max_range: 2,
             uses,
             terrain_effect: effect,
-            no_counter: false,
+            ..testing::spell(id)
         }
     }
 
     fn heal(id: &str, name: &str, heal_power: StatValue, uses: u8) -> SpellDef {
         SpellDef {
-            id: SpellId::new(id),
             name: name.into(),
             kind: SpellKind::Heal { heal_power },
-            element: Element::None,
-            min_range: 1,
-            max_range: 1,
             uses,
-            terrain_effect: None,
-            no_counter: false,
+            ..testing::spell(id)
         }
     }
 
@@ -403,7 +397,6 @@ mod tests {
         assert_eq!(
             t.get(&SpellId::new("x")),
             Some(&SpellDef {
-                id: SpellId::new("x"),
                 name: "X".into(),
                 kind: SpellKind::Attack {
                     might: 1,
@@ -412,11 +405,9 @@ mod tests {
                     effective: vec![(UnitTag::Flying, 2)],
                 },
                 element: Element::Ice,
-                min_range: 1,
                 max_range: 2,
                 uses: 3,
-                terrain_effect: None,
-                no_counter: false,
+                ..testing::spell("x")
             })
         );
     }

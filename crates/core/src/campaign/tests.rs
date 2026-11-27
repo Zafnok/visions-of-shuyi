@@ -12,6 +12,7 @@ use crate::battle::{Command, TriggerWhen, UnitAction};
 use crate::item::WeaponInstance;
 use crate::lead::LeadGender;
 use crate::support::{ByRank, PairDef, SupportRank, SupportRules};
+use crate::testing;
 
 fn c(id: &str) -> CharacterId {
     CharacterId(id.into())
@@ -100,7 +101,6 @@ fn def() -> BattleDef {
         id: BattleDef::slot_id(n),
     };
     BattleDef {
-        id: "test".into(),
         map: setup(vec![]).map,
         player_slots: vec![
             slot("lord", p(0, 0), 0),
@@ -114,17 +114,9 @@ fn def() -> BattleDef {
                 ..named(armed(unit(5, Faction::Enemy, p(1, 2)), 20), "rook")
             },
         ],
-        reinforcements: vec![],
-        preparations: false,
         pack_cap: 3,
         default_pack: vec![item("potion"), item("potion")],
-        solo_stock: vec![],
-        solo_gold: 0,
-        solo_bench: vec![],
-        bots_army: None,
         clear_gold: 500,
-        clear_items: vec![],
-        objective: Objective::Rout { turn_limit: None },
         triggers: vec![Trigger {
             when: TriggerWhen::UnitFell {
                 unit: c("rook"),
@@ -138,12 +130,9 @@ fn def() -> BattleDef {
             text: "Spare the captain.".into(),
             units: vec![UnitId(5)],
         }],
-        place_name: None,
-        village: None,
-        difficulty: Difficulty::Normal,
-        kind: BattleKind::Story,
         music: BattleMusic::Pool("skirmish".into()),
         seed: 3,
+        ..testing::battle("test")
     }
 }
 

@@ -3,12 +3,11 @@
 
 use super::*;
 use crate::art::ArtId;
-use crate::class::{ClassDef, ClassId, UnitTags};
+use crate::class::{ClassDef, ClassId};
 use crate::geom::Pos;
 use crate::item::WeaponInstance;
 use crate::item::{Equipped, ItemId};
-use crate::stats::Growths;
-use crate::terrain::MovementTypeId;
+use crate::testing;
 use crate::unit::{ClassRecord, Faction, UnitId};
 
 fn sid(id: &str) -> SkillId {
@@ -17,24 +16,22 @@ fn sid(id: &str) -> SkillId {
 
 fn passive(id: &str, family: &str, rank: u8, effects: Vec<PassiveEffect>) -> SkillDef {
     SkillDef {
-        id: sid(id),
-        name: id.into(),
         family: family.into(),
         rank,
         kind: SkillKind::Passive(effects),
+        ..testing::skill(id)
     }
 }
 
 fn active(id: &str, family: &str, rank: u8, effect: ActiveEffect) -> SkillDef {
     SkillDef {
-        id: sid(id),
-        name: id.into(),
         family: family.into(),
         rank,
         kind: SkillKind::Active {
             cost: SkillCost::Durability(3),
             effect,
         },
+        ..testing::skill(id)
     }
 }
 
@@ -106,24 +103,9 @@ fn table() -> SkillTable {
 
 fn class(id: &str, active: Option<&str>) -> ClassDef {
     ClassDef {
-        id: ClassId(id.into()),
-        name: id.into(),
-        tier: 1,
-        movement_type: MovementTypeId(0),
         move_points: 5,
-        base: Stats::default(),
-        growths: Growths::default(),
-        weapons: vec![],
-        max_armour: None,
-        tags: UnitTags::default(),
-        promotes_to: vec![],
         active: active.map(sid),
-        passives: vec![],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
-        spells: vec![],
-        affinities: vec![],
+        ..testing::class(id)
     }
 }
 

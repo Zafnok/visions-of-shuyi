@@ -1652,9 +1652,7 @@ mod tests {
     use crate::screens::battle::testing::{battle_with, skirmish, vaulted, wait};
     use crate::widgets::menu::{Label, english};
 
-    fn p(x: i32, y: i32) -> Pos {
-        Pos::new(x, y)
-    }
+    use crate::screens::battle::testing::p;
 
     /// A keymap with `pairs` bound.
     fn keys(pairs: &[(&str, Action)]) -> Keymap {

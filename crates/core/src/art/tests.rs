@@ -4,13 +4,12 @@
 use std::collections::BTreeMap;
 
 use super::*;
-use crate::class::{ClassDef, ClassId, UnitTags, WeaponProficiency};
+use crate::class::{ClassDef, ClassId, WeaponProficiency};
 use crate::combat::DamageType;
 use crate::geom::Pos;
 use crate::item::{ItemDef, ItemId, Loadout, WeaponDef, WeaponInstance};
 use crate::magic::Element;
-use crate::stats::{Growths, Stats};
-use crate::terrain::MovementTypeId;
+use crate::testing;
 use crate::unit::{Faction, UnitId};
 
 fn aid(id: &str) -> ArtId {
@@ -19,12 +18,10 @@ fn aid(id: &str) -> ArtId {
 
 fn art(id: &str, kind: WeaponKind, rank: Option<WeaponRank>, cost: u32) -> ArtDef {
     ArtDef {
-        id: aid(id),
-        name: id.into(),
         kind,
         rank,
         cost,
-        effect: ArtEffect::default(),
+        ..testing::art(id)
     }
 }
 
@@ -47,22 +44,14 @@ fn arts() -> ArtTable {
 
 fn weapon(kind: WeaponKind, rank: WeaponRank, arts: &[&str]) -> ItemDef {
     ItemDef::Weapon(WeaponDef {
-        short_name: None,
-        name: "W".into(),
         kind,
         rank,
         might: 5,
         hit: 90,
-        crit: 0,
         weight: 2,
-        min_range: 1,
-        max_range: 1,
-        damage_type: DamageType::Physical,
         durability: 20,
-        effective: vec![],
         arts: arts.iter().map(|a| aid(a)).collect(),
-        price: 0,
-        special: None,
+        ..testing::sword_def("W")
     })
 }
 
@@ -89,13 +78,7 @@ fn items() -> ItemTable {
 
 fn class(id: &str, kinds: &[WeaponKind]) -> ClassDef {
     ClassDef {
-        id: ClassId(id.into()),
-        name: id.into(),
-        tier: 1,
-        movement_type: MovementTypeId(0),
         move_points: 5,
-        base: Stats::default(),
-        growths: Growths::default(),
         weapons: kinds
             .iter()
             .map(|&kind| WeaponProficiency {
@@ -104,16 +87,7 @@ fn class(id: &str, kinds: &[WeaponKind]) -> ClassDef {
                 max: WeaponRank::S,
             })
             .collect(),
-        max_armour: None,
-        tags: UnitTags::default(),
-        promotes_to: vec![],
-        active: None,
-        passives: vec![],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
-        spells: vec![],
-        affinities: vec![],
+        ..testing::class(id)
     }
 }
 

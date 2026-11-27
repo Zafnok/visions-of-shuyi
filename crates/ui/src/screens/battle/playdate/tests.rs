@@ -13,7 +13,8 @@ use crate::onebit::is_white;
 use crate::screen::Screen;
 use crate::screens::battle::banner::BannerKind;
 use crate::screens::battle::notes::{NOTE_WIDTH, wrap_notes};
-use crate::screens::battle::tests::{lord_menu, quick, step};
+use crate::screens::battle::testing::{quick, step};
+use crate::screens::battle::tests::lord_menu;
 use crate::screens::battle::view::{
     BoxFighterView, FightBoxView, ObjectiveLine, ObjectiveView, QuestionView, UsesView,
 };

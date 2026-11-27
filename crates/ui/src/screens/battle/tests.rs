@@ -4,7 +4,7 @@ use insta::assert_snapshot;
 
 use trpg_core::{BattleMap, Grid, Objective, Phase, TerrainId, Unit};
 
-use super::testing::{battle, vaulted, wait};
+use super::testing::{battle, frame, quick, step, vaulted, wait};
 use super::view::{MenuPlace, PanelUnitView, PanelView, TerrainView};
 use super::*;
 use crate::audio::CURSOR_MOVE;
@@ -24,11 +24,9 @@ pub(super) fn unpadded(help: &str) -> String {
     }
 }
 
-pub(super) fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
-}
-
-pub(super) fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
+/// `screen` drawn over a buffer of stale cells, so a cell it leaves
+/// alone shows (re-exported by `testing`: `mod.rs` names no cell).
+pub(crate) fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
     let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     screen.draw(c, &mut buf);
@@ -231,11 +229,6 @@ fn cursor_starts_on_the_first_player_lord() {
     units.retain(|u| u.faction != Faction::Player);
     let s4 = BattleScreen::new(battle(&c, map, units));
     assert_eq!(s4.cursor().pos, Pos::new(7, 4));
-}
-
-/// One frame with `actions`.
-pub(super) fn step(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
-    s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
 }
 
 #[test]
@@ -681,12 +674,6 @@ fn large_map_scrolled_to_bottom_right_snapshot() {
     assert_eq!(scene.offset(corner), Some((34, 29)));
     assert_eq!(scene.unit_at(corner).map(|u| u.id), Some(cornered));
     assert_snapshot!(layout::snap(&render(&s, &c), &c, layout::MAP_VIEW));
-}
-
-/// One frame of `dt` seconds with `actions`, Confirm held if `held`.
-pub(super) fn frame(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action], dt: f32, held: bool) {
-    let held = if held { vec![Action::Confirm] } else { vec![] };
-    s.update(c, &FrameInput::new(actions.to_vec(), dt, held));
 }
 
 /// The Quick Battle with the lord selected and walked two tiles right to

@@ -23,13 +23,14 @@ use super::mode::{Effect, MenuEntry, Mode, Selection, entries_at, open_menu};
 use super::playback::TIMINGS;
 use super::sounds::step_sound;
 use super::testing::{battle_with, quick_units, setup, through_ai_phases, tile_cell};
+use super::testing::{p, render, step};
 use super::view::{ForecastView, InfoView, LeftView, PanelPreviewView};
 use super::{BattleScreen, HealPopup, PopupKind, TERRAIN_FLASH_S, TerrainFlash, quick_battle};
 use crate::FrameInput;
 use crate::audio::MenuSound;
-use crate::color::{Rgb, UiColor};
+use crate::color::UiColor;
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::{Cell, GlyphBuffer};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::harness::Harness;
 use crate::input::Action;
 use crate::map_view::{MapScene, range};
@@ -44,10 +45,6 @@ const MAGE: UnitId = UnitId(8);
 
 /// Its frost elemental: weak to Fire, absorbs Ice.
 const ELEMENTAL: UnitId = UnitId(7);
-
-fn p(x: i32, y: i32) -> Pos {
-    Pos::new(x, y)
-}
 
 fn sid(id: &str) -> SpellId {
     SpellId::new(id)
@@ -77,19 +74,8 @@ fn field(c: &Ctx, knight_hurt: StatValue) -> BattleState {
     battle_with(c, map, units, Objective::Rout { turn_limit: None })
 }
 
-fn step(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
-    s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
-}
-
 fn wait(s: &mut BattleScreen, c: &mut Ctx, seconds: f32) {
     s.update(c, &FrameInput::new(vec![], seconds, vec![]));
-}
-
-fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
-    let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
-    s.draw(c, &mut buf);
-    buf
 }
 
 /// Cells `x..x + w` of row `y`, trimmed on the right.

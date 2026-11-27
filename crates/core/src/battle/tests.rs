@@ -20,7 +20,7 @@ use proptest::prelude::*;
 use super::*;
 use crate::art::{ArtDef, ArtEffect, Debuff};
 use crate::class::{ArmourWeight, ClassDef, UnitTag, UnitTags, WeaponProficiency};
-use crate::combat::{CombatMods, DamageType};
+use crate::combat::CombatMods;
 use crate::geom::Grid;
 use crate::item::{
     AccessoryDef, ArmourDef, ConsumableDef, ItemDef, Loadout, WEAPON_SLOTS, WeaponDef,
@@ -36,8 +36,9 @@ use crate::skill::{
     TimedMods, WeaponReq,
 };
 use crate::spell::{EffectDuration, SpellState, TerrainEffect};
-use crate::stats::{Growths, StatKind, StatValue, Stats};
-use crate::terrain::{MovementTypeId, TerrainId, TerrainRules};
+use crate::stats::{StatKind, StatValue, Stats};
+use crate::terrain::{TerrainId, TerrainRules};
+use crate::testing;
 use crate::unit::{CharacterId, Role};
 use crate::weapon::WeaponKind;
 
@@ -85,13 +86,7 @@ fn terrain() -> TerrainTable {
 
 fn class(id: &str, tags: UnitTags) -> ClassDef {
     ClassDef {
-        id: ClassId(id.into()),
-        name: id.into(),
-        tier: 1,
-        movement_type: MovementTypeId(0),
         move_points: 3,
-        base: Stats::default(),
-        growths: Growths::default(),
         weapons: [
             WeaponKind::Sword,
             WeaponKind::Spear,
@@ -107,14 +102,7 @@ fn class(id: &str, tags: UnitTags) -> ClassDef {
         .to_vec(),
         max_armour: Some(ArmourWeight::Leather),
         tags,
-        promotes_to: vec![],
-        active: None,
-        passives: vec![],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
-        spells: vec![],
-        affinities: vec![],
+        ..testing::class(id)
     }
 }
 
@@ -161,12 +149,11 @@ fn test_melee_arts() -> Vec<ArtDef> {
     use WeaponKind::{Axe, Spear, Sword};
     let e = ArtEffect::default;
     let art = |id: &str, kind, rank, cost, effect| ArtDef {
-        id: ArtId::new(id),
-        name: id.into(),
         kind,
         rank,
         cost,
         effect,
+        ..testing::art(id)
     };
     let (e_rank, d_rank) = (Some(WeaponRank::E), Some(WeaponRank::D));
     vec![
@@ -261,8 +248,6 @@ fn test_melee_arts() -> Vec<ArtDef> {
 /// `rending_arrow` (bow E, 4), for [`test_arts`].
 fn test_rending_arrow() -> ArtDef {
     ArtDef {
-        id: ArtId::new("rending_arrow"),
-        name: "rending_arrow".into(),
         kind: WeaponKind::Bow,
         rank: Some(WeaponRank::E),
         cost: 4,
@@ -273,6 +258,7 @@ fn test_rending_arrow() -> ArtDef {
             }],
             ..ArtEffect::default()
         },
+        ..testing::art("rending_arrow")
     }
 }
 
@@ -281,12 +267,11 @@ fn test_other_arts() -> Vec<ArtDef> {
     use WeaponKind::{Bow, Gauntlet, Sword};
     let e = ArtEffect::default;
     let art = |id: &str, kind, rank, cost, effect| ArtDef {
-        id: ArtId::new(id),
-        name: id.into(),
         kind,
         rank,
         cost,
         effect,
+        ..testing::art(id)
     };
     let (e_rank, d_rank) = (Some(WeaponRank::E), Some(WeaponRank::D));
     vec![
@@ -373,11 +358,8 @@ fn test_other_arts() -> Vec<ArtDef> {
 /// A test skill (family = id, rank 1).
 fn test_skill(id: &str, kind: SkillKind) -> SkillDef {
     SkillDef {
-        id: SkillId::new(id),
-        name: id.into(),
-        family: id.into(),
-        rank: 1,
         kind,
+        ..testing::skill(id)
     }
 }
 
@@ -694,8 +676,6 @@ fn spells() -> SpellTable {
                   uses,
                   effect: Option<TerrainEffect>| {
         SpellDef {
-            id: SpellId::new(id),
-            name: id.into(),
             kind: SpellKind::Attack {
                 might,
                 hit,
@@ -703,23 +683,16 @@ fn spells() -> SpellTable {
                 effective: vec![],
             },
             element,
-            min_range: 1,
             max_range: 2,
             uses,
             terrain_effect: effect,
-            no_counter: false,
+            ..testing::spell(id)
         }
     };
     let heal = |id: &str, heal_power, uses| SpellDef {
-        id: SpellId::new(id),
-        name: id.into(),
         kind: SpellKind::Heal { heal_power },
-        element: Element::None,
-        min_range: 1,
-        max_range: 1,
         uses,
-        terrain_effect: None,
-        no_counter: false,
+        ..testing::spell(id)
     };
     let burn = TerrainEffect {
         from: vec![FOREST],
@@ -783,22 +756,9 @@ fn weapon(min: u32, max: u32, might: StatValue) -> ItemId {
 
 fn sword(name: &str) -> WeaponDef {
     WeaponDef {
-        short_name: None,
-        name: name.into(),
-        kind: WeaponKind::Sword,
-        rank: WeaponRank::E,
-        might: 0,
         hit: 100,
-        crit: 0,
-        weight: 0,
-        min_range: 1,
-        max_range: 1,
-        damage_type: DamageType::Physical,
         durability: 20,
-        effective: vec![],
-        arts: vec![],
-        price: 0,
-        special: None,
+        ..testing::sword_def(name)
     }
 }
 

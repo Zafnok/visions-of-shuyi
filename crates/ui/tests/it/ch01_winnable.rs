@@ -24,7 +24,8 @@ use trpg_core::{BattleState, Faction, GameMode, LeadGender, LeadProfile, Outcome
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 
-use crate::playthrough::{self, battle, lost, skip_scenes};
+use crate::playthrough::{self, lost};
+use crate::support::{skip_scenes, state as battle};
 
 const FIXTURE: &str = include_str!("fixtures/ch01_winning.ron");
 

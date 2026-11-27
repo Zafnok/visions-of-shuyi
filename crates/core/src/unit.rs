@@ -428,19 +428,16 @@ pub(crate) fn raise_to_start_ranks(ranks: &mut BTreeMap<WeaponKind, WeaponRank>,
 
 #[cfg(test)]
 mod tests {
+    use crate::testing;
     use proptest::prelude::*;
 
     use super::*;
-    use crate::class::{UnitTags, WeaponProficiency};
+    use crate::class::WeaponProficiency;
     use crate::stats::Growths;
-    use crate::terrain::MovementTypeId;
 
     fn class(id: &str) -> ClassDef {
         ClassDef {
-            id: ClassId(id.into()),
             name: "Brigand".into(),
-            tier: 1,
-            movement_type: MovementTypeId(0),
             move_points: 5,
             base: Stats::from_growable([20, 6, 0, 2, 4, 3, 0], 5),
             growths: Growths([80, 50, 0, 30, 30, 25, 5]),
@@ -456,16 +453,7 @@ mod tests {
                     max: WeaponRank::C,
                 },
             ],
-            max_armour: None,
-            tags: UnitTags::default(),
-            promotes_to: vec![],
-            active: None,
-            passives: vec![],
-            enemy_only: false,
-            lord_only: false,
-            weapon_slots: 3,
-            spells: vec![],
-            affinities: vec![],
+            ..testing::class(id)
         }
     }
 

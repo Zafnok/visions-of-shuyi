@@ -30,7 +30,8 @@ use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::WorldMapScreen;
 use trpg_ui::{Ctx, MemoryStorage, ShuyiCtx, Storage};
 
-use crate::playthrough::{self, battle, lost, skip_scenes};
+use crate::playthrough::{self, lost};
+use crate::support::{skip_scenes, state as battle};
 
 const LEDGER: &str = include_str!("fixtures/side_company_ledger_winning.ron");
 const LETTERS: &str = include_str!("fixtures/side_letters_home_winning.ron");

@@ -5,26 +5,24 @@
 //! progress?" (declined here; `save.rs` saves) → "To be continued" →
 //! title. Battles are won and lost with scripted commands.
 
+use crate::support::{state as battle, title};
 use insta::assert_snapshot;
 use trpg_content::TipTrigger;
 use trpg_core::{
-    BattleState, Command, GameMode, LeadGender, LeadProfile, Outcome, Pos, TutorialLevel,
-    UnitAction, UnitId,
+    Command, GameMode, LeadGender, LeadProfile, Outcome, Pos, TutorialLevel, UnitAction, UnitId,
 };
 use trpg_ui::ShuyiCtx;
 use trpg_ui::audio::pick_from_pool;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
+use trpg_ui::screens::ResultsScreen;
 use trpg_ui::screens::battle::layout::MAP_VIEW;
+use trpg_ui::screens::results::view::{ResultsBody, TallyView};
 
 /// The lead's unit in the test battle (its first slot).
 const LEAD: UnitId = UnitId(1);
 /// The seize tile.
 const FORT: Pos = Pos::new(5, 5);
-
-fn title() -> Harness {
-    Harness::with_layout(RIGHT_HANDED)
-}
 
 /// From the title: New Game, the mode (`Down` for Casual), "Not familiar",
 /// then the lead screen's `keys`, which must end on Start.
@@ -91,15 +89,6 @@ fn notes_open(h: &Harness) -> bool {
 fn send(h: &mut Harness, cmd: &Command) {
     let battle = h.battle_mut();
     battle.unwrap_or_else(|| panic!("no battle")).send(cmd);
-}
-
-/// The battle on screen.
-fn battle(h: &Harness) -> BattleState {
-    let battle = h.battle();
-    battle
-        .unwrap_or_else(|| panic!("no battle"))
-        .state()
-        .clone()
 }
 
 /// Rewind charges left in the battle on screen.
@@ -238,29 +227,28 @@ fn a_won_battle_shows_its_gold_and_the_rewind_bonus() {
     seize(&mut h);
     h.keys("f");
     assert_eq!(h.screens(), ["title", "game_flow", "results"]);
-    assert!(shows(&h, "Gold for clearing the map"), "{}", h.snapshot());
-    assert!(shows(&h, "+500 (now 500)"), "{}", h.snapshot());
-    assert!(shows(&h, "3 of 3"));
-    assert!(shows(&h, "Bonus EXP for each unit                     +21"));
+    let t = tally(&h);
+    let gold = t.gold.clone().unwrap_or_else(|| panic!("no gold line"));
+    assert_eq!(gold.label, "Gold for clearing the map");
+    assert_eq!((gold.gained, gold.now.as_str()), (500, "(now 500)"));
+    assert_eq!(t.rewinds.left, "3 of 3");
+    assert_eq!(bonus(&t), Some(("Bonus EXP for each unit", 21)));
     // Both deployed units, before the bars move.
-    let bar = |name: &str, class: &str, bar: &str, exp: u32| {
-        format!("{name:<14}{class:<9}Lv 1  EXP {bar:░<20} {exp:>2}")
+    let bars = |h: &Harness| -> Vec<(String, String, String, u32)> {
+        let units = tally(h).units.into_iter();
+        units.map(|u| (u.name, u.class, u.level, u.exp)).collect()
     };
-    assert!(
-        shows(&h, &bar("Ellery", "Exile", "", 0)),
-        "{}",
-        h.snapshot()
-    );
-    assert!(shows(&h, &bar("Test Knight", "Guard", "", 0)));
+    let bar = |name: &str, class: &str, exp: u32| {
+        (name.to_owned(), class.to_owned(), "Lv 1".to_owned(), exp)
+    };
+    let before = [bar("Ellery", "Exile", 0), bar("Test Knight", "Guard", 0)];
+    assert_eq!(bars(&h), before);
     // They fill by themselves, and then wait.
     h.wait(3.0);
     assert_eq!(h.screens(), ["title", "game_flow", "results"]);
-    assert!(
-        shows(&h, &bar("Ellery", "Exile", "████", 21)),
-        "{}",
-        h.snapshot()
-    );
-    assert!(shows(&h, &bar("Test Knight", "Guard", "████", 21)));
+    let after = [bar("Ellery", "Exile", 21), bar("Test Knight", "Guard", 21)];
+    assert_eq!(bars(&h), after);
+    // The whole frame, end to end: the cells the skin paints from the view.
     assert_snapshot!(h.snapshot());
     // What the screen showed is what the campaign got.
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
@@ -293,8 +281,9 @@ fn used_rewind_charges_shrink_the_bonus_to_nothing() {
     assert_eq!(charges(&h), 2);
     seize(&mut h);
     h.keys("f");
-    assert!(shows(&h, "2 of 3"), "{}", h.snapshot());
-    assert!(shows(&h, "Bonus EXP for each unit                     +14"));
+    let t = tally(&h);
+    assert_eq!(t.rewinds.left, "2 of 3");
+    assert_eq!(bonus(&t), Some(("Bonus EXP for each unit", 14)));
     // Every charge used.
     let mut h = to_battle();
     for _ in 0..3 {
@@ -305,12 +294,29 @@ fn used_rewind_charges_shrink_the_bonus_to_nothing() {
     seize(&mut h);
     h.keys("f");
     assert_eq!(h.screens(), ["title", "game_flow", "results"]);
-    assert!(shows(&h, "+500 (now 500)"), "{}", h.snapshot());
-    assert!(shows(&h, "0 of 3"));
-    assert!(!shows(&h, "Bonus EXP"));
-    assert!(!shows(&h, "EXP"));
+    let t = tally(&h);
+    let gold = t.gold.as_ref().map(|g| (g.gained, g.now.as_str()));
+    assert_eq!(gold, Some((500, "(now 500)")));
+    assert_eq!(t.rewinds.left, "0 of 3");
+    assert_eq!(bonus(&t), None);
+    assert!(t.units.is_empty(), "{:?}", t.units);
     h.keys("f");
     assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);
+}
+
+/// The results screen's tally, read from its view.
+fn tally(h: &Harness) -> TallyView {
+    let results = h.screen::<ResultsScreen>();
+    let results = results.unwrap_or_else(|| panic!("no results: {:?}", h.screens()));
+    match results.view(h.game().ctx()).body {
+        ResultsBody::Tally(tally) => tally,
+        body @ ResultsBody::LevelUp(_) => panic!("not the tally: {body:?}"),
+    }
+}
+
+/// The tally's bonus EXP line: its label and the EXP.
+fn bonus(t: &TallyView) -> Option<(&str, u32)> {
+    t.bonus.as_ref().map(|b| (b.label.as_str(), b.exp))
 }
 
 /// Whether some row of the screen contains `text`.

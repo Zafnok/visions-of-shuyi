@@ -9,16 +9,16 @@ use super::art::{art_attack, art_setup, artist};
 use super::*;
 use crate::art::ArtArea;
 use crate::battle::arts::area_tiles;
+use crate::testing;
 
 /// The four arts, rank D.
 fn several_arts() -> Vec<ArtDef> {
     let art = |id: &str, kind, cost, effect| ArtDef {
-        id: ArtId::new(id),
-        name: id.into(),
         kind,
         rank: Some(WeaponRank::D),
         cost,
         effect,
+        ..testing::art(id)
     };
     let area = |area, min, max| ArtEffect {
         area: Some(area),

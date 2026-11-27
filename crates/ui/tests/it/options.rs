@@ -16,6 +16,7 @@
 //! plain data), not from the glyphs a skin painted; the snapshots pin the
 //! glyph look.
 
+use crate::support::title;
 use insta::assert_snapshot;
 use shuyi_ui::audio::loudness::linear;
 use trpg_content::Theme;
@@ -46,11 +47,6 @@ const TO_LAYOUT: &str = "Down Down Down Down Down Down Down Down Down Down Down 
 /// Leaves Options with its changes kept: Cancel asks, the cursor starts on
 /// Back, two left is Keep (ticket 0839).
 const KEEP: &str = "d Left Left f";
-
-/// A launch after the right-handed layout was picked.
-fn title() -> Harness {
-    Harness::with_layout(RIGHT_HANDED)
-}
 
 /// Options, from the title: two rows under New Game (past Quick Battle).
 fn options() -> Harness {
