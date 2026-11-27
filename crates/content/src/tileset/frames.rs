@@ -216,19 +216,25 @@ pub(super) fn read(
 }
 
 /// Every moving cell of `tilesets`, each named as the check's messages show
-/// it (`tileset "test_auto", cell (3, 1)`), with its motion: what
-/// [`motion::check`](crate::motion::check) reads.
+/// it (`tileset "test_auto", cell (3, 1)`), and every look's trees
+/// (`tileset "tiny_tales", look "rogue_adventure"'s trees`, ticket 1356),
+/// with its motion: what [`motion::check`](crate::motion::check) reads.
 pub fn moving_rows<'a>(
     tilesets: impl IntoIterator<Item = &'a Tileset>,
 ) -> Vec<(String, &'a Motion)> {
     tilesets
         .into_iter()
         .flat_map(|tileset| {
-            tileset.frames.iter().map(move |tile| {
+            let cells = tileset.frames.iter().map(move |tile| {
                 let (x, y) = tile.at;
                 let name = format!("tileset \"{}\", cell ({x}, {y})", tileset.id);
                 (name, &tile.motion)
-            })
+            });
+            let trees = tileset.trees.iter().map(move |(look, trees)| {
+                let name = format!("tileset \"{}\", look \"{look}\"'s trees", tileset.id);
+                (name, &trees.motion)
+            });
+            cells.chain(trees)
         })
         .collect()
 }

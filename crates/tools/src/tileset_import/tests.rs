@@ -2095,3 +2095,200 @@ fn the_keeps_layers_name_only_our_terrains() {
     assert_eq!(problem("\"wall\", \"floor\"", "\"lava\""), lava("tower"));
     assert_eq!(problem("[\"floor\"]", "[\"lava\"]"), lava("stone"));
 }
+
+/// The colour of frame `k` of the made-up tree sheet.
+fn tree_color(k: u32) -> [u8; 4] {
+    [u8::try_from(40 + 20 * k).unwrap(), 120, 30, 255]
+}
+
+/// Writes a made-up tree sheet, `lib/trees/t.png`: eight frames of 64 ×
+/// 20 px, four across, each one colour; and `lib/trees/narrow.png`, 32 px
+/// wide, narrower than a frame.
+fn with_tree_sheet(temp: &Temp) {
+    let mut rgba = Vec::new();
+    for y in 0..40u32 {
+        for x in 0..256u32 {
+            rgba.extend(tree_color((y / 20) * 4 + x / 64));
+        }
+    }
+    temp.write("lib/trees/t.png", &encode_png(256, 40, &rgba).unwrap());
+    let narrow = vec![0; 32 * 40 * 4];
+    temp.write(
+        "lib/trees/narrow.png",
+        &encode_png(32, 40, &narrow).unwrap(),
+    );
+}
+
+/// The look `indoor` with `frames` frames of the made-up sheet `sheet` as
+/// trees on the forest.
+fn tree_looks(sheet: &str, frames: u32) -> String {
+    format!(
+        r#""outdoor": (layers: ["mud", "span", "fort"]),
+           "indoor": (layers: ["edge"], trees: (of: ["forest"], sheets: ["trees/{sheet}"],
+                      frame: (64, 20), frames: {frames}, ms: 160, foot: (32, 18))),"#
+    )
+}
+
+#[test]
+fn a_halved_picture_keeps_its_edge_crisp_and_its_shadow_soft() {
+    let (o, c) = ([200, 100, 0, 255], [0, 0, 0, 0]);
+    let shade = [0, 0, 0, 100];
+    // Four blocks of two by two: all solid, two solid (the edge), one
+    // solid, and a shadow's half.
+    #[rustfmt::skip]
+    let rows: [[[u8; 4]; 8]; 2] = [
+        [o, o, o, c, o, c, shade, shade],
+        [o, o, o, c, c, c, c, c],
+    ];
+    let pixels: Vec<u8> = rows.iter().flatten().flatten().copied().collect();
+    let half = halved(&pixels, (8, 2));
+    let at = |i: usize| <[u8; 4]>::try_from(&half[i * 4..i * 4 + 4]).unwrap();
+    assert_eq!(half.len(), 4 * 4);
+    assert_eq!(at(0), o);
+    assert_eq!(at(1), o);
+    // One solid pixel of four: its colour, a quarter as opaque.
+    assert_eq!(at(2), [200, 100, 0, 63]);
+    assert_eq!(at(3), [0, 0, 0, 50]);
+    // One solid pixel below a shadow's: the two averaged, as clear as the
+    // block on the whole.
+    let low: Vec<u8> = [c, c, o, shade].into_iter().flatten().collect();
+    assert_eq!(halved(&low, (2, 2)), [100, 50, 0, 88]);
+    // A block nearly clear (one pixel at alpha 3) is clear.
+    let faint: Vec<u8> = [[90, 90, 90, 3], c, c, c].into_iter().flatten().collect();
+    assert_eq!(halved(&faint, (2, 2)), [0, 0, 0, 0]);
+}
+
+#[test]
+fn a_looks_trees_are_packed_whole_and_halved_below_the_tiles() {
+    let temp = Temp::new("trees").with_sheet("lib");
+    with_tree_sheet(&temp);
+    let map = mapping(LAYERS, &tree_looks("t.png", 8));
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    let (_, indoor) = &imported.others[0];
+    let trees = indoor.trees.as_ref().expect("the look's trees");
+    assert_eq!(trees.of, ["forest"]);
+    let (big, half) = (&trees.big[0], &trees.half[0]);
+    assert_eq!((big.size, big.foot), ((64, 20), (32, 18)));
+    assert_eq!((half.size, half.foot), ((32, 10), (16, 9)));
+    // Below every tile packed: four frames four cells wide fill a row of
+    // the image, then the next four two cells down (a frame is 20 px
+    // tall); then the eight halves, two cells wide, fill one row.
+    let row = big.frames[0].0.1;
+    assert!(row > 0);
+    let cells = |kind: &tileset_ron::TreeKindText| -> Vec<At> {
+        kind.frames.iter().map(|&(at, _)| at).collect()
+    };
+    let shelf =
+        |top: u32, step: u32, n: u32| -> Vec<At> { (0..n).map(|k| (k * step, top)).collect() };
+    let mut whole = shelf(row, 4, 4);
+    whole.extend(shelf(row + 2, 4, 4));
+    assert_eq!(cells(big), whole);
+    assert_eq!(cells(half), shelf(row + 4, 2, 8));
+    assert!(big.frames.iter().all(|&(_, ms)| ms == 160));
+    // Each frame its picture, whole and halved.
+    for (k, (&(whole, _), &(halved, _))) in (0..).zip(big.frames.iter().zip(&half.frames)) {
+        assert_eq!(
+            cell_color(&imported.image, whole),
+            tree_color(k),
+            "frame {k}"
+        );
+        assert_eq!(
+            cell_color(&imported.image, halved),
+            tree_color(k),
+            "frame {k}"
+        );
+    }
+    // The game reads the trees from the tileset file.
+    let text = tileset(&imported, &UNITS);
+    let (width, height, rgba) = &imported.image;
+    let png = encode_png(*width, *height, rgba).unwrap();
+    let header = |w: u32, h: u32| {
+        let mut sheet = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR".to_vec();
+        sheet.extend(w.to_be_bytes());
+        sheet.extend(h.to_be_bytes());
+        sheet
+    };
+    let (sheet, horse) = (header(48, 80), header(72, 96));
+    let files = [
+        ("tilesets/tiny_tales.png", png.as_slice()),
+        ("units/a.png", sheet.as_slice()),
+        ("units/horse.png", horse.as_slice()),
+    ];
+    let content = trpg_content::load_embedded().unwrap();
+    let refs = TilesetRefs {
+        images: &trpg_content::image::from_files(files).unwrap(),
+        terrain: &content.terrain.display,
+        classes: &content.classes,
+        characters: &content.characters,
+    };
+    let read = parse_tileset("tiny_tales.ron", "tiny_tales", &text, &refs).unwrap();
+    let trees = read.trees("indoor").expect("the game reads the trees");
+    assert_eq!(
+        (trees.big[0].frames.len(), trees.half[0].frames.len()),
+        (8, 8)
+    );
+    let rows = trpg_content::tileset::moving_rows([&read]);
+    let report = trpg_content::motion::check(rows);
+    assert!(report.problems.is_empty(), "{:?}", report.problems);
+    assert!(
+        report.todo.iter().any(|t| t.contains("a one-bit tree")),
+        "{:?}",
+        report.todo
+    );
+}
+
+#[test]
+fn trees_whose_frames_dont_fit_their_sheet_are_refused() {
+    let temp = Temp::new("tree-fit").with_sheet("lib");
+    with_tree_sheet(&temp);
+    let dir = temp.0.join("lib");
+    let refused = |sheet: &str, frames: u32| {
+        let map = mapping(LAYERS, &tree_looks(sheet, frames));
+        import(&dir, &map, &terrains(), &fire).unwrap_err()
+    };
+    // Nine frames of 20 px need three rows of four: 60 px of a 40 px sheet.
+    assert_eq!(
+        refused("t.png", 9),
+        "look \"indoor\": trees: trees/t.png: 9 frames of 64×20 px don't fit the 256×40 px image"
+    );
+    // A frame of an odd side doesn't halve; one of no side, or wider than
+    // the packed image, can't be packed.
+    for (w, h) in [(63, 20), (64, 21), (0, 20), (64, 0), (512, 20)] {
+        let looks =
+            tree_looks("t.png", 8).replace("frame: (64, 20)", &format!("frame: ({w}, {h})"));
+        let map = mapping(LAYERS, &looks);
+        assert_eq!(
+            import(&dir, &map, &terrains(), &fire).unwrap_err(),
+            format!("look \"indoor\": trees: a frame of {w}×{h} px doesn't halve or doesn't fit")
+        );
+    }
+    // A frame as wide as the packed image fits.
+    let widest = tree_looks("t.png", 2).replace("frame: (64, 20)", "frame: (256, 20)");
+    assert!(import(&dir, &mapping(LAYERS, &widest), &terrains(), &fire).is_ok());
+    // A sheet narrower than a frame holds none.
+    assert_eq!(
+        refused("narrow.png", 2),
+        "look \"indoor\": trees: trees/narrow.png: 2 frames of 64×20 px don't fit the 32×40 px \
+         image"
+    );
+}
+
+#[test]
+fn a_looks_trees_are_checked_with_the_mapping() {
+    let looks = |trees: &str| {
+        format!("\"outdoor\": (layers: []), \"indoor\": (layers: [], trees: {trees}),")
+    };
+    let check_of = |trees: &str| check(&mapping(LAYERS, &looks(trees)), &terrains());
+    let tree = |of: &str, frames: u32| {
+        format!(
+            "(of: [\"{of}\"], sheets: [\"trees/t.png\"], frame: (32, 20), frames: {frames}, \
+             ms: 160, foot: (16, 18))"
+        )
+    };
+    assert_eq!(check_of(&tree("forest", 4)), Ok(()));
+    assert!(check_of(&tree("woods", 4)).unwrap_err().contains("woods"));
+    assert_eq!(
+        check_of(&tree("forest", 1)),
+        Err("look \"indoor\": trees need a sheet, 2 frames or more and a time".to_owned())
+    );
+}

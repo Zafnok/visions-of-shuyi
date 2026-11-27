@@ -17,6 +17,32 @@ pub struct LookText {
     pub terrain: Vec<(String, At)>,
     /// The layers painted over them, the first undermost.
     pub layers: Vec<LayerText>,
+    /// The trees standing on its forest, if it has any (ticket 1356).
+    pub trees: Option<TreesText>,
+}
+
+/// A look's trees to write (ticket 1356).
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct TreesText {
+    /// The terrains they stand on.
+    pub of: Vec<String>,
+    /// The kinds of big tree.
+    pub big: Vec<TreeKindText>,
+    /// The kinds of half-size tree.
+    pub half: Vec<TreeKindText>,
+    /// What is still to make for the `Minimal` tier's still, if anything.
+    pub minimal_todo: Option<String>,
+}
+
+/// A kind of tree to write: its frames' size, its foot and its frames.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TreeKindText {
+    /// A frame's size in pixels.
+    pub size: (u32, u32),
+    /// The pixel of a frame on the middle of its trunk tile's bottom edge.
+    pub foot: (u32, u32),
+    /// Each frame's top-left cell and its time in ms.
+    pub frames: Vec<(At, u32)>,
 }
 
 /// A layer to write.
@@ -132,7 +158,48 @@ pub fn look(look: &LookText, indent: &str) -> String {
         out.push_str(&layer(l, &format!("{indent}    ")));
     }
     let _ = writeln!(out, "{indent}],");
+    if let Some(trees) = &look.trees {
+        out.push_str(&trees_field(trees, indent));
+    }
     out
+}
+
+/// The `trees` field of a look, each line indented by `indent`, every
+/// lesser tier showing a tree's first frame.
+fn trees_field(trees: &TreesText, indent: &str) -> String {
+    let kinds = |kinds: &[TreeKindText]| {
+        let mut out = String::new();
+        for TreeKindText {
+            size: (w, h),
+            foot: (fx, fy),
+            frames,
+        } in kinds
+        {
+            let shown: Vec<String> = frames
+                .iter()
+                .map(|((c, r), ms)| format!("(({c}, {r}), {ms})"))
+                .collect();
+            let _ = writeln!(
+                out,
+                "{indent}        (size: ({w}, {h}), foot: ({fx}, {fy}), frames: [{}]),",
+                shown.join(", ")
+            );
+        }
+        out
+    };
+    let todo = trees
+        .minimal_todo
+        .as_ref()
+        .map_or_default(|t| format!(", todo: \"{t}\""));
+    let stills = format!("{{Reduced: (show: FirstFrame), Minimal: (show: FirstFrame{todo})}}");
+    format!(
+        "{indent}trees: (\n{indent}    of: {},\n{indent}    big: [\n{}{indent}    ],\n\
+         {indent}    half: [\n{}{indent}    ],\n{indent}    motion: (stills: {stills}),\n\
+         {indent}),\n",
+        list(&trees.of),
+        kinds(&trees.big),
+        kinds(&trees.half),
+    )
 }
 
 /// The `looks` field naming each of `named`; nothing for none.
@@ -225,7 +292,36 @@ mod tests {
                     sides: vec![(5, (2, 4))],
                 },
             ],
+            trees: None,
         }
+    }
+
+    #[test]
+    fn a_looks_trees_are_written_after_its_layers_each_still_its_first_frame() {
+        let kind = |size, foot, frames: Vec<(At, u32)>| TreeKindText { size, foot, frames };
+        let with_trees = LookText {
+            terrain: vec![],
+            layers: vec![],
+            trees: Some(TreesText {
+                of: names(&["forest"]),
+                big: vec![kind((64, 80), (32, 74), vec![((0, 9), 160), ((4, 9), 160)])],
+                half: vec![kind(
+                    (32, 40),
+                    (16, 37),
+                    vec![((0, 14), 160), ((2, 14), 160)],
+                )],
+                minimal_todo: Some("a one-bit tree".to_owned()),
+            }),
+        };
+        assert_eq!(
+            look(&with_trees, ""),
+            "terrain: {\n},\nlayers: [\n],\ntrees: (\n    of: [\"forest\"],\n    big: [\n        \
+             (size: (64, 80), foot: (32, 74), frames: [((0, 9), 160), ((4, 9), 160)]),\n    ],\n    \
+             half: [\n        \
+             (size: (32, 40), foot: (16, 37), frames: [((0, 14), 160), ((2, 14), 160)]),\n    ],\n    \
+             motion: (stills: {Reduced: (show: FirstFrame), Minimal: (show: FirstFrame, \
+             todo: \"a one-bit tree\")}),\n),\n"
+        );
     }
 
     #[test]
@@ -243,6 +339,7 @@ mod tests {
         let bare = LookText {
             terrain: vec![("plain".to_owned(), (7, 9))],
             layers: vec![],
+            trees: None,
         };
         assert_eq!(
             look(&bare, ""),
@@ -330,6 +427,7 @@ mod tests {
         let bare = LookText {
             terrain: vec![("plain".to_owned(), (0, 0))],
             layers: vec![],
+            trees: None,
         };
         assert_eq!(
             looks(&[("indoor".to_owned(), bare)]),

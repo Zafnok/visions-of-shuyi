@@ -2045,6 +2045,7 @@ impl BattleScreen {
             toggles: self.toggles(ctx, end_turn, message.as_ref()),
             message,
             scene: self.scene(ctx),
+            map: Some(self.state.map().tiles.clone()),
             help,
             debug_hint: super::debug_hint(ctx),
             forecast,

@@ -46,6 +46,15 @@ picture size. engine#2243's `LayerDef::Corners` had only `of` and
 `tiles`; Zafnok/shuyi-engine#607 (Nick's OK) adds the three fields and
 their checks to its scope.
 
+**2026-11-26, from 1356 (ADR-0134):** `LookFile` in `look.rs` gained an
+optional `trees` (`tileset/trees.rs`: the trees standing on a look's
+forest, their frames and stills), read with `Looking`'s `sized` and
+`terrains` (now `pub(super)`). engine#2243's `LookDef` doesn't have it
+and needn't: trees are this game's own data riding in a look. When this
+ticket moves the loader onto `LookDef`, it reads `trees` beside it (or
+takes it out of the look before the engine reads the rest), and keeps
+`trpg_content::tileset::Trees` and its checks as they are.
+
 ## Nick input
 
 None. Nothing a player sees changes; an unknown terrain's error text

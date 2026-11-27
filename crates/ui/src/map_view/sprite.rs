@@ -21,6 +21,7 @@
 //! arrows on glyph terrain.
 
 pub mod moving;
+pub mod trees;
 pub mod units;
 
 use alloc::rc::Rc;
@@ -62,21 +63,34 @@ impl MapSkin {
     }
 }
 
-/// This game's units as the sprite skin shows them: under them, a light
-/// square for a unit a battle note picks out (with terrain tiles), or the
-/// terrain's glyphs taken off a standing unit's tile (on glyph terrain);
-/// then their pictures, and their HP bars and marks ([`units`]).
+/// This game's units as the sprite skin shows them: under them, the trees
+/// of the map's look and a light square for a unit a battle note picks
+/// out (with terrain tiles), or the terrain's glyphs taken off a standing
+/// unit's tile (on glyph terrain); then their pictures, and their HP bars
+/// and marks ([`units`]).
 #[derive(Debug, Clone, Copy)]
 pub struct SpriteUnits<'a> {
     /// The context: its palette, its images, the lead.
     pub ctx: &'a Ctx,
     /// The tileset the pictures come from.
     pub tileset: &'a Tileset,
+    /// The whole map's terrain, if the screen knows it: where its trees
+    /// stand ([`trees`]).
+    pub map: Option<&'a trpg_core::Grid<trpg_core::TerrainId>>,
+    /// The index in the buffer's items of the first the ground painted.
+    pub ground_from: usize,
 }
 
 impl UnitPainter<UnitView> for SpriteUnits<'_> {
     fn paint_under(&self, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
         if self.tileset.terrain.is_some() {
+            trees::TreePainter {
+                ctx: self.ctx,
+                tileset: self.tileset,
+                map: self.map,
+                ground_from: self.ground_from,
+            }
+            .paint(scene, grid, buf);
             let light = self.ctx.palette.get(UiColor::Text);
             for unit in scene.units.iter().filter(|u| u.highlight) {
                 if let Some(tile) = grid.rect(unit.pos) {
