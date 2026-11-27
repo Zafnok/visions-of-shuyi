@@ -114,15 +114,18 @@ Nick's.
 - Music, sound and voice volume each go from **0 (silent) to 100**, and
   each **starts at 100**, the top (ticket 0879, option B; Nick,
   2026-11-23: "do we have a ticket yet for the starting volume being 97
-  which is super weird and should be 100"). The numbers are steps of
-  loudness (0.6 dB each, engine #318): 100 is the sound as it is, about
-  1.8 dB louder than the 97 the rows showed before, and turning one down
-  goes 95, 90, 85… A save from before is read where it sounds the same.
+  which is super weird and should be 100"). **Each number is that
+  percentage of full volume** (ticket 0882, Nick 2026-11-26: "1 should be
+  1% and 20 should be 20%"): 100 is the sound as it is, 50 half of it,
+  20 a fifth, 1 a hundredth, and 0 silent. Turning one down goes
+  95, 90, 85… A saved volume keeps its number: a profile at 20 plays at
+  20%.
 - **Ambience volume** (ticket 1322, Nick 2026-11-23: "its own in game
   volume slider", "10 ticks under"; `audio.md`, *Ambience*): a third row
   like the other two, for the places' sound beds. It starts **10 under
-  the music volume's start** (90 against the music's 100: 6 dB
-  quieter), and keeps that gap if the music's start ever moves. It sits
+  the music volume's start** (90 against the music's 100: 90% of full,
+  about 1 dB quieter), and keeps that gap if the music's start ever
+  moves. It sits
   under the Sound volume (*Claude's starting rule*), is kept in the player
   profile like the others, and `Restore defaults` puts it back. The
   Playdate shows it only if it plays the beds.

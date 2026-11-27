@@ -5,11 +5,11 @@ type: tuning
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: todo
+status: done
 blocked_by: []
 blocks: ["1064"]
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 0882 — Volumes are a straight percentage of full: 20 plays at 20%
@@ -119,19 +119,19 @@ settings docs and tests, design docs); nothing in the engine.
 
 ## Acceptance criteria
 
-- [ ] A group at volume 20 plays at a gain of 0.20 of full (±1 unit of
+- [x] A group at volume 20 plays at a gain of 0.20 of full (±1 unit of
   4096), at 1 at 0.01, at 100 at full, at 0 silent: a game test through
   `Ctx`/the audio queue for the music group (the engine's unit test over
   every position is engine 3248's).
-- [ ] A saved version 4 profile with `volumes: { "music": 20 }` loads
+- [x] A saved version 4 profile with `volumes: { "music": 20 }` loads
   with music at 20 and plays it at 20% (a `settings.rs` test).
-- [ ] A version 1–2 save's linear volume loads as the same number.
-- [ ] `options.md` and `audio.md` say volumes are percentages of full;
+- [x] A version 1–2 save's linear volume loads as the same number.
+- [x] `options.md` and `audio.md` say volumes are percentages of full;
   no design document says 0.6 dB a step.
-- [ ] 1064's checklist has the line to listen to the beds under the
+- [x] 1064's checklist has the line to listen to the beds under the
   music at the new numbers.
-- [ ] `assets/audio/audio.ron` says `volume_curve: Linear`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `assets/audio/audio.ron` says `volume_curve: Linear`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -143,5 +143,37 @@ settings docs and tests, design docs); nothing in the engine.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Engine** (engine ticket 3248, `Zafnok/shuyi-engine#617`, ADR-0158):
+  a game picks its volume curve in its audio manifest,
+  `volume_curve: Linear` (each number that percent of full) or
+  `Decibels` (the 0.6 dB steps, still the engine's default for other
+  games). A ducking rule's `to` stays on the decibel curve on both, so
+  the dip under a voice keeps its 6 dB. The baked pack moves to version
+  26 for the new field.
+- **Game:** `volume_curve: Linear` in the public stand-in
+  `assets/audio/audio.ron` and in the private manifest
+  (`Zafnok/visions-of-shuyi-assets`, branch
+  `t0882-volumes-straight-percentage`). `settings.rs` reads a version
+  1–2 save's volumes as the same numbers (no more `read_old_volumes`);
+  version 3 and 4 saves were already read as they are. No settings
+  version bump: the saved form is unchanged.
+- **Deviation:** a version 1–2 save's 80 (the old default it always
+  wrote) still reads as "the default" (100 since 0879), as before; any
+  other number keeps its number.
+- **Deviation:** the pin itself moved on `main` in #866 (engine
+  `96eb097c` → `10cbb98b`, past #617's merge `877a4d0`), which also
+  adapted the game to the other engine PRs it passed, so this PR moves
+  no engine pin; it moves `assets-private.rev` to the private
+  repository's merge of `Zafnok/visions-of-shuyi-assets#40`.
+- Tests: the engine's position → gain for all 101 volumes on both
+  curves; `voice.rs`'s `a_music_volume_plays_at_that_percent_of_full`
+  (every volume through the game's frames, and a saved version 4
+  profile at 20 playing at 819 of 4096); the settings readers of
+  versions 1–4; the options and ducking tests now expect straight-line
+  gains with the dip still `loudness(90)`.
+- Friction: estimate 20 production lines (the settings reader and the
+  manifest line), measured 16 added: under 2×. Engine side about 210
+  lines of code in #617.
+- **For the Act 1 playtest (1064):** the beds now start about 1 dB under
+  the music (90% against 100), where they were 6 dB under; 1064's
+  checklist asks whether they sit well.

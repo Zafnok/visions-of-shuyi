@@ -16,6 +16,7 @@
 use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::audio::groups::{MUSIC, SFX, VOICE};
 use crate::input::Layout;
 use trpg_content::Theme;
 
@@ -24,17 +25,18 @@ use crate::map_view::CursorStyle;
 pub use shuyi_ui::settings::{
     Background, GameSettings, MAX_VOLUME, SETTINGS_KEY, TextSpeed, Volumes,
 };
-use shuyi_ui::settings::{language_from_text, language_to_text, old_volume, read_old_volumes};
+use shuyi_ui::settings::{language_from_text, language_to_text, old_volume};
 
 /// This game's settings: the engine's, with this game's
 /// ([`Settings::game`](shuyi_ui::settings::Settings::game)).
 pub type Settings = shuyi_ui::settings::Settings<ShuyiSettings>;
 
 /// The saved format's version: 2 since the voices (ticket 0826), 3 since
-/// the volumes are each sound group's on the engine's loudness curve
-/// (engine #318). A version 1 save loads with the voices' defaults, and
-/// the linear volumes of a version 1 or 2 save are put where they sound
-/// the same. 4 since the language picked (ticket 0825): a save from before
+/// the volumes are each sound group's (engine #318). A version 1 save
+/// loads with the voices' defaults, and the volumes of a version 1 or 2
+/// save keep their numbers: a volume is that percent of full (ticket 0882,
+/// `volume_curve: Linear` in the audio manifest), as it was when they were
+/// written. 4 since the language picked (ticket 0825): a save from before
 /// it has none, so it shows English until the player picks one.
 pub const SETTINGS_VERSION: u32 = 4;
 
@@ -42,9 +44,9 @@ pub const SETTINGS_VERSION: u32 = 4;
 /// their defaults.
 pub(crate) const READ_VERSIONS: [u32; 4] = [1, 2, 3, SETTINGS_VERSION];
 
-/// The linear volume every group had by default before the loudness curve:
-/// a version 1 or 2 save always wrote its volumes, so one at this is read
-/// as the group's default (which sounds the same).
+/// The volume every group had by default in a version 1 or 2 save: such a
+/// save always wrote its volumes, so one at this is the default the player
+/// never changed, and is read as the group's default today.
 const OLD_DEFAULT_VOLUME: u8 = 80;
 
 /// How much faster animations play at [`AnimSpeed::Fast`]. *Tunable.*
@@ -577,8 +579,7 @@ impl GameSettings for ShuyiSettings {
     /// other than 1 to 4, gives `Err` with why (the caller then uses the
     /// defaults); a missing field takes its default, an unknown layout
     /// counts as none picked, a volume over [`MAX_VOLUME`] is brought
-    /// down to it and an old linear volume is put where it sounds the
-    /// same.
+    /// down to it and an old volume keeps its number.
     // check-text: not player text (warnings for the log)
     fn from_ron(text: &str) -> Result<Settings, String> {
         let file: SettingsFile = ron::from_str(text).map_err(|e| format!("unreadable: {e}"))?;
@@ -593,9 +594,16 @@ impl GameSettings for ShuyiSettings {
         for (group, volume) in file.volumes.iter() {
             s.volumes.set(group, volume);
         }
-        let old = |v: Option<u8>| v.filter(|&v| v != OLD_DEFAULT_VOLUME);
-        let (music, sound) = (old(file.music_volume), old(file.sound_volume));
-        read_old_volumes(&mut s.volumes, music, sound, old(file.voice_volume));
+        let old = [
+            (MUSIC, file.music_volume),
+            (SFX, file.sound_volume),
+            (VOICE, file.voice_volume),
+        ];
+        for (group, volume) in old {
+            if let Some(volume) = volume.filter(|&v| v != OLD_DEFAULT_VOLUME) {
+                s.volumes.set(group, volume);
+            }
+        }
         s.voices = file.voices.unwrap_or(true);
         s.language = language_from_text(file.language.as_deref());
         s.game = ShuyiSettings {
@@ -636,7 +644,6 @@ impl GameSettings for ShuyiSettings {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::audio::groups::{MUSIC, SFX, VOICE};
     use crate::input::LEFT_HANDED;
 
     /// Every setting changed from its default.
@@ -645,9 +652,9 @@ mod tests {
         s.text_speed = TextSpeed::Fast;
         s.fullscreen = true;
         s.theme = Theme::Moonlit;
-        // The saved form's 35 and 64, from before the loudness curve.
-        s.volumes.set_from_linear(MUSIC, 35);
-        s.volumes.set_from_linear(SFX, 64);
+        // The saved form's 35 and 64, their numbers kept (ticket 0882).
+        s.volumes.set(MUSIC, 35);
+        s.volumes.set(SFX, 64);
         s.game = ShuyiSettings {
             anim_speed: AnimSpeed::Fast,
             combat_animations: false,
@@ -698,23 +705,26 @@ mod tests {
         assert_eq!(Settings::from_ron(&text), Ok(off));
         let old = Settings::from_ron("Settings(version: 1, sound_volume: 3)").unwrap();
         let mut expected = Settings::default();
-        expected.volumes.set_from_linear(SFX, 3);
+        expected.volumes.set(SFX, 3);
         assert_eq!(old, expected);
         let loud = Settings::from_ron("Settings(version: 2, voice_volume: 250)").unwrap();
         assert_eq!(loud.volumes.get(VOICE), Some(MAX_VOLUME));
     }
 
-    /// Engine #318: the volumes are each sound group's on the loudness
-    /// curve. A version 1 or 2 save's linear volumes are put where they
-    /// sound the same, its 80 (the old default) at the group's default,
-    /// and none is written back; a volume over the loudest is brought
-    /// down to it.
+    /// Ticket 0882: a volume is that percent of full, as a version 1 or 2
+    /// save's linear volumes were, so each keeps its number; its 80 (the
+    /// old default) is the group's default, and none is written back; a
+    /// volume over the loudest is brought down to it.
     #[test]
-    fn old_linear_volumes_load_where_they_sound_the_same() {
+    fn old_linear_volumes_keep_their_numbers() {
         let old = "Settings(version: 2, music_volume: 35, sound_volume: 80, voice_volume: 100)";
         let s = Settings::from_ron(old).unwrap();
         let read = [MUSIC, SFX, VOICE].map(|group| s.volumes.get(group));
-        assert_eq!(read, [Some(85), None, Some(100)]);
+        assert_eq!(read, [Some(35), None, Some(100)]);
+        let one = "Settings(version: 1, music_volume: 1, sound_volume: 20)";
+        let s = Settings::from_ron(one).unwrap();
+        let read = [MUSIC, SFX].map(|group| s.volumes.get(group));
+        assert_eq!(read, [Some(1), Some(20)]);
         let text = s.to_ron();
         assert!(!text.contains("_volume"), "{text}");
         assert!(text.contains("version: 4,"), "{text}");
@@ -813,10 +823,10 @@ mod tests {
     /// Ticket 1109: settings saved before the engine had the settings
     /// (written by `main` at `6677932e`, every setting changed, and the
     /// defaults) load as they were. They were written byte for byte the
-    /// same until version 2 added the voices (0826), and version 3 the
-    /// volumes on the loudness curve (engine #318): now that form, with
-    /// the volumes the player set in place of the three linear ones
-    /// (voices and the log's, on, are left out).
+    /// same until version 2 added the voices (0826), and version 3 each
+    /// group's volume (engine #318): now that form, with the volumes the
+    /// player set, their numbers kept (0882), in place of the three old
+    /// ones (voices and the log's, on, are left out).
     /// Ticket 0908: the threat arrows are arcs by default, left out of a
     /// save then, and saved by name otherwise.
     #[test]
@@ -895,7 +905,7 @@ mod tests {
         let before = include_str!("settings/saved_before_1109.ron");
         let saved = as_written(before);
         assert_eq!(Settings::from_ron(&saved), Ok(changed()));
-        let set = "{\n        \"music\": 85,\n        \"sfx\": 94,\n    }";
+        let set = "{\n        \"music\": 35,\n        \"sfx\": 64,\n    }";
         assert_eq!(changed().to_ron(), as_now(before, set));
         let before = include_str!("settings/defaults_before_1109.ron");
         let defaults = as_written(before);
@@ -962,7 +972,7 @@ mod tests {
         for saved in ["0", "3", "-2", "200"] {
             let text = format!("Settings(version: 1, map_zoom: {saved}, sound_volume: 3)");
             let mut expected = Settings::default();
-            expected.volumes.set_from_linear(SFX, 3);
+            expected.volumes.set(SFX, 3);
             assert_eq!(Settings::from_ron(&text), Ok(expected), "{saved}");
         }
         let kept = Settings::from_ron("Settings(version: 1, map_zoom: 1)").unwrap();
@@ -975,11 +985,23 @@ mod tests {
         assert!(Settings::from_ron("Settings(version: 1, map_zoom: \"big\")").is_err());
     }
 
+    /// Ticket 0882: a version 4 profile's volumes keep their numbers (the
+    /// numbers are percents of full now, where they were steps of 0.6 dB
+    /// when it was saved), and so do a version 3 profile's.
+    #[test]
+    fn a_saved_volume_keeps_its_number() {
+        for version in [3, 4] {
+            let text = format!(r#"Settings(version: {version}, volumes: {{"music": 20}})"#);
+            let s = Settings::from_ron(&text).unwrap();
+            assert_eq!(s.volumes.get(MUSIC), Some(20), "version {version}");
+        }
+    }
+
     #[test]
     fn missing_fields_take_their_defaults() {
         let s = Settings::from_ron("Settings(version: 1, sound_volume: 3)").unwrap();
         let mut expected = Settings::default();
-        expected.volumes.set_from_linear(SFX, 3);
+        expected.volumes.set(SFX, 3);
         assert_eq!(s, expected);
     }
 

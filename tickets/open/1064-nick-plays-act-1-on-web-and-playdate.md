@@ -118,7 +118,11 @@ feel, difficulty, story, looks, controls, sounds, pauses that feel long.
   - 1050's questions: whether the enemy's pauses on the Playdate feel
     long, whether start-up feels slow (numbers from 0512's device run);
   - the new chapters' starting rules (0848–0854, 1070–1073) and the
-    Act 1 battle rules (0069, 0319).
+    Act 1 battle rules (0069, 0319);
+  - the volumes as straight percentages (0882): whether the places'
+    sound beds sit well under the music at their starting numbers
+    (ambience 90 against music 100, now about 1 dB apart where it was
+    6 dB), and whether music, beds and voices sit well together.
 - Turn every item of his feedback into a ticket (`write-ticket` skill,
   *Turning Nick's playtest feedback into tickets*): bugs with repro
   steps, feel items as tuning with proposed values, design changes as a

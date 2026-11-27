@@ -24,15 +24,20 @@ crashes it, so the checks below read every file's header.
 ```ron
 (
     music_fade_ms: 500,           // old track fades out this long, then the new one starts
+    // How a volume's number (0-100) becomes the gain it plays at: Linear,
+    // that percent of full (ticket 0882), or Decibels, 0.6 dB a step (the
+    // engine's default; engine ADR-0157). Optional.
+    volume_curve: Linear,
     groups: [
-        // The volume a new player's group starts at on Options (0-100 on
-        // the loudness curve; engine GroupDef). Optional: a group left
-        // out starts at the engine's default.
+        // The volume a new player's group starts at on Options (0-100;
+        // engine GroupDef). Optional: a group left out starts at the
+        // engine's default.
         (id: "music", volume: 100),
     ],
     ducks: [
         // While a voice clip plays, lower a sound group to `to` on the
-        // loudness curve (each step 0.6 dB: 90 is 6 dB under) over
+        // engine's decibel curve, whatever volume_curve says (each step
+        // 0.6 dB: 90 is 6 dB under) over
         // attack_ms, and bring it back over release_ms after (engine
         // ADR-0099; ticket 0865). Optional.
         (when: "voice", lower: "music", to: 90, attack_ms: 150, release_ms: 600),

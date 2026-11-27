@@ -277,8 +277,12 @@ Which bed each place gets is each chapter's ticket (1324–1331); Chapter
   music's own loudness (Nick: "ambient should be same volume as music").
   The player sets it with **its own volume on Options**, which starts
   **10 under the music's** on the 0–100 scale: 90 against the music's 100
-  (0879), so 6 dB quieter (0.6 dB a step, `options.md`, *Volumes*). If the
-  music's start ever moves, the ambience's start moves with it, 10 under.
+  (0879). Each number is that percentage of full (0882, `options.md`,
+  *Volumes*), so the bed starts at 90% of full, about 1 dB quieter than
+  the music (it was 6 dB before 0882); the Act 1
+  playtest (1064) listens to the beds under the music at these numbers.
+  If the music's start ever moves, the ambience's start moves with it,
+  10 under.
   The world map, towns and camp play their beds as loud as a battle does.
 - **In conversations the bed dips under a voiced line**, exactly as the
   music does (rule 11): only while a line's clip plays, and back up after
@@ -440,8 +444,10 @@ sign-off: "it should sound like a heal").
   battle's track starts again from its beginning (the same track, also in a
   skirmish). `Retry Battle` starts the battle's music as a new battle does
   (a skirmish picks again).
-- The music's dip under a voiced line (rule 11) is 6 dB (to 90 on the
-  loudness curve, from the player's own music volume), reached over
+- The music's dip under a voiced line (rule 11) is 6 dB (`to: 90` on the
+  engine's decibel curve, whatever the volumes' own: the dip is its own
+  amount, not a volume row, 0882; from the player's own music volume),
+  reached over
   0.15 s; it comes back over 0.6 s once the line ends. The friend asked
   for "slightly" and "prob a fade transition"; the numbers are Claude's
   (`audio.ron`'s `ducks`), to judge in the Act 1 playtest.
