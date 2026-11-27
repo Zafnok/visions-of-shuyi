@@ -148,7 +148,8 @@ plays the intro cinematic above, in time with the title music.
 
 ### Progress
 
-*As of 2026-11-26. Work is tracked as tickets in [`tickets/`](tickets/README.md).*
+*As of 2026-11-26. Work is tracked as tickets in [`tickets/`](tickets/README.md);
+the numbers below count finished tickets out of all tickets written so far.*
 
 | Act 1 | Done |
 | ----- | ---: |
@@ -158,9 +159,27 @@ plays the intro cinematic above, in time with the title music.
 | Fixed skirmishes | 4 / 8 |
 | Chapters voiced | 1 / 8 |
 
-Across the project, 644 of 981 tickets are done; many of the open ones are
-for after Act 1 (other languages, modding, replay modes). Shuyi Engine's
-tickets are counted in [its repository](https://github.com/Zafnok/shuyi-engine).
+| Area | Progress | Done |
+| ---- | -------- | ---: |
+| Game-design decisions | `██████████░░░░░░░░░░` | 60 / 119 |
+| Project foundation | `█████████████░░░░░░░` | 65 / 98 |
+| Drawing, input and audio | `██████████████████░░` | 62 / 69 |
+| Battle rules | `████████████████░░░░` | 30 / 37 |
+| Battle screens | `█████████████████░░░` | 106 / 127 |
+| Enemy AI and playtest bots | `██████████████░░░░░░` | 18 / 26 |
+| Level ups and classes | `██████████████░░░░░░` | 7 / 10 |
+| Story and dialogue | `████████████████░░░░` | 73 / 91 |
+| Chapters and game flow | `█████████████░░░░░░░` | 58 / 88 |
+| Release | `██████████████░░░░░░` | 31 / 45 |
+| World map and later plans | `████░░░░░░░░░░░░░░░░` | 11 / 59 |
+| Playdate version | `███████████░░░░░░░░░` | 37 / 67 |
+| Shuyi Engine and tooling | `████████████░░░░░░░░` | 86 / 145 |
+| **Total** | `█████████████░░░░░░░` | **644 / 981** |
+
+Many open tickets are for after Act 1 (other languages, modding, replay
+modes), which is why the bars look emptier than Act 1 really is. Shuyi
+Engine's own tickets are counted in
+[its repository](https://github.com/Zafnok/shuyi-engine).
 
 ## Roadmap
 
