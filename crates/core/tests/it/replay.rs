@@ -10,15 +10,16 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
+use trpg_core::testing;
 use trpg_core::{
     ActiveEffect, BattleMap, BattlePack, BattleSetup, BattleState, CastTarget, CharacterId,
     ClassDef, ClassId, ClassTable, CombatMods, Command, ConsumableDef, ConsumableEffect,
-    DamageType, EffectDuration, Element, Equipped, Event, Faction, Grid, Growths, ItemDef, ItemId,
-    ItemTable, LoadoutDef, MovementTypeId, Objective, Phase, Pos, SkillCost, SkillDef, SkillId,
-    SkillKind, SkillTable, SpellDef, SpellId, SpellKind, SpellState, SpellTable, Stance, StatKind,
-    Stats, Stock, TerrainEffect, TerrainId, TerrainRules, TerrainTable, TileRect, TimedMods,
-    Trigger, TriggerWhen, Unit, UnitAction, UnitId, UnitTags, WeaponDef, WeaponKind,
-    WeaponProficiency, WeaponRank, WeaponReq, Who,
+    EffectDuration, Element, Equipped, Event, Faction, Grid, Growths, ItemDef, ItemId, ItemTable,
+    LoadoutDef, Objective, Phase, Pos, SkillCost, SkillDef, SkillId, SkillKind, SkillTable,
+    SpellDef, SpellId, SpellKind, SpellState, SpellTable, Stance, StatKind, Stats, Stock,
+    TerrainEffect, TerrainId, TerrainRules, TerrainTable, TileRect, TimedMods, Trigger,
+    TriggerWhen, Unit, UnitAction, UnitId, WeaponDef, WeaponKind, WeaponProficiency, WeaponRank,
+    WeaponReq, Who,
 };
 
 const FOREST: TerrainId = TerrainId(1);
@@ -51,12 +52,8 @@ pub(super) fn terrain() -> Arc<TerrainTable> {
 
 pub(super) fn classes() -> Arc<ClassTable> {
     let fighter = ClassDef {
-        id: ClassId("fighter".into()),
         name: "Fighter".into(),
-        tier: 1,
-        movement_type: MovementTypeId(0),
         move_points: 3,
-        base: Stats::default(),
         // Only HP and Res grow: sturdier units, same weapon damage.
         growths: Growths([80, 0, 0, 0, 0, 0, 30]),
         weapons: vec![WeaponProficiency {
@@ -64,16 +61,8 @@ pub(super) fn classes() -> Arc<ClassTable> {
             start: WeaponRank::E,
             max: WeaponRank::S,
         }],
-        max_armour: None,
-        tags: UnitTags::default(),
-        promotes_to: vec![],
         active: Some(SkillId::new("guard_strike")),
-        passives: vec![],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
-        spells: vec![],
-        affinities: vec![],
+        ..testing::class("fighter")
     };
     Arc::new(ClassTable {
         classes: BTreeMap::from([(fighter.id.clone(), fighter)]),
@@ -87,22 +76,10 @@ pub(super) fn classes() -> Arc<ClassTable> {
 
 fn blade(might: i32) -> ItemDef {
     ItemDef::Weapon(WeaponDef {
-        short_name: None,
-        name: "Blade".into(),
-        kind: WeaponKind::Sword,
-        rank: WeaponRank::E,
         might,
         hit: 60,
-        crit: 0,
-        weight: 0,
-        min_range: 1,
-        max_range: 1,
-        damage_type: DamageType::Physical,
         durability: 20,
-        effective: vec![],
-        arts: vec![],
-        price: 0,
-        special: None,
+        ..testing::sword_def("Blade")
     })
 }
 
@@ -173,10 +150,7 @@ pub(super) fn unit(id: u32, faction: Faction, x: i32, y: i32) -> Unit {
 /// rider, Def +2 until the user's next phase.
 pub(super) fn skills() -> Arc<SkillTable> {
     let def = SkillDef {
-        id: SkillId::new("guard_strike"),
         name: "Guard Strike".into(),
-        family: "guard_strike".into(),
-        rank: 1,
         kind: SkillKind::Active {
             cost: SkillCost::Durability(2),
             effect: ActiveEffect::Strike {
@@ -198,6 +172,7 @@ pub(super) fn skills() -> Arc<SkillTable> {
                 drain: false,
             },
         },
+        ..testing::skill("guard_strike")
     };
     Arc::new(SkillTable {
         skills: BTreeMap::from([(def.id.clone(), def)]),
@@ -209,7 +184,6 @@ pub(super) fn skills() -> Arc<SkillTable> {
 /// ice), for tile casts.
 pub(super) fn spells() -> Arc<SpellTable> {
     let bolt = SpellDef {
-        id: SpellId::new("bolt"),
         name: "Bolt".into(),
         kind: SpellKind::Attack {
             might: 5,
@@ -217,12 +191,9 @@ pub(super) fn spells() -> Arc<SpellTable> {
             crit: 0,
             effective: vec![],
         },
-        element: Element::None,
-        min_range: 1,
         max_range: 2,
         uses: 3,
-        terrain_effect: None,
-        no_counter: false,
+        ..testing::spell("bolt")
     };
     let fire = SpellDef {
         id: SpellId::new("fire"),
