@@ -339,12 +339,15 @@ jobs:
       - name: Join the lists
         id: join
         run: |
-          mkdir -p mutants-iterate
+          # One shard's artifact lands in outcomes/ itself, several each
+          # in a folder of its own: find reads both.
+          mkdir -p mutants-iterate outcomes
           touch mutants-iterate/previously_caught.txt
-          shopt -s nullglob
-          cat mutants-iterate/previously_caught.txt \
-            outcomes/*/caught.txt outcomes/*/unviable.txt outcomes/*/previously_caught.txt \
-            | sort -u > joined.txt
+          {
+            cat mutants-iterate/previously_caught.txt
+            find outcomes \( -name caught.txt -o -name unviable.txt -o -name previously_caught.txt \) \
+              -exec cat {} +
+          } | sort -u > joined.txt
           mv joined.txt mutants-iterate/previously_caught.txt
           count=$(wc -l < mutants-iterate/previously_caught.txt)
           echo "$count mutants caught or unviable so far"
@@ -384,9 +387,11 @@ jobs:
       - name: List the missed mutants
         if: needs.pr.result != 'skipped'
         run: |
-          shopt -s nullglob
-          cat /dev/null outcomes/*/missed.txt | sort -u > missed.txt
-          cat /dev/null outcomes/*/timeout.txt | sort -u > timeout.txt
+          # One shard's artifact lands in outcomes/ itself, several each
+          # in a folder of its own: find reads both.
+          mkdir -p outcomes
+          find outcomes -name missed.txt -exec cat {} + | sort -u > missed.txt
+          find outcomes -name timeout.txt -exec cat {} + | sort -u > timeout.txt
           {
             echo "### Missed mutants: $(wc -l < missed.txt)"
             echo
