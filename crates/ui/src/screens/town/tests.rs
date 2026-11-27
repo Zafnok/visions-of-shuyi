@@ -86,6 +86,29 @@ fn selling_asks_how_many_first() {
     assert_eq!(s.campaign().gold, 2300);
 }
 
+/// Up from the last line of a list longer than its box keeps the first
+/// line shown (1238).
+#[test]
+fn up_from_the_last_line_keeps_the_window() {
+    let mut ctx = ctx();
+    let vendor = shop(&ctx, "home", ShopKind::Vendor);
+    let mut campaign = army(&ctx);
+    let copy = trpg_core::WeaponInstance {
+        def: ItemId::new("iron_sword"),
+        durability_left: 10,
+    };
+    campaign.stock.weapons = vec![copy; 40];
+    let mut s = TownScreen::new(campaign, vendor, "Millbrook".into());
+    press(&mut s, &mut ctx, &[Action::CursorRight, Action::CursorUp]);
+    let (n, rows) = (s.deals(&ctx).len(), ROWS);
+    assert!(n > rows, "the list must be longer than its box");
+    let first = s.view(&ctx).first;
+    assert_eq!(first, n - rows, "the focus is on the bottom row");
+    press(&mut s, &mut ctx, &[Action::CursorUp]);
+    let view = s.view(&ctx);
+    assert_eq!((view.focus, view.first), (n - 2, first));
+}
+
 /// Up and down move between the lines: the second one is bought.
 #[test]
 fn down_then_confirm_buys_the_second_line() {

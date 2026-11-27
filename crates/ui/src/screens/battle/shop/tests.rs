@@ -205,6 +205,20 @@ fn leaving_with_nothing_chosen_sends_nothing() {
     assert!(entries(&s).contains(&MenuEntry::Shop));
 }
 
+/// Up from the last line of a list longer than its box keeps the first
+/// line shown (1238).
+#[test]
+fn up_from_the_last_line_keeps_the_window() {
+    let mut shop = ShopScreen::new(&battle_at(VENDOR, 0), LORD, VENDOR).unwrap();
+    shop.cursor = ListCursor::new(40).at(39);
+    let first = shop.cursor.window(ROWS).start;
+    assert_eq!(first, 40 - ROWS, "the focus is on the bottom row");
+    shop.step(Action::CursorUp);
+    assert_eq!(shop.cursor.first_shown(), first);
+    shop.step(Action::CursorUp);
+    assert_eq!((shop.focus(), shop.cursor.first_shown()), (37, first));
+}
+
 #[test]
 fn what_the_party_cant_afford_is_dimmed_and_refused() {
     let mut c = ctx();

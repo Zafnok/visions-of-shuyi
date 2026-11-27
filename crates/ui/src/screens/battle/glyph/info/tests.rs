@@ -6,6 +6,7 @@ use trpg_core::{Faction, UnitId};
 use super::*;
 use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
+use crate::glyph_buffer::Cell;
 use crate::screen::tests::ctx;
 use crate::screens::battle::glyph::progress::shows_face_of;
 use crate::screens::battle::info;

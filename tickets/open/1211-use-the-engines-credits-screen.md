@@ -15,6 +15,8 @@ completed:
 
 ## Context
 
+2026-11-27 (1238): `credits/glyph.rs`' box now goes through `GlyphBuffer::panel` with its title; the engine's credits screen is unaffected. No gap in the engine ticket.
+
 The game/engine boundary audit of 2026-11-03 found that the credits
 screen (0808; `crates/ui/src/screens/credits.rs`, `credits/view.rs`,
 `credits/glyph.rs`, about 270 production lines, with 643 lines of unit

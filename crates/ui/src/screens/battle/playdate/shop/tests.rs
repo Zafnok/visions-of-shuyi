@@ -25,6 +25,7 @@ fn view(n: usize, focus: usize) -> ShopScreenView {
         tab: 1,
         lines: (0..n).map(line).collect(),
         focus,
+        first: 0,
         empty: "Nothing here.".into(),
         selling: None,
         special: None,

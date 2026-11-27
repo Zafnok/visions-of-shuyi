@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1238 — Panels and list windows from the engine in every skin
@@ -113,5 +113,30 @@ lines removed.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+Done. 1185, 1077, 1216, 1215 and 1211 are all still open, so their
+"either order" clauses went the "if not" way: the three shops each got
+the window, both shop boxes moved, `credits/glyph.rs` moved, and the
+cuts, sized question boxes and `pd::window` were left alone. Not in the
+ticket's list but moved too: `save_import/glyph.rs`' box (same shape).
+
+- **Boxes:** progress (three), info, guides, rewind, shop (two), credits,
+  save (slot picker), save import, Preparations (`paint_frame`), results,
+  camp, world map (`panel(.., None)` + `print_centred`), lead select and
+  the dialogue log are on `GlyphBuffer::panel`. Where the old title sat
+  at `x + 2` it is the panel's title; the shop's (`x + 3`) and the
+  dialogue log's (`x + 3`) titles sit elsewhere, so they stay a print
+  after `panel(.., None)` to keep every snapshot unchanged.
+- **Windows:** `ShopScreenView.first`, `GuidesView.first` and
+  `ListView.first` carry `ListCursor::first_shown()`. The three shops
+  and Guides call `cursor.window(rows)` after every step and
+  `set_len`; the town shop no longer rebuilds its cursor on each step;
+  Preparations' units, spare, pack and shop lists are now
+  `ListCursor`s. The three `first_shown`/`window_start` helpers and
+  their tests are gone; a test per list (Guides, battle shop, town shop,
+  Preparations shop and the step its three plain lists share) checks Up
+  from the last row keeps the first row shown. The Preparations stock
+  list still scrolls by row heights and ignores `first` (out of scope).
+- **Snapshots:** none changed.
+- **For the Act 1 playtest (1064):** a long shop, Guides or Preparations
+  list now moves its window only when the focus leaves it, as every other
+  list does.
