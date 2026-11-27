@@ -21,11 +21,28 @@ fn view(brigand_hp: StatValue, change: impl FnOnce(&mut ForecastView)) -> Foreca
 }
 
 fn render(v: &ForecastView) -> GlyphBuffer {
-    let c = ctx();
+    render_in(&ctx(), v)
+}
+
+fn render_in(c: &Ctx, v: &ForecastView) -> GlyphBuffer {
     let blank = Cell::new(' ', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
-    paint(&c, v, &mut buf);
+    paint(c, v, &mut buf);
     buf
+}
+
+/// Ticket 1380: the forecast wears the panel frame in the picture look,
+/// its title centred on the plate.
+#[test]
+fn the_picture_look_frames_the_forecast_and_plates_its_title() {
+    use crate::frames::tests::{assert_framed, assert_plated, framed_ctx};
+    let c = framed_ctx();
+    let v = view(20, |_| {});
+    let buf = render_in(&c, &v);
+    assert_framed(&buf, "ui/panel.png", SIDE_PANEL);
+    let w = buf.text_cells(&v.title);
+    let x = SIDE_PANEL.x + (SIDE_PANEL.w - w - 2) / 2 + 1;
+    assert_plated(&buf, Rect::new(x, SIDE_PANEL.y, w, 1));
 }
 
 fn text(buf: &GlyphBuffer, x: i32, y: i32, n: i32) -> String {

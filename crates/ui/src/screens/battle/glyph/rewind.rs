@@ -7,6 +7,7 @@
 
 use super::{TEXT_W, TEXT_X, clear, paint_help, paint_lesson};
 use crate::color::UiColor;
+use crate::frames;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
@@ -50,9 +51,11 @@ pub fn paint(ctx: &Ctx, view: &RewindScreenView, buf: &mut GlyphBuffer) {
 /// prompt.
 pub fn paint_list(ctx: &Ctx, view: &RewindView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(SIDE_PANEL, &look.with_border(c(UiColor::PanelBorder)), None);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg))
+        .with_border(c(UiColor::PanelBorder));
+    let look = frames::framed(ctx, frames::PANEL, look);
+    let bg = look.bg;
+    buf.panel(SIDE_PANEL, &look, None);
     let print = |buf: &mut GlyphBuffer, y, text: &str, fg, bg| {
         buf.print(TEXT_X, y, text, fg, bg);
     };

@@ -95,11 +95,21 @@ fn view(lines: usize, focus: usize) -> RewindView {
 
 /// `view` painted.
 fn painted(view: &RewindView) -> GlyphBuffer {
-    let c = ctx();
+    painted_in(&ctx(), view)
+}
+
+fn painted_in(c: &Ctx, view: &RewindView) -> GlyphBuffer {
     let black = c.palette.get(UiColor::Black);
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
-    paint_list(&c, view, &mut buf);
+    paint_list(c, view, &mut buf);
     buf
+}
+
+/// Ticket 1380: the rewind list wears the panel frame in the picture look.
+#[test]
+fn the_picture_look_frames_the_rewind_list() {
+    let buf = painted_in(&crate::frames::tests::framed_ctx(), &view(3, 0));
+    crate::frames::tests::assert_framed(&buf, "ui/panel.png", SIDE_PANEL);
 }
 
 /// Row `y` of the panel of `buf`, inside its border, trimmed.

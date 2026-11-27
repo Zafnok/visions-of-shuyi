@@ -47,8 +47,7 @@ use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
 use crate::screens::Skins;
 use crate::settings::{
     AnimSpeed, AutoAdvance, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, PortraitStyle, RangeStyle,
-    WindowLook,
-    Settings, ThreatArrows, TownsOpen,
+    Settings, ThreatArrows, TownsOpen, WindowLook,
 };
 use crate::tips::reset_tips;
 
@@ -279,12 +278,7 @@ impl Row {
     /// row of each group (`Language`, `Reset tips`) after a blank one.
     pub fn option(self) -> OptionRow {
         let row = match self {
-            Row::Language => OptionRow::new(
-                self.key(),
-                RowValue::names(language_list::names, language_list::in_use, |ctx, i| {
-                    language_list::pick(ctx, i, false)
-                }),
-            ),
+            Row::Language => language_row(),
             Row::TextSpeed => OptionRow::text_speed(),
             Row::Fullscreen => OptionRow::fullscreen(),
             Row::MusicVolume => OptionRow::music_volume(),
@@ -544,6 +538,16 @@ pub fn shown_rows(ctx: &Ctx) -> Vec<Row> {
         .filter(|r| pc || !PC_ONLY.contains(r))
         .filter(|r| !pc || !PLAYDATE_ONLY.contains(r))
         .collect()
+}
+
+/// The Language row: the languages by name, the one in use picked.
+fn language_row() -> OptionRow {
+    OptionRow::new(
+        Row::Language.key(),
+        RowValue::names(language_list::names, language_list::in_use, |ctx, i| {
+            language_list::pick(ctx, i, false)
+        }),
+    )
 }
 
 /// What `row` shows beside its name ([`options::OptionsScreen::value`]).

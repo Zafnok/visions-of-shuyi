@@ -17,6 +17,8 @@ completed:
 
 2026-11-27 (1238): `paint_sell`'s box in `glyph/shop.rs` now goes through `GlyphBuffer::panel` (`PanelLook`, no title); the code is otherwise as the engine ticket copies it. No gap in the engine ticket.
 
+2026-11-27 (1380): in the picture look `paint_sell`'s box wears the battle's panel frame (`frames::framed(ctx, frames::PANEL, ..)`) and its fill (`frames::bg`). The engine's question widget draws its own box: when it replaces this one, frame it as engine#2338 plans (the game's frame through `GameData`), or the sale's question keeps glyph lines in the picture look until then. Engine#3205's copy of the box needs no change for this.
+
 The game/engine boundary audit of 2026-11-03 found that the shops' "Sell
 how many?" box names nothing of the game. Today it is the game's
 `SellConfirm { line, count }` (`crates/ui/src/screens/battle/shop.rs:197`),

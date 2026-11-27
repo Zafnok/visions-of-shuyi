@@ -10,6 +10,8 @@
 //! [`trpg_content::frames`]); the engine draws them
 //! (`shuyi_ui::frame::draw::PanelFrame`, engine#3249).
 
+use crate::prelude::*;
+
 use shuyi_ui::frame::draw::{PanelFrame, TitlePlate};
 use trpg_content::frames::{Frame, Plate};
 
@@ -37,13 +39,17 @@ pub fn pictures(ctx: &Ctx) -> bool {
 /// The frame called `name`, when the windows wear pictures and this
 /// build has its picture.
 pub fn frame(ctx: &Ctx, name: &str) -> Option<Frame> {
-    pictures(ctx).then(|| ctx.game.content.frames.frame(name)).flatten()
+    pictures(ctx)
+        .then(|| ctx.game.content.frames.frame(name))
+        .flatten()
 }
 
 /// The title plate, when the windows wear pictures and this build has its
 /// picture.
 pub fn plate(ctx: &Ctx) -> Option<Plate> {
-    pictures(ctx).then(|| ctx.game.content.frames.plate(TITLE)).flatten()
+    pictures(ctx)
+        .then(|| ctx.game.content.frames.plate(TITLE))
+        .flatten()
 }
 
 /// `look` in the frame called `name` ([`framed_with`]).
@@ -59,7 +65,11 @@ pub fn framed_with(look: PanelLook, frame: Option<Frame>, plate: Option<Plate>) 
         return look;
     };
     let panel = PanelFrame::new(f.slice).with_outset(f.outset);
-    let plate = plate.map(|p| TitlePlate::new(p.slice).with_pad(p.pad).with_text_top(p.text_top));
+    let plate = plate.map(|p| {
+        TitlePlate::new(p.slice)
+            .with_pad(p.pad)
+            .with_text_top(p.text_top)
+    });
     let mut look = look.with_frame(Some(panel)).with_plate(plate);
     let [r, g, b] = f.fill;
     look.bg = Rgb::new(r, g, b);
@@ -70,10 +80,13 @@ pub fn framed_with(look: PanelLook, frame: Option<Frame>, plate: Option<Plate>) 
 /// panels' colour in the glyph look. For a skin's prints inside the
 /// window.
 pub fn bg(ctx: &Ctx, name: &str) -> Rgb {
-    frame(ctx, name).map_or_else(|| ctx.palette.get(UiColor::PanelBg), |f| {
-        let [r, g, b] = f.fill;
-        Rgb::new(r, g, b)
-    })
+    frame(ctx, name).map_or_else(
+        || ctx.palette.get(UiColor::PanelBg),
+        |f| {
+            let [r, g, b] = f.fill;
+            Rgb::new(r, g, b)
+        },
+    )
 }
 
 /// Puts the title plate behind the text on the cells `text` when the
@@ -81,9 +94,38 @@ pub fn bg(ctx: &Ctx, name: &str) -> Rgb {
 /// rather than through the panel.
 pub fn plate_behind(ctx: &Ctx, buf: &mut GlyphBuffer, text: Rect) {
     if let Some(p) = plate(ctx) {
-        let plate = TitlePlate::new(p.slice).with_pad(p.pad).with_text_top(p.text_top);
+        let plate = TitlePlate::new(p.slice)
+            .with_pad(p.pad)
+            .with_text_top(p.text_top);
         buf.title_plate(&plate, text);
     }
+}
+
+/// Prints `title` with a space each side, centred on the row `row`, in
+/// `fg` (the cells keep their background), with the title plate behind
+/// it in the picture look: a title a skin sets into a window's top
+/// border itself.
+pub fn centred_title(ctx: &Ctx, buf: &mut GlyphBuffer, row: Rect, title: &str, fg: Rgb) {
+    let shown = format!(" {title} ");
+    let cells = buf.text_cells(&shown).min(row.w);
+    buf.print_centred(row, &shown, fg);
+    let x = row.x + (row.w - cells) / 2;
+    plate_behind(ctx, buf, Rect::new(x + 1, row.y, cells - 2, 1));
+}
+
+/// Prints `title` with a space each side from `at` in `colors` (its
+/// text and background), with the title plate behind it in the picture
+/// look. Returns how many cells it took.
+pub fn title_at(
+    ctx: &Ctx,
+    buf: &mut GlyphBuffer,
+    (x, y): (i32, i32),
+    title: &str,
+    (fg, bg): (Rgb, Rgb),
+) -> i32 {
+    let n = i32::from(buf.print(x, y, &format!(" {title} "), fg, bg));
+    plate_behind(ctx, buf, Rect::new(x + 1, y, n - 2, 1));
+    n
 }
 
 #[cfg(test)]

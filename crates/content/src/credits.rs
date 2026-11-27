@@ -146,7 +146,9 @@ mod tests {
                 "pixel_flag",
                 "mattwalkden",
                 "elv_games",
-                "electric_lemon_lonesome_forest"
+                "electric_lemon_lonesome_forest",
+                "barely_pixel_quest",
+                "barely_post_baroque"
             ]
         );
         // Rogue Adventure's tiles share Tiny Tales' packed image (1318).

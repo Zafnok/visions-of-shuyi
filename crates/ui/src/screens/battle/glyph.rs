@@ -32,6 +32,7 @@ use super::view::{
 };
 use super::{PopupKind, objective, stage};
 use crate::color::{Rgb, UiColor};
+use crate::frames;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
@@ -283,21 +284,34 @@ fn paint_menu_beside(
         return;
     };
     let (x, y) = menu_origin(cells, menu::glyph::size(ctx, &m.menu));
-    menu::glyph::paint(ctx, &m.menu, buf, x, y);
+    let name = if m.map_menu {
+        frames::MAP_MENU
+    } else {
+        frames::MENU
+    };
+    let look = frames::framed(ctx, name, menu::glyph::look(ctx));
+    menu::glyph::paint_with(ctx, &m.menu, buf, x, y, &look);
     if let Some(header) = &m.header {
-        paint_header(ctx, header, buf, (x, y));
+        paint_header(ctx, header, buf, (x, y), look.bg);
     }
 }
 
-/// Prints `header` in the top border of a menu at `(x, y)`: its name lit,
-/// then the uses left, in the warning colour once none are.
-fn paint_header(ctx: &Ctx, header: &MenuHeader, buf: &mut GlyphBuffer, (x, y): (i32, i32)) {
+/// Prints `header` in the top border of a menu at `(x, y)` on `bg`: its
+/// name lit, then the uses left, in the warning colour once none are; on
+/// the title plate in the picture look.
+fn paint_header(
+    ctx: &Ctx,
+    header: &MenuHeader,
+    buf: &mut GlyphBuffer,
+    (x, y): (i32, i32),
+    bg: Rgb,
+) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
     let at = x + 2;
     // check-text: not a data name (the view's own)
     let name = format!(" {} ", header.name);
-    let n = buf.print(at, y, &name, c(UiColor::TextHighlight), bg);
+    let n = i32::from(buf.print(at, y, &name, c(UiColor::TextHighlight), bg));
+    let mut end = at + n - 1;
     if let Some(uses) = &header.uses {
         let color = if uses.spent {
             UiColor::HpLow
@@ -305,8 +319,9 @@ fn paint_header(ctx: &Ctx, header: &MenuHeader, buf: &mut GlyphBuffer, (x, y): (
             UiColor::Text
         };
         let text = format!("{} ", uses.text);
-        buf.print(at + i32::from(n), y, &text, c(color), bg);
+        end += i32::from(buf.print(at + n, y, &text, c(color), bg));
     }
+    frames::plate_behind(ctx, buf, Rect::new(at + 1, y, end - at - 1, 1));
 }
 
 /// The colour of a heal or burn number.
@@ -349,8 +364,9 @@ fn paint_panel(ctx: &Ctx, panel: &PanelView, buf: &mut GlyphBuffer) {
     } else {
         BoxStyle::Single
     };
-    let look = PanelLook::new(style, c(UiColor::Text), c(UiColor::PanelBg));
-    buf.panel(SIDE_PANEL, &look.with_border(c(UiColor::PanelBorder)), None);
+    let look = PanelLook::new(style, c(UiColor::Text), c(UiColor::PanelBg))
+        .with_border(c(UiColor::PanelBorder));
+    buf.panel(SIDE_PANEL, &frames::framed(ctx, frames::PANEL, look), None);
     // The aimed preview's block first; the rest moves down under it.
     let dy = panel
         .preview
@@ -481,7 +497,7 @@ fn paint_panel_hp(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer, y: i32
         &ctx.palette,
         bar,
         (shown, unit.max),
-        c(UiColor::PanelBg),
+        frames::bg(ctx, frames::PANEL),
     );
 }
 
@@ -669,12 +685,13 @@ fn draw_dialog_at(
     top: i32,
 ) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
     let (w, h) = dialog_size(title, lines, buf.widths());
     let rect = Rect::new(MAP_VIEW.x + (MAP_VIEW.w - w) / 2, top, w, h);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg)
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg))
         .with_border(c(UiColor::PanelBorder))
         .with_title(c(UiColor::TextHighlight));
+    let look = frames::framed(ctx, frames::PANEL, look);
+    let bg = look.bg;
     buf.panel(rect, &look, Some(title).filter(|t| !t.is_empty()));
     for (y, (line, color)) in (rect.y + 2..).zip(lines) {
         let colors = ctx.palette.text_colors_on(c(*color), bg);
@@ -687,7 +704,8 @@ fn paint_centred_menu(ctx: &Ctx, menu: &MenuView, buf: &mut GlyphBuffer) {
     let (w, h) = menu::glyph::size(ctx, menu);
     let x = MAP_VIEW.x + (MAP_VIEW.w - w) / 2;
     let y = MAP_VIEW.y + (MAP_VIEW.h - h) / 2;
-    menu::glyph::paint(ctx, menu, buf, x, y);
+    let look = frames::framed(ctx, frames::MENU, menu::glyph::look(ctx));
+    menu::glyph::paint_with(ctx, menu, buf, x, y, &look);
 }
 
 /// The colour of a banner announcing `kind`: the phase's faction's, or
@@ -713,7 +731,6 @@ fn paint_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer) {
         return;
     }
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
     let rect = Rect::new(
         MAP_VIEW.x + (MAP_VIEW.w - BANNER_W) / 2,
         MAP_VIEW.y + (MAP_VIEW.h - BANNER_H) / 2,
@@ -721,8 +738,12 @@ fn paint_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer) {
         BANNER_H,
     );
     let color = banner_color(banner.kind);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(rect, &look.with_border(c(color)), None);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg));
+    buf.panel(
+        rect,
+        &frames::framed(ctx, frames::PANEL, look.with_border(c(color))),
+        None,
+    );
     let row = |dy| Rect::new(rect.x, rect.y + dy, rect.w, 1);
     buf.print_centred(row(2), &banner.title, c(color));
     buf.print_centred(row(3), &banner.subtitle, c(UiColor::Text));
@@ -752,7 +773,7 @@ pub fn objective_banner_size(
 /// in the banner's colour, then each line, its label highlighted.
 fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
+    let bg = frames::bg(ctx, frames::PANEL);
     let (w, h) = objective_banner_size(&banner.title, &banner.lines, buf.widths());
     let rect = Rect::new(
         MAP_VIEW.x + (MAP_VIEW.w - w) / 2,
@@ -761,8 +782,12 @@ fn paint_objective_banner(ctx: &Ctx, banner: &BannerView, buf: &mut GlyphBuffer)
         h,
     );
     let color = banner_color(banner.kind);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(rect, &look.with_border(c(color)), None);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg));
+    buf.panel(
+        rect,
+        &frames::framed(ctx, frames::PANEL, look.with_border(c(color))),
+        None,
+    );
     buf.print_centred(
         Rect::new(rect.x, rect.y + 2, rect.w, 1),
         &banner.title,
@@ -824,14 +849,14 @@ fn paint_note(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
 /// bar, wrapped to fit inside the map.
 fn paint_warning(ctx: &Ctx, text: &str, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let (fg, bg) = (c(UiColor::TextHighlight), c(UiColor::PanelBg));
+    let (fg, bg) = (c(UiColor::TextHighlight), frames::bg(ctx, frames::PANEL));
     let lines = wrap_words(text, WARNING_W, buf.widths());
     let cells = |s: &String| buf.text_cells(s);
     let w = lines.iter().map(cells).max().unwrap_or(0) + 4;
     let h = i32::try_from(lines.len()).unwrap_or(1) + 2;
     let rect = Rect::new(MAP_VIEW.x, HELP_BAR.y - h, w, h);
-    let look = PanelLook::new(BoxStyle::Single, fg, bg);
-    buf.panel(rect, &look.with_border(fg), None);
+    let look = PanelLook::new(BoxStyle::Single, fg, c(UiColor::PanelBg)).with_border(fg);
+    buf.panel(rect, &frames::framed(ctx, frames::PANEL, look), None);
     for (y, line) in (rect.y + 1..).zip(&lines) {
         buf.print(rect.x + 2, y, line, fg, bg);
     }

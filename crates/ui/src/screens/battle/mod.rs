@@ -2101,6 +2101,7 @@ impl BattleScreen {
             place,
             header,
             clear_of: self.reach_shown().to_vec(),
+            map_menu: matches!(self.mode, Mode::MapMenu { .. }),
         })
     }
 

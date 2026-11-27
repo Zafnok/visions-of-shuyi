@@ -129,6 +129,9 @@ pub struct BattleMenuView {
     /// The tiles it keeps clear of besides its own: the focused area
     /// skill's reach in the Skill list (ticket 0492), most often none.
     pub clear_of: Vec<Pos>,
+    /// Whether it is the map menu (opened with Cancel on the map), which
+    /// the picture look frames apart from a unit's menus (ticket 1380).
+    pub map_menu: bool,
 }
 
 /// Where a menu opens.

@@ -152,23 +152,34 @@ pub fn from_source(
     let raw: FramesFile = parse_ron(file, source).map_err(|e| vec![e])?;
     let mut errors = Vec::new();
     let mut error = |what: String| errors.push(ContentError::new(file, what));
-    let names = |kind: &str, wanted: &[&str], given: Vec<&String>, error: &mut dyn FnMut(String)| {
-        for name in wanted {
-            if !given.iter().any(|g| g == name) {
-                error(format!("no {kind} \"{name}\": the windows ask for it"));
+    let names =
+        |kind: &str, wanted: &[&str], given: Vec<&String>, error: &mut dyn FnMut(String)| {
+            for name in wanted {
+                if !given.iter().any(|g| g == name) {
+                    error(format!("no {kind} \"{name}\": the windows ask for it"));
+                }
             }
-        }
-        for name in given {
-            if !wanted.contains(&name.as_str()) {
-                error(format!("{kind} \"{name}\": no window asks for it"));
+            for name in given {
+                if !wanted.contains(&name.as_str()) {
+                    error(format!("{kind} \"{name}\": no window asks for it"));
+                }
             }
-        }
-    };
-    names("frame", &FRAME_NAMES, raw.frames.keys().collect(), &mut error);
-    names("plate", &PLATE_NAMES, raw.plates.keys().collect(), &mut error);
+        };
+    names(
+        "frame",
+        &FRAME_NAMES,
+        raw.frames.keys().collect(),
+        &mut error,
+    );
+    names(
+        "plate",
+        &PLATE_NAMES,
+        raw.plates.keys().collect(),
+        &mut error,
+    );
     let mut out = UiFrames::default();
     for (name, f) in &raw.frames {
-        let fill = parse_hex(&f.fill).map_err(|e| error(format!("frame \"{name}\": fill {e}")));
+        let inside = parse_hex(&f.fill).map_err(|e| error(format!("frame \"{name}\": fill {e}")));
         let b = Borders {
             left: f.borders.left,
             top: f.borders.top,
@@ -185,9 +196,13 @@ pub fn from_source(
             ));
             continue;
         }
-        if let Ok(fill) = fill {
+        if let Ok(fill) = inside {
             let slice = NineSlice::new(pic, b);
-            let frame = Frame { slice, outset: f.outset, fill };
+            let frame = Frame {
+                slice,
+                outset: f.outset,
+                fill,
+            };
             out.frames.insert(name.clone(), frame);
         }
     }
@@ -209,10 +224,18 @@ pub fn from_source(
             bottom: 0,
         };
         let slice = NineSlice::new(pic, caps);
-        let plate = Plate { slice, pad: p.pad, text_top: p.text_top };
+        let plate = Plate {
+            slice,
+            pad: p.pad,
+            text_top: p.text_top,
+        };
         out.plates.insert(name.clone(), plate);
     }
-    if errors.is_empty() { Ok(out) } else { Err(errors) }
+    if errors.is_empty() {
+        Ok(out)
+    } else {
+        Err(errors)
+    }
 }
 
 #[cfg(test)]

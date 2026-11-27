@@ -104,6 +104,7 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
     let mut tileset = c.game.content.tilesets["test_units"].clone();
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
     c.game.content.tilesets.insert(tileset.id.clone(), tileset);
+    c.game.content.frames = crate::frames::tests::bought_frames();
     assert_eq!(shown_rows(&c), pc_rows());
     c.platform.keyboard = Keyboard::Absent;
     let no_layout: Vec<Row> = pc_rows()
@@ -253,7 +254,10 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::Fullscreen, s.fullscreen != before.fullscreen),
             (Row::Cursor, s.game.cursor_style != before.game.cursor_style),
             (Row::MapLook, s.game.map_look != before.game.map_look),
-            (Row::WindowLook, s.game.window_look != before.game.window_look),
+            (
+                Row::WindowLook,
+                s.game.window_look != before.game.window_look,
+            ),
             (Row::MapZoom, s.game.map_zoom != before.game.map_zoom),
             (
                 Row::ThreatArrows,
@@ -324,6 +328,7 @@ fn rows_show_their_values() {
             "Off*",
             "Off*",
             "Corners*",
+            "Pictures*",
             "Pictures*",
             "2×*",
             "Arcs*",

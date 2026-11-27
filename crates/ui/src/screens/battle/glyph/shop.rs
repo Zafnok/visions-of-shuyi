@@ -11,6 +11,7 @@
 
 use super::{clear, paint_help};
 use crate::color::UiColor;
+use crate::frames;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
@@ -103,17 +104,17 @@ pub fn paint(ctx: &Ctx, view: &ShopScreenView, buf: &mut GlyphBuffer) {
 /// Preparations screen's Shop tab paints it in its own place, 0443).
 pub fn paint_box(ctx: &Ctx, view: &ShopScreenView, area: Rect, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
+    let bg = frames::bg(ctx, frames::PANEL);
     let text = c(UiColor::Text);
     let lit = c(UiColor::TextHighlight);
     let focus_bg = c(UiColor::PanelBorderFocus);
     let (list_x, top_row, rows) = (list_x(area), top_row(area), list_rows(area));
-    let look = PanelLook::new(BoxStyle::Double, text, bg).with_border(c(UiColor::PanelBorder));
-    buf.panel(area, &look, None);
-    buf.print(list_x, area.y, &format!(" {} ", view.shop), lit, bg);
-    let gold = format!(" {} ", view.gold);
-    let gold_x = area.x + area.w - 3 - cells(&gold, buf.widths());
-    buf.print(gold_x, area.y, &gold, lit, bg);
+    let look = PanelLook::new(BoxStyle::Double, text, c(UiColor::PanelBg))
+        .with_border(c(UiColor::PanelBorder));
+    buf.panel(area, &frames::framed(ctx, frames::PANEL, look), None);
+    frames::title_at(ctx, buf, (list_x, area.y), &view.shop, (lit, bg));
+    let gold_x = area.x + area.w - 5 - cells(&view.gold, buf.widths());
+    frames::title_at(ctx, buf, (gold_x, area.y), &view.gold, (lit, bg));
     buf.print(list_x, tab_row(area), &view.unit, lit, bg);
     let mut x = tabs_x(list_x);
     for (i, tab) in view.tabs.iter().enumerate() {
@@ -188,11 +189,12 @@ pub const SELL_BOX: Rect = sell_box(AREA);
 /// Paints the confirmation `sell` over the list, in `sell_box`.
 fn paint_sell(ctx: &Ctx, sell: &SellConfirmView, sell_box: Rect, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
+    let bg = frames::bg(ctx, frames::PANEL);
     let text = c(UiColor::Text);
     let dim = c(UiColor::TextDim);
-    let look = PanelLook::new(BoxStyle::Double, text, bg).with_border(c(UiColor::PanelBorderFocus));
-    buf.panel(sell_box, &look, None);
+    let look = PanelLook::new(BoxStyle::Double, text, c(UiColor::PanelBg))
+        .with_border(c(UiColor::PanelBorderFocus));
+    buf.panel(sell_box, &frames::framed(ctx, frames::PANEL, look), None);
     let centred = |buf: &mut GlyphBuffer, y: i32, line: &str, fg| {
         let x = sell_box.x + (sell_box.w - cells(line, buf.widths())) / 2;
         buf.print(x, y, line, fg, bg);
@@ -394,5 +396,24 @@ mod tests {
         // The widest weapon numbers fit inside the right border.
         let numbers = "Mt 10  Hit 100  Crit 10  Rng 1-2  Wt 10";
         assert!(DETAIL_X + cells(numbers, &CellWidths::NARROW) < AREA.x + AREA.w - 1);
+    }
+
+    /// Ticket 1380: the shop's box wears the panel frame in the picture
+    /// look, its name and the gold on title plates.
+    #[test]
+    fn the_picture_look_frames_the_shop_and_plates_its_name() {
+        use crate::frames::tests::{assert_framed, assert_plated, framed_ctx};
+        let c = framed_ctx();
+        let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
+        paint(&c, &view(3, 0), &mut buf);
+        assert_framed(&buf, "ui/panel.png", AREA);
+        assert_plated(&buf, Rect::new(LIST_X + 1, AREA.y, 6, 1));
+        let plates = buf
+            .sprites()
+            .iter()
+            .filter(|s| s.image.path() == "ui/plate.png")
+            .count();
+        assert_eq!(plates, 6, "two plates of three pieces");
     }
 }

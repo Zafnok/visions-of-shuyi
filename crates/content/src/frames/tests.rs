@@ -42,13 +42,34 @@ fn the_frames_and_the_plate_load_with_their_pictures() {
     assert_eq!(panel.outset, 5);
     assert_eq!(
         panel.slice.borders,
-        Borders { left: 22, top: 33, right: 22, bottom: 32 }
+        Borders {
+            left: 22,
+            top: 33,
+            right: 22,
+            bottom: 32
+        }
     );
-    assert_eq!(panel.slice.picture.rect, ImageRect { x: 0, y: 0, w: 96, h: 96 });
+    assert_eq!(
+        panel.slice.picture.rect,
+        ImageRect {
+            x: 0,
+            y: 0,
+            w: 96,
+            h: 96
+        }
+    );
     assert_eq!(ui.frame("menu").unwrap().outset, 0);
     let title = ui.plate("title").unwrap();
     assert_eq!((title.pad, title.text_top), (6, 8));
-    assert_eq!(title.slice.borders, Borders { left: 16, top: 0, right: 16, bottom: 0 });
+    assert_eq!(
+        title.slice.borders,
+        Borders {
+            left: 16,
+            top: 0,
+            right: 16,
+            bottom: 0
+        }
+    );
 }
 
 #[test]
@@ -62,20 +83,39 @@ fn without_the_pictures_there_are_no_frames() {
 fn a_missing_or_unknown_name_is_an_error() {
     let missing = GOOD.replace("\"menu\":", "\"menus\":");
     let found = errors(&missing);
-    assert!(found.iter().any(|e| e.contains("no frame \"menu\"")), "{found:?}");
-    assert!(found.iter().any(|e| e.contains("frame \"menus\": no window asks")), "{found:?}");
+    assert!(
+        found.iter().any(|e| e.contains("no frame \"menu\"")),
+        "{found:?}"
+    );
+    assert!(
+        found
+            .iter()
+            .any(|e| e.contains("frame \"menus\": no window asks")),
+        "{found:?}"
+    );
     let no_plate = GOOD.replace("\"title\":", "\"name\":");
-    assert!(errors(&no_plate).iter().any(|e| e.contains("no plate \"title\"")));
+    assert!(
+        errors(&no_plate)
+            .iter()
+            .any(|e| e.contains("no plate \"title\""))
+    );
 }
 
 #[test]
 fn borders_and_caps_must_leave_a_middle_and_a_fill_must_be_a_colour() {
-    let wide = GOOD.replace("left: 22, top: 22, right: 22", "left: 50, top: 22, right: 46");
+    let wide = GOOD.replace(
+        "left: 22, top: 22, right: 22",
+        "left: 50, top: 22, right: 46",
+    );
     assert!(errors(&wide).iter().any(|e| e.contains("leave no middle")));
     let caps = GOOD.replace("left: 16, right: 16", "left: 16, right: 17");
     assert!(errors(&caps).iter().any(|e| e.contains("leave no body")));
     let fill = GOOD.replace("#382b33", "plum");
-    assert!(errors(&fill).iter().any(|e| e.contains("frame \"menu\": fill")));
+    assert!(
+        errors(&fill)
+            .iter()
+            .any(|e| e.contains("frame \"menu\": fill"))
+    );
 }
 
 #[test]

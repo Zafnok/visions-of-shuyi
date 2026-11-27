@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: high
-status: in-progress
+status: done
 blocked_by: ["1379", "1238"]
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1380 — The battle's windows framed by the UI kit's pictures
@@ -152,15 +152,15 @@ completion notes.
 - [ ] The engine's picture frame merged, the pin moved past it.
 - [ ] `cargo xtask ui-import` writes the pieces; the private repository
       holds them and `assets-private.rev` names that commit.
-- [ ] `assets/ui/frames.ron` loads and validates; a content test fails
+- [x] `assets/ui/frames.ron` loads and validates; a content test fails
       on a missing frame name.
-- [ ] With the bought art and the picture look, every battle window in
+- [x] With the bought art and the picture look, every battle window in
       *In* draws the picture frame (a test reads the buffer's sprite
       items per window); with the glyph look or without the art, the
       snapshots are unchanged.
-- [ ] *Window look* switches the windows and *Map look* the map, each
+- [x] *Window look* switches the windows and *Map look* the map, each
       on its own, in every language pack.
-- [ ] `THIRD_PARTY_ASSETS.md` names the pieces used.
+- [x] `THIRD_PARTY_ASSETS.md` names the pieces used.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
@@ -175,4 +175,78 @@ completion notes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **Engine** (engine#3249, carved from engine#2338 with Nick's OK,
+  2026-11-27): `shuyi_assets::nine_slice` (`NineSlice`, `Borders`,
+  `EdgeFill`, `CentreFill`), `frame::slice::nine_slice_sprites` and
+  `GlyphBuffer::nine_slice`, and on `PanelLook` a `PanelFrame` (a nine-slice
+  and an outset, drawn by `panel_border` over the border cells, never over
+  the inside, never past the screen's edge) and a `TitlePlate` behind the
+  title (`GlyphBuffer::title_plate` for a title a skin prints itself); the
+  menu widget's `glyph::look` and `glyph::paint_with` take a caller's look.
+  ADR-0161 (engine): only a panel's border becomes a picture. engine#2338
+  keeps the rest (tiled pictures, every engine panel asking the game for
+  its frame), engine#2235 the file format.
+- **Game:** `cargo xtask ui-import` (`crates/tools/src/ui_import.rs`, its
+  list `assets-src/ui/pictures.ron`) cuts the four pictures into the private
+  repository's `game/ui/`: `panel.png` (Pixel Quest `F-UI_Panel_H`),
+  `menu.png` (`F-UI_Panel_E`), `map_menu.png` (H, its cool pixels moved to
+  hue 218 at saturation ×1.6 and brightness ×1.5, 1379's mockup's numbers;
+  its fill `#263857`) and `plate.png` (Post-Baroque `UI_TitleB1` cut to its
+  16-pixel caps and column 60). `assets/ui/frames.ron` (format in
+  `assets/ui/README.md`) names the frames `panel`, `menu`, `map_menu` and the
+  plate `title`, loaded and checked by `trpg_content::frames` (every name
+  the windows ask for and no other, fills are colours, borders and caps
+  leave a middle; a missing picture leaves its frame out). `crates/ui/src/frames.rs`
+  turns a name into a `PanelLook` (`framed`, `bg`, `plate_behind`,
+  `centred_title`, `title_at`) when *Window look* says pictures, the build
+  has the picture and the skins are the PC's.
+- **Windows framed:** the side panel, the unit menu and its lists (Arts,
+  Skill, Item, Equip), the unit list, the map menu (royal blue), the
+  forecast, unit info, the EXP, level-up and class boxes, the guides, the
+  rewind list, the shop and its sale box, and the fight box; and, as the
+  battle's other windows (not named in *In*, *the agent's starting rule*),
+  the questions, the objective page, the notes box, the phase and
+  objective banners and the warning box. `BattleMenuView` gained
+  `map_menu` so the skin knows the map menu.
+- **Credits:** two *Shipped items* rows (one per kit, each with its own
+  link) and two entries in `credits.ron` (`barely_pixel_quest`, its recolor
+  said; `barely_post_baroque`, its plate cut down), author "Barely Apes".
+- **The private pictures:** pushed as the private repository's PR #43 from
+  the current pin (`b68863cc`), so the pin moves by these four files only.
+  `cargo shuyi private-assets --pin` accepts only a commit on its `main`,
+  so the pin moves once #43 merges (see the PR).
+- Friction: game production lines about 880 added against an estimate of
+  900 (under 2×). PR size about 1,560 lines of this ticket's own (the
+  branch also carries 1238's, under it).
+- Tests: the helper (picture, glyph look, picture missing, the Playdate),
+  `frames.ron`'s checks, a picture-look test per window reading the sprite
+  items by picture and rect (`frames::tests::assert_framed`,
+  `assert_plated`), the Options rows, the saved setting, and the
+  private-assets test that every frame resolves from the bought pictures.
+  Every glyph-look snapshot is unchanged.
+
+*The agent's starting rules* (for the Act 1 playtest, 1064):
+
+- Every text a skin sets into a window's top border sits on the title
+  plate: the forecast's title, the guides', the shop's name and its gold,
+  the fight box's banner, a list's header (the Arts weapon, the pack's
+  size), a question's or the notes' title. Text on a bottom border (the
+  forecast's swap keys) has no plate.
+- The frames are drawn 5 console pixels (10 screen pixels at scale 2)
+  outside their window, as 1379's mockup; at the screen's edge they stay
+  on screen (the side panel, unit info). The forecast's plate on the top
+  row has its top cut by the screen: pulled down whole, its rim crossed
+  the title.
+- Boxes inside a window (unit info's and the level-up's portrait boxes,
+  the guides' divider, the forecast's rules) keep their glyph lines: 1381
+  frames the portraits.
+- The shop's box and the guides are painted by one painter each, so the
+  town's and the Preparations' shops wear the frame too.
+- The `reduced` and `minimal` tiers (ADR-0131) draw the picture frames: a
+  window is 8 to 20 sprites, about the cost of its line glyphs.
+- A save from before this ticket starts *Window look* on its *Map look*;
+  a new player starts on *Pictures*.
+
+What to judge by playing (1064): the frames' sizes and the plate on the
+top row; the menus' focus bar is still today's (1382 brings Pixel Quest's
+bar and the hand).

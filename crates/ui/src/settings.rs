@@ -1180,4 +1180,3 @@ mod tests {
         assert_eq!(read(&s.to_ron()), WindowLook::Glyphs);
     }
 }
-

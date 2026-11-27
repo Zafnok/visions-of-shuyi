@@ -37,18 +37,18 @@ pub const USAGE: &str = "usage: cargo xtask ui-import [--list]\n\
 #[serde(deny_unknown_fields)]
 pub struct Sources {
     /// Each picture written.
-    pub pictures: Vec<Source>,
+    pub pictures: Vec<Picture>,
 }
 
 /// One picture written: its name in `game/ui/`, the file it comes from,
 /// and what is done to it on the way.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct Source {
+pub struct Picture {
     /// Its file name in `game/ui/`.
     pub out: String,
     /// The bought file, under `assets-private/`.
-    pub source: String,
+    pub from: String,
     /// Its cool pixels moved to a hue.
     #[serde(default)]
     pub recolour: Option<Recolour>,
@@ -100,7 +100,11 @@ pub fn recolour(pixels: &mut [u8], r: Recolour) {
             continue;
         }
         let (_, sat, val) = to_hsv([red, green, blue]);
-        let [red, green, blue] = to_rgb(r.hue, (sat.max(0.35) * r.sat).min(1.0), (val * r.val).min(1.0));
+        let [red, green, blue] = to_rgb(
+            r.hue,
+            (sat.max(0.35) * r.sat).min(1.0),
+            (val * r.val).min(1.0),
+        );
         *pixel = [red, green, blue, alpha];
     }
 }
@@ -144,7 +148,7 @@ pub fn list(sources: &Sources) -> String {
             (None, Some(_)) => " (cut to a plate)".to_owned(),
             (None, None) => String::new(),
         };
-        let _ = writeln!(out, "{} <- {}{how}", s.out, s.source);
+        let _ = writeln!(out, "{} <- {}{how}", s.out, s.from);
     }
     out
 }
@@ -161,9 +165,9 @@ pub fn run(root: &Path) -> Result<String, String> {
     }
     fs::create_dir_all(&out_dir).map_err(|e| format!("creating {}: {e}", out_dir.display()))?;
     for s in &sources.pictures {
-        let path = private.join(&s.source);
+        let path = private.join(&s.from);
         let bytes = fs::read(&path).map_err(|e| format!("reading {}: {e}", path.display()))?;
-        let (mut w, h, mut pixels) = decode_png(&bytes).map_err(|e| format!("{}: {e}", s.source))?;
+        let (mut w, h, mut pixels) = decode_png(&bytes).map_err(|e| format!("{}: {e}", s.from))?;
         if let Some(r) = s.recolour {
             recolour(&mut pixels, r);
         }
@@ -171,7 +175,8 @@ pub fn run(root: &Path) -> Result<String, String> {
             (w, pixels) = cut_plate(w, h, &pixels, cut).map_err(|e| format!("{}: {e}", s.out))?;
         }
         let out = out_dir.join(&s.out);
-        fs::write(&out, encode_png(w, h, &pixels)?).map_err(|e| format!("writing {}: {e}", out.display()))?;
+        fs::write(&out, encode_png(w, h, &pixels)?)
+            .map_err(|e| format!("writing {}: {e}", out.display()))?;
     }
     Ok(format!(
         "ui-import: wrote {} pictures to {OUT_DIR}/; commit and push in assets-private/, then run \
@@ -191,7 +196,14 @@ mod tests {
     #[test]
     fn a_recolour_moves_the_plum_and_keeps_the_gold_and_the_clear() {
         let mut pixels = [GOLD, PLUM, CLEAR].concat();
-        recolour(&mut pixels, Recolour { hue: 218.0, sat: 1.6, val: 1.5 });
+        recolour(
+            &mut pixels,
+            Recolour {
+                hue: 218.0,
+                sat: 1.6,
+                val: 1.5,
+            },
+        );
         assert_eq!(&pixels[0..4], &GOLD);
         assert_eq!(&pixels[8..12], &CLEAR);
         let (hue, sat, val) = to_hsv([pixels[4], pixels[5], pixels[6]]);
@@ -206,15 +218,29 @@ mod tests {
     fn a_plate_keeps_its_caps_and_one_column() {
         // 5 wide, 2 tall: columns are 0..5, rows multiply by 10.
         let px = |x: u8, y: u8| [x + 10 * y, 0, 0, 255];
-        let pixels: Vec<u8> = (0..2).flat_map(|y| (0..5).flat_map(move |x| px(x, y))).collect();
-        let cut = PlateCut { left: 1, column: 2, right: 1 };
+        let pixels: Vec<u8> = (0..2)
+            .flat_map(|y| (0..5).flat_map(move |x| px(x, y)))
+            .collect();
+        let cut = PlateCut {
+            left: 1,
+            column: 2,
+            right: 1,
+        };
         let (w, out) = cut_plate(5, 2, &pixels, cut).unwrap();
         assert_eq!(w, 3);
         let reds: Vec<u8> = out.as_chunks::<4>().0.iter().map(|p| p[0]).collect();
         assert_eq!(reds, [0, 2, 4, 10, 12, 14]);
-        let wide = PlateCut { left: 3, column: 2, right: 3 };
+        let wide = PlateCut {
+            left: 3,
+            column: 2,
+            right: 3,
+        };
         assert!(cut_plate(5, 2, &pixels, wide).is_err());
-        let past = PlateCut { left: 1, column: 5, right: 1 };
+        let past = PlateCut {
+            left: 1,
+            column: 5,
+            right: 1,
+        };
         assert!(cut_plate(5, 2, &pixels, past).is_err());
     }
 
