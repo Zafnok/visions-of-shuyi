@@ -435,12 +435,14 @@ mod tests {
     #[test]
     fn a_prop_moves_at_its_own_size() {
         let f = Fixture::new();
-        let props = "{ \"lamp\": (at: (1, 2), size: (16, 32)) }";
+        // A sign in the lamp's column, not at its cell, doesn't size it.
+        let props = "{ \"lamp\": (at: (1, 2), size: (24, 32)), \"sign\": (at: (1, 0)) }";
         let frames = format!("[(at: (1, 2), frames: [((1, 2), 150), ((2, 2), 150)], {STILLS})]");
         let t = f
             .parse(&file(&f, &[("props", props), ("frames", &frames)]))
             .unwrap();
         let tall = |x, y| ImageRect {
+            w: 24,
             h: 32,
             ..cell(x, y)
         };
@@ -458,7 +460,7 @@ mod tests {
         let low = format!("[(at: (1, 2), frames: [((1, 2), 150), ((1, 3), 150)], {STILLS})]");
         assert_eq!(
             f.errors(&file(&f, &[("props", props), ("frames", &low)])),
-            ["frames of cell (1, 2): its 16×32 px at (16, 48) lies outside the 64×64 px image"]
+            ["frames of cell (1, 2): its 24×32 px at (16, 48) lies outside the 64×64 px image"]
         );
         // Built from its moving cells, as a test does: the same frames.
         let built: TileFrames = t.frames.iter().cloned().collect();
