@@ -543,6 +543,33 @@ mod tests {
         }
     }
 
+    /// On the full tier a tree moves: a frame (100 ms) later it shows the
+    /// next; with no clock (idle motion off) it stands on its first.
+    #[test]
+    fn a_tree_moves_on_the_full_tier_and_stands_with_no_clock() {
+        let t = trees();
+        let tree = Tree {
+            trunk: Pos::new(1, 2),
+            footprint: Footprint::Big,
+        };
+        let at = |t_ms| t.picture(tree, Full, t_ms).unwrap().1;
+        assert_ne!(at(Some(0)), at(Some(100)));
+        assert_eq!(at(None), t.kind(tree).unwrap().frames[0].0);
+    }
+
+    /// A footprint the look has no kind of gets no tree.
+    #[test]
+    fn a_look_with_no_kind_of_a_footprint_draws_none() {
+        let mut t = trees();
+        t.half.clear();
+        let half = Tree {
+            trunk: Pos::new(0, 0),
+            footprint: Footprint::Half,
+        };
+        assert_eq!(t.kind(half), None);
+        assert_eq!(t.picture(half, Full, Some(0)), None);
+    }
+
     #[test]
     fn a_lesser_tier_draws_every_trees_first_frame() {
         let t = trees();

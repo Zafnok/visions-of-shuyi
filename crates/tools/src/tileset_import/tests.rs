@@ -2255,6 +2255,9 @@ fn trees_whose_frames_dont_fit_their_sheet_are_refused() {
             format!("look \"indoor\": trees: a frame of {w}×{h} px doesn't halve or doesn't fit")
         );
     }
+    // A frame as wide as the packed image fits.
+    let widest = tree_looks("t.png", 2).replace("frame: (64, 20)", "frame: (256, 20)");
+    assert!(import(&dir, &mapping(LAYERS, &widest), &terrains(), &fire).is_ok());
     // A sheet narrower than a frame holds none.
     assert_eq!(
         refused("narrow.png", 2),
