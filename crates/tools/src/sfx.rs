@@ -2,8 +2,8 @@
 //! `docs/design/audio.md`) into `assets/audio/sfx/*.wav`.
 //!
 //! A small offline port of the Web Audio graph in
-//! `assets-src/audio/sound-audition.html`, the page Nick picked the sounds
-//! on. It has the page's building blocks (`tone`, `burst`, `pulse`, `env`,
+//! `assets-src/audio/sound-audition.html` and `levelup-audition.html`
+//! (ticket 0605), the pages Nick picked the sounds on. It has the page's building blocks (`tone`, `burst`, `pulse`, `env`,
 //! `wet` and the master chain in `init()`) and each recipe keeps the page's
 //! numbers. Where Web Audio's behaviour shapes the sound, this follows the
 //! spec: `AudioParam` ramps, `PeriodicWave` normalisation, the
@@ -42,13 +42,31 @@ const REVERB_SEED: u64 = 0x0213_0002;
 type Recipe = fn() -> Mix;
 
 /// The sounds, in the order written: file stem and recipe.
-const SOUNDS: [(&str, Recipe); 5] = [
+const SOUNDS: [(&str, Recipe); 16] = [
     ("menu_move", menu_move),
     ("menu_select", menu_select),
     ("menu_cancel", menu_cancel),
     ("miss", miss),
     ("heal", heal),
+    ("exp_fill", exp_fill),
+    ("exp_full", exp_full),
+    ("level_up", level_up),
+    ("level_up_stat_1", || level_up_stat(0)),
+    ("level_up_stat_2", || level_up_stat(1)),
+    ("level_up_stat_3", || level_up_stat(2)),
+    ("level_up_stat_4", || level_up_stat(3)),
+    ("level_up_stat_5", || level_up_stat(4)),
+    ("level_up_stat_6", || level_up_stat(5)),
+    ("level_up_stat_7", || level_up_stat(6)),
+    ("class_mastered", class_mastered),
 ];
+
+/// Where each set of sounds Nick picked on one page starts in [`SOUNDS`]:
+/// each set is normalised on its own (one gain for the set, so it keeps
+/// its page's relative loudness), and adding a set never changes the files
+/// already in the game. The first five are from `sound-audition.html`
+/// (0213), the rest from `levelup-audition.html` (0605).
+const SETS: [usize; 2] = [0, 5];
 
 // ---------- recipes (the page's `MENU`, `SFX` and `HEAL`) ----------
 
@@ -127,6 +145,141 @@ fn heal() -> Mix {
             ..Tone::new(&triangle, nf("G3"), 0.0)
         };
         mix.add_wet(&tone.render(), 0.5);
+    }
+    mix
+}
+
+// ---------- the level-up sounds (ticket 0605): `levelup-audition.html` ----------
+
+/// The EXP bar's fill, in seconds (the page's `FILL`, `PROGRESS_TIMINGS`).
+const FILL: f64 = 0.6;
+/// The page's `SCALE`: the fill's chip ticks climb it.
+const SCALE: [&str; 12] = [
+    "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "D5", "E5", "F5", "G5",
+];
+/// The page's `PENTA`: each grown stat's pluck is the next of it.
+const PENTA: [&str; 8] = ["C4", "D4", "E4", "G4", "A4", "C5", "D5", "E5"];
+
+/// `F6`: a triangle sliding C4 → C5 over the fill, under twelve quiet
+/// chip ticks climbing [`SCALE`].
+fn exp_fill() -> Mix {
+    let mut mix = Mix::new();
+    let triangle = Wave::triangle();
+    let whistle = Tone {
+        f2: Some(nf("C5")),
+        glide: Some(FILL),
+        a: 0.04,
+        hold: FILL - 0.04,
+        d: 0.08,
+        peak: 0.045,
+        filter: Some(2000.0),
+        ..Tone::new(&triangle, nf("C4"), 0.0)
+    };
+    mix.add(&whistle.render());
+    let p25 = Wave::pulse(0.25);
+    for (k, note) in SCALE.iter().enumerate() {
+        let t = to_f64(k) * FILL / 12.0;
+        mix.add(&chip(&p25, note, t, 0.025, 0.006, 0.03, 1500.0));
+    }
+    mix
+}
+
+/// `H3`: four sine pips up a C chord, 35 ms apart, each shorter.
+fn exp_full() -> Mix {
+    let mut mix = Mix::new();
+    let sine = Wave::sine();
+    for (k, note) in ["C5", "E5", "G5", "C6"].into_iter().enumerate() {
+        let kf = to_f64(k);
+        let pip = Tone {
+            d: 0.25 - kf * 0.03,
+            peak: 0.06,
+            ..Tone::new(&sine, nf(note), kf * 0.035)
+        };
+        mix.add_wet(&pip.render(), 0.5);
+    }
+    mix
+}
+
+/// `L6`: square chips C4–G4–C5, then E5, D5 and a held E5 over a C–G
+/// triangle chord.
+fn level_up() -> Mix {
+    let mut mix = Mix::new();
+    let p50 = Wave::pulse(0.5);
+    for (k, note) in ["C4", "G4", "C5"].into_iter().enumerate() {
+        mix.add(&chip(
+            &p50,
+            note,
+            to_f64(k) * 0.07,
+            0.04,
+            0.03,
+            0.08,
+            1800.0,
+        ));
+    }
+    mix.add(&chip(&p50, "E5", 0.21, 0.08, 0.05, 0.08, 2000.0));
+    mix.add(&chip(&p50, "D5", 0.35, 0.08, 0.05, 0.08, 2000.0));
+    mix.add(&chip(&p50, "E5", 0.49, 0.5, 0.3, 0.09, 2000.0));
+    let triangle = Wave::triangle();
+    for note in ["C4", "G4"] {
+        let chord = Tone {
+            a: 0.01,
+            hold: 0.3,
+            d: 0.5,
+            peak: 0.05,
+            filter: Some(1500.0),
+            ..Tone::new(&triangle, nf(note), 0.49)
+        };
+        mix.add(&chord.render());
+    }
+    mix
+}
+
+/// `S6` for the grown stat at place `i` (0 for the first that grew): a
+/// round triangle pluck, an octave over [`PENTA`]`[i]`.
+fn level_up_stat(i: usize) -> Mix {
+    let mut mix = Mix::new();
+    let triangle = Wave::triangle();
+    let pluck = Tone {
+        a: 0.003,
+        d: 0.16,
+        peak: 0.12,
+        filter: Some(2400.0),
+        ..Tone::new(&triangle, nf(PENTA[i]) * 2.0, 0.0)
+    };
+    mix.add(&pluck.render());
+    mix
+}
+
+/// `M1`: sine bells G4, B4, D5 60 ms apart, and the page's `bloomChord`
+/// of G3, B3, D4, G4 swelling in under them, all sent to the reverb.
+fn class_mastered() -> Mix {
+    let mut mix = Mix::new();
+    let sine = Wave::sine();
+    for (k, note) in ["G4", "B4", "D5"].into_iter().enumerate() {
+        let bell = Tone {
+            d: 1.0,
+            peak: 0.08,
+            ..Tone::new(&sine, nf(note), to_f64(k) * 0.06)
+        };
+        mix.add_wet(&bell.render(), 0.5);
+    }
+    let triangle = Wave::triangle();
+    let (a, d) = (0.3, 1.2);
+    for note in ["G3", "B3", "D4", "G4"] {
+        for detune in [-6.0, 6.0] {
+            let f = nf(note);
+            let tone = Tone {
+                f2: Some(f * 1.01),
+                glide: Some(a + d * 0.6),
+                a,
+                d,
+                peak: 0.04,
+                detune,
+                filter: Some(1300.0),
+                ..Tone::new(&triangle, f, 0.1)
+            };
+            mix.add_wet(&tone.render(), 0.5);
+        }
     }
     mix
 }
@@ -265,6 +418,11 @@ impl Wave {
             *b = sign / (kf * kf);
         }
         Self::new(vec![0.0; n], imag)
+    }
+
+    /// Web Audio's built-in sine: the first harmonic alone.
+    fn sine() -> Self {
+        Self::new(vec![0.0; 2], vec![0.0, 1.0])
     }
 
     /// The page's `pulse(duty)`: 64 terms, harmonics 1..=63.
@@ -677,23 +835,37 @@ fn time(i: usize) -> f64 {
     to_f64(i) / SR
 }
 
-/// Renders every sound: normalised together (one gain for all, so they
-/// keep the page's relative loudness), trailing silence trimmed, 16-bit.
+/// Renders every sound: each of the [`SETS`] normalised together (one gain
+/// for the set, so it keeps its page's relative loudness), trailing
+/// silence trimmed, 16-bit.
 pub fn render_all() -> Vec<(&'static str, Vec<i16>)> {
     let raw: Vec<(&str, Vec<f64>)> = SOUNDS
         .iter()
         .map(|&(name, recipe)| (name, recipe().master()))
         .collect();
-    let loudest = raw
-        .iter()
-        .flat_map(|(_, s)| s.iter())
-        .fold(0.0, |m: f64, x| m.max(x.abs()));
-    let gain = PEAK / loudest;
+    let gains = set_gains(&raw);
     raw.into_iter()
-        .map(|(name, samples)| {
+        .enumerate()
+        .map(|(i, (name, samples))| {
+            let gain = gains[SETS.iter().rposition(|&start| start <= i).unwrap_or(0)];
             let scaled: Vec<f64> = samples.iter().map(|x| x * gain).collect();
             let end = audible_len(&scaled);
             (name, scaled[..end].iter().map(|&x| to_i16(x)).collect())
+        })
+        .collect()
+}
+
+/// The gain of each of the [`SETS`]: its loudest sample to [`PEAK`].
+fn set_gains(raw: &[(&str, Vec<f64>)]) -> Vec<f64> {
+    SETS.iter()
+        .enumerate()
+        .map(|(n, &start)| {
+            let end = SETS.get(n + 1).copied().unwrap_or(raw.len());
+            let loudest = raw[start..end]
+                .iter()
+                .flat_map(|(_, s)| s.iter())
+                .fold(0.0, |m: f64, x| m.max(x.abs()));
+            PEAK / loudest
         })
         .collect()
 }
@@ -1223,6 +1395,12 @@ mod tests {
             ("menu_select", 0.06 + 0.005 + 0.04 + 0.14),
             ("menu_cancel", 0.07 + 0.005 + 0.03 + 0.1),
             ("miss", 0.07 + 0.16),
+            // The level-up set (0605): the fill's whistle, the last stat
+            // pluck, the fanfare's held E5 (loud enough to last to its
+            // stop, 50 ms after its envelope).
+            ("exp_fill", 0.04 + (0.6 - 0.04) + 0.08),
+            ("level_up_stat_7", 0.003 + 0.16),
+            ("level_up", 0.49 + 0.005 + 0.3 + 0.5 + 0.05),
         ] {
             assert!((len(name) - recipe).abs() <= 0.05, "{name}: {}", len(name));
         }
@@ -1230,6 +1408,38 @@ mod tests {
         // heal: 0.3 + 1.2 s, then the reverb tail down to −60 dB.
         let heal = len("heal");
         assert!((1.5..=1.5 + REVERB_SECS).contains(&heal), "{heal}");
+        // With the reverb: the sparkle's first pip, and the mastery's bloom.
+        let full = len("exp_full");
+        assert!((0.25..=0.25 + REVERB_SECS).contains(&full), "{full}");
+        let mastered = len("class_mastered");
+        assert!((1.6..=1.6 + REVERB_SECS).contains(&mastered), "{mastered}");
+    }
+
+    /// How much louder each of the [`SETS`] plays than the first at the same
+    /// cue volume, in dB: what its cues' volumes make up for, so that each
+    /// sounds as loud next to the others as on its page.
+    fn set_offsets_db() -> Vec<f64> {
+        let raw: Vec<(&str, Vec<f64>)> = SOUNDS
+            .iter()
+            .map(|&(name, recipe)| (name, recipe().master()))
+            .collect();
+        let gains = set_gains(&raw);
+        gains
+            .iter()
+            .map(|g| 20.0 * (g / gains[0]).log10())
+            .collect()
+    }
+
+    /// The level-up set (0605) is normalised on its own, 1.9 dB under the
+    /// first set: its cues' volume in `audio.ron`, 50 where the others are
+    /// 40 (+1.9 dB), makes up for it.
+    #[test]
+    fn the_level_up_set_is_two_db_under_the_first() {
+        let offsets = set_offsets_db();
+        assert_eq!(offsets.len(), 2);
+        assert!((-2.2..=-1.6).contains(&offsets[1]), "{offsets:?}");
+        let made_up = 20.0 * (50.0f64 / 40.0).log10();
+        assert!((made_up + offsets[1]).abs() < 0.2, "{made_up}");
     }
 
     #[test]
