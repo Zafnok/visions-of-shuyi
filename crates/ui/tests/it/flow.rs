@@ -310,7 +310,7 @@ fn tally(h: &Harness) -> TallyView {
     let results = results.unwrap_or_else(|| panic!("no results: {:?}", h.screens()));
     match results.view(h.game().ctx()).body {
         ResultsBody::Tally(tally) => tally,
-        body => panic!("not the tally: {body:?}"),
+        body @ ResultsBody::LevelUp(_) => panic!("not the tally: {body:?}"),
     }
 }
 

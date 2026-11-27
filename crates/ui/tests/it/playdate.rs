@@ -47,7 +47,7 @@ fn playdate(ctx: &mut Ctx) {
 }
 
 /// Skips every scene on screen: B, then A on "Skip scene?".
-fn skip_scenes(h: &mut Harness) {
+fn pad_through_scenes(h: &mut Harness) {
     for _ in 0..8 {
         // A chapter's title card first (0812): Confirm closes it.
         if h.top_screen() == "chapter_card" {
@@ -82,11 +82,11 @@ fn the_d_pad_a_and_b_play_from_the_title_into_the_first_battle() {
     assert_eq!(h.top_screen(), "lead_select");
     // Then down to Start, and A.
     h.pad("DpadDown East");
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     // The battle's banners (A, A: its objective's, turn 1's), then its
     // opening scene.
     h.pad("East East");
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.game().ctx().layout(), None);
     assert_eq!(h.game().ctx().device, Device::Pad(PadKind::Playdate));
@@ -353,12 +353,12 @@ fn the_one_bit_frames_are_the_references_whole_or_changed() {
         saw_dialogue |= h.top_screen() == "dialogue";
     }
     assert!(saw_dialogue, "no scene: {:?}", h.screens());
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     one_bit.check(&h);
     // The battle's banner, its scene, then the map.
     h.pad("East");
     one_bit.check(&h);
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     one_bit.frames(&mut h, 3, 0.4);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     // The guide closed, the cursor around the lead.
@@ -387,9 +387,9 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
     // A to New Game, Classic and the familiarity answer, the name as it
     // is, Start; past the scenes and the banners.
     h.pad("East East East East DpadDown DpadDown East");
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     h.pad("East East");
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let battle = |h: &Harness| h.battle().map(|b| b.mode().clone());
@@ -439,9 +439,9 @@ fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
     });
     h.use_pad(PadKind::Playdate);
     h.pad("East East East East DpadDown DpadDown East");
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     h.pad("East East");
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
@@ -453,7 +453,7 @@ fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
 fn to_turn_two(h: &mut Harness) {
     h.pad("East+West East");
     for _ in 0..200 {
-        skip_scenes(h);
+        pad_through_scenes(h);
         let b = battle(h);
         let state = b.state();
         if state.turn() == 2 && state.phase() == Phase::Player && b.banner().is_none() {
@@ -756,9 +756,9 @@ fn the_system_menu_entries_work_where_they_can() {
     assert_eq!(h.top_screen(), "dialogue");
     h.pad("West");
     assert!(!log_open(&h));
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     h.pad("East East");
-    skip_scenes(&mut h);
+    pad_through_scenes(&mut h);
     h.wait(1.0);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     // The battle map: the danger zone toggles; no log.
