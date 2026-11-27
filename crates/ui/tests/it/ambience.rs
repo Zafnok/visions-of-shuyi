@@ -109,3 +109,83 @@ fn the_ambience_volume_starts_10_under_the_music_and_at_0_starts_nothing() {
         .filter(|(_, r)| r.cue() == Some(MEADOW));
     assert_eq!(started.count(), 0);
 }
+
+/// The bed a scene's `@ambience quiet` plays, beside the battle's meadow.
+const QUIET: &str = "bed_quiet";
+
+/// Ticket 1383: a scene over the battle's map (`@place battle`) that names
+/// its own ambience plays that bed, not the battle's; `@ambience none`
+/// stops it and the music goes on; the next `@place` plays the place's
+/// bed again.
+#[test]
+fn a_scene_over_the_battle_plays_the_ambience_it_names() {
+    use trpg_content::dialogue::{AmbienceLine, MusicLine, PlaceLine, Present, Scene, Stage, Step};
+    use trpg_core::{LeadGender, LeadProfile, Pos};
+    use trpg_ui::ShuyiCtx;
+    use trpg_ui::map_view::Place;
+    use trpg_ui::screens::DialogueScreen;
+
+    let mut ctx = trpg_ui::Ctx::embedded()
+        .unwrap_or_else(|e| panic!("{e}"))
+        .with_layout(RIGHT_HANDED);
+    // A second bed: the meadow's file under another cue.
+    let sounds = &mut ctx.game.content.audio.sounds;
+    let meadow = sounds[MEADOW].clone();
+    sounds.insert(QUIET.into(), meadow);
+    let quiet = [("noon".to_owned(), QUIET.to_owned())].into();
+    let table = &mut ctx.game.content.ambience;
+    table.ambiences.insert("quiet".into(), quiet);
+    let narrate = |text: &str| Step::Narrate {
+        direction: None,
+        text: text.into(),
+        line: trpg_content::LineId::default(),
+    };
+    let fort = || {
+        Step::Directive(Stage::Setting(PlaceLine::Battle {
+            at: Pos::new(11, 5),
+            bright: None,
+        }))
+    };
+    let ambience = |id: Option<&str>| {
+        Step::Directive(Stage::Ambience(
+            id.map_or(AmbienceLine::None, |id| AmbienceLine::Bed(id.into())),
+        ))
+    };
+    let scene = Scene {
+        id: "red_company".into(),
+        steps: vec![
+            fort(),
+            Step::Music(MusicLine::Cue("village".into())),
+            ambience(Some("quiet")),
+            narrate("Quiet."),
+            ambience(None),
+            narrate("Silence."),
+            fort(),
+            narrate("The field again."),
+        ],
+    };
+    let field = Place::of_battle(&ctx.game.content, &ctx.game.content.battles["test"]);
+    let lead = LeadProfile::new("Ellery", LeadGender::Male);
+    let names = ctx.game.content.names.clone();
+    let screen = DialogueScreen::new(&scene, lead, names, &Present::Everyone).with_battle(field);
+    let mut h = Harness::from_game(trpg_ui::game::new(ctx, Box::new(screen)));
+    let cues = |h: &Harness| -> Vec<String> {
+        let playing = h.sounds_playing().iter();
+        playing.map(|s| s.cue.clone()).collect()
+    };
+    h.wait(1.0);
+    assert_eq!(cues(&h), [QUIET], "the scene's, not the battle's");
+    h.clear_audio();
+    h.keys("f f").wait(1.0);
+    assert_eq!(cues(&h), [] as [&str; 0], "no bed");
+    let log = h.audio_log();
+    let music = log.iter().filter(|(_, r)| {
+        matches!(
+            r,
+            AudioRequest::StopMusic | AudioRequest::StopMusicWith { .. }
+        )
+    });
+    assert_eq!(music.count(), 0, "the music goes on: {log:?}");
+    h.keys("f f").wait(1.0);
+    assert_eq!(cues(&h), [MEADOW], "the battle's again");
+}

@@ -608,6 +608,7 @@ fn files_that_are_not_utf8() {
     );
 }
 
+mod ambience;
 mod choice;
 mod deaths;
 mod knowledge;

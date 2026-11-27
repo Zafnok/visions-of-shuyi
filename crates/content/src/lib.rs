@@ -87,8 +87,8 @@ pub use cinematic::{
 };
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{
-    Bright, ChoiceOption, DialogueTable, LineId, MusicLine, PlaceLine, Present, Scene, Side, Stage,
-    Step, deaths, joins,
+    AmbienceLine, Bright, ChoiceOption, DialogueTable, LineId, MusicLine, PlaceLine, Present,
+    Scene, Side, Stage, Step, deaths, joins,
 };
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
@@ -755,6 +755,7 @@ fn check_dialogue(
         .map_or_else(|_| dialogue::StandIns::new(), |s| s.stand_ins.clone());
     let places = dialogue::PlaceRefs::new(maps, battles, chapters, supports);
     let places = places.with_openings(openings).with_camp(camp);
+    let places = places.with_ambiences(ambience::ids());
     let scripts = check_stand_ins(check_places(scripts, &places));
     let table = check_presence(scripts, battles, chapters, new_game, (supports, camp));
     (table, stand_ins)

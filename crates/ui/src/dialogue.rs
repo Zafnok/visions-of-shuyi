@@ -1,8 +1,8 @@
 //! Playing a dialogue [`Scene`] one text box at a time: Shuyi Engine's
 //! player (`shuyi_ui::dialogue`, ticket 1112) with this game's lines and
 //! tokens ([`Hooks`]): the lead's name and pronouns and the story's names
-//! fill the text, and `@place` and `@opening` set the place behind the
-//! talk and the opening played on it. [`DialoguePlayer`] is the state
+//! fill the text, and `@place`, `@opening` and `@ambience` set the place
+//! behind the talk, the opening played on it and the ambience under it. [`DialoguePlayer`] is the state
 //! machine only (who stands where, what is said, which reply choice is
 //! open, which music and which opening the script asked for); the dialogue
 //! screen (ticket 0704) draws its [`View`], asks for the music and plays
@@ -13,13 +13,15 @@ use alloc::borrow::Cow;
 
 use shuyi_ui::dialogue::DialogueHooks;
 use shuyi_ui::dialogue::preview::Showing;
-use trpg_content::{LineId, MusicLine, Names, PlaceLine, Present, Scene, Side, Stage};
+use trpg_content::{
+    AmbienceLine, LineId, MusicLine, Names, PlaceLine, Present, Scene, Side, Stage,
+};
 use trpg_core::LeadProfile;
 
 pub use shuyi_ui::dialogue::Portrait;
 
-/// What this game's own lines have set: the place behind the talk and the
-/// opening played on it.
+/// What this game's own lines have set: the place behind the talk, the
+/// opening played on it and the ambience under it.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Setting {
     /// The place the last `@place` line named; `None` before one, or after
@@ -30,6 +32,9 @@ pub struct Setting {
     opening: Option<String>,
     /// The last `@opening` line reached and not yet taken.
     opening_due: Option<String>,
+    /// The ambience the last `@ambience` line since the last `@place` line
+    /// named; `None` without one: the place's own bed plays (ticket 1383).
+    ambience: Option<AmbienceLine>,
 }
 
 /// This game's part in playing a scene: the lead and the story's names
@@ -58,7 +63,9 @@ impl DialogueHooks for Hooks {
             Stage::Setting(place) => {
                 stage.place = (*place != PlaceLine::None).then(|| place.clone());
                 stage.opening = None;
+                stage.ambience = None;
             }
+            Stage::Ambience(line) => stage.ambience = Some(line.clone()),
             Stage::Opening(id) => {
                 stage.opening = Some(id.clone());
                 stage.opening_due = Some(id.clone());
@@ -91,6 +98,9 @@ pub struct View<'a> {
     /// The opening played on that place, if one was (`@opening`, 0734):
     /// its characters stay where it left them until the place changes.
     pub opening: Option<&'a str>,
+    /// The ambience the scene named for the place in force (`@ambience`,
+    /// ticket 1383); `None` if it named none (the place's own bed plays).
+    pub ambience: Option<&'a AmbienceLine>,
     /// Whether the text is narration (no speaker).
     pub narration: bool,
     /// The lead's replies, in menu order, while a choice is open: pick
@@ -175,6 +185,7 @@ impl DialoguePlayer {
             caption: view.caption,
             place: view.stage.place.as_ref(),
             opening: view.stage.opening.as_deref(),
+            ambience: view.stage.ambience.as_ref(),
             narration: view.narration,
             choices: view.choices,
         }
