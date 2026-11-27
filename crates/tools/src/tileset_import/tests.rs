@@ -2510,3 +2510,117 @@ fn a_standing_picture_may_be_moved_across_onto_the_tiles_beside() {
         "{listed}"
     );
 }
+
+/// A strip whose every pixel is its own colour, `[x, y, 7, 255]`, `w` × `h`
+/// px, as `pack/<name>` of the packs in the folder.
+fn strip_by_place(temp: &Temp, name: &str, (w, h): (u32, u32)) -> Sheet {
+    let mut rgba = Vec::new();
+    for y in 0..h {
+        for x in 0..w {
+            rgba.extend([u8::try_from(x).unwrap(), u8::try_from(y).unwrap(), 7, 255]);
+        }
+    }
+    temp.write(
+        &format!("lib/pack/{name}"),
+        &encode_png(w, h, &rgba).unwrap(),
+    );
+    Sheet::strip(&temp.0.join(format!("lib/pack/{name}"))).unwrap()
+}
+
+#[test]
+fn each_sprite_is_its_frames_pixels_where_it_lies_and_nothing_else() {
+    let temp = Temp::new("compose");
+    // 8 frames of 2 × 2 px, four across in two rows.
+    let sheet = strip_by_place(&temp, "places.png", (8, 4));
+    let layout = sprites::Layout {
+        frame: (2, 2),
+        frames: 8,
+        ms: 100,
+        at: vec![(0, 0, 0), (5, 9, 5)],
+    };
+    // Frame 1: the first sprite on frame 1, (2, 0) of the strip; the
+    // second on frame 6, (4, 2): the second row.
+    let tile = sprites::compose(&sheet, &layout, 1).unwrap();
+    for y in 0..16u32 {
+        for x in 0..16u32 {
+            let wanted = match (x, y) {
+                (0..2, 0..2) => [2 + x, y, 7, 255],
+                (5..7, 9..11) => [4 + x - 5, 2 + y - 9, 7, 255],
+                _ => [0; 4],
+            }
+            .map(|c| u8::try_from(c).unwrap());
+            let at = usize::try_from((y * 16 + x) * 4).unwrap();
+            assert_eq!(tile[at..at + 4], wanted, "({x}, {y})");
+        }
+    }
+    // A frame on a row the strip lacks: one pixel tall, its fifth frame
+    // on the second row.
+    let thin = strip_by_place(&temp, "thin.png", (4, 1));
+    let five = sprites::Layout {
+        frame: (1, 1),
+        frames: 5,
+        ms: 100,
+        at: vec![(0, 0, 4)],
+    };
+    assert_eq!(
+        sprites::compose(&thin, &five, 0).unwrap_err(),
+        "frame 4 of 1×1 px is outside the 4×1 px image"
+    );
+}
+
+#[test]
+fn a_sprites_layout_needs_two_frames_a_size_and_a_time() {
+    let layout = |frame: (u32, u32), frames: u32, ms: u32| sprites::Layout {
+        frame,
+        frames,
+        ms,
+        at: vec![(0, 0, 0)],
+    };
+    assert_eq!(layout((4, 4), 2, 100).problem(), None);
+    for wrong in [
+        layout((4, 4), 1, 100),
+        layout((4, 4), 2, 0),
+        layout((0, 4), 2, 100),
+        layout((4, 0), 2, 100),
+    ] {
+        assert_eq!(
+            wrong.problem().as_deref(),
+            Some("sprites need 2 frames or more, a size and a time"),
+            "{wrong:?}"
+        );
+    }
+}
+
+#[test]
+fn two_sprites_layers_laid_out_alike_share_their_pictures() {
+    let temp = Temp::new("sprites-shared").with_sheet("lib");
+    with_flames(&temp);
+    let layers = format!(
+        "{FLAMES} {}, {}",
+        FLAMES
+            .trim()
+            .trim_end_matches(',')
+            .replace("\"fire\"", "\"again\""),
+        FLAMES
+            .trim()
+            .trim_end_matches(',')
+            .replace("\"fire\"", "\"other\"")
+            .replace("(12, 12, 2)", "(12, 12, 1)")
+    );
+    let look = r#""outdoor": (layers: ["fire", "again", "other"]),"#;
+    let map = plain_mapping(&layers, look, "");
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    let ats: Vec<At> = imported
+        .own
+        .layers
+        .iter()
+        .map(|layer| match layer {
+            LayerText::Tiles { at, .. } => *at,
+            LayerText::Corners { .. } => panic!("{layer:?}"),
+        })
+        .collect();
+    assert_eq!(ats[0], ats[1]);
+    assert_ne!(ats[0], ats[2]);
+    // Each layout moves once.
+    assert_eq!(imported.moving.len(), 2);
+}
