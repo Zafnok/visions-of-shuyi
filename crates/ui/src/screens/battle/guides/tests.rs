@@ -113,6 +113,22 @@ fn up_and_down_move_through_the_topics_and_wrap() {
     assert_eq!(g.step(Action::Cancel), GuidesEffect::Close);
 }
 
+/// A list longer than its box keeps its window while the focus moves
+/// inside it (1238): Up from the last topic does not scroll.
+#[test]
+fn up_from_the_last_topic_keeps_the_first_row_shown() {
+    let c = ctx();
+    let n = titles(&c).len();
+    assert!(n > ROWS, "the list must be longer than its box");
+    let mut g = GuidesScreen::new(&c.game.content);
+    g.step(Action::CursorUp);
+    let first = g.list_view(&c).first;
+    assert_eq!(first, n - ROWS);
+    g.step(Action::CursorUp);
+    let view = g.list_view(&c);
+    assert_eq!((view.focus, view.first), (n - 2, first));
+}
+
 #[test]
 fn an_empty_list_does_not_move() {
     let mut g = GuidesScreen {

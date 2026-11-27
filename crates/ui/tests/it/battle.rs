@@ -1,6 +1,7 @@
 //! Scripted tests of the battle screen through the real game (ADR-0007
 //! layer 4), reached from the title screen's debug Quick Battle item.
 
+use crate::support::{self, skip_scenes};
 use insta::assert_snapshot;
 use trpg_content::{Theme, TipTrigger};
 use trpg_core::{Faction, Phase, Pos, Trigger, TriggerWhen};
@@ -33,7 +34,7 @@ fn quick_battle_banner() -> Harness {
 fn quick_battle() -> Harness {
     let mut h = quick_battle_banner();
     h.keys("f");
-    assert!(!shows(&h, "PHASE"));
+    assert!(!banner(&h).contains("PHASE"));
     h
 }
 
@@ -42,16 +43,16 @@ fn quick_battle() -> Harness {
 #[test]
 fn quick_battle_opens_on_its_objective_until_confirmed() {
     let mut h = quick_battle_objective();
-    assert!(shows(&h, "OBJECTIVE"));
-    assert!(shows(&h, "Rout the enemy"));
+    assert!(banner(&h).contains("OBJECTIVE"));
+    assert!(banner(&h).contains("Rout the enemy"));
     assert_eq!(help(&h), "f continue");
     h.keys("Right d Space");
     h.wait(5.0);
-    assert!(shows(&h, "OBJECTIVE"));
-    assert!(!shows(&h, "PHASE"));
+    assert!(banner(&h).contains("OBJECTIVE"));
+    assert!(!banner(&h).contains("PHASE"));
     h.keys("f");
-    assert!(!shows(&h, "OBJECTIVE"));
-    assert!(shows(&h, "PLAYER PHASE"));
+    assert!(!banner(&h).contains("OBJECTIVE"));
+    assert!(banner(&h).contains("PLAYER PHASE"));
     assert_eq!(h.cursor_tile(), Some(LORD));
 }
 
@@ -61,25 +62,25 @@ fn quick_battle_opens_on_its_objective_until_confirmed() {
 #[test]
 fn quick_battle_opens_on_the_player_phase_banner() {
     let mut h = quick_battle_banner();
-    assert!(shows(&h, "PLAYER PHASE"));
-    assert!(shows(&h, "Turn 1"));
+    assert!(banner(&h).contains("PLAYER PHASE"));
+    assert!(banner(&h).contains("Turn 1"));
     assert_eq!(help(&h), "f skip");
     // Other keys do nothing: no menu opens, and the cursor stays on the
     // lord at (3, 5).
     h.keys("Right d Space");
-    assert!(shows(&h, "PLAYER PHASE"));
+    assert!(banner(&h).contains("PLAYER PHASE"));
     let browsing = "f select · e info · s next unit · r rewind · d menu · Space end turn";
     // Confirm closes it, and does nothing else: the lord isn't selected.
     h.keys("f");
-    assert!(!shows(&h, "PHASE"));
+    assert!(!banner(&h).contains("PHASE"));
     assert_eq!(help(&h), browsing);
     assert_eq!(h.cursor_tile(), Some(LORD));
     // Left alone, it is gone after a second.
     let mut h = quick_battle_banner();
     h.wait(0.5);
-    assert!(shows(&h, "PLAYER PHASE"));
+    assert!(banner(&h).contains("PLAYER PHASE"));
     h.wait(0.6);
-    assert!(!shows(&h, "PHASE"));
+    assert!(!banner(&h).contains("PHASE"));
     assert_eq!(help(&h), browsing);
     assert_eq!(h.cursor_tile(), Some(LORD));
 }
@@ -188,15 +189,27 @@ fn shows(h: &Harness, text: &str) -> bool {
     (0..32).any(|y| row(h, y).contains(text))
 }
 
-/// Lets frames pass with no keys until `text` shows (the enemies act one
-/// by one before the player's next phase).
+/// The banner on screen, read from the battle's view: its big line, the
+/// line beneath and the objective's lines; empty with no banner.
+fn banner(h: &Harness) -> String {
+    let Some(b) = support::battle(h).view(h.game().ctx()).banner else {
+        return String::new();
+    };
+    let lines = b.lines.iter().map(|l| format!("{} {}", l.label, l.text));
+    let mut words = vec![b.title, b.subtitle];
+    words.extend(lines);
+    words.join(" ")
+}
+
+/// Lets frames pass with no keys until the banner shows `text` (the
+/// enemies act one by one before the player's next phase).
 ///
 /// # Panics
 ///
 /// If it doesn't show within `max` seconds.
-fn wait_for(h: &mut Harness, text: &str, max: f32) {
+fn wait_for_banner(h: &mut Harness, text: &str, max: f32) {
     let mut waited = 0.0;
-    while !shows(h, text) {
+    while !banner(h).contains(text) {
         assert!(waited < max, "no {text:?} after {max} s:\n{}", h.snapshot());
         h.wait(FRAME_DT);
         waited += FRAME_DT;
@@ -228,14 +241,14 @@ fn a_full_turn_of_waits_ends_with_auto_end_and_starts_turn_two() {
     wait_all(&mut h, 4);
     // The enemy phase's banner, then the enemies act, then the player's
     // turn 2.
-    assert!(shows(&h, "ENEMY PHASE"), "{}", h.snapshot());
-    assert!(shows(&h, "Turn 1"));
+    assert!(banner(&h).contains("ENEMY PHASE"), "{}", h.snapshot());
+    assert!(banner(&h).contains("Turn 1"));
     h.wait(1.1);
-    assert!(!shows(&h, "PHASE"));
-    wait_for(&mut h, "PLAYER PHASE", 30.0);
-    assert!(shows(&h, "Turn 2"));
+    assert!(!banner(&h).contains("PHASE"));
+    wait_for_banner(&mut h, "PLAYER PHASE", 30.0);
+    assert!(banner(&h).contains("Turn 2"));
     h.wait(1.1);
-    assert!(!shows(&h, "PHASE"));
+    assert!(!banner(&h).contains("PHASE"));
     // Everyone is ready again, the lord selectable.
     let units = h.map_scene().unwrap().units;
     let ready = units
@@ -255,17 +268,17 @@ fn a_full_turn_of_waits_then_space_ends_the_turn() {
     // Auto-end is off by default (ticket 0420).
     assert!(row(&h, 30).ends_with("Shift+Space auto-end: OFF"));
     wait_all(&mut h, 4);
-    assert!(!shows(&h, "PHASE"));
+    assert!(!banner(&h).contains("PHASE"));
     // Nobody ready: Space ends the turn without asking.
     h.keys("Space");
-    assert!(shows(&h, "ENEMY PHASE"));
+    assert!(banner(&h).contains("ENEMY PHASE"));
     // Confirm skips each banner.
     h.keys("f");
-    assert!(!shows(&h, "ENEMY PHASE"));
-    wait_for(&mut h, "PLAYER PHASE", 30.0);
-    assert!(shows(&h, "Turn 2"));
+    assert!(!banner(&h).contains("ENEMY PHASE"));
+    wait_for_banner(&mut h, "PLAYER PHASE", 30.0);
+    assert!(banner(&h).contains("Turn 2"));
     h.keys("f");
-    assert!(!shows(&h, "PHASE"));
+    assert!(!banner(&h).contains("PHASE"));
     assert_eq!(unit(&h, 3, 5), Some(shown("Lo", false)));
 }
 
@@ -281,11 +294,11 @@ fn space_twice_ends_the_turn_with_units_ready() {
     assert!(!shows(&h, "units ready?"));
     // Double-tap Space.
     h.keys("Space Space");
-    assert!(shows(&h, "ENEMY PHASE"));
+    assert!(banner(&h).contains("ENEMY PHASE"));
     h.keys("f");
-    wait_for(&mut h, "PLAYER PHASE", 30.0);
+    wait_for_banner(&mut h, "PLAYER PHASE", 30.0);
     h.keys("f");
-    assert!(!shows(&h, "PHASE"));
+    assert!(!banner(&h).contains("PHASE"));
     // Turn 2: the objective says so.
     h.keys("d Down f");
     assert!(shows(&h, "Rout the enemy"));
@@ -386,7 +399,7 @@ fn new_boxes_draw_only_glyphs_in_the_font() {
         h.keys(keys);
         check(&h);
     }
-    assert!(shows(&h, "ENEMY PHASE"));
+    assert!(banner(&h).contains("ENEMY PHASE"));
 }
 
 #[test]
@@ -463,13 +476,9 @@ fn next_unit_jumps_between_ready_units() {
     assert_eq!(panel(&h)[4], "Test Archer");
 }
 
-/// The key-help line, left of the right-aligned debug hint.
+/// The key-help line, read from the battle's view.
 fn help(h: &Harness) -> String {
-    let buf = h.game().buffer();
-    let row = (0..90)
-        .map(|x| buf.get(x, 31).map_or(' ', |c| c.glyph))
-        .collect::<String>();
-    crate::unpadded(&row)
+    crate::unpadded(&support::battle(h).view(h.game().ctx()).help.plain())
 }
 
 /// The lord (at (3, 5)) selected, the path steered two tiles right onto
@@ -770,10 +779,10 @@ fn tips_show_when_switched_on() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_tips().keys("Down f Left f");
     // The start tip waits for the objective's and `PLAYER PHASE` banners.
-    assert!(shows(&h, "OBJECTIVE"));
+    assert!(banner(&h).contains("OBJECTIVE"));
     assert!(!shows(&h, "Your move"));
     h.keys("f");
-    assert!(shows(&h, "PLAYER PHASE"));
+    assert!(banner(&h).contains("PLAYER PHASE"));
     assert!(!shows(&h, "Your move"));
     h.keys("f");
     assert!(shows(&h, "Your move"));
@@ -808,9 +817,9 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
     h.keys("f f f Up f");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
-    assert!(shows(&h, "OBJECTIVE"));
+    assert!(banner(&h).contains("OBJECTIVE"));
     h.keys("f");
-    assert!(shows(&h, "PLAYER PHASE"));
+    assert!(banner(&h).contains("PLAYER PHASE"));
     // Closing the banner starts the scene: no tip under it.
     h.keys("f");
     assert_eq!(h.screens(), ["title", "game_flow", "battle", "dialogue"]);
@@ -825,22 +834,6 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
     assert!(shows(&h, " Vix "));
 }
 
-/// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
-fn skip_scenes(h: &mut Harness) {
-    for _ in 0..8 {
-        // A chapter's title card first (0812): Confirm closes it.
-        if h.top_screen() == "chapter_card" {
-            h.keys("f");
-            continue;
-        }
-        if h.top_screen() != "dialogue" {
-            return;
-        }
-        h.keys("d f");
-    }
-    panic!("the scenes never end: {:?}", h.screens());
-}
-
 /// The Quick Battle's dialogue triggers (0705): its rogue arrives on the
 /// fort in turn 2's enemy phase, and turn 3 starts with a scene, once its
 /// banner is closed.
@@ -851,15 +844,15 @@ fn the_rogue_arrives_and_turn_three_opens_with_a_scene() {
     assert_eq!(unit(&h, 12, 3), None);
     // Turn 1 ends with everyone ready; both banners skipped.
     h.keys("Space Space f");
-    wait_for(&mut h, "PLAYER PHASE", 30.0);
+    wait_for_banner(&mut h, "PLAYER PHASE", 30.0);
     h.keys("f");
-    assert!(!shows(&h, "PHASE"));
+    assert!(!banner(&h).contains("PHASE"));
     // Turn 2's enemy phase (the rogue arrives under its banner).
     h.keys("Space Space");
-    assert!(shows(&h, "ENEMY PHASE"));
+    assert!(banner(&h).contains("ENEMY PHASE"));
     h.keys("f");
-    wait_for(&mut h, "PLAYER PHASE", 30.0);
-    assert!(shows(&h, "Turn 3"));
+    wait_for_banner(&mut h, "PLAYER PHASE", 30.0);
+    assert!(banner(&h).contains("Turn 3"));
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     // Closing the banner plays the scene over the map.
     h.keys("f");
@@ -955,11 +948,11 @@ fn play_into_turn_two(h: &mut Harness) {
     h.keys("r").wait(0.5).keys("f f");
     assert!(!shows(h, "Rewind"), "{}", h.snapshot());
     h.keys("Space Space");
-    assert!(shows(h, "ENEMY PHASE"), "{}", h.snapshot());
+    assert!(banner(h).contains("ENEMY PHASE"), "{}", h.snapshot());
     h.keys("f");
-    wait_for(h, "PLAYER PHASE", 30.0);
+    wait_for_banner(h, "PLAYER PHASE", 30.0);
     h.keys("f");
-    assert!(!shows(h, "PHASE"));
+    assert!(!banner(h).contains("PHASE"));
     h.keys("d Down f");
     assert!(shows(h, "Turn 2"));
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);

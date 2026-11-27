@@ -19,7 +19,8 @@ use trpg_ui::map_view::{MapScene, Place};
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::dialogue::glyph::{PLACE_BRIGHTNESS, TEXT_BOX};
 
-use crate::playthrough::{battle, play_in_game, skip_scenes};
+use crate::playthrough::play_in_game;
+use crate::support::{skip_scenes, state as battle};
 
 /// The screen over the text box: the place, the faces and the scene's
 /// caption. A snapshot shows these alone, not the talk or its keys (1290).

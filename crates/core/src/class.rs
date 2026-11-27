@@ -208,6 +208,7 @@ fn tier_entry<T: Copy>(table: &[T], tier: Tier) -> Option<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::testing;
 
     #[test]
     fn tags_from_list() {
@@ -253,24 +254,11 @@ mod tests {
             max: WeaponRank::C,
         };
         let class = ClassDef {
-            id: ClassId("rider".into()),
             name: "Rider".into(),
-            tier: 1,
             movement_type: MovementTypeId(1),
             move_points: 7,
-            base: Stats::default(),
-            growths: Growths::default(),
             weapons: vec![prof(WeaponKind::Sword), prof(WeaponKind::Spear)],
-            max_armour: None,
-            tags: UnitTags::default(),
-            promotes_to: vec![],
-            active: None,
-            passives: vec![],
-            enemy_only: false,
-            lord_only: false,
-            weapon_slots: 3,
-            spells: vec![],
-            affinities: vec![],
+            ..testing::class("rider")
         };
         assert_eq!(
             class.weapon(WeaponKind::Spear).map(|w| w.kind),
@@ -284,24 +272,11 @@ mod tests {
         use ArmourWeight::{Chain, Cloth, Leather, Plate};
         let wears = |max_armour| {
             let class = ClassDef {
-                id: ClassId("c".into()),
                 name: "C".into(),
-                tier: 1,
                 movement_type: MovementTypeId(1),
                 move_points: 5,
-                base: Stats::default(),
-                growths: Growths::default(),
-                weapons: vec![],
                 max_armour,
-                tags: UnitTags::default(),
-                promotes_to: vec![],
-                active: None,
-                passives: vec![],
-                enemy_only: false,
-                lord_only: false,
-                weapon_slots: 3,
-                spells: vec![],
-                affinities: vec![],
+                ..testing::class("c")
             };
             [Cloth, Leather, Chain, Plate].map(|w| class.can_wear(w))
         };

@@ -67,6 +67,10 @@ pub struct ListView<Row> {
     pub rows: Vec<Row>,
     /// The row the cursor is on, or was on when it left the list.
     pub cursor: usize,
+    /// The first row shown, for a list that keeps its window until the
+    /// cursor leaves it (1238). The stock list scrolls by its rows'
+    /// heights and ignores it.
+    pub first: usize,
     /// What the cursor is doing here.
     pub state: ListState,
 }

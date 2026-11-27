@@ -6,19 +6,19 @@ use std::collections::{BTreeMap, BTreeSet};
 use proptest::prelude::*;
 
 use super::*;
-use crate::class::{ArmourWeight, ClassLevel, Tier, UnitTags, WeaponProficiency};
+use crate::class::{ArmourWeight, ClassLevel, Tier, WeaponProficiency};
 use crate::geom::Pos;
 use crate::item::{
     ArmourDef, ConsumableDef, ConsumableEffect, Equipped, ItemDef, SealDef, WeaponDef,
     WeaponInstance, WeaponRules,
 };
-use crate::skill::{SkillDef, SkillId, SkillKind, SkillTable};
+use crate::skill::{SkillDef, SkillId, SkillTable};
 use crate::spell::SpellId;
 use crate::stats::{Growths, StatValue};
-use crate::terrain::MovementTypeId;
 use crate::unit::{Faction, UnitId};
 use crate::weapon::{WeaponKind, WeaponRank};
 
+use crate::testing;
 use ArmourWeight::{Chain, Leather, Plate};
 use ClassChangeError as Refused;
 use WeaponKind::{Axe, Spear, Sword};
@@ -48,7 +48,6 @@ fn def(s: &Spec) -> ClassDef {
         id: cid(s.id),
         name: s.id.into(),
         tier: s.tier,
-        movement_type: MovementTypeId(0),
         move_points: s.mov,
         base: Stats::from_growable(s.base, s.mov),
         growths: Growths([50; 7]),
@@ -58,19 +57,14 @@ fn def(s: &Spec) -> ClassDef {
             .map(|&(kind, start, max)| WeaponProficiency { kind, start, max })
             .collect(),
         max_armour: s.max_armour,
-        tags: UnitTags::default(),
         promotes_to: s.promotes_to.iter().map(|c| cid(c)).collect(),
         active: Some(SkillId::new(&format!("{}_active", s.id))),
-        passives: vec![],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
         spells: s
             .spells
             .iter()
             .map(|&(level, spell)| (level, SpellId::new(spell)))
             .collect(),
-        affinities: vec![],
+        ..testing::class("x")
     }
 }
 
@@ -204,22 +198,15 @@ fn classes() -> ClassTable {
 fn items() -> ItemTable {
     let weapon = |name: &str, kind| {
         ItemDef::Weapon(WeaponDef {
-            short_name: None,
-            name: name.into(),
             kind,
             rank: E,
             might: 5,
             hit: 90,
-            crit: 0,
             weight: 2,
-            min_range: 1,
-            max_range: 1,
             damage_type: crate::combat::DamageType::Physical,
             durability: 20,
-            effective: vec![],
-            arts: vec![],
             price: 400,
-            special: None,
+            ..testing::sword_def(name)
         })
     };
     let armour = |name: &str, weight_class| {
@@ -270,8 +257,7 @@ fn skills() -> SkillTable {
                 id: SkillId::new(&format!("{}_active", s.id)),
                 name: s.id.into(),
                 family: s.id.into(),
-                rank: 1,
-                kind: SkillKind::Passive(vec![]),
+                ..testing::skill("x")
             })
             .map(|s| (s.id.clone(), s))
             .collect(),

@@ -4,6 +4,7 @@
 //! them as caps, the arrow keys as their picture; a controller's buttons
 //! read as before (0255).
 
+use crate::support::battle;
 use insta::assert_snapshot;
 use shuyi_ui::text::{StyledText, TextRole};
 use trpg_content::image::KEY_ARROWS_PATH;
@@ -11,7 +12,6 @@ use trpg_core::{CharacterId, LEAD_ID};
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, LEFT_HANDED, PadKind, RIGHT_HANDED};
-use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::layout::{HELP_BAR, MAP_VIEW};
 use trpg_ui::screens::dialogue::DialogueScreen;
 use trpg_ui::screens::{PreparationsScreen, WorldMapScreen};
@@ -48,11 +48,6 @@ fn battle_in(layout: trpg_ui::input::Layout, tips: bool) -> Harness {
     ));
     h.wait(0.5);
     h
-}
-
-fn battle(h: &Harness) -> &BattleScreen {
-    h.screen::<BattleScreen>()
-        .unwrap_or_else(|| panic!("no battle: {:?}", h.screens()))
 }
 
 /// Acceptance (0254): the battle's help bar and toggles hold each key the

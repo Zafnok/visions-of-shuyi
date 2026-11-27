@@ -10,6 +10,7 @@ use crate::ai::{AiWeights, next_command};
 use crate::art::{ArtNote, ArtStatus, OnKill};
 use crate::combat::SideForecast;
 use crate::skill::TimedEffect;
+use crate::testing;
 
 fn aid(id: &str) -> ArtId {
     ArtId::new(id)
@@ -19,12 +20,11 @@ fn aid(id: &str) -> ArtId {
 /// (sword, 8), rank D.
 fn rule_arts() -> Vec<ArtDef> {
     let art = |id: &str, kind, cost, effect| ArtDef {
-        id: aid(id),
-        name: id.into(),
         kind,
         rank: Some(WeaponRank::D),
         cost,
         effect,
+        ..testing::art(id)
     };
     vec![
         art(

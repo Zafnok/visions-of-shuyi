@@ -11,6 +11,7 @@ use super::*;
 use crate::art::{ArtNote, Debuff};
 use crate::combat::{CombatHp, SideForecast, if_all_hit};
 use crate::skill::{CostError, TimedEffect};
+use crate::testing;
 
 fn aid(id: &str) -> ArtId {
     ArtId::new(id)
@@ -1623,12 +1624,10 @@ fn special_battle(units: Vec<Unit>) -> BattleState {
     let mut setup = art_setup(units);
     let mut arts = (*setup.arts).clone();
     let art = |id: &str, kind, cost, effect| ArtDef {
-        id: aid(id),
-        name: id.into(),
         kind,
-        rank: None,
         cost,
         effect,
+        ..testing::art(id)
     };
     let e = ArtEffect::default;
     for a in [
