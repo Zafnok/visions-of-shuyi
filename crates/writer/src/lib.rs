@@ -361,27 +361,3 @@ mod tests {
         assert!(err.starts_with("story-check: can't read "), "{err}");
     }
 }
-
-/// Ticket 0150's probe of the mutants workflow; reverted before merge.
-pub fn zz_probe_0150_caught(n: u32) -> u32 {
-    n + 1
-}
-
-/// Ticket 0150's probe: no test checks what this returns, so its
-/// mutant is missed on purpose; reverted before merge.
-pub fn zz_probe_0150_missed() -> bool {
-    true
-}
-
-#[cfg(test)]
-mod probe_0150 {
-    #[test]
-    fn the_probe_adds_one() {
-        assert_eq!(super::zz_probe_0150_caught(1), 2);
-        assert_eq!(super::zz_probe_0150_caught(3), 4);
-        assert_eq!(super::zz_probe_0150_caught(3), 5, "probe D fails on purpose");
-        let _ = super::zz_probe_0150_missed();
-    }
-}
-// Ticket 0150's probe, push B (reverted before merge).
-// Ticket 0150's probe, push C (reverted before merge).
