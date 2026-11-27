@@ -438,6 +438,10 @@ fn every_bought_file_has_a_credit() {
             "Lonesome Forest (modified: stones recolored)",
             // The candle in Veyne Hall's study (ticket 1384).
             "Classic Dungeons",
+            // The house, the throne and the burning wood's flames (0460).
+            "Castle and Village",
+            "Tile Fantasy: Castle",
+            "Minifantasy: Raided Village",
             // The title's campfire (ticket 0922).
             "Idylwild's Chromatic Campfires",
         ]
