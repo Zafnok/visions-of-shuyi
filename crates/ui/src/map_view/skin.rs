@@ -8,6 +8,7 @@ use alloc::rc::Rc;
 
 use shuyi_ui::grid::skin::{GridSkin, Looks, UnitPainter};
 use trpg_content::Tileset;
+use trpg_core::{Grid, TerrainId};
 
 use super::glyph::{GLYPH, GlyphUnits};
 use super::playdate::{ONE_BIT, OneBitUnits};
@@ -154,8 +155,25 @@ impl MapSkin {
     }
 
     /// Paints `scene` into the cells of `area`, its units by the painter of
-    /// this frame's `ctx`. Touches nothing outside it.
+    /// this frame's `ctx`. Touches nothing outside it. What stands on more
+    /// than one tile (the trees, ticket 1356) is placed on the scene's own
+    /// tiles: [`paint_on`](Self::paint_on) a part of a bigger map.
     pub fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer) {
+        self.paint_on(ctx, scene, None, area, buf);
+    }
+
+    /// [`paint`](Self::paint) `scene`, a part of the map whose terrain is
+    /// `map` (`None`: the scene is the map): the trees stand where they do
+    /// on the whole map, however the view is scrolled.
+    pub fn paint_on(
+        &self,
+        ctx: &Ctx,
+        scene: &MapScene,
+        map: Option<&Grid<TerrainId>>,
+        area: Rect,
+        buf: &mut GlyphBuffer,
+    ) {
+        let ground_from = buf.items().len();
         // engine-friction: engine#2359, moves (game 1357 deletes it)
         // The frame of the tileset's moving tiles at the scene's clock, if
         // any moves now (ticket 1315).
@@ -178,7 +196,12 @@ impl MapSkin {
                 Units::Glyph => paint(&GlyphUnits {
                     palette: &ctx.palette,
                 }),
-                Units::Sprite(tileset) => paint(&SpriteUnits { ctx, tileset }),
+                Units::Sprite(tileset) => paint(&SpriteUnits {
+                    ctx,
+                    tileset,
+                    map,
+                    ground_from,
+                }),
                 Units::OneBit => paint(&OneBitUnits::new(ctx, area)),
             }
         });

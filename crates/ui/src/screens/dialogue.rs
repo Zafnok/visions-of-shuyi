@@ -31,7 +31,7 @@ pub mod view;
 use crate::prelude::*;
 use alloc::rc::Rc;
 use trpg_content::{AmbienceLine, MusicLine, Names, OpeningDef, PlaceLine, Present, Scene};
-use trpg_core::{LEAD_ID, LeadProfile};
+use trpg_core::{Grid, LEAD_ID, LeadProfile, TerrainId};
 
 use crate::audio::MenuSound;
 use crate::cinematic::opening::{DARKEN_MS, cast_units, darkened_after, opening_ms, opening_units};
@@ -923,9 +923,10 @@ impl DialogueScreen {
         let opening = current
             .opening
             .and_then(|id| ctx.game.content.openings.get(id));
-        view.place = current
+        let place = current
             .place
             .and_then(|line| self.place_scene(ctx, line, opening));
+        (view.place, view.place_map) = place.unzip();
         view.bright = current
             .place
             .and_then(PlaceLine::bright)
@@ -941,15 +942,15 @@ impl DialogueScreen {
 
     /// The part of the place `line` names that the whole screen shows with
     /// `ctx`'s map skin, centred on the line's tile, with the characters of
-    /// the `opening` played on it where it has them now. `None` for no
-    /// place, a map the content hasn't got (the validator rules it out)
-    /// and the battle when the screen has none.
+    /// the `opening` played on it where it has them now, and the whole
+    /// map's terrain. `None` for no place, a map the content hasn't got
+    /// (the validator rules it out) and the battle when the screen has none.
     fn place_scene(
         &self,
         ctx: &Ctx,
         line: &PlaceLine,
         opening: Option<&OpeningDef>,
-    ) -> Option<MapScene> {
+    ) -> Option<(MapScene, Grid<TerrainId>)> {
         let view = screen_tiles(ctx);
         match line {
             PlaceLine::Map { map, at, .. } => {
@@ -958,9 +959,12 @@ impl DialogueScreen {
                 if let Some(opening) = opening.filter(|o| o.map == *map) {
                     place.units = self.opening_cast(ctx, opening);
                 }
-                Some(place.scene(*at, view))
+                Some((place.scene(*at, view), place.tiles))
             }
-            PlaceLine::Battle { at, .. } => Some(self.battle.as_ref()?.scene(*at, view)),
+            PlaceLine::Battle { at, .. } => {
+                let place = self.battle.as_ref()?;
+                Some((place.scene(*at, view), place.tiles.clone()))
+            }
             PlaceLine::None => None,
         }
     }

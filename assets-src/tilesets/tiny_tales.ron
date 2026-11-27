@@ -390,8 +390,7 @@
         // rock inside it (1359), the cliff's face below and its shadow
         // (1361); Harl's fort as the stone keep, its paving inside and
         // Harrowby's round tower (1360), drawn last so nothing covers
-        // them. The trees (1356) keep Tiny Tales' pictures until their
-        // ticket, over this ground.
+        // them. The woods' trees stand by footprint (1356, below).
         "rogue_adventure": (
             terrain: {
                 // The grass, (2, 5); the forest floor's middle, (10, 5).
@@ -430,11 +429,28 @@
                 "wall": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
             },
             layers: ["ra_forest_floor", "ra_river", "ice", "ash", "ra_peak", "lf_shadow", "lf_rim",
-                     "forest", "thicket", "burnt", "burning", "ra_bridge", "house", "gate",
+                     "thicket", "burnt", "burning", "ra_bridge", "house", "gate",
                      "throne", "door", "roof", "house_wall", "lintel", "house_door", "hedge",
                      "well", "rack", "campfire", "desk", "papers", "candle", "shelf", "rug", "banner",
                      "crest",
                      "ra_wall_face", "ra_wall", "ra_tower", "ra_keep"],
+            // The forest's trees (ticket 1356; 0096: trees by footprint):
+            // ELV's animated green trees, the two wide ones, which fit a
+            // crown of 3 x 3 tiles. Each sheet is 12 frames of 64 x 80 px,
+            // four across; a frame's foot is where the roots meet the
+            // ground. A big tree on each free 3 x 3 of forest, the same
+            // frames halved on what is left. 160 ms a frame, as the river.
+            trees: (
+                of: ["forest"],
+                sheets: [
+                    "elv-games/tilesets/rogue-adventure/animated-trees/tree01_s_01_animation.png",
+                    "elv-games/tilesets/rogue-adventure/animated-trees/tree02_s_01_animation.png",
+                ],
+                frame: (64, 80),
+                frames: 12,
+                ms: 160,
+                foot: (32, 74),
+            ),
         ),
         // A map outdoors (and any map that names no look): the World Map
         // set in its Standard colours. Walls, floors and doors are the

@@ -137,6 +137,47 @@ frames: [
 - The content test `every_moving_look_names_its_stills` checks every
   cell's stills and lists each `todo`.
 
+### Trees by footprint: a look's `trees`
+
+A look of `looks` may have **trees** (ticket 1356, `docs/design/
+look-and-feel.md`, *Woods: trees by footprint*): pictures bigger than a
+tile standing on its forest, each looping through drawn frames.
+
+```ron
+"rogue_adventure": (
+    terrain: { … },
+    layers: [ … ],
+    trees: (
+        of: ["forest"],               // the terrains a tree stands on
+        // Each kind: a frame's size in pixels, the pixel of a frame on the
+        // middle of its trunk tile's bottom edge, and its frames (the top-
+        // left cell of each and how long it shows, in ms).
+        big: [(size: (64, 80), foot: (32, 74), frames: [((0, 33), 160), ((4, 33), 160), …])],
+        half: [(size: (32, 40), foot: (16, 37), frames: [((0, 63), 160), ((2, 63), 160), …])],
+        // As a moving tile's; a tree's still is its first frame.
+        motion: (stills: {Reduced: (show: FirstFrame), Minimal: (show: FirstFrame)}),
+    ),
+),
+```
+
+- **Where they stand** is worked out from the whole map's terrain alone
+  (`trpg_content::tileset::place`), the same on every run: a **big**
+  tree wherever a 3 × 3 of forest is free, row by row from the top-left,
+  its trunk on the bottom row's middle tile; then, from the bottom row
+  up, a **half-size** tree on each forest tile left, its crown over the
+  tile above (taking it, if that is forest left too). A lone forest tile
+  gets a half-size tree, its crown over whatever is above.
+- Which kind a tree is, and how far into its loop it starts, come from
+  its place: a forest doesn't sway as one, and a frame at a given time is
+  always the same.
+- The sprite skin paints the trees over the ground and under the path,
+  the units and the cursor, the top row first. A tree takes the tint of
+  each tile it covers over its own pixels, and the ranges' outlines are
+  painted again over it, so a range under a crown shows as on the ground.
+- Like a moving tile, a tree shows its **first frame** below the lowest
+  tier it moves at (the Playdate is `Reduced`) and while idle motion is
+  off; `every_moving_look_names_its_stills` checks its stills.
+
 ### Units
 
 A unit **picture** is written one of two ways, and a file may mix them:
@@ -222,7 +263,11 @@ its name:
 - `frames` need `terrain`; a moving cell is listed once, is drawn by a
   terrain or a layer, has two frames or more, the first the cell itself,
   each lasting 1 ms or more and lying inside the image; its stills show
-  `FirstFrame` (`Nothing` would leave a hole in the map).
+  `FirstFrame` (`Nothing` would leave a hole in the map);
+- a look's `trees` name real terrains in `of`, have a kind or more of
+  `big` and of `half`, each a frame of some pixels with its foot inside
+  it and two frames or more, each lasting 1 ms or more and lying inside
+  the image; their stills show `FirstFrame`.
 
 ## Files
 
@@ -298,3 +343,9 @@ table):
   drawn over by the keep's stone where a fort is by a floor). A `Tiles`
   layer may leave its `tile` out (a see-through cell) and give `near`,
   its picture beside any of `beside`.
+  A look's `trees` (1356) name plain sheets of frames (ELV's
+  `animated-trees/`, 12 frames of 64 × 80 px, four across), each a kind
+  of big tree; the importer packs every frame below the tiles, and each
+  frame again at half the size (each two by two pixels one: a block with
+  two solid pixels or more solid, their colours averaged; else as clear
+  as the block on the whole) as a kind of half-size tree.

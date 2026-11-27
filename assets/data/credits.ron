@@ -99,12 +99,13 @@
          private: ["units/lance_cavalier.", "units/mounted_archer."]),
 
         // ELV Games' Rogue Adventure (1318): Chapter 1's ground, river and
-        // bridges, Harl's keep and Harrowby's tower (1360), the fire in
-        // Harrowby's yard (1384), packed into the
-        // same image as Tiny Tales' tiles. A wall running up and down is a
-        // cell's half mirrored (a change, so the credit says so).
+        // bridges, Harl's keep and Harrowby's tower (1360), its swaying
+        // trees (1356) and the fire in Harrowby's yard (1384), packed into the same image as Tiny Tales' tiles. A
+        // wall running up and down is a cell's half mirrored, and the
+        // half-size trees are the trees' frames halved (changes, so the
+        // credit says so).
         (id: "elv_games", group: Art,
-         title: "Rogue Adventure World (modified: a wall mirrored)",
+         title: "Rogue Adventure World (modified: a wall mirrored, trees halved)",
          author: "ElvGames",
          source: "https://elvgames.itch.io/rogue-adventure-world", license: "Custom (ElvGames)",
          private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),

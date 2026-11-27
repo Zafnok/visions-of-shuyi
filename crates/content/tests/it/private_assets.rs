@@ -431,8 +431,9 @@ fn every_bought_file_has_a_credit() {
             "Shironejiya battle pictures (the materials in this game may not be reused)",
             "Classes and Mobs pixel-art TRPG pieces",
             "Fantasy Battle Pack",
-            // Chapter 1's ground and river (ticket 1318).
-            "Rogue Adventure World (modified: a wall mirrored)",
+            // Chapter 1's ground and river (ticket 1318), its trees
+            // halved (1356).
+            "Rogue Adventure World (modified: a wall mirrored, trees halved)",
             // Chapter 1's hills (ticket 1359).
             "Lonesome Forest (modified: stones recolored)",
             // The title's campfire (ticket 0922).
