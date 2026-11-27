@@ -23,7 +23,7 @@ use crate::prelude::*;
 use shuyi_assets::font::CellWidths;
 use shuyi_ui::text::StyledText;
 
-use trpg_core::{Faction, Pos, StatValue};
+use trpg_core::{Faction, Grid, Pos, StatValue, TerrainId};
 
 pub use self::fight_box::{BoxFighterView, FightBoxView};
 pub use self::forecast::{
@@ -52,6 +52,10 @@ use crate::widgets::menu::MenuView;
 pub struct BattleView {
     /// What is on the visible map (ADR-0038): the map skin paints it.
     pub scene: MapScene,
+    /// The whole map's terrain (ticket 1356): where what stands on more
+    /// than one tile (a tree) is placed, however the view is scrolled.
+    /// `None`: the scene's own tiles.
+    pub map: Option<Grid<TerrainId>>,
     /// The menu open, if any: a unit's action menu or a list it opened,
     /// the map menu, or the unit list.
     pub menu: Option<BattleMenuView>,

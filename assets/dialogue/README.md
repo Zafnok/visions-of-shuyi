@@ -63,6 +63,8 @@ Every line is one of these. Directives start at the very first column.
 | `@place battle <x>,<y>` | The same over the map of the scene's battle. |
 | `@place <map> <x>,<y> bright <n>%`, `@place battle <x>,<y> bright <n>%` | The same, darkened only to `n`% of its brightness (1% to 100%) instead of the usual 40%. See "Places". |
 | `@place none` | Back to black behind the talk. |
+| `@ambience <ambience>` | Plays that ambience's sound bed under the talk (an ambience of `assets/data/ambience.ron`) instead of the place's, from here until the next `@ambience` or `@place`. See "Places". |
+| `@ambience none` | No sound bed until the next `@ambience` or `@place`; the music goes on. |
 | `@opening <opening>` | Before the next text box, plays that opening of `assets/openings/` (its file name without `.ron`) on the place: its characters move, then the place darkens and the talk comes up. See "Places". |
 | `@dies <character>` | A death in the scene (`death-and-difficulty.md`): when the scene plays, the character leaves the army for good, in Classic and Casual alike; their gear goes to the stock and their supports end. Usually inside an `@if` block for them. See "Rules". |
 | `@joins <character>` | A recruit on a story beat (`battle-scenes-and-recruitment.md`): when the scene plays, the character joins the army, fresh from `characters.ron`. The army can lose them from the next chapter on, so later scenes show them only in `@if` blocks; the scenes of the chapter that recruits them need none. See "Rules". |
@@ -78,7 +80,7 @@ Every line is one of these. Directives start at the very first column.
 
 Each speech or narration line is **one text box** on screen (the screen
 splits a long one into pages). Directives (`@caption`, `@left`, `@right`,
-`@music`, `@place`, `@opening`) take effect before the next text box.
+`@music`, `@place`, `@ambience`, `@opening`) take effect before the next text box.
 
 ## Rules
 
@@ -110,6 +112,9 @@ The validator reports every broken rule, with the file and line:
   or `none`; a brightness after the tile is `bright` and a whole
   percentage from 1% to 100%. Every reply of a choice, and both parts of an `@if` block,
   leave the same place (as with the caption).
+- **Ambience**: `@ambience` names exactly one ambience of
+  `assets/data/ambience.ron`'s `ambiences`, or `none`. Every reply of a
+  choice, and both parts of an `@if` block, leave the same one.
 - **Openings**: `@opening` names an opening of `assets/openings/` made
   for the place in force, which is a map of `assets/maps/` (not
   `battle`, not `none`). It is written at the scene's top level (not in a
@@ -560,6 +565,15 @@ glyphs, with *Pictures* in the tiles, like the battle map.
 - A scene with no `@place` is drawn on black, as before. A scene played
   during a battle is drawn over the battle map, darkened, whether it names
   a place or not.
+- The place plays its **sound bed** under the music (`assets/audio/README.md`,
+  *Ambience*): a map's from `assets/data/ambience.ron`'s `places`, the
+  battle's for `@place battle`, none on black. `@ambience <ambience>`
+  plays that ambience instead (a scene over the battle's map that should
+  not sound like the battle: `@place battle 20,3` then `@ambience
+  after_quiet`), and `@ambience none` plays none, the music going on;
+  either lasts until the next `@ambience` or `@place`, which plays the new
+  place's own bed again (ticket 1383). The bed fades from one to the other
+  over half a second.
 - `@opening <opening>`: a short moving opening (ticket 0734), **only where
   the script asks** for one. Before the next text box the place is shown
   at full brightness, with no portraits or text box (the caption stays),

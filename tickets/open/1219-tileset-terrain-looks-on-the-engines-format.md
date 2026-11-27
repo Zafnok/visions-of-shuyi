@@ -5,8 +5,8 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: blocked
-blocked_by: ["engine#2243"]
+status: todo
+blocked_by: []
 nick_input: none
 completed:
 ---
@@ -46,6 +46,15 @@ picture size. engine#2243's `LayerDef::Corners` had only `of` and
 `tiles`; Zafnok/shuyi-engine#607 (Nick's OK) adds the three fields and
 their checks to its scope.
 
+**2026-11-26, from 1356 (ADR-0134):** `LookFile` in `look.rs` gained an
+optional `trees` (`tileset/trees.rs`: the trees standing on a look's
+forest, their frames and stills), read with `Looking`'s `sized` and
+`terrains` (now `pub(super)`). engine#2243's `LookDef` doesn't have it
+and needn't: trees are this game's own data riding in a look. When this
+ticket moves the loader onto `LookDef`, it reads `trees` beside it (or
+takes it out of the look before the engine reads the rest), and keeps
+`trpg_content::tileset::Trees` and its checks as they are.
+
 - 2026-11-26 (0882): `tileset/look.rs` builds its `Look` with
   `Look::new(tiles, layers)`, since the engine made `Look`
   non-exhaustive (engine #615). Nothing new for engine#2243 to cover:
@@ -59,7 +68,15 @@ does (the engine's words).
 ## Scope
 
 **In:**
-- The pin past engine#2243.
+- ~~The pin past engine#2243.~~ Done by the pin move of 2026-11-27 (`docs/engine/pins.md`).
+- **Props, either order with 1378.** Engine PR #620 (2281), in the pin
+  since the same move, reads a look's `props` in the terrain-tiles
+  format (`TerrainTilesDef`, each `LookDef` its own; the pictures a map
+  places by hand, engine 3247). If 1378 is done, the game's `LookFile`
+  reads `props` too: take the engine's in their place and delete the
+  game's reading and checks of them with the rest of `look.rs`. If not,
+  there is nothing of the game's to delete; add a line to 1378 that its
+  props come from the engine's format.
 - `TilesetFile`'s `layers` and `looks` typed with the engine's `LayerDef`
   and `LookDef`; when `terrain`, `image` and `tile_px` are all written, a
   `TerrainTilesDef` built from them, checked with `problems(&TILE_RULES)`
@@ -83,8 +100,8 @@ does (the engine's words).
 
 ## Implementation steps
 
-1. **Pin** past engine#2243 (`engine-change` §7, `engine-pin` skill),
-   unless an open `engine-pin` PR has; read its API.
+1. ~~**Pin** past engine#2243~~ (done by the pin move of 2026-11-27 (`docs/engine/pins.md`)); read its API,
+   `props` included.
 2. In `crates/content/src/tileset.rs`: a `TILE_RULES:
    TileRules<'static>` of `map::TILE_LOOKS` and `SIDE_PX`; the terrain
    map `BTreeMap<String, TerrainId>` from `refs.terrain` (each

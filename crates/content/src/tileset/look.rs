@@ -27,6 +27,9 @@ pub(super) struct LookFile {
     pub(super) terrain: BTreeMap<String, (u32, u32)>,
     #[serde(default)]
     pub(super) layers: Vec<LayerFile>,
+    /// Its trees (ticket 1356): only in a look of `looks`.
+    #[serde(default, deserialize_with = "super::written")]
+    pub(super) trees: Option<super::trees::TreesFile>,
 }
 
 /// A layer as written.
@@ -75,7 +78,7 @@ pub(super) struct SidesAt {
 
 /// What a named look is called in a problem: nothing for the tileset's
 /// own.
-fn prefix(name: Option<&str>) -> String {
+pub(super) fn prefix(name: Option<&str>) -> String {
     name.map_or_default(|n| format!("look \"{n}\": "))
 }
 
@@ -118,7 +121,7 @@ impl Looking<'_, '_> {
 
     /// The rectangle of `(w, h)` pixels from the top-left of tile `at`,
     /// reported (as `what`) if it lies outside the tileset's image.
-    fn sized(&mut self, what: &str, at: (u32, u32), (w, h): (u32, u32)) -> ImageRect {
+    pub(super) fn sized(&mut self, what: &str, at: (u32, u32), (w, h): (u32, u32)) -> ImageRect {
         let rect = ImageRect {
             w,
             h,
@@ -132,7 +135,7 @@ impl Looking<'_, '_> {
 
     /// The terrains called `names`, reporting (as `what`) each that
     /// doesn't exist.
-    fn terrains(&mut self, what: &str, names: &[String]) -> BTreeSet<TerrainId> {
+    pub(super) fn terrains(&mut self, what: &str, names: &[String]) -> BTreeSet<TerrainId> {
         let mut ids = BTreeSet::new();
         for name in names {
             match self.refs.terrain.id_of(name) {

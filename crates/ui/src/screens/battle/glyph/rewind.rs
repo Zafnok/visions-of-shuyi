@@ -34,7 +34,10 @@ const WRAP_INDENT: &str = "  ";
 /// and the help row.
 pub fn paint(ctx: &Ctx, view: &RewindScreenView, buf: &mut GlyphBuffer) {
     clear(ctx, buf);
-    ctx.game.map_skin.paint(ctx, &view.scene, MAP_VIEW, buf);
+    let map = view.map.as_ref();
+    ctx.game
+        .map_skin
+        .paint_on(ctx, &view.scene, map, MAP_VIEW, buf);
     paint_list(ctx, &view.list, buf);
     if let Some(lesson) = &view.lesson {
         paint_lesson(ctx, &view.scene, lesson, buf);

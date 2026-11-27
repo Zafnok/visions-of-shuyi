@@ -2,7 +2,7 @@
 //! it shows (its view). The look is tested in `glyph/tests.rs`; scripted
 //! runs and snapshots are in `crates/ui/tests/it/dialogue.rs`.
 
-use trpg_content::{Side, Stage, Step};
+use trpg_content::{AmbienceLine, Side, Stage, Step};
 use trpg_core::CharacterId;
 
 use super::*;
@@ -1236,4 +1236,63 @@ fn a_scene_over_the_battle_without_a_place_keeps_the_battles_bed() {
         Transition::Pop
     ));
     assert_eq!(bed(&c).as_deref(), Some("bed_summer_meadow"));
+}
+
+/// Ticket 1383: a scene over the battle's map plays the bed its
+/// `@ambience` line names, not the battle's; `@ambience none` stops the
+/// bed and leaves the music playing; a `@place` after it goes back to the
+/// place's bed.
+#[test]
+fn a_scene_names_its_own_ambience_until_its_next_place() {
+    let mut c = ctx();
+    c.change_settings(|s| s.text_speed = TextSpeed::Instant)
+        .unwrap();
+    let table = &mut c.game.content.ambience;
+    let quiet = [("noon".to_owned(), "quiet_bed".to_owned())].into();
+    table.ambiences.insert("quiet".into(), quiet);
+    let fort = || {
+        setting(PlaceLine::Battle {
+            at: at(11, 5),
+            bright: None,
+        })
+    };
+    let ambience = |id: Option<&str>| {
+        Step::Directive(Stage::Ambience(
+            id.map_or(AmbienceLine::None, |id| AmbienceLine::Bed(id.into())),
+        ))
+    };
+    let steps = vec![
+        fort(),
+        music("village"),
+        ambience(Some("quiet")),
+        narrate("Quiet."),
+        ambience(None),
+        narrate("Silence."),
+        fort(),
+        narrate("The fort again."),
+    ];
+    let field = Place::of_battle(&c.game.content, &c.game.content.battles["test"]);
+    let mut s = full(&scene(steps)).with_battle(field);
+    s.update(&mut c, &frame(&[], 0.0, false));
+    assert_eq!(bed(&c).as_deref(), Some("quiet_bed"), "not the battle's");
+    assert!(c.audio.take().contains(&play_music("village")));
+    next_line(&mut s, &mut c);
+    assert_eq!(bed(&c), None, "no bed");
+    let requests = c.audio.take();
+    let music = |r: &AudioRequest| {
+        matches!(
+            r,
+            AudioRequest::StopMusic | AudioRequest::StopMusicWith { .. }
+        )
+    };
+    assert!(
+        !requests.iter().any(music),
+        "the music goes on: {requests:?}"
+    );
+    next_line(&mut s, &mut c);
+    assert_eq!(
+        bed(&c).as_deref(),
+        Some("bed_summer_meadow"),
+        "the place's again"
+    );
 }

@@ -70,7 +70,10 @@ pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
     if let Some(opening) = &view.opening {
         buf.fill_rect(buf.bounds(), blank);
         if let Some(place) = &view.place {
-            ctx.game.map_skin.paint(ctx, place, buf.bounds(), buf);
+            let map = view.place_map.as_ref();
+            ctx.game
+                .map_skin
+                .paint_on(ctx, place, map, buf.bounds(), buf);
         }
         let darkened = opening.darkened.clamp(0.0, 1.0);
         buf.fade(1.0 + (dark - 1.0) * darkened);
@@ -79,7 +82,10 @@ pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
     }
     if let Some(place) = &view.place {
         buf.fill_rect(buf.bounds(), blank);
-        ctx.game.map_skin.paint(ctx, place, buf.bounds(), buf);
+        let map = view.place_map.as_ref();
+        ctx.game
+            .map_skin
+            .paint_on(ctx, place, map, buf.bounds(), buf);
         buf.fade(dark);
     } else if view.overlay {
         // The text box, on the bottom rows, covers the battle's key help,

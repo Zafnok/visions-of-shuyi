@@ -119,11 +119,14 @@ like the music by `assets-src/audio/import.py`. Which place plays which is
 
 A battle file names its own (`ambience: "meadow"`, `assets/battles/`),
 and a world map names the map's and each town's (`ambience: Some(...)`,
-`assets/worldmaps/`); `@place battle` plays its battle's.
+`assets/worldmaps/`); `@place battle` plays its battle's. A scene may
+name its own instead, from a line on until its next `@place`:
+`@ambience <id>`, or `@ambience none` for no bed
+(`assets/dialogue/README.md`, *Places*; ticket 1383).
 `cargo test -p trpg-content` refuses a bed that isn't a looped sound cue
 of the `ambience` group, a light that isn't one, an ambience without a
 `noon` bed, a place's map that isn't one, and a name of an ambience that
-isn't one.
+isn't one (a scene's `@ambience` too, with its file and line).
 
 ## Third-party files
 

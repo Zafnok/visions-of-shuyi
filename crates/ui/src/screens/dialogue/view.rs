@@ -8,7 +8,7 @@
 
 use crate::prelude::*;
 use trpg_content::Side;
-use trpg_core::LeadProfile;
+use trpg_core::{Grid, LeadProfile, TerrainId};
 
 use super::display_name;
 use super::log::LogView;
@@ -28,6 +28,9 @@ pub struct DialogueView {
     /// below for an overlay. The characters of an opening played on it
     /// (0734) are its units, where the opening has them.
     pub place: Option<MapScene>,
+    /// The terrain of the whole map the place is part of (ticket 1356):
+    /// where its trees stand, wherever the place is centred.
+    pub place_map: Option<Grid<TerrainId>>,
     /// An opening playing before the text box (0734): the place is shown
     /// without the talk, bright while its characters move, then
     /// darkening.
@@ -110,6 +113,7 @@ pub(super) fn scene(
     DialogueView {
         overlay,
         place: None,
+        place_map: None,
         opening: None,
         bright: None,
         caption: view.caption.as_deref().map(str::to_owned),

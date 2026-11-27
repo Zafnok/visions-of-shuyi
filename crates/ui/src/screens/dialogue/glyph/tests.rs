@@ -54,6 +54,7 @@ fn two_speakers() -> DialogueView {
     DialogueView {
         overlay: false,
         place: None,
+        place_map: None,
         opening: None,
         bright: None,
         caption: None,
