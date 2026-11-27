@@ -18,6 +18,7 @@ use super::layout::{MAP_VIEW, SIDE_PANEL, snap};
 use super::mode::{Line, MenuEntry, Mode};
 use super::playback::{Playback, TIMINGS, box_view};
 use super::testing::{battle_with, quick_units};
+use super::testing::{p, render, step};
 use super::view::{ForecastView, InfoView, SkillLineView};
 use crate::FrameInput;
 use crate::console::{ConsoleSizes, ConsoleSpec};
@@ -28,7 +29,6 @@ use crate::screen::{Ctx, Screen};
 use crate::widgets::menu::SuffixKind;
 use crate::widgets::menu::{Menu, text_of};
 use crate::words::Words;
-use super::testing::{p, render, step};
 
 fn wait(s: &mut BattleScreen, c: &mut Ctx, seconds: f32) {
     s.update(c, &FrameInput::new(vec![], seconds, vec![]));

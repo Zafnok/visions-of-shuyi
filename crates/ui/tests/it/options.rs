@@ -16,6 +16,7 @@
 //! plain data), not from the glyphs a skin painted; the snapshots pin the
 //! glyph look.
 
+use crate::support::title;
 use insta::assert_snapshot;
 use shuyi_ui::audio::loudness::linear;
 use trpg_content::Theme;
@@ -33,7 +34,6 @@ use trpg_ui::screens::options::{LeaveChoice, OptionsScreen, Row, ValueView};
 use trpg_ui::settings::{AnimSpeed, EnemyPhaseSpeed, MapLook, Settings, TextSpeed};
 use trpg_ui::storage::Storage;
 use trpg_ui::tips::TIPS_SEEN_KEY;
-use crate::support::title;
 
 /// From the first row down to each row.
 const TO_AUTO_END: &str = "Down Down Down Down";

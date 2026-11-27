@@ -5,6 +5,7 @@
 //! done after the battle is suspended and continued. The guide says a
 //! lesson's and a tip's line as its box opens (ticket 0476).
 
+use crate::support::battle;
 use trpg_content::{TipTrigger, Variant};
 use trpg_core::{Phase, TutorialLevel};
 use trpg_ui::AudioRequest;
@@ -13,7 +14,6 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::save::SUSPEND_KEY;
 use trpg_ui::{Ctx, MemoryStorage, Storage};
-use crate::support::battle;
 
 /// The test lesson.
 const TEST_LESSON: &str = "test_cursor";

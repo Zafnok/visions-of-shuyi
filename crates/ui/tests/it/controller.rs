@@ -6,12 +6,12 @@
 //! (ticket 0220), so the pad's screen is compared as the keyboard would
 //! show it ([`as_keys`]); the button names have their own tests below.
 
+use crate::support::{quick_battle, title};
 use insta::assert_snapshot;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::input::{Action, Chord, Device, PadKind};
 use trpg_ui::screens::battle::layout::MAP_VIEW;
-use crate::support::{quick_battle, title};
 
 /// The screen as it would look with the keyboard pressed last: the same
 /// screen, naming keys.

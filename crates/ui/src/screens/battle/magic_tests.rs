@@ -23,6 +23,7 @@ use super::mode::{Effect, MenuEntry, Mode, Selection, entries_at, open_menu};
 use super::playback::TIMINGS;
 use super::sounds::step_sound;
 use super::testing::{battle_with, quick_units, setup, through_ai_phases, tile_cell};
+use super::testing::{p, render, step};
 use super::view::{ForecastView, InfoView, LeftView, PanelPreviewView};
 use super::{BattleScreen, HealPopup, PopupKind, TERRAIN_FLASH_S, TerrainFlash, quick_battle};
 use crate::FrameInput;
@@ -38,7 +39,6 @@ use crate::screen::{Ctx, Screen};
 use crate::widgets::menu::SuffixKind;
 use crate::words::Words;
 use trpg_content::TipTrigger;
-use super::testing::{p, render, step};
 
 /// The Quick Battle's mage.
 const MAGE: UnitId = UnitId(8);

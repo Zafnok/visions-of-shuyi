@@ -10,13 +10,13 @@
 //! without the game's content; the lessons' mechanism is tested on the
 //! test lesson (`lessons.rs`, `screens/battle/lesson_tests.rs`).
 
+use crate::support::{battle, skip_scenes};
 use trpg_content::bundle::skip_without_the_game;
 use trpg_core::{Phase, Pos, TutorialLevel};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::mode::{MenuEntry, Mode, list_entry};
 use trpg_ui::screens::battle::rewind::RewindScreen;
-use crate::support::{battle, skip_scenes};
 
 fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)

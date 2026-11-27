@@ -9,13 +9,13 @@
 //! without the game's content; the tips' mechanism is tested on the test
 //! files (`lessons.rs`, `battle.rs`, `crates/ui/src/tips.rs`).
 
+use crate::support::{battle, skip_scenes};
 use trpg_content::TipTrigger;
 use trpg_content::bundle::skip_without_the_game;
 use trpg_core::{Pos, TutorialLevel};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::mode::Mode;
-use crate::support::{battle, skip_scenes};
 
 // Chapter 1's party where it starts (`assets-private/content/battles/ch01.ron`).
 const LEAD: Pos = Pos::new(4, 12);

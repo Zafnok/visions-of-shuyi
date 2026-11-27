@@ -5,6 +5,7 @@
 //! buttons lead, not how it looks; and that the one-bit renderer draws those
 //! frames as 1032's did, whole or only what changed (ticket 1055).
 
+use crate::support::battle;
 use insta::assert_snapshot;
 use trpg_content::FontAtlasDef;
 use trpg_content::font::ATLAS_1BIT_PATH;
@@ -34,7 +35,6 @@ use trpg_ui::{
     ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, RawInputEvent, ShuyiCtx,
     Storage, UiColor,
 };
-use crate::support::battle;
 
 /// The context as `crates/playdate` sets it up (the tips and lessons
 /// are turned on below), with the Playdate's own buttons (ticket 1034).

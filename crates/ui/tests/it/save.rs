@@ -4,17 +4,15 @@
 //! storage is the Harness's `MemoryStorage`, carried from one launch to the
 //! next.
 
+use crate::support::state as battle;
 use insta::assert_snapshot;
-use trpg_core::{
-    Campaign, Command, GameMode, Pos, SAVE_VERSION, SaveFile, UnitAction, UnitId,
-};
+use trpg_core::{Campaign, Command, GameMode, Pos, SAVE_VERSION, SaveFile, UnitAction, UnitId};
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::profiles::ProfileId;
 use trpg_ui::save::{SUSPEND_KEY, SaveError, slot_key};
 use trpg_ui::{Ctx, MemoryStorage, Storage};
-use crate::support::state as battle;
 
 /// The lead's unit in the test battle (its first slot).
 const LEAD: UnitId = UnitId(1);

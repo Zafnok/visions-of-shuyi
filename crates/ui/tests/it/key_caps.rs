@@ -4,6 +4,7 @@
 //! them as caps, the arrow keys as their picture; a controller's buttons
 //! read as before (0255).
 
+use crate::support::battle;
 use insta::assert_snapshot;
 use shuyi_ui::text::{StyledText, TextRole};
 use trpg_content::image::KEY_ARROWS_PATH;
@@ -16,7 +17,6 @@ use trpg_ui::screens::dialogue::DialogueScreen;
 use trpg_ui::screens::{PreparationsScreen, WorldMapScreen};
 use trpg_ui::widgets::help::{cursor_keys_name, key_name, key_spans, spans_of};
 use trpg_ui::{MemoryStorage, Storage};
-use crate::support::battle;
 
 /// The keys of `text`, in order: `!` for the arrows picture.
 fn keys(text: &StyledText) -> Vec<String> {

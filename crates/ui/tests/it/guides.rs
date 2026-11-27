@@ -2,12 +2,12 @@
 //! New Game on the test chapter at `None` (no tips, no lessons), Guides
 //! from the battle's map menu, stepping through the topics, and back.
 
+use crate::support::battle;
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::guides::GuidesScreen;
 use trpg_ui::{Ctx, MemoryStorage, Storage};
-use crate::support::battle;
 
 /// Acceptance: at `None` the map menu's Guides lists every lesson and
 /// tip; moving through it shows each one's text with the keys; Cancel

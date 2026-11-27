@@ -10,6 +10,7 @@ use super::items::{ItemTargeting, item_targets, pack_groups};
 use super::layout::{MAP_VIEW, snap};
 use super::mode::{MenuEntry, Mode};
 use super::testing::{battle_packed, quick_units};
+use super::testing::{p, render, step};
 use super::{BattleScreen, HealPopup, PopupKind, TIMINGS};
 use crate::FrameInput;
 use crate::color::UiColor;
@@ -20,7 +21,6 @@ use crate::map_view::range;
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 use crate::words::Words;
-use super::testing::{p, render, step};
 
 /// The Quick Battle with the lord (unit 1, at (3, 5)) and the knight (unit
 /// 2, moved to (4, 5), beside it) `lord_hurt` and `knight_hurt` HP below

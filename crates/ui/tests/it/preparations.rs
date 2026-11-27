@@ -3,11 +3,11 @@
 //! first, with a stock of spare gear, six Potions and two Elixirs, and a
 //! scout left out of the battle who carries a Steel Bow.
 
+use crate::support::state as battle;
 use trpg_core::{BattleState, ItemId, UnitId};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, Chord, LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screens::preparations::PrepBody;
-use crate::support::state as battle;
 
 /// The lord's unit (the first slot).
 const LORD: UnitId = UnitId(1);

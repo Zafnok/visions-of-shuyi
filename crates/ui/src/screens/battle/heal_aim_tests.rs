@@ -12,13 +12,13 @@ use super::BattleScreen;
 use super::attack::aim_tile;
 use super::magic::{can_heal, heal_choices, heal_tile};
 use super::mode::{Line, MenuEntry, Mode, Selection, step};
+use super::testing::p;
 use super::testing::{battle_with, quick_units};
 use crate::console::ConsoleSizes;
 use crate::harness::Harness;
 use crate::input::Action;
 use crate::screen::Ctx;
 use crate::screen::tests::ctx;
-use super::testing::{p};
 
 /// The Quick Battle's mage (Fire, Frost, Heal), at (3, 6).
 const MAGE: UnitId = UnitId(8);

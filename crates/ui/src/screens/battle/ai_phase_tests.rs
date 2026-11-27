@@ -8,11 +8,11 @@ use trpg_core::{BattleState, Command, Phase, UnitId, next_command};
 
 use super::ai_phase::PACING;
 use super::testing::{answer, through_ai_phases};
+use super::testing::{frame, quick, render, step};
 use super::*;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
-use super::testing::{frame, quick, render, step};
 
 /// The glyphs of every row of `buf`.
 fn glyphs(buf: &GlyphBuffer) -> Vec<String> {

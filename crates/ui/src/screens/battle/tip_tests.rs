@@ -11,13 +11,13 @@ use trpg_core::{Command, Event, Objective, Phase, StatGains, TerrainRules, UnitI
 use super::banner::PHASE_BANNER_S;
 use super::layout::{MAP_VIEW, SIDE_PANEL, snap};
 use super::testing::{Stacked, battle_with, skirmish, skirmish_charged, through_ai_phases};
+use super::testing::{quick, render, step};
 use super::triggers::not_plain;
 use super::*;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
 use crate::storage::Storage;
 use crate::tips::{TIPS_SEEN_KEY, reset_tips};
-use super::testing::{quick, render, step};
 
 /// A context with tips on.
 fn tipped() -> Ctx {

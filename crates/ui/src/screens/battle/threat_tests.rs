@@ -10,6 +10,7 @@ use trpg_core::{
     WeaponInstance, WeaponKind, WeaponRank,
 };
 
+use super::testing::p;
 use super::testing::{Stacked, battle_with, quick_units, skirmish_charged};
 use super::threat::KeptThreat;
 use super::{BattleScreen, quick_battle, threat_enemies};
@@ -19,7 +20,6 @@ use crate::input::Action;
 use crate::map_view::{ThreatView, range};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
-use super::testing::{p};
 
 const LORD: UnitId = UnitId(1);
 

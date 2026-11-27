@@ -12,13 +12,13 @@ use super::cursor::Cursor;
 use super::glyph::{in_top_half, lesson_rect};
 use super::layout::MAP_VIEW;
 use super::mode::Selection;
+use super::testing::step;
 use super::testing::{Stacked, skirmish_charged, vaulted, wait};
 use super::*;
 use crate::audio::AudioRequest;
 use crate::glyph_buffer::Rect;
 use crate::harness::Harness;
 use crate::screen::tests::ctx;
-use super::testing::{step};
 
 /// The test lesson (`assets-test/data/lessons.ron`).
 const TEST_LESSON: &str = "test_cursor";

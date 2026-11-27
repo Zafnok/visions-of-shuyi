@@ -12,13 +12,13 @@ use super::BattleScreen;
 use super::layout::{ABOVE_HELP_BAR, MAP_VIEW, snap};
 use super::mode::{MenuEntry, Mode};
 use super::testing::{battle_with, quick_units};
+use super::testing::{p, render, step};
 use crate::FrameInput;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{UnitView, range};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
-use super::testing::{p, render, step};
 
 fn wait(s: &mut BattleScreen, c: &mut Ctx, seconds: f32) {
     s.update(c, &FrameInput::new(vec![], seconds, vec![]));

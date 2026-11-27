@@ -3,12 +3,12 @@
 //! stands on or is about to move to. What they look like is each map
 //! skin's (`crates/ui/src/map_view/threat.rs`).
 
+use crate::support::{self, skip_scenes};
 use trpg_core::ai::AiBehavior;
 use trpg_core::{Phase, Pos};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::ThreatView;
-use crate::support::{self, skip_scenes};
 
 fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)
