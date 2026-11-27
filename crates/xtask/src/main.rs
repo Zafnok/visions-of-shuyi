@@ -11,6 +11,7 @@
 //! A CLI tool prints to stdout by design, so `print_stdout` is allowed here.
 #![allow(clippy::print_stdout)]
 
+mod assets_pin;
 mod clean_targets;
 mod code_lines;
 mod engine;
@@ -37,6 +38,7 @@ check-leaks                        find a tracked file that quotes the game's li
 engine [--off]                    build the game on Shuyi Engine checked out in shuyi-engine/\n  \
 engine-pin [<commit> | --check [--offline]] move the engine's pinned commit, or check it and its ledger (ADR-0063 §8)\n  \
 engine-pin --report                the engine PRs past the pin, sorted, and whether a move is due (ADR-0096)\n  \
+assets-pin --check [--base <ref>]  fail when assets-private.rev moves back from its value at <ref> (0194)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
 code-lines [--base <ref>]          production Rust lines added and removed per crate (ADR-0092)\n  \
 pr-size [--base <ref>] [--branch <name>] [--hook]\n                                     \
@@ -62,6 +64,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("check-leaks") => leaks::command(&repo_root(), &args.collect::<Vec<_>>()),
         Some("engine") => engine(&args.collect::<Vec<_>>()),
         Some("engine-pin") => engine_pin(&args.collect::<Vec<_>>()),
+        Some("assets-pin") => assets_pin(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
         Some("code-lines") => code_lines(&args.collect::<Vec<_>>()),
         Some("pr-size") => pr_size(&args.collect::<Vec<_>>(), || {
@@ -216,6 +219,18 @@ fn engine_pin(args: &[String]) -> u8 {
             2
         }
     }
+}
+
+fn assets_pin(args: &[String]) -> u8 {
+    let base = match args {
+        [flag] if flag == "--check" => "origin/main",
+        [flag, option, base] if flag == "--check" && option == "--base" => base.as_str(),
+        _ => {
+            eprintln!("{}", assets_pin::USAGE);
+            return 2;
+        }
+    };
+    report(assets_pin::check(&repo_root(), base))
 }
 
 /// Prints what a command did, or why it failed.
@@ -843,6 +858,14 @@ mod tests {
         assert_eq!(engine_pin(&args(&["a", "b"])), 2);
         assert_eq!(engine(&args(&["--bogus"])), 2);
         assert_eq!(engine(&args(&["--off", "x"])), 2);
+    }
+
+    #[test]
+    fn assets_pin_takes_only_check_and_a_base() {
+        assert_eq!(assets_pin(&args(&[])), 2);
+        assert_eq!(assets_pin(&args(&["--check", "--bogus"])), 2);
+        // HEAD's pin is the working tree's unless this worktree moved it.
+        assert_eq!(assets_pin(&args(&["--check", "--base", "HEAD"])), 0);
     }
 
     #[test]

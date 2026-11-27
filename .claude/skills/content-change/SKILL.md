@@ -87,6 +87,18 @@ pull request merged: the ticket is in `tickets/done/` on the game's
 linked here); never pin past it, and never pin a commit before it that
 leaves this ticket's out. Run it again whenever `main` moves.
 
+## The pin only moves forward
+
+Several sessions may move the pin at once, and their pull requests merge
+in any order. `cargo xtask assets-pin --check` (CI's `tickets` job, ticket
+0194) fails when the pin isn't `main`'s pin or a commit after it in the
+private history: the second to merge would put `main` back on older
+content. Resolving the conflict on `assets-private.rev` never keeps either
+side's line: pin the private `main` again, as `shuyi-private-files` §5
+says, after `git -C assets-private fetch origin` (a stale `origin/main`
+pins backwards too). The check warns, without failing, on a pin that isn't
+on the private `main` yet.
+
 ## What this game adds to "never in public"
 
 - `cargo xtask check-leaks` (ADR-0118 §4, in `run-gates`) finds a tracked
