@@ -423,7 +423,7 @@ impl GameTools for Generating {
     }
 
     fn playtest_defaults(&self) -> Tries {
-        Tries::new(100, 1, 60)
+        Tries::new(100).with_seed(1).with_turns(60)
     }
 
     fn autobalance_plan(

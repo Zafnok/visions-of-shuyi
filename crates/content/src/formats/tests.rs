@@ -31,6 +31,7 @@ fn the_registry_lists_its_kinds_and_their_formats() {
         r#"("names table", ["names"])"#,
         r#"("dialogue", ["dlg"])"#,
         r#"("target profile", ["target-ron"])"#,
+        r#"("atlas", ["atlas"])"#,
         r#"("dialogue", ["dlg"])"#,
         r#"("keymap", ["keymap"])"#,
         r#"("map", ["map"])"#,

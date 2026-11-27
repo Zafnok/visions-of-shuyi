@@ -860,11 +860,9 @@ fn the_embers_follow_how_long_the_title_was_updated() {
 
 /// A frame of `dt` seconds with the title song `position` seconds in.
 fn song_tick(t: &mut TitleScreen, c: &mut Ctx, position: f32, dt: f32) {
-    c.music_clock = Some(crate::audio::MusicClock::new(
-        TITLE_MUSIC.to_owned(),
-        position,
-        133.743,
-    ));
+    c.music_clock = Some(
+        crate::audio::MusicClock::new(TITLE_MUSIC.to_owned(), 133.743).with_position(position),
+    );
     t.update(c, &tick(dt));
 }
 

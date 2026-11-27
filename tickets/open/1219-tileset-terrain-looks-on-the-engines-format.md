@@ -5,8 +5,8 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: blocked
-blocked_by: ["engine#2243"]
+status: todo
+blocked_by: []
 nick_input: none
 completed:
 ---
@@ -63,7 +63,15 @@ does (the engine's words).
 ## Scope
 
 **In:**
-- The pin past engine#2243.
+- ~~The pin past engine#2243.~~ Done by the pin move of 2026-11-27 (`docs/engine/pins.md`).
+- **Props, either order with 1378.** Engine PR #620 (2281), in the pin
+  since the same move, reads a look's `props` in the terrain-tiles
+  format (`TerrainTilesDef`, each `LookDef` its own; the pictures a map
+  places by hand, engine 3247). If 1378 is done, the game's `LookFile`
+  reads `props` too: take the engine's in their place and delete the
+  game's reading and checks of them with the rest of `look.rs`. If not,
+  there is nothing of the game's to delete; add a line to 1378 that its
+  props come from the engine's format.
 - `TilesetFile`'s `layers` and `looks` typed with the engine's `LayerDef`
   and `LookDef`; when `terrain`, `image` and `tile_px` are all written, a
   `TerrainTilesDef` built from them, checked with `problems(&TILE_RULES)`
@@ -87,8 +95,8 @@ does (the engine's words).
 
 ## Implementation steps
 
-1. **Pin** past engine#2243 (`engine-change` §7, `engine-pin` skill),
-   unless an open `engine-pin` PR has; read its API.
+1. ~~**Pin** past engine#2243~~ (done by the pin move of 2026-11-27 (`docs/engine/pins.md`)); read its API,
+   `props` included.
 2. In `crates/content/src/tileset.rs`: a `TILE_RULES:
    TileRules<'static>` of `map::TILE_LOOKS` and `SIDE_PX`; the terrain
    map `BTreeMap<String, TerrainId>` from `refs.terrain` (each

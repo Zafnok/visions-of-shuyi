@@ -45,6 +45,20 @@ thread that decodes them at its class's highest priority. The check of
 the loops below reads those counts too, so a gap is known to be the
 output's (dry callbacks) or a track's decoder (stalled frames).
 
+Engine PRs #602 (2280) and #627 (2378), in the pin since the pin move
+of 2026-11-27 (`docs/engine/pins.md`), make the voice limit the
+manifest's to set: each sound cue holds its files' lengths, measured
+from their headers when the manifest is read (`SoundCue::lengths_ms`,
+`sound_length_ms`), so `shuyi-platform`'s `Cues` knows how many copies
+of a cue are sounding. A cue may say `max_copies`, `when_full` (drop the
+new play or cut the oldest copy) and `priority`, and the manifest
+`max_voices`. A play past them is dropped (`DropWhy::Copies`,
+`DropWhy::Voices`) or cuts one copy alone (`SoundRequest::StopCopy`,
+`DropWhy::Cut`), and the drops are listed (`Harness::dropped_sounds`,
+`run`'s `dropped`, `why` as `copies`, `voices` or `cut`). A manifest that
+names none of them sees no change. The game's cues use only part one's
+`min_gap_ms` and `pick` (1349).
+
 ## Nick input
 
 None. His sign-off on the backend's sound is the engine's, given on
@@ -63,7 +77,13 @@ None. His sign-off on the backend's sound is the engine's, given on
   on Windows. Check its sounds, fades and volumes play as
   before.
 - Note in the completion notes any game sound that the voice limit now
-  skips, which quad-snd would have stolen a voice for.
+  skips, which quad-snd would have stolen a voice for. If there are
+  any, make the drop the manifest's instead of the backend's: set
+  `max_voices` in `assets/audio/audio.ron` at or under the backend's
+  limit, with `max_copies` on the cue that stacks (a footstep, a hit)
+  and `priority` on the one that must still play, so the drop shows in
+  `Harness::dropped_sounds` with its reason, and a test of the busiest
+  moment found (a Harness test reading the drops) keeps it so.
 
 **Out:**
 - The Playdate's sound (its own players, ADR-0084).

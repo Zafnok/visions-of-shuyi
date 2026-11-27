@@ -38,8 +38,6 @@ pub fn state(bits: u32) -> PadState {
             .filter(|&&(bit, _)| bits & bit != 0)
             .map(|&(_, button)| button)
             .collect(),
-        (0.0, 0.0),
-        (0.0, 0.0),
     )
 }
 
@@ -78,7 +76,11 @@ mod tests {
     const A: u32 = 32;
 
     fn pad() -> PlaydatePad {
-        PlaydatePad::new(StickDef::new(50, 35))
+        PlaydatePad::new(
+            StickDef::DEFAULT
+                .with_press_percent(50)
+                .with_release_percent(35),
+        )
     }
 
     fn down(button: Button) -> RawInputEvent {

@@ -57,6 +57,16 @@ example, live PvP over lockstep and the relay is a few game tickets once
 Global chat is a decision about moderation and legal duties
 (engine ADR-0006 §8, 1150), so add it as a question if Nick wants chat at all.
 
+**What the engine has built so far (the pin move of 2026-11-27,
+`docs/engine/pins.md`):** `shuyi-net` (feature `net`), split out of 1140:
+the `Transport` trait every network goes through, and an in-memory
+network of seats (engine PR #608, 2613) whose `Unreliable` messages can be
+lost, duplicated and reordered, and every delivery delayed, from a seed
+(#614, 2620), so a match's lockstep can be tested on bad links without a
+machine. Engine ADR-0155 plans real-time rooms. Lockstep itself (the rest
+of 1140), the relay and the other layers above aren't built: say so in
+the size of each option.
+
 What Steam gives (Nick: "doesn't steam provide servers somehow"), as told
 to him on 2026-10-05; **re-check against Valve's Steamworks documentation
 on the day**:

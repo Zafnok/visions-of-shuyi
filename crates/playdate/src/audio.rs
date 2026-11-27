@@ -496,7 +496,9 @@ mod tests {
         m.sounds
             .insert("bloop".into(), sound(&["sfx/blip.wav"], 40));
         let track = |file: &str, volume, looped| {
-            MusicCue::new(file.into(), volume, 10_000, CreditRef::Own).with_looped(looped)
+            MusicCue::new(file.into(), 10_000, CreditRef::Own)
+                .with_volume(volume)
+                .with_looped(looped)
         };
         m.music.insert("theme".into(), track("theme.ogg", 80, true));
         m.music
