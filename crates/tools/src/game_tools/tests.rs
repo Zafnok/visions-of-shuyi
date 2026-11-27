@@ -266,6 +266,31 @@ fn the_help_names_the_games_options_and_the_bought_art() {
     assert!(usage.ends_with("(CLAUDE.md, Bought art)."), "{usage}");
 }
 
+/// Ticket 1389: the README's stills are `shuyi.ron`'s shots, each still
+/// what its arguments draw. They show the bought art, so only with
+/// `--features private-assets`, which the gates never turn on (ADR-0040):
+/// `cargo test -p trpg-tools --features private-assets the_readme_s_shots`.
+#[cfg(feature = "private-assets")]
+#[test]
+fn the_readme_s_shots_are_what_the_game_draws() {
+    let project = project();
+    assert_eq!(
+        project.config.shots.keys().collect::<Vec<_>>(),
+        [
+            "battle-forecast",
+            "battle-glyphs",
+            "battle-ranges",
+            "combat-scene",
+            "dialogue",
+            "key-bindings",
+            "lead-select",
+            "spell-menu",
+            "title"
+        ]
+    );
+    frame_png::kept::check_shots(&project, &Trpg).unwrap_or_else(|e| panic!("{e}"));
+}
+
 #[test]
 fn writes_the_title_screen_and_the_same_bytes_twice() {
     let dir = temp_dir("title");

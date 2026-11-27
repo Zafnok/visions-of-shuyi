@@ -95,13 +95,19 @@ follows the `content-change` skill.
 **The gates never read the bought art** (ADR-0040): run them exactly as
 above, without `--features private-assets`, whether or not
 `assets-private/` is on the machine. A ticket that changes files in
-`assets-private/game/` also runs the one test that opts in, and looks at
+`assets-private/game/` also runs the tests that opt in, and looks at
 the result in a build:
 
 ```bash
 cargo test -p trpg-content --features private-assets --test it private_assets::
+cargo test -p trpg-tools --features private-assets the_readme_s_shots
 cargo run -p trpg-app --features private-assets
 ```
+
+The second checks the README's stills, `shuyi.ron`'s shots (ticket
+1389): run it too after a change they show (the title, the lead select,
+Chapter 1's battle and scene, Options, Key bindings), and when it fails
+remake them as `docs/img/README.md` says.
 
 ## Snapshots (insta)
 
