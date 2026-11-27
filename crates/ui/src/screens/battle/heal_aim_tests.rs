@@ -6,7 +6,7 @@
 
 use crate::screens::battle::testing::{Lines as _, Values as _};
 use insta::assert_snapshot;
-use trpg_core::{BattleState, CastTarget, Objective, Pos, SpellId, StatValue, UnitId};
+use trpg_core::{BattleState, CastTarget, Objective, SpellId, StatValue, UnitId};
 
 use super::BattleScreen;
 use super::attack::aim_tile;
@@ -18,6 +18,7 @@ use crate::harness::Harness;
 use crate::input::Action;
 use crate::screen::Ctx;
 use crate::screen::tests::ctx;
+use super::testing::{p};
 
 /// The Quick Battle's mage (Fire, Frost, Heal), at (3, 6).
 const MAGE: UnitId = UnitId(8);
@@ -27,10 +28,6 @@ const ARCHER: UnitId = UnitId(3);
 
 /// The Quick Battle's knight.
 const KNIGHT: UnitId = UnitId(2);
-
-fn p(x: i32, y: i32) -> Pos {
-    Pos::new(x, y)
-}
 
 /// The Quick Battle with the archer moved to (1, 6), two tiles left of the
 /// mage, at `archer_hp` HP; with `vigil` the mage also knows Vigil Light

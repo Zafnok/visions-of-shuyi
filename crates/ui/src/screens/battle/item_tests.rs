@@ -14,16 +14,13 @@ use super::{BattleScreen, HealPopup, PopupKind, TIMINGS};
 use crate::FrameInput;
 use crate::color::UiColor;
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::{Cell, GlyphBuffer};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::range;
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 use crate::words::Words;
-
-fn p(x: i32, y: i32) -> Pos {
-    Pos::new(x, y)
-}
+use super::testing::{p, render, step};
 
 /// The Quick Battle with the lord (unit 1, at (3, 5)) and the knight (unit
 /// 2, moved to (4, 5), beside it) `lord_hurt` and `knight_hurt` HP below
@@ -39,23 +36,8 @@ fn hurt_pair(c: &Ctx, lord_hurt: StatValue, knight_hurt: StatValue, pack: &[&str
     battle_packed(c, map, units, rout, 0, pack)
 }
 
-fn step(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
-    s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
-}
-
 fn wait(s: &mut BattleScreen, c: &mut Ctx, seconds: f32) {
     s.update(c, &FrameInput::new(vec![], seconds, vec![]));
-}
-
-fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
-    let stale = Cell::new(
-        'x',
-        crate::color::Rgb::new(1, 2, 3),
-        crate::color::Rgb::new(1, 2, 3),
-    );
-    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
-    s.draw(c, &mut buf);
-    buf
 }
 
 /// The lord's action menu, opened without moving.

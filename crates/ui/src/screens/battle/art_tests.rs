@@ -20,33 +20,18 @@ use super::playback::{Playback, TIMINGS, box_view};
 use super::testing::{battle_with, quick_units};
 use super::view::{ForecastView, InfoView, SkillLineView};
 use crate::FrameInput;
-use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::{Cell, GlyphBuffer};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 use crate::widgets::menu::SuffixKind;
 use crate::widgets::menu::{Menu, text_of};
 use crate::words::Words;
-
-fn p(x: i32, y: i32) -> Pos {
-    Pos::new(x, y)
-}
-
-fn step(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
-    s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
-}
+use super::testing::{p, render, step};
 
 fn wait(s: &mut BattleScreen, c: &mut Ctx, seconds: f32) {
     s.update(c, &FrameInput::new(vec![], seconds, vec![]));
-}
-
-fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
-    let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
-    s.draw(c, &mut buf);
-    buf
 }
 
 /// Cells `x..x + w` of row `y`, trimmed.

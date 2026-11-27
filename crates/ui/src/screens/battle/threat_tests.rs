@@ -19,12 +19,9 @@ use crate::input::Action;
 use crate::map_view::{ThreatView, range};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
+use super::testing::{p};
 
 const LORD: UnitId = UnitId(1);
-
-fn p(x: i32, y: i32) -> Pos {
-    Pos::new(x, y)
-}
 
 /// The arrows the scene shows: the tile and the enemies' tiles.
 fn shown(s: &BattleScreen, c: &Ctx) -> Option<(Pos, Vec<Pos>)> {

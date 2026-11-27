@@ -9,32 +9,10 @@ use trpg_core::{BattleState, Command, Phase, UnitId, next_command};
 use super::ai_phase::PACING;
 use super::testing::{answer, through_ai_phases};
 use super::*;
-use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::Cell;
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
-
-fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
-}
-
-/// One frame of `dt` seconds with `actions`, Confirm held if `held`.
-fn frame(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action], dt: f32, held: bool) {
-    let held = if held { vec![Action::Confirm] } else { vec![] };
-    s.update(c, &FrameInput::new(actions.to_vec(), dt, held));
-}
-
-fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
-    frame(s, c, actions, 0.0, false);
-}
-
-fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
-    let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
-    s.draw(c, &mut buf);
-    buf
-}
+use super::testing::{frame, quick, render, step};
 
 /// The glyphs of every row of `buf`.
 fn glyphs(buf: &GlyphBuffer) -> Vec<String> {
@@ -64,9 +42,9 @@ fn played_directly(c: &Ctx, mut state: BattleState) -> (BattleState, Vec<Command
 /// first enemy action starts.
 fn enemy_phase(c: &mut Ctx) -> BattleScreen {
     let mut s = quick();
-    press(&mut s, c, &[Action::EndTurn, Action::EndTurn]);
+    step(&mut s, c, &[Action::EndTurn, Action::EndTurn]);
     assert_eq!(s.state().phase(), Phase::Enemy);
-    press(&mut s, c, &[Action::Confirm]);
+    step(&mut s, c, &[Action::Confirm]);
     s
 }
 
@@ -74,7 +52,7 @@ fn enemy_phase(c: &mut Ctx) -> BattleScreen {
 fn nothing_acts_under_the_banner() {
     let mut c = ctx();
     let mut s = quick();
-    press(&mut s, &mut c, &[Action::EndTurn, Action::EndTurn]);
+    step(&mut s, &mut c, &[Action::EndTurn, Action::EndTurn]);
     let at_start = s.state().clone();
     frame(&mut s, &mut c, &[], 0.5, false);
     assert!(s.banner().is_some());
@@ -236,7 +214,7 @@ fn only_confirm_and_cancel_do_anything_while_the_ai_plays() {
     let mut s = enemy_phase(&mut c);
     let (cursor, camera, mode) = (s.cursor().pos, s.camera(), s.mode().clone());
     let auto_end = s.auto_end();
-    press(
+    step(
         &mut s,
         &mut c,
         &[
@@ -258,7 +236,7 @@ fn only_confirm_and_cancel_do_anything_while_the_ai_plays() {
     assert_eq!(s.toast(), None);
     assert_eq!(answer(&mut s, &mut c, Action::Rewind), "None");
     // Confirm and Cancel don't skip the walk either.
-    press(&mut s, &mut c, &[Action::Confirm, Action::Cancel]);
+    step(&mut s, &mut c, &[Action::Confirm, Action::Cancel]);
     assert_eq!(s.mode(), &mode);
 }
 
@@ -278,7 +256,7 @@ fn cancel_skips_an_enemy_fight() {
     let fighter = pb.bouts()[0].attacker.unit;
     assert!(pb.time() < pb.total());
     // Skipped at once: the next enemy's action starts.
-    press(&mut s, &mut c, &[Action::Cancel]);
+    step(&mut s, &mut c, &[Action::Cancel]);
     let Mode::AiAction(a) = s.mode() else {
         panic!("{:?}", s.mode());
     };
@@ -289,11 +267,11 @@ fn cancel_skips_an_enemy_fight() {
 fn the_cursor_and_camera_come_back_for_the_player_phase() {
     let mut c = ctx();
     let mut s = quick();
-    press(&mut s, &mut c, &[Action::CursorRight, Action::CursorRight]);
-    press(&mut s, &mut c, &[Action::CursorDown]);
+    step(&mut s, &mut c, &[Action::CursorRight, Action::CursorRight]);
+    step(&mut s, &mut c, &[Action::CursorDown]);
     let (cursor, camera) = (s.cursor().pos, s.camera());
-    press(&mut s, &mut c, &[Action::EndTurn, Action::EndTurn]);
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::EndTurn, Action::EndTurn]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert_ne!(s.cursor().pos, cursor, "on the acting enemy");
     through_ai_phases(&mut s, &mut c, 1.0);
     assert_eq!(s.state().phase(), Phase::Player);
