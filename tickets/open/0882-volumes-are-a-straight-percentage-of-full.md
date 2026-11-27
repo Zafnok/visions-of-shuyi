@@ -142,13 +142,13 @@ design docs, the pin), and about as much in the engine.
 
 ## Completion notes
 
-- **Engine** (engine ticket 3248, `Zafnok/shuyi-engine#617`, ADR-0157):
+- **Engine** (engine ticket 3248, `Zafnok/shuyi-engine#617`, ADR-0158):
   a game picks its volume curve in its audio manifest,
   `volume_curve: Linear` (each number that percent of full) or
   `Decibels` (the 0.6 dB steps, still the engine's default for other
   games). A ducking rule's `to` stays on the decibel curve on both, so
   the dip under a voice keeps its 6 dB. The baked pack moves to version
-  25 for the new field.
+  26 for the new field.
 - **Game:** `volume_curve: Linear` in the public stand-in
   `assets/audio/audio.ron` and in the private manifest
   (`Zafnok/visions-of-shuyi-assets`, branch
