@@ -5,11 +5,11 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 blocks: []
 nick_input: none
-completed:
+completed: 2026-11-26
 ---
 
 # 1383 — A scene names its own ambience: the ambience directive
@@ -67,11 +67,11 @@ parse, check and play.
 
 ## Acceptance criteria
 
-- [ ] A scene with `@place battle` then `@ambience x` plays bed `x`, not
+- [x] A scene with `@place battle` then `@ambience x` plays bed `x`, not
       the battle's (test through 1332's audio fake).
-- [ ] `@ambience none` stops the bed and keeps the music.
-- [ ] An unknown id is a content error naming file and line.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `@ambience none` stops the bed and keeps the music.
+- [x] An unknown id is a content error naming file and line.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -84,3 +84,30 @@ Same data everywhere; the Playdate plays no bed (1322), so the directive
 does nothing there.
 
 ## Completion notes
+
+- `@ambience <id>` and `@ambience none` are a game directive
+  (`Stage::Ambience(AmbienceLine)` in `trpg-content`'s `dialogue.rs`), parsed beside
+  `@place`, printed back as written, and of their own kind for blocks:
+  every reply of a choice and both parts of an `@if` leave the same one.
+- The check is with the `@place` checks (`dialogue/setting.rs`,
+  `check_places`): an id that isn't one of `data/ambience.ron`'s
+  `ambiences` is an error with file and line. The ambience table loads
+  after the dialogue (the world maps it checks need the scenes), so the
+  check reads the file's ids alone (`ambience::ids`); a file that doesn't
+  parse leaves `@ambience` unchecked and is reported by the ambience
+  load.
+- Played by the dialogue player's setting (`trpg-ui`'s `dialogue.rs`):
+  `@ambience` sets the scene's bed, `@place` clears it back to the
+  place's. The dialogue screen asks 1332's `ambience::play` for it, so the
+  switch fades as between places, and the log's jumps carry it with the
+  rest of the scene's state. A scene over the battle with no place of its
+  own that names an ambience plays it too.
+- Tests: the parse, print and check in
+  `crates/content/src/dialogue/tests/ambience.rs`; the screen's bed in
+  `screens/dialogue/tests.rs`; and through the headless speaker in
+  `crates/ui/tests/it/ambience.rs` (a test bed registered beside the
+  meadow, since the public file has one ambience).
+- No gameplay rule decided. To judge by ear on the Act 1 playtest
+  (1064): nothing until 1335 writes Chapter 1's `@ambience` lines.
+- Friction: estimate 100 production lines (the ticket's, checked against
+  `@place`'s parse and `@opening`'s check), measured 91: under 2×.

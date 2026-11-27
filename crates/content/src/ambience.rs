@@ -14,7 +14,7 @@
 //! every name of an ambience is one.
 use crate::prelude::*;
 
-use alloc::collections::BTreeMap;
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 
@@ -93,6 +93,15 @@ pub fn load(refs: AmbienceRefs<'_>) -> Result<AmbienceTable, Vec<ContentError>> 
         )]
     })?;
     from_source(&display, &source, refs)
+}
+
+/// The ids of the embedded ambience file's ambiences, without its checks:
+/// what a scene's `@ambience` may name (ticket 1383). `None` if the file
+/// is missing or doesn't parse ([`load`] reports it).
+pub fn ids() -> Option<BTreeSet<String>> {
+    let source = bundle::file(AMBIENCE_PATH)?;
+    let raw: RawFile = parse_ron(AMBIENCE_PATH, &source).ok()?;
+    Some(raw.ambiences.into_keys().collect())
 }
 
 /// Parses ambience file `source` (attributing errors to `file`) and checks

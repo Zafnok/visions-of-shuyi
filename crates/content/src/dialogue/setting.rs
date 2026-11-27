@@ -2,15 +2,17 @@
 //! ([`check_places`]): the map is one of `assets/maps/`, the tile is on it,
 //! and `@place battle` is only in a scene that has a battle. And on
 //! `@opening` lines, which need the openings: the opening is one of
-//! `assets/openings/`, and plays on the place in force (ticket 0734).
+//! `assets/openings/`, and plays on the place in force (ticket 0734). And
+//! on `@ambience` lines: the ambience is one of `data/ambience.ron`'s
+//! (ticket 1383).
 use crate::prelude::*;
 
 use alloc::collections::{BTreeMap, BTreeSet};
 
 use trpg_core::{BattleDef, BattleMap, CampEvent, Pos, SupportTable};
 
+use super::{AmbienceLine, PlaceLine, Stage, Step};
 use super::{Lines, ParsedScene};
-use super::{PlaceLine, Stage, Step};
 use crate::chapter::ChapterDef;
 use crate::cinematic::OpeningDef;
 use crate::error::ContentError;
@@ -33,6 +35,9 @@ pub struct PlaceRefs<'a> {
     /// `None` when the openings aren't known: `@opening` isn't checked
     /// then.
     pub openings: Option<BTreeMap<&'a str, &'a str>>,
+    /// The ambiences of `data/ambience.ron`. `None` when the file failed
+    /// to read: `@ambience` isn't checked then.
+    pub ambiences: Option<BTreeSet<String>>,
 }
 
 impl<'a> PlaceRefs<'a> {
@@ -88,6 +93,7 @@ impl<'a> PlaceRefs<'a> {
             battles,
             elsewhere,
             openings: None,
+            ambiences: None,
         }
     }
 
@@ -110,6 +116,13 @@ impl<'a> PlaceRefs<'a> {
         });
         Self { openings, ..self }
     }
+
+    /// The same, with the `ambiences` an `@ambience` line may name
+    /// (`None` if their file failed to read).
+    #[must_use]
+    pub fn with_ambiences(self, ambiences: Option<BTreeSet<String>>) -> Self {
+        Self { ambiences, ..self }
+    }
 }
 
 /// Checks the `@place` lines of `parsed`: one error for each line that
@@ -118,16 +131,20 @@ impl<'a> PlaceRefs<'a> {
 /// tile off that battle's map. And its `@opening` lines: one error for
 /// each that names an opening `refs` hasn't got, or one that plays on
 /// another map than the place in force. (Where an `@opening` may go:
-/// `check_scene`.)
+/// `check_scene`.) And its `@ambience` lines: one error for each that
+/// names an ambience `refs` hasn't got.
 pub fn check_places(parsed: &ParsedScene, refs: &PlaceRefs) -> Vec<ContentError> {
-    let mut places = Vec::new();
-    settings(&parsed.scene.steps, &parsed.lines, &mut places);
+    let mut stages = Vec::new();
+    directives(&parsed.scene.steps, &parsed.lines, &mut stages);
     let mut errors = Vec::new();
-    for (line, place) in places {
-        let message = match place {
-            PlaceLine::Map { map, at, .. } => map_problem(refs, map, *at),
-            PlaceLine::Battle { at, .. } => battle_problem(refs, &parsed.scene.id, *at),
-            PlaceLine::None => None,
+    for (line, stage) in stages {
+        let message = match stage {
+            Stage::Setting(PlaceLine::Map { map, at, .. }) => map_problem(refs, map, *at),
+            Stage::Setting(PlaceLine::Battle { at, .. }) => {
+                battle_problem(refs, &parsed.scene.id, *at)
+            }
+            Stage::Ambience(AmbienceLine::Bed(id)) => ambience_problem(refs, id),
+            _ => None,
         };
         if let Some(message) = message {
             errors.push(ContentError::new(&parsed.file, message).at(line, None));
@@ -188,14 +205,14 @@ fn last_in(steps: &[Step]) -> Option<&PlaceLine> {
     steps.iter().rev().find_map(last_setting)
 }
 
-/// Adds every `@place` line of `steps` (written at `lines`) and of the
+/// Adds every directive line of `steps` (written at `lines`) and of the
 /// blocks among them to `out`, with its line.
-fn settings<'s>(steps: &'s [Step], lines: &Lines, out: &mut Vec<(u32, &'s PlaceLine)>) {
+fn directives<'s>(steps: &'s [Step], lines: &Lines, out: &mut Vec<(u32, &'s Stage)>) {
     let mut blocks = lines.blocks.iter();
     for (step, &line) in steps.iter().zip(&lines.steps) {
         let parts: Vec<&[Step]> = match step {
-            Step::Directive(Stage::Setting(place)) => {
-                out.push((line, place));
+            Step::Directive(stage) => {
+                out.push((line, stage));
                 continue;
             }
             Step::Choice { options } => options.iter().map(|o| &o.steps[..]).collect(),
@@ -206,10 +223,21 @@ fn settings<'s>(steps: &'s [Step], lines: &Lines, out: &mut Vec<(u32, &'s PlaceL
         };
         if let Some(block) = blocks.next() {
             for (part, at) in parts.into_iter().zip(block) {
-                settings(part, &at.lines, out);
+                directives(part, &at.lines, out);
             }
         }
     }
+}
+
+/// What is wrong with `@ambience <id>`, if anything.
+fn ambience_problem(refs: &PlaceRefs, id: &str) -> Option<String> {
+    let known = refs.ambiences.as_ref()?;
+    (!known.contains(id)).then(|| {
+        format!(
+            "no ambience \"{id}\"; an ambience is one of {}'s ambiences",
+            crate::ambience::AMBIENCE_PATH
+        )
+    })
 }
 
 /// What is wrong with `@place <map> <at>`, if anything.
