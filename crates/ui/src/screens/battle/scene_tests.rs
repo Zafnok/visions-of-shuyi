@@ -491,10 +491,7 @@ fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
         _ => TerrainId(0),
     };
     let tiles = Grid::from_cells(64, 40, cells.map(terrain).collect()).unwrap();
-    let indoor = MapLook {
-        tiles: "indoor".to_owned(),
-        light: "dusk".to_owned(),
-    };
+    let indoor = MapLook::new("indoor", "dusk");
     let map = BattleMap::new("Big", tiles);
     let s = BattleScreen::new(battle(&c, map, units)).with_look(indoor.clone());
     let scene = s.scene(&c);
