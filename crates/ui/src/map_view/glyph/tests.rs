@@ -511,7 +511,7 @@ prop_compose! {
         more in any::<[bool; 4]>(),
     ) -> MapScene {
         let rim = rim.into_iter().map(|id| id.map(TerrainId)).collect();
-        let look = trpg_content::MapLook { tiles: look.to_owned(), light: light.to_owned() };
+        let look = trpg_content::MapLook::new(look, light);
         let threat = threat.map(|(tile, enemies)| ThreatView { tile, enemies });
         let [left, right, up, down] = more;
         let more = MapEdges {

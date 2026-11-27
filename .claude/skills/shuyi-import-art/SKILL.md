@@ -48,7 +48,32 @@ unless the person who asked for the game wants one.
 
 A tileset for a grid map's sprite skin is a PNG of tiles that the game's
 skin cuts by rectangle; `cargo shuyi glyph-tiles` draws one from the
-font and the palette, when `shuyi.ron` has a `glyph_tiles` entry.
+font and the palette, when `shuyi.ron` has a `glyph_tiles` entry. Its
+ground (a tile per terrain, the corner and tile layers over them, the
+pictures a map places on its tiles by name, `props: { "lamp": (at: (4,
+0), size: (16, 32)) }`, other looks by name) is a `terrain-tiles` RON file beside it: the game
+registers `tileset::TerrainTilesRon` with the looks its maps name and
+the tile sizes it allows, and makes the skin's tiles with
+`TerrainTilesDef::resolve`, which reports every picture outside the PNG
+and every terrain name the game lacks. The `tileset` module's docs have
+a file.
+
+A corner layer's 15 pictures need not be drawn: with `shuyi-cli`'s
+`corners` feature on in the game's tools, a `<name>.corners.ron` recipe
+makes them from the terrain's one tile, rounded and seamless, with an
+optional wobble and rim. `cargo shuyi corners <recipe>` writes the PNG
+sheet (8 × 2 pictures, mix `m` at column `m % 8`, row `m / 8`), and a
+test keeps it equal to its recipe with `shuyi_cli::corners::check`. The
+`corners` module's docs (`shuyi_assets::corners::recipe`) have a recipe.
+
+Named pictures for one id (a person's faces, a card's front and back)
+are a picture set: a `picture-set` RON file per id, named as its `id`,
+whose image paths are relative to its folder, `( id: "ana", pictures: {
+"happy": "ana/smile.png" } )`. The game registers
+`picture_set::PictureSetRon` with the names every set must have and the
+largest a picture may be (`PictureRules`), and makes the set it draws
+from with `PictureSetDef::resolve`, which reports every picture not in
+the image table or too big, at its line.
 
 ## Steps
 

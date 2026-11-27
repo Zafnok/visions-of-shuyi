@@ -347,7 +347,7 @@ impl GameTools for Trpg {
 
     /// 0506's playtest: 100 tries from seed 1, each stopped at turn 60.
     fn playtest_defaults(&self) -> Tries {
-        Tries::new(100, 1, 60)
+        Tries::new(100).with_seed(1).with_turns(60)
     }
 
     fn autobalance_plan(

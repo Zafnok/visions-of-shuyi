@@ -395,7 +395,12 @@ mod tests {
         assert_eq!(design.len(), Action::ALL.len());
         assert_eq!(k.pad, design);
         // Stick thresholds: tunable, press above release.
-        assert_eq!(k.stick, StickDef::new(50, 35));
+        assert_eq!(
+            k.stick,
+            StickDef::DEFAULT
+                .with_press_percent(50)
+                .with_release_percent(35)
+        );
     }
 
     /// Ticket 1034: the Playdate's buttons are `docs/design/playdate.md`'s

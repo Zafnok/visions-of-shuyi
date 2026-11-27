@@ -257,7 +257,7 @@ impl Looking<'_, '_> {
             .zip(layers)
             .map(|(number, layer)| self.layer(number, layer))
             .collect();
-        Look { tiles, layers }
+        Look::new(tiles, layers)
     }
 }
 

@@ -65,7 +65,7 @@ pub fn ask(ctx: &mut Ctx, cue: &MusicCue) {
     match cue {
         MusicCue::Play(cue) => {
             let out_ms = ctx.game.content.audio.music_fade_ms;
-            let switch = MusicSwitch::new(out_ms, FADE_IN_MS, false);
+            let switch = MusicSwitch::after_fade(out_ms).with_in_ms(FADE_IN_MS);
             ctx.audio.play_music_with(cue, switch);
         }
         MusicCue::Stop => ctx.audio.stop_music_with(FADE_OUT_MS),
@@ -171,7 +171,7 @@ impl Speaker {
     /// The request a track of camp or the world map makes for `cue`.
     pub(crate) fn faded_in(ctx: &Ctx, cue: &str) -> crate::audio::AudioRequest {
         let out_ms = ctx.game.content.audio.music_fade_ms;
-        let switch = MusicSwitch::new(out_ms, FADE_IN_MS, false);
+        let switch = MusicSwitch::after_fade(out_ms).with_in_ms(FADE_IN_MS);
         crate::audio::AudioRequest::play_music(cue, Some(switch))
     }
 
@@ -196,7 +196,7 @@ impl Speaker {
             })
             .collect();
         for cue in started {
-            let clock = crate::audio::MusicClock::new(cue, 0.0, 1.0);
+            let clock = crate::audio::MusicClock::new(cue, 1.0);
             self.state.heard(Some(&clock));
         }
     }
