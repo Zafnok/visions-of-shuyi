@@ -1247,7 +1247,7 @@ impl Packer<'_> {
         // Down the column, a frame past the bottom is outside the image
         // when it is packed; along the row, one past the right edge would
         // wrap onto the next row, so it is caught here.
-        let across = strip.step % columns != 0;
+        let across = !strip.step.is_multiple_of(columns);
         if across && cut.right_column(columns) + last >= columns {
             return Err(format!(
                 "{sheet}: the frames of {cut:?} run past the image's right edge"

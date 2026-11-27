@@ -56,6 +56,14 @@ pub fn loop_clock_s(ctx: &Ctx) -> f64 {
     }
 }
 
+/// Whole milliseconds of [`loop_clock_s`]: a map scene's clock, on the
+/// battle map and behind a conversation alike (its moving tiles, 1384).
+pub fn loop_clock_ms(ctx: &Ctx) -> u64 {
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let ms = (loop_clock_s(ctx).max(0.0) * 1000.0) as u64;
+    ms
+}
+
 /// What every screen shares: Shuyi Engine's services and this game's part,
 /// [`Ctx::game`](shuyi_ui::Ctx::game) ([`Shuyi`]).
 pub type Ctx = shuyi_ui::Ctx<Shuyi>;
