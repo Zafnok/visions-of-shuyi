@@ -1952,7 +1952,8 @@ pub fn halved(pixels: &[u8], (w, h): (u32, u32)) -> Vec<u8> {
                 let sum: u32 = block.iter().map(|p| u32::from(p[3])).sum();
                 (seen, u8::try_from(sum / 4).unwrap_or(u8::MAX))
             };
-            if picked.is_empty() || alpha == 0 {
+            // A block with no solid pixel and nearly clear is clear.
+            if alpha == 0 {
                 out.extend_from_slice(&[0; 4]);
                 continue;
             }

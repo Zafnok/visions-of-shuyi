@@ -2149,6 +2149,9 @@ fn a_halved_picture_keeps_its_edge_crisp_and_its_shadow_soft() {
     // One solid pixel of four: its colour, a quarter as opaque.
     assert_eq!(at(2), [200, 100, 0, 63]);
     assert_eq!(at(3), [0, 0, 0, 50]);
+    // A block nearly clear (one pixel at alpha 3) is clear.
+    let faint: Vec<u8> = [[90, 90, 90, 3], c, c, c].into_iter().flatten().collect();
+    assert_eq!(halved(&faint, (2, 2)), [0, 0, 0, 0]);
 }
 
 #[test]

@@ -387,6 +387,19 @@ mod tests {
         assert_eq!(placed(&[".#.", ".#.", ".#."]), [(1, 0, Half), (1, 2, Half)]);
     }
 
+    /// Only the map's tiles get trees, whatever the forest says of the
+    /// tiles round it.
+    #[test]
+    fn a_forest_that_runs_off_the_map_gets_trees_only_on_it() {
+        assert_eq!(
+            place(2, 3, |_| true)
+                .into_iter()
+                .map(|t| (t.trunk.x, t.trunk.y, t.footprint))
+                .collect::<Vec<_>>(),
+            [(0, 0, Half), (1, 0, Half), (0, 2, Half), (1, 2, Half)]
+        );
+    }
+
     #[test]
     fn big_trees_come_first_and_half_size_ones_take_what_is_left() {
         // Five across, three down: a big tree on the left three, then the
