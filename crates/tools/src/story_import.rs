@@ -31,7 +31,7 @@ pub const USAGE: &str = "usage: cargo xtask story-import <pull request> [--dry-r
 takes a pull request of the writer's mirror (Zafnok/visions-of-shuyi-story)\n\
 that Nick approved into the private assets repository: applies its change\n\
 three-way onto origin/main in assets-private/, with the writer as the\n\
-commit's author, pushes the branch story/<n>-<slug> and opens its pull\n\
+commit's author, pushes the branch story-<n>-<slug> and opens its pull\n\
 request. --dry-run prints the change and pushes nothing. The story-import\n\
 skill has the steps after it.";
 
@@ -216,7 +216,8 @@ pub fn author(json: &str) -> Result<(String, String), String> {
     ))
 }
 
-/// `story/<n>-<slug>`: the branch for pull request `n` titled `title`.
+/// `story-<n>-<slug>`: the assets branch for pull request `n` titled
+/// `title`. No `/`: the game's pin file is named after it (ADR-0135).
 pub fn branch(n: u64, title: &str) -> String {
     let mut slug = String::new();
     for c in title.chars().flat_map(char::to_lowercase) {
@@ -227,7 +228,7 @@ pub fn branch(n: u64, title: &str) -> String {
         }
     }
     let slug: String = slug.chars().take(40).collect();
-    format!("story/{n}-{}", slug.trim_end_matches('-'))
+    format!("story-{n}-{}", slug.trim_end_matches('-'))
 }
 
 /// `patch` (a `git diff` of the mirror) with every mirror path as its
@@ -423,9 +424,9 @@ pub fn gh(args: &[&str]) -> Result<String, String> {
 fn body(n: u64, login: &str) -> String {
     format!(
         "The writer's change from {MIRROR}#{n} (by {login}), approved by Nick on the mirror, \
-         taken in by `cargo xtask story-import` (ticket 0152).\n\nMerges first; then the \
-         game's pull request moves `assets-private.rev` here (the `story-import` skill), and \
-         its merge closes the mirror's pull request.\n"
+         taken in by `cargo xtask story-import` (ticket 0152).\n\nDon't merge it by hand: \
+         the game's pull request carries its pin file, and the game's merge lands it \
+         (`private-land.yml`, ADR-0135) and closes the mirror's pull request.\n"
     )
 }
 
@@ -664,7 +665,7 @@ mod tests {
         );
         assert_eq!(
             branch(12, "Warmer camp: Joss's lines!"),
-            "story/12-warmer-camp-joss-s-lines"
+            "story-12-warmer-camp-joss-s-lines"
         );
     }
 

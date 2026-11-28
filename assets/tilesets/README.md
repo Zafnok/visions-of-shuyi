@@ -27,6 +27,7 @@ skin*, which goes round every tileset). They are test files: they are in
         "plain": (0, 0), "road": (1, 0), "forest": (2, 0),
     },
     layers: [],                      // optional: pictures painted over the tiles (below)
+    props: {},                       // optional: pictures a map places by name (below)
     looks: {},                       // optional: other looks by name (below)
     frames: [],                      // optional: cells that loop through frames (below)
     unit_px: (24, 24),               // a unit picture, across × down; may be taller than a tile
@@ -104,13 +105,38 @@ looks: {
 The tileset's top-level `terrain` and `layers` are its own look: a map
 outdoors, a map that names no look, and any look the tileset lacks.
 
+### Pictures a map places: `props`
+
+A look may have **props** (ticket 1378): pictures a map places by hand,
+by name, on tiles no terrain says one goes on (Chapter 1's lamps at
+Harl's gate and beside the road bridge). The tileset's own are at its
+top beside `terrain` and `layers`; another look's in that look, never
+shared. The shape is the engine's (`shuyi_assets::tileset::PropAt`):
+
+```ron
+props: {
+    // A cell, and the picture's size in pixels from its top-left
+    // (left out, `tile_px`).
+    "lamp": (at: (7, 24), size: (16, 32)),
+},
+```
+
+The sprite skin paints each over the look's layers, standing on its tile
+(its bottom on the tile's bottom, centred across), so a tall one reaches
+up over the tiles above. A map names them in its look
+(`assets/maps/README.md`, *Look*). A prop moves like a tile when its cell
+is in `frames` (below). The glyph look draws none.
+
 ### Moving tiles: `frames`
 
 `frames` makes **cells of the image loop through frames** (ticket 1315,
-ADR-0131): flowing water, a shore's foam. Every row that draws a moving
-cell moves with it, in every look: a terrain's own tile, a corner
-layer's mix, a tile layer's picture. So the rows stay as they are, and
-a cell moves wherever it is drawn.
+ADR-0131): flowing water, a shore's foam, a lamp's flame. Every row that
+draws a moving cell moves with it, in every look: a terrain's own tile,
+a corner layer's mix, a tile layer's picture, a prop. So the rows stay as
+they are, and a cell moves wherever it is drawn. A cell nothing draws at
+a tile's size, whose top-left a bigger picture starts at (a lamp two
+tiles tall), moves at that picture's size: each frame that size from its
+own cell.
 
 ```ron
 frames: [
@@ -261,9 +287,11 @@ its name:
   a map can give (`trpg_content::map::TILE_LOOKS`) other than the
   tileset's own, `outdoor`;
 - `frames` need `terrain`; a moving cell is listed once, is drawn by a
-  terrain or a layer, has two frames or more, the first the cell itself,
+  terrain, a layer or a prop, has two frames or more, the first the cell itself,
   each lasting 1 ms or more and lying inside the image; its stills show
   `FirstFrame` (`Nothing` would leave a hole in the map);
+- `props` need `terrain`; a prop has a name, the sides of its `size` are
+  8 to 64 px, and its picture lies inside the image;
 - a look's `trees` name real terrains in `of`, have a kind or more of
   `big` and of `half`, each a frame of some pixels with its foot inside
   it and two frames or more, each lasting 1 ms or more and lying inside
@@ -343,6 +371,10 @@ table):
   drawn over by the keep's stone where a fort is by a floor). A `Tiles`
   layer may leave its `tile` out (a see-through cell) and give `near`,
   its picture beside any of `beside`.
+  A look's `props` (1378) name each prop's top cell, a tile of a sheet:
+  the importer packs it over the tile below it, a picture two cells
+  tall, and its sheet's `moving` strip moves the two together (the lamp,
+  `RA_Jungle_Animation.png`, 4 frames 2 rows apart, 150 ms each).
   A look's `trees` (1356) name plain sheets of frames (ELV's
   `animated-trees/`, 12 frames of 64 × 80 px, four across), each a kind
   of big tree; the importer packs every frame below the tiles, and each

@@ -78,8 +78,9 @@ Consequences), not a fourth tier. Preview with `cargo shuyi frame-png
 
 **Out (do not do):** weather that changes rules (rain lowering hit);
 sounds (1332); effects on screens 0096 didn't name; bursts on hits
-(1333) and touches and creatures on the map (1334), which use this
-ticket's engine particles; each chapter's pick (1370–1377).
+(1333) and touches and creatures on the map (1334), which play drawn
+flipbooks and don't need this ticket's engine particles (1323,
+2026-11-27); each chapter's pick (1370–1377).
 
 ## Implementation steps
 

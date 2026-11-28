@@ -21,7 +21,7 @@
 
 use crate::prelude::*;
 
-use shuyi_core::save::{SaveFormat, SaveHeader};
+use shuyi_core::prelude::{SaveFormat, SaveHeader};
 use shuyi_ui::input::PlayerKeys;
 use shuyi_ui::input::bindings::PLAYER_KEYS_VERSION;
 use shuyi_ui::storage::bundle::{self, BundleError, EntryCheck, FormatCheck, ImportPlan, Verdict};

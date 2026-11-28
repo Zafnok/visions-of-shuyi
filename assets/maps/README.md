@@ -68,13 +68,26 @@ says what each look is (`assets/tilesets/README.md`); one that lacks a look
 paints the map with its own. The loader keeps it beside the map the rules
 see (`MapDef::look`), never in it (ADR-0038, ADR-0052).
 
+`props` places pictures by hand (ticket 1378): a tile, in map
+coordinates `(x, y)`, to the name of what stands on it, as Chapter 1's
+lamps at Harl's gate and the road bridge:
+
+```
+look: (tiles: "rogue_adventure", props: { (19, 5): "lamp", (21, 5): "lamp" }),
+```
+
+A tileset's look says what each name is drawn as (`assets/tilesets/
+README.md`, *Pictures a map places*): standing on its tile, reaching up
+if it is taller. Like `tiles`, it changes only the look, and the glyph
+look ignores it.
+
 `light` names the light the map is in: one of `assets/data/lighting.ron`
 (`"noon"`, the default: leave it out; `"dawn"`; `"dusk"`; `"night"`). A skin that
 has pictures shades the ground by it; units, ranges, the cursor and the
 panels keep their colours, and the glyph look ignores it (ADR-0058). A
 battle file may name another light for its own fight
 (`assets/battles/README.md`). Either of `tiles` and `light` may be left
-out.
+out, and so may `props`.
 
 One character per tile is the *file* format only: on screen each tile is two
 glyphs wide, taken from the terrain's `glyphs` in `terrain.ron` (ADR-0012).
@@ -106,6 +119,10 @@ Each is reported with `file:line:column`, and all are reported at once:
   with an empty list (or a blacksmith with a list), a chest with 0 gold;
 - an unknown item id, or a shop listing an item its kind doesn't sell;
 - a `look` whose `tiles` isn't `"outdoor"`, `"indoor"` or `"rogue_adventure"`;
-- a `look` whose `light` isn't a light of `assets/data/lighting.ron`.
+- a `look` whose `light` isn't a light of `assets/data/lighting.ron`;
+- a `look` whose `props` places a tile outside the map, or a name that a
+  tileset with the map's look has no prop for (checked with the
+  tilesets; one without the look paints the map with its own and isn't
+  asked).
 
 Unused legend entries are allowed.

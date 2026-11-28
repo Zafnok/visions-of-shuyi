@@ -5,8 +5,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use shuyi_assets::voice::CastVoice;
 use shuyi_assets::voice::plan::{self as engine, VoicePlan, WantedClip};
-use shuyi_assets::voice::{CastVoice, ClipVariant};
+use shuyi_platform::prelude::audio::ClipVariant;
 use trpg_content::dialogue::{DialogueTable, REPLY_SPEAKER};
 use trpg_content::names::Names;
 use trpg_content::voice::{self, MadeBy, Variant, VoiceClip};

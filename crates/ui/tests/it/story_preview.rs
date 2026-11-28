@@ -10,7 +10,7 @@
 
 use std::collections::BTreeMap;
 
-use shuyi_assets::bundle::Layer;
+use shuyi_platform::prelude::Layer;
 use shuyi_ui::FileDrops;
 use shuyi_ui::dialogue::preview::{PreviewView, Tab};
 use trpg_content::bundle::{self, Bundle, skip_without_the_game};

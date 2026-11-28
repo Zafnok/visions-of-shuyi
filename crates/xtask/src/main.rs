@@ -38,7 +38,8 @@ check-leaks                        find a tracked file that quotes the game's li
 engine [--off]                    build the game on Shuyi Engine checked out in shuyi-engine/\n  \
 engine-pin [<commit> | --check [--offline]] move the engine's pinned commit, or check it and its ledger (ADR-0063 §8)\n  \
 engine-pin --report                the engine PRs past the pin, sorted, and whether a move is due (ADR-0096)\n  \
-assets-pin --check [--base <ref>]  fail when assets-private.rev moves back from its value at <ref> (0194)\n  \
+assets-pin --check [--base <ref>]  fail when assets-private.rev moves back or a pin file is wrong (0194, 0195)\n  \
+assets-pin --add | --resolve       write this change's pin file, or put assets-private/ at the effective pin (ADR-0135)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
 code-lines [--base <ref>]          production Rust lines added and removed per crate (ADR-0092)\n  \
 pr-size [--base <ref>] [--branch <name>] [--hook]\n                                     \
@@ -222,15 +223,19 @@ fn engine_pin(args: &[String]) -> u8 {
 }
 
 fn assets_pin(args: &[String]) -> u8 {
-    let base = match args {
-        [flag] if flag == "--check" => "origin/main",
-        [flag, option, base] if flag == "--check" && option == "--base" => base.as_str(),
+    let root = repo_root();
+    match args {
+        [flag] if flag == "--check" => report(assets_pin::check(&root, "origin/main")),
+        [flag, option, base] if flag == "--check" && option == "--base" => {
+            report(assets_pin::check(&root, base))
+        }
+        [flag] if flag == "--add" => report(assets_pin::add(&root)),
+        [flag] if flag == "--resolve" => report(assets_pin::resolve(&root)),
         _ => {
             eprintln!("{}", assets_pin::USAGE);
-            return 2;
+            2
         }
-    };
-    report(assets_pin::check(&repo_root(), base))
+    }
 }
 
 /// Prints what a command did, or why it failed.
@@ -861,9 +866,11 @@ mod tests {
     }
 
     #[test]
-    fn assets_pin_takes_only_check_and_a_base() {
+    fn assets_pin_takes_check_and_a_base_add_or_resolve() {
         assert_eq!(assets_pin(&args(&[])), 2);
         assert_eq!(assets_pin(&args(&["--check", "--bogus"])), 2);
+        assert_eq!(assets_pin(&args(&["--add", "x"])), 2);
+        assert_eq!(assets_pin(&args(&["--resolve", "--check"])), 2);
         // HEAD's pin is the working tree's unless this worktree moved it.
         assert_eq!(assets_pin(&args(&["--check", "--base", "HEAD"])), 0);
     }

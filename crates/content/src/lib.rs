@@ -534,6 +534,7 @@ impl Early {
             classes.as_ref().ok(),
             characters.as_ref().ok(),
         );
+        let tilesets = check_map_props(tilesets, maps.as_ref().ok());
         let mut units = Loaded {
             classes,
             items,
@@ -1062,6 +1063,26 @@ fn check_map_lights(
             }
         }
         (maps, _) => maps,
+    }
+}
+
+/// Adds the map props check ([`map::check_props`]: every name a map
+/// places is a prop of its look in each tileset that has the look) to the
+/// tilesets' result. Skipped when the maps or the tilesets failed to load.
+fn check_map_props(
+    tilesets: Result<BTreeMap<String, Tileset>, Vec<ContentError>>,
+    maps: Option<&BTreeMap<String, MapDef>>,
+) -> Result<BTreeMap<String, Tileset>, Vec<ContentError>> {
+    match (tilesets, maps) {
+        (Ok(tilesets), Some(maps)) => {
+            let errors = map::check_props(maps, &tilesets);
+            if errors.is_empty() {
+                Ok(tilesets)
+            } else {
+                Err(errors)
+            }
+        }
+        (tilesets, _) => tilesets,
     }
 }
 

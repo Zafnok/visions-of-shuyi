@@ -23,7 +23,7 @@
 use crate::prelude::*;
 use alloc::collections::BTreeMap;
 
-use shuyi_core::Made;
+use shuyi_core::prelude::Made;
 use shuyi_ui::player_files::Folder;
 use shuyi_ui::storage::bundle::SaveBundle;
 use shuyi_ui::{PlatformFacts, StoragePlace};

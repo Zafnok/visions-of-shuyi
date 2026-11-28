@@ -32,7 +32,8 @@ use crate::prelude::*;
 use core::fmt;
 
 use serde::{Deserialize, Serialize};
-use shuyi_core::history::{History, NoSuchPoint};
+use shuyi_core::history::NoSuchPoint;
+use shuyi_core::prelude::History;
 
 use crate::{BattleState, Command, GameTables};
 

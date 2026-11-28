@@ -18,20 +18,18 @@
 
 use std::path::Path;
 
-use shuyi_assets::font::FontAtlasDef;
+use shuyi_assets::Formats;
 use shuyi_assets::pack::Bake;
 use shuyi_assets::target::GraphicsTier;
-use shuyi_assets::{ContentError, Formats};
-use shuyi_cli::contract::autobalance::AutobalanceInput;
-use shuyi_cli::contract::playtest::PlaytestInput;
-use shuyi_cli::contract::replay::{Record, ReplayRun};
-use shuyi_cli::contract::session::{Headless, Scene, Session};
-use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
-use shuyi_cli::{
-    AutobalancePlan, GameArg, GameBake, GameLang, GameOption, GameTools, OneBitSkin, PlaytestPlan,
+use shuyi_cli::frame_png::one_bit_picture;
+use shuyi_cli::prelude::{
+    AutobalanceInput, AutobalancePlan, GameArg, GameBake, GameLang, GameOption, GameTools,
+    Headless, Image, OneBitSkin, Painter, PlaytestInput, PlaytestPlan, Record, ReplayRun, Scene,
+    Script, Session, Shot,
 };
-use shuyi_core::bots::playtest::Tries;
-use shuyi_platform::session::{SessionRecord, Stamps};
+use shuyi_platform::prelude::ContentError;
+use shuyi_platform::prelude::test::{SessionRecord, Stamps, Tries};
+use shuyi_platform::prelude::text::FontAtlasDef;
 use shuyi_platform::{Frame, Show};
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_content::palette::PaletteDef;

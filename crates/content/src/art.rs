@@ -6,8 +6,7 @@ use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 use trpg_core::{
-    ArtArea, ArtDef, ArtEffect, ArtId, ArtTable, ItemDef, ItemTable, StanceReaction, WeaponKind,
-    WeaponRank,
+    ArtArea, ArtDef, ArtEffect, ArtTable, ItemDef, ItemTable, StanceReaction, WeaponKind,
 };
 
 use crate::bundle;
@@ -23,19 +22,7 @@ pub const ARTS_PATH: &str = "data/arts.ron";
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawFile {
-    arts: Vec<RawArt>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawArt {
-    id: String,
-    name: String,
-    kind: WeaponKind,
-    rank: Option<WeaponRank>,
-    cost: u32,
-    #[serde(default)]
-    effect: ArtEffect,
+    arts: Vec<ArtDef>,
 }
 
 /// Loads and validates the embedded art file.
@@ -57,38 +44,32 @@ pub fn from_source(file: &str, source: &str) -> Result<ArtTable, Vec<ContentErro
     let raw: RawFile = parse_ron(file, source).map_err(|e| vec![e])?;
     let mut errors = Vec::new();
     let mut arts = BTreeMap::new();
-    for a in raw.arts {
+    for def in raw.arts {
+        let a = &def.id.0;
         let at = |message: String| {
             let e = ContentError::new(file, message);
-            match line_of(source, &format!("id: \"{}\"", a.id)) {
+            match line_of(source, &format!("id: \"{a}\"")) {
                 Some(l) => e.at(l, None),
                 None => e,
             }
         };
-        let what = format!("art \"{}\"", a.id);
-        if a.id.is_empty() {
+        let what = format!("art \"{a}\"");
+        if a.is_empty() {
             errors.push(at("an art id is empty".into()));
         }
-        if a.cost == 0 {
+        if def.cost == 0 {
             errors.push(at(format!("{what}: cost must be at least 1")));
         }
         errors.extend(
-            problems(a.kind, &a.effect)
+            problems(def.kind, &def.effect)
                 .into_iter()
                 .map(|p| at(format!("{what}: {p}"))),
         );
-        let id = ArtId(a.id.clone());
-        let def = ArtDef {
-            id: id.clone(),
-            name: a.name,
-            kind: a.kind,
-            rank: a.rank,
-            cost: a.cost,
-            effect: a.effect,
-        };
-        if arts.insert(id, def).is_some() {
-            errors.push(at(format!("duplicate art id \"{}\"", a.id)));
+        let duplicate = arts.contains_key(&def.id);
+        if duplicate {
+            errors.push(at(format!("duplicate art id \"{a}\"")));
         }
+        arts.insert(def.id.clone(), def);
     }
     if errors.is_empty() {
         Ok(ArtTable { arts })

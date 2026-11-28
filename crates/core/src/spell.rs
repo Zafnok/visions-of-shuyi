@@ -83,8 +83,9 @@ pub enum EffectDuration {
     },
 }
 
-/// What a spell does.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// What a spell does, read as `spells.ron` writes it (ticket 1392).
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub enum SpellKind {
     /// Fights like a magical weapon.
     Attack {
@@ -95,6 +96,7 @@ pub enum SpellKind {
         /// Base crit.
         crit: StatValue,
         /// Extra `(tag, multiplier)` pairs, as for weapons.
+        #[serde(default)]
         effective: Vec<(UnitTag, u8)>,
     },
     /// Restores HP to an ally.

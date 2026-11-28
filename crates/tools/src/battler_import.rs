@@ -22,7 +22,7 @@ use std::path::Path;
 use trpg_content::battler::{BACKDROP_PX, BACKDROPS_DIR, BACKDROPS_PATH, BATTLERS_DIR};
 use trpg_content::image::png_size;
 
-use shuyi_cli::codec::{decode_png, encode_png};
+use shuyi_cli::prelude::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask battler-import [--list]\n\n\
@@ -31,7 +31,7 @@ assets-private/game/battlers/<id>.png with its sidecar <id>.ron, and each backdr
 to assets-private/game/battlebacks/, with the file that names the dusk and night ones.\n\
 --list  print which picture each class and character gets, and copy nothing\n\n\
 Run `cargo shuyi private-assets --library` first. Afterwards commit and push in\n\
-assets-private/, then run `cargo shuyi private-assets --pin`.";
+assets-private/, then run `cargo xtask assets-pin --add`.";
 
 /// The sorted bought packs, relative to the repo root.
 pub const LIBRARY_DIR: &str = "assets-private/library";
@@ -528,8 +528,8 @@ pub fn run(
     }
     Ok(format!(
         "battler-import: wrote {} pictures to {GAME_DIR}/{BATTLERS_DIR}/ and {} backdrops to \
-         {GAME_DIR}/{BACKDROPS_DIR}/; commit and push in assets-private/, then run \
-         `cargo shuyi private-assets --pin`",
+         {GAME_DIR}/{BACKDROPS_DIR}/; commit and push your branch in assets-private/, then run \
+         `cargo xtask assets-pin --add`",
         pictures.len(),
         backdrops.len()
     ))

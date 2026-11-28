@@ -8,8 +8,7 @@
 //! The other phases are played as the game plays them, here and in every
 //! replay ([`play`]): the enemy AI's command, else the phase's end.
 
-use shuyi_core::grid::Grid;
-use shuyi_core::path::flow_field;
+use shuyi_core::prelude::{Grid, flow_field};
 use trpg_content::Content;
 use trpg_core::{
     BattleState, Command, Faction, Objective, Outcome, Phase, Pos, SimRng, UnitAction,

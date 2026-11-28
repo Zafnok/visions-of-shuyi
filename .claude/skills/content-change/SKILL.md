@@ -1,19 +1,20 @@
 ---
 name: content-change
-description: This game's rules on top of the engine pack's shuyi-private-files for its content and story documents in the private assets repository — its names (`assets-private/content/`, `story/`, the pin `assets-private.rev`), the ticket in each name, the pin on the private branch while both pull requests are open, what the pin carries, `check-leaks` and the dialogue pause. Read shuyi-private-files first for the steps (checkout, `--no-track` branch, the two pull requests, `--pin`, two pull requests moving it, never in public), then this for the game's names in place of the template's `private/` and `private.rev`. Use when a ticket edits, adds, renames or removes a file in `assets-private/content/` or `assets-private/story/`, when two pull requests both move that pin, or when a game pull request's CI needs content that isn't on the private repository's `main` yet. Not for the bought art in `game/` and `test/` (ADR-0040 and ADR-0051, the work-ticket skill's credits) or for the engine (engine-change).
+description: This game's rules on top of the engine pack's shuyi-private-files for its content and story documents in the private assets repository — its names (`assets-private/content/`, `story/`, the base pin `assets-private.rev`), the ticket in each name, the change's own pin file `assets-private.d/<branch>.rev` (`cargo xtask assets-pin --add`) that the game's merge lands (ADR-0135), `check-leaks` and the dialogue pause. Read shuyi-private-files first for the steps (checkout, `--no-track` branch, the private pull request, never in public), then this for the game's names and for where its pin differs from the template's §4 and §5. Use when a ticket edits, adds, renames or removes a file in `assets-private/content/`, `assets-private/story/` or the bought art, when a pin file or `assets-private.rev` conflicts or fails CI, or when a `private-land` issue is open. Not for the engine (engine-change).
 metadata:
-  version: "2.0"
+  version: "3.0"
 ---
 
 # Change the private content
 
 **Read [`shuyi-private-files`](../shuyi-private-files/SKILL.md) first.** It
-holds every step a Shuyi game with private files follows: the checkout,
+holds the steps a Shuyi game with private files follows: the checkout,
 a branch there made with `--no-track`, never pushing the private `main`,
-pushing by the branch's full name, the private pull request first and the
-game's that moves the pin with `cargo shuyi private-assets --pin`, listing
-what the pin carries, two pull requests that both move it, and what never
-goes in public. This skill holds only what is this game's (ADR-0117).
+pushing by the branch's full name, the private pull request, and what
+never goes in public. Its pin steps (§4's `--pin`, what the pin carries,
+§5) are **not** this game's: here a change adds its own pin file, and
+the game's merge lands the private pull request (below, ADR-0135). This
+skill holds only what is this game's (ADR-0117).
 
 ## This game's names
 
@@ -31,9 +32,11 @@ as written; the skill's text uses the template's names. Read them as:
 | `the_private_files_are_the_checkouts`, `cargo clean -p <crate>` | `bundle.rs`'s test that every layer is its folder, `cargo clean -p trpg-content` |
 | the game's gates (`shuyi-gates`) | the `run-gates` skill |
 
-The checkout also holds `game/` and `test/`, the **bought art**: not this
-skill. It needs a credit (ADR-0051), the gates never read it (ADR-0040
-§5), and `--pin` refuses a bought file without one. Never put a content
+The checkout also holds `game/` and `test/`, the **bought art**. Its
+files need a credit (ADR-0051) and the gates never read them (ADR-0040
+§5), but a change to them lands the same way: a branch, its pull
+request, a pin file. The run-gates test `every_bought_file_has_a_credit`
+refuses a bought file without a credit (`--add` doesn't check it). Never put a content
 file in `game/`, or bought art in `content/`. The tools that read
 `assets/` from disk read the content over it too (`cargo xtask
 check-script`, `voice`, `cargo shuyi check-keys`, `lint`).
@@ -43,61 +46,78 @@ check-script`, `voice`, `cargo shuyi check-keys`, `lint`).
 - The private branch: `t<NNNN>-<slug>`, after the game ticket.
 - Its commits: `[NNNN] <what changed>` (`git -C assets-private add
   content story`).
-- The private pull request's title starts with `[NNNN]`: it is the commit
-  the squash merge makes on `main`, which "What the pin carries" below
-  reads.
-- Its body names the game ticket, says it merges first, and links the
-  game's pull request by full URL
+- The private pull request's title starts with `[NNNN]`: it becomes the
+  title of the merge commit `private-land.yml` makes on the private `main`.
+- Its body names the game ticket, says the game's merge lands it (don't
+  merge by hand), and links the game's pull request by full URL
   (`https://github.com/Zafnok/visions-of-shuyi/pull/<N>`). The game's
-  names `Zafnok/visions-of-shuyi-assets#<N>` and says the pin moves to
-  its merge.
+  names `Zafnok/visions-of-shuyi-assets#<N>` and its pin file.
 
-## The game's CI reads the new content before either merges
+## Its own pin file, and the merge lands it (ADR-0135)
 
-Unlike the template's default, the game's pull request does not wait on
-the old pin. While the private one is open, point the pin at its branch's
-commit by hand, commit it with the game's change and push:
+This game differs from `shuyi-private-files` §4 and §5 here: **a change
+never edits `assets-private.rev` and never runs `private-assets --pin`**.
+Several asset tickets run at once, and that one line made each wait for
+and conflict with the others (ticket 0195). Instead:
 
-```bash
-git -C assets-private rev-parse HEAD > assets-private.rev
-```
+1. Commit on the private branch and push it by its full name (§3, §4 of
+   `shuyi-private-files`).
+2. Open its pull request in the private repository, as above. Its body
+   also says: "Merged by the game's merge (`private-land.yml`): don't merge
+   by hand."
+3. Give the change its own pin file, then commit it with the game's change:
 
-CI checks out exactly that commit. **A game pull request never merges
-with the pin on a branch commit:** after the squash merge that commit is
-on no branch, and the next fetch of it may fail. Once the private pull
-request merges, move the pin to `main` with `--pin` as
-`shuyi-private-files` says.
+   ```bash
+   cargo xtask assets-pin --add
+   git add assets-private.d
+   ```
 
-A change to `story/` alone moves the pin too, so every worktree that
-checks out the pin has the documents.
+   It writes `assets-private.d/<branch>.rev`, the pushed head of the
+   private branch, and refuses one that isn't pushed. **Push the private
+   branch again, then run `--add` again, after every new commit there**:
+   CI builds the pinned commit, and the landing refuses a branch that
+   moved past it. `--check` warns when they differ.
+4. Push the game's branch. CI's private-assets action checks out the
+   **effective pin**: `assets-private.rev` merged with every pin file
+   (`.github/actions/private-assets/resolve.sh`). Locally, `cargo xtask
+   assets-pin --resolve` puts `assets-private/` there (detached), when a
+   worktree needs other changes' pins as well as its own. Switch back to
+   your branch before you commit there again.
+5. Nick merges the game's pull request whenever it is green, in any order
+   with the others. `private-land.yml` then merges the private pull
+   request with a merge commit at the pinned commit, and folds the pin
+   into `assets-private.rev` in a commit of its own on `main`. Nothing
+   waits for another ticket, and two pin files never conflict.
 
-## What the pin carries
+**When CI's merge of the pins conflicts** (two private branches edit the
+same lines), the message names the fix: merge the private `origin/main`
+into your branch (`git -C assets-private fetch origin`, `git -C
+assets-private merge origin/main` on the branch), resolve, commit, push,
+`--add` again.
 
-List only the content and story commits; art commits (`game/`, `test/`,
-`voice/`) don't break a build:
+**If a landing fails**, an issue labelled `private-land` says why (no
+pull request from the branch, a head that moved, a conflict). `main` still
+builds with the pin file. Fix what it says, in a game pull request when
+the pin file must change, and run the workflow again (Actions → Private
+land → Run workflow).
 
-```bash
-git -C assets-private log --oneline "$(cat assets-private.rev)..origin/main" -- content story
-```
+**`assets-private.rev` only moves forward** (0194), and only to the
+private `main`: `cargo xtask assets-pin --check` (CI's `tickets` job)
+fails on a pull request that points it at a branch commit or back. Only
+the fold moves it. A conflict on it means a branch still uses the old
+flow: drop the branch's change to it, and `--add` instead.
 
-For each that isn't this ticket's, take its `[NNNN]` and check its game
-pull request merged: the ticket is in `tickets/done/` on the game's
-`main`, or `gh pr list --repo Zafnok/visions-of-shuyi --search "[NNNN]"
---state merged`. If not, wait, or ask its session (`SendMessage` if it is
-linked here); never pin past it, and never pin a commit before it that
-leaves this ticket's out. Run it again whenever `main` moves.
+**An older ticket or doc that says "`cargo shuyi private-assets --pin`
+and commit `assets-private.rev`"** means these steps now: `--add` and
+commit the pin file. Don't wait for the private pull request to merge,
+since nobody merges it by hand. "`--pin` accepts the file" in an
+acceptance criterion means the run-gates test
+`every_bought_file_has_a_credit` passes.
 
-## The pin only moves forward
-
-Several sessions may move the pin at once, and their pull requests merge
-in any order. `cargo xtask assets-pin --check` (CI's `tickets` job, ticket
-0194) fails when the pin isn't `main`'s pin or a commit after it in the
-private history: the second to merge would put `main` back on older
-content. Resolving the conflict on `assets-private.rev` never keeps either
-side's line: pin the private `main` again, as `shuyi-private-files` §5
-says, after `git -C assets-private fetch origin` (a stale `origin/main`
-pins backwards too). The check warns, without failing, on a pin that isn't
-on the private `main` yet.
+**A pull request from before 0195** that moved `assets-private.rev` to
+its branch commit: undo that change (`git checkout origin/main --
+assets-private.rev`) and `--add`. If one moved it to the private `main`
+after its private pull request merged, it may finish that way.
 
 ## What this game adds to "never in public"
 

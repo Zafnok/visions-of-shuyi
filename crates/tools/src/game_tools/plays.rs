@@ -6,11 +6,10 @@
 //! 1245, [`BattleRecord`]).
 
 use serde::{Deserialize, Serialize};
-use shuyi_assets::ContentError;
-use shuyi_cli::PlaytestPlan;
-use shuyi_cli::contract::replay::{Record, ReplayRun, turns};
-use shuyi_core::Bot;
-use shuyi_core::bots::playtest::{Entrant, Measure, play_try};
+use shuyi_cli::prelude::{PlaytestPlan, Record, ReplayRun, turns};
+use shuyi_core::prelude::Bot;
+use shuyi_platform::prelude::ContentError;
+use shuyi_platform::prelude::test::{Entrant, Measure, play_try};
 use trpg_bots::{BattleEntrant, BattleStage, Player};
 use trpg_content::Content;
 use trpg_core::{BattleState, Command, GameMode, Phase};

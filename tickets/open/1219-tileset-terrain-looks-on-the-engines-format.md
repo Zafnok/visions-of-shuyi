@@ -55,6 +55,17 @@ ticket moves the loader onto `LookDef`, it reads `trees` beside it (or
 takes it out of the look before the engine reads the rest), and keeps
 `trpg_content::tileset::Trees` and its checks as they are.
 
+**2026-11-27, from 1378:** `LookFile` in `look.rs` and the file's top
+level gained `props` (the pictures a map places by name), written with
+the engine's own `PropAt` (engine PR #620, in the pin), so the files
+already have the engine's field names and shape; `Looking::prop` checks
+a name, the size's sides and the picture inside the image, as
+`LookDef`'s `problems` and `resolve` do. This ticket deletes the game's
+props reading with the rest of `look.rs`. `frames.rs` (the game's own,
+ADR-0131) now moves a prop at its size and swaps `Look::props` in
+`look_at`; it stays. `map::check_props` (a map's placed names against
+its tilesets' looks) is the game's and stays too.
+
 ## Nick input
 
 None. Nothing a player sees changes; an unknown terrain's error text

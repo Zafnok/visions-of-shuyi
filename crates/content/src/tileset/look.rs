@@ -1,9 +1,11 @@
 // engine-friction: engine#2243, moves (game 1219 deletes it)
 //! A tileset's terrain looks (ADR-0052) as its file writes them: for each
 //! look, a tile for every terrain and the layers painted over those tiles,
-//! checked against this game's terrains and the looks its maps may name.
-//! What a look is (its tiles, its corner and tile layers, the mix rule) is
-//! the engine's (`shuyi_assets::tileset`, ticket 1115).
+//! checked against this game's terrains and the looks its maps may name,
+//! and the pictures a map may place on its tiles (`props`, ticket 1378).
+//! What a look is (its tiles, its corner and tile layers, the mix rule, its
+//! props) is the engine's (`shuyi_assets::tileset`, ticket 1115), and so
+//! is how a prop is written ([`PropAt`]).
 use crate::prelude::*;
 
 use alloc::collections::{BTreeMap, BTreeSet};
@@ -11,6 +13,7 @@ use alloc::collections::{BTreeMap, BTreeSet};
 use serde::Deserialize;
 use trpg_core::TerrainId;
 
+pub(super) use shuyi_assets::tileset::PropAt;
 pub use shuyi_assets::tileset::{
     CornerLayer, Layer, Look, MIXES, TileLayer, mix, mix_name, parse_mix,
 };
@@ -27,6 +30,10 @@ pub(super) struct LookFile {
     pub(super) terrain: BTreeMap<String, (u32, u32)>,
     #[serde(default)]
     pub(super) layers: Vec<LayerFile>,
+    /// The pictures a map may place on its tiles, by name (ticket 1378):
+    /// the engine's `LookDef::props`, field for field.
+    #[serde(default)]
+    pub(super) props: BTreeMap<String, PropAt>,
     /// Its trees (ticket 1356): only in a look of `looks`.
     #[serde(default, deserialize_with = "super::written")]
     pub(super) trees: Option<super::trees::TreesFile>,
@@ -233,12 +240,31 @@ impl Looking<'_, '_> {
         }
     }
 
-    /// The look of `terrain` (each terrain's tile, by name) and `layers`,
-    /// checked. Terrains without a tile are [`missing`]'s to report.
+    /// The picture a map places as `name`, written as `at`, checked: a
+    /// name, and a size (a tile's if left out) whose sides are a tile's
+    /// sides can be, lying inside the image.
+    fn prop(&mut self, name: &str, at: &PropAt) -> ImageRect {
+        let what = format!("{}prop \"{name}\"", prefix(self.name));
+        if name.is_empty() {
+            self.check
+                .problems
+                .push(format!("{what}: its name is empty"));
+        }
+        let size = at.size.unwrap_or(self.tile_px);
+        if let Some(problem) = side_problem(&format!("{what}: size"), size) {
+            self.check.problems.push(problem);
+        }
+        self.sized(&what, at.at, size)
+    }
+
+    /// The look of `terrain` (each terrain's tile, by name), `layers` and
+    /// `props`, checked. Terrains without a tile are [`missing`]'s to
+    /// report.
     pub(super) fn look(
         &mut self,
         terrain: &BTreeMap<String, (u32, u32)>,
         layers: &[LayerFile],
+        props: &BTreeMap<String, PropAt>,
     ) -> Look {
         let own = prefix(self.name);
         let mut tiles = BTreeMap::new();
@@ -257,7 +283,12 @@ impl Looking<'_, '_> {
             .zip(layers)
             .map(|(number, layer)| self.layer(number, layer))
             .collect();
-        Look::new(tiles, layers)
+        let mut look = Look::new(tiles, layers);
+        look.props = props
+            .iter()
+            .map(|(name, at)| (name.clone(), self.prop(name, at)))
+            .collect();
+        look
     }
 }
 

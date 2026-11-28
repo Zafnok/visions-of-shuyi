@@ -4,7 +4,7 @@
 
 use crate::input::{LEFT_HANDED, RIGHT_HANDED};
 use insta::assert_snapshot;
-use shuyi_ui::text::StyledText;
+use shuyi_platform::prelude::text::StyledText;
 use trpg_content::TipTrigger;
 use trpg_core::{Command, Event, Objective, Phase, StatGains, TerrainRules, UnitId};
 

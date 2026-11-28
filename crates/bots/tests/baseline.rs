@@ -116,8 +116,8 @@ type Try = (
 /// side and the AI on the others, for at most 60 turns: every command
 /// and its events, in order, and the state it ends in.
 fn recorded(id: &str, seed: u64) -> Try {
-    use shuyi_core::Bot;
     use shuyi_core::bots::play_observed;
+    use shuyi_core::prelude::Bot;
     use trpg_core::Phase;
     let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
     let def = &content.battles[id];

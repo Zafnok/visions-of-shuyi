@@ -22,7 +22,7 @@ mod app_info;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::{Path, PathBuf};
 
-use shuyi::assets::bundle::Layer;
+use shuyi::prelude::Layer;
 use shuyi_app::storage::DesktopFolder;
 use shuyi_app::{AppConfig, Window};
 use trpg_content::{bundle, font};

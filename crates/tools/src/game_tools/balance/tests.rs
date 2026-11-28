@@ -1,10 +1,9 @@
 use std::fs;
 use std::path::PathBuf;
 
-use shuyi_cli::contract::Answer;
-use shuyi_cli::contract::autobalance::{AutobalanceOutput, autobalance};
-use shuyi_cli::frame_png::{Script, Shot};
-use shuyi_cli::{GameArg, GameLang, GameOption, GameTools};
+use shuyi_cli::prelude::{
+    Answer, AutobalanceOutput, GameArg, GameLang, GameOption, GameTools, Script, Shot, autobalance,
+};
 
 use super::*;
 use crate::game_tools::Trpg;

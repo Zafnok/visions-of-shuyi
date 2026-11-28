@@ -2,7 +2,7 @@
 //! game pauses on its last frame and goes silent, and comes back as it was
 //! when its window has the focus again.
 
-use shuyi_platform::SystemEvent;
+use shuyi_platform::prelude::SystemEvent;
 use trpg_ui::audio::Gain;
 use trpg_ui::audio::groups::{MUSIC, SFX, VOICE};
 use trpg_ui::harness::Harness;

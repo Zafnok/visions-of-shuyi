@@ -229,8 +229,8 @@ enum RawShot {
     Characters {
         who: Vec<String>,
         expression: String,
-        #[serde(default)]
-        from: RawSide,
+        #[serde(default = "right")]
+        from: Side,
     },
     Combat {
         battle: String,
@@ -247,11 +247,8 @@ enum RawShot {
 
 /// The side faces come in from; the right unless the file says otherwise
 /// (the title's storyboard: right to left).
-#[derive(Deserialize, Clone, Copy, Default)]
-enum RawSide {
-    Left,
-    #[default]
-    Right,
+fn right() -> Side {
+    Side::Right
 }
 
 // engine-friction: engine#2233, moves (game 1186 deletes it)
@@ -617,10 +614,7 @@ impl RawShot {
             } => Shot::Characters {
                 who: who.iter().cloned().map(CharacterId).collect(),
                 expression: expression.clone(),
-                from: match from {
-                    RawSide::Left => Side::Left,
-                    RawSide::Right => Side::Right,
-                },
+                from: *from,
             },
             RawShot::Combat {
                 battle,

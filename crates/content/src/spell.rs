@@ -6,7 +6,7 @@ use alloc::collections::BTreeMap;
 use serde::Deserialize;
 use trpg_core::{
     ClassTable, EffectDuration, Element, SpellDef, SpellId, SpellKind, SpellTable, StatValue,
-    TerrainEffect, TerrainId, UnitTag,
+    TerrainEffect, TerrainId,
 };
 
 use crate::bundle;
@@ -30,7 +30,7 @@ struct RawFile {
 struct RawSpell {
     id: String,
     name: String,
-    kind: RawKind,
+    kind: SpellKind,
     element: Element,
     range: (u32, u32),
     uses: u8,
@@ -53,21 +53,6 @@ struct RawTerrainEffect {
 enum RawLasts {
     Permanent,
     UntilCastersNextPhase { then: String, damage: StatValue },
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-enum RawKind {
-    Attack {
-        might: StatValue,
-        hit: StatValue,
-        crit: StatValue,
-        #[serde(default)]
-        effective: Vec<(UnitTag, u8)>,
-    },
-    Heal {
-        heal_power: StatValue,
-    },
 }
 
 /// Loads and validates the embedded spell file. Terrain effects name
@@ -115,30 +100,20 @@ pub fn from_source(
         if s.uses == 0 {
             errors.push(at(format!("{what}: uses must be at least 1")));
         }
-        let kind = match s.kind {
-            RawKind::Attack {
-                might,
-                hit,
-                crit,
-                effective,
+        match s.kind {
+            SpellKind::Attack {
+                might, hit, crit, ..
             } => {
                 if [might, hit, crit].iter().any(|&v| v < 0) {
                     errors.push(at(format!("{what}: might, hit and crit can't be negative")));
                 }
-                SpellKind::Attack {
-                    might,
-                    hit,
-                    crit,
-                    effective,
-                }
             }
-            RawKind::Heal { heal_power } => {
+            SpellKind::Heal { heal_power } => {
                 if heal_power < 1 {
                     errors.push(at(format!("{what}: heal_power must be at least 1")));
                 }
-                SpellKind::Heal { heal_power }
             }
-        };
+        }
         let terrain_effect = match (s.terrain_effect, terrain) {
             (Some(raw), Some(table)) => {
                 let (effect, problems) = resolve_effect(raw, table);
@@ -151,7 +126,7 @@ pub fn from_source(
         let def = SpellDef {
             id: id.clone(),
             name: s.name,
-            kind,
+            kind: s.kind,
             element: s.element,
             min_range,
             max_range,
@@ -246,7 +221,7 @@ pub fn check_references(
 #[cfg(test)]
 mod tests {
     use trpg_core::testing;
-    use trpg_core::{CharacterDef, CharacterId, ClassDef, ClassId};
+    use trpg_core::{CharacterDef, CharacterId, ClassDef, ClassId, UnitTag};
 
     use super::*;
 

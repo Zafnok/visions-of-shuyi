@@ -23,7 +23,7 @@ use trpg_content::battler::BACKDROP_PX;
 use trpg_content::image::png_size;
 use trpg_content::title::{LOGO_MAX_PX, TITLE_DIR};
 
-use shuyi_cli::codec::encode_png;
+use shuyi_cli::prelude::encode_png;
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask title-art [--bought]\n\n\
@@ -32,8 +32,8 @@ assets/title/game_over.png from assets-src/title/game_over.txt, and the placehol
 backdrops beside them.\n\
 --bought  instead copy the bought backdrops from assets-private/library/ to\n\
           assets-private/game/title/ (run `cargo shuyi private-assets --library` first;\n\
-          afterwards commit and push in assets-private/, then run\n\
-          `cargo shuyi private-assets --pin`)";
+          afterwards commit and push your branch in assets-private/, then run\n\
+          `cargo xtask assets-pin --add`)";
 
 /// The logo's source, relative to the repo root.
 pub const LOGO_SOURCE: &str = "assets-src/title/logo.txt";
@@ -270,7 +270,7 @@ pub fn run_bought(root: &Path, backdrops: &[Backdrop]) -> Result<String, String>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use shuyi_cli::codec::decode_png;
+    use shuyi_cli::prelude::decode_png;
 
     fn repo() -> std::path::PathBuf {
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")

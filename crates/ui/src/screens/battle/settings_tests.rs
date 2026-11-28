@@ -245,7 +245,7 @@ fn a_fight_plays_on_the_stage_with_both_fighters() {
 /// back once the fight is over.
 #[test]
 fn the_grid_channel_draws_nothing_over_the_stage() {
-    use shuyi_ui::grid::debug::GRID;
+    use shuyi_platform::prelude::grid::GRID;
     let mut h = fight(|_| {});
     h.ctx_mut().debug_view.set(GRID.id(), true);
     h.wait(FRAME_DT);
