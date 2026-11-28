@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: in-progress
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-28
 ---
 
 # 0174 — A push runs only the CI its change can break
@@ -146,19 +146,19 @@ None.
 
 ## Acceptance criteria
 
-- [ ] A throwaway PR changing one comment in `scorecard.yml` (closed
+- [x] A throwaway PR changing one comment in `scorecard.yml` (closed
       after) logs `code=false workflows=true`; only `changes`, `tickets`,
       `doc-tests` (xtask), `typos`, `zizmor` and `analyze` run, 15
       job-minutes or fewer (summed in the notes).
-- [ ] A throwaway draft PR with a one-line Rust change: `test` runs on
+- [x] A throwaway draft PR with a one-line Rust change: `test` runs on
       Ubuntu only; `plan`, `analyze`, `sonar` and the playtest are
       skipped; a `t0174-…` branch with the ticket still open warns, not
       fails; "Ready for review" starts a full run.
-- [ ] Two throwaway PRs changing only `assets-private.rev`: one points at
+- [x] Two throwaway PRs changing only `assets-private.rev`: one points at
       a scratch private commit with the pin's tree (`git commit-tree
       <pin>^{tree} -p <pin>`, branch `tmp/0174-same-tree`, deleted after)
       and gives `code=false`; one at a different tree gives `code=true`.
-- [ ] With `tmp/0174-push` added for a while to `ci.yml`'s push branches,
+- [x] With `tmp/0174-push` added for a while to `ci.yml`'s push branches,
       a docs-only commit pushed after a code commit logs the
       `before..sha` diff and skips the jobs. The trigger is gone from the
       merged tree.
@@ -166,14 +166,14 @@ None.
       SonarCloud analysis shows coverage (link in the notes).
 - [ ] Each test leg's median of 3 runs, before and after, is in the
       notes; the Windows leg is faster (aim: under 10 min).
-- [ ] One job builds the release web target.
+- [x] One job builds the release web target.
 - [ ] `gh cache list --ref refs/pull/<this PR>/merge` is empty after the
       PR's runs.
-- [ ] `cargo test -p xtask every_rust_cache_step_saves_only_on_main` and
+- [x] `cargo test -p xtask every_rust_cache_step_saves_only_on_main` and
       `light_workflows_are_called_by_no_pull_request_workflow` pass, and
       each fails when its rule is broken once (said in the notes).
-- [ ] `zizmor` passes on the changed workflows.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `zizmor` passes on the changed workflows.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -185,5 +185,86 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+What was done (PR #901):
+
+- `changes.yml`: a push diffs `before..sha` (`before` fetched at depth 1;
+  all zeros or a failed fetch is code); a `workflows` output; `LICENSE` as
+  docs; a `workflow, tested by xtask` line for the workflows no
+  pull-request workflow calls (adds `xtask` to `doc_crates`); a pin move
+  alone compares the old and new private commits' root trees (commit
+  objects only, `--filter=tree:0`, the deploy key passed by name as the
+  optional `PRIVATE_ASSETS_KEY` secret by `ci`, `codeql`, `security`,
+  `mutants`).
+- `zizmor` and CodeQL's `analyze` run on `code || workflows`; push runs of
+  `ci.yml` and `codeql.yml` aren't cancelled (keyed by the commit).
+- Drafts: `ready_for_review` in the four workflows' types; `test` on
+  Ubuntu only; `plan`, `analyze`, `sonar` and the playtest's `detect`
+  skipped; the `--pr-branch` ticket lint warns.
+- `test` runs nextest (`[profile.ci]`, `fail-fast = false`); Ubuntu runs
+  `cargo llvm-cov nextest` then `cargo test --doc` and uploads `lcov.info`;
+  `clippy` writes `clippy.json`, prints the rendered messages, still fails
+  on a warning and uploads it; `sonar` (no build, no private checkout)
+  replaces `coverage` in `ci-result`.
+- `wasm` runs `cargo shuyi web` (debug); `export` is the one release web
+  build.
+- 23 rust-cache steps get `save-if: ${{ github.ref == 'refs/heads/main' }}`
+  (12 in `ci.yml`, 5 `mutants.yml`, 2 `story-kit.yml`, 1 each in
+  `playtest.yml`, `engine-watch.yml`, `long-run.yml`,
+  `proptest-explore.yml`; `release.yml` has none).
+- xtask's `ci_rules` module (test-only, beside `workflow_guard`, which an
+  engine ticket is moving) with `every_rust_cache_step_saves_only_on_main`
+  and `light_workflows_are_called_by_no_pull_request_workflow` (follows
+  `uses:` through called workflows and actions; checks the list against
+  `changes.yml`'s line).
+- ADR-0014's note and gate table, ADR-0073's note.
+
+Deviations:
+
+- **The butler action is off the light list**: the new check found that
+  `demo.yml`, a pull-request workflow, runs it. A change to it is code.
+- **CodeQL's language matrix is `actions` only when `code` is false**: the
+  first scorecard run spent 7 of its 17.3 job-minutes on the Rust analysis.
+- `cargo llvm-cov nextest` gets the profile as `NEXTEST_PROFILE=ci`:
+  llvm-cov's own `--profile` is cargo's build profile.
+- `shuyi-checks` still runs on a workflows-only PR: it is never gated, since
+  it checks `.claude/skills` (docs).
+- `trpg-app` and `trpg-story-preview` pass under nextest (15 tests): none
+  share a file on disk, so no `test-group`.
+- The ticket's counts of rust-cache steps (12/4) and line numbers were
+  stale; every step was changed, as step 8 asks.
+
+Acceptance runs (throwaway PRs against a branch at this PR's tree, closed
+and deleted after; the scratch private branch too):
+
+- Scorecard comment, #902: `workflow, tested by xtask:
+  .github/workflows/scorecard.yml`, `code=false workflows=true`; ran
+  `changes`, `tickets`, `doc-tests`, `typos`, `zizmor`, `analyze
+  (actions)`, plus `shuyi-checks` and the aggregates: **9.7 job-minutes**
+  (after the CodeQL change; 17.3 before it).
+- Draft with one Rust line, #903 (`t0174-draft-check`): `test
+  (ubuntu-latest)` only; `plan`, `analyze`, `sonar`, `detect`/`playtest`
+  skipped; ticket lint printed the `--pr-branch` error and `::warning::`,
+  and `tickets` passed. "Ready for review" started CI, CodeQL, Mutants and
+  Playtest with all three test legs (run 46128141190, then cancelled).
+- Pin moves: #904 to `c8ae554` (`git commit-tree <pin>^{tree} -p <pin>`,
+  branch `tmp/0174-same-tree`): "same tree: docs", `code=false`; #905 to
+  the pin's parent: `code=true`. Their `tickets` failed as it should (a pin
+  off the private `main`). The first run found a bug (the EXIT trap named
+  a function's locals under `set -u`), fixed before these.
+- Push, `tmp/0174-push` (trigger only on that throwaway branch, never in
+  this tree): the docs-only commit after a code commit logged `Push:
+  diffing 5b332d4..9a40e57`, `code=false`, and skipped every heavy job
+  (run 46123538192).
+- Gates: every run-gates step passed locally after main's duplicate 0196
+  was fixed; zizmor (1.31.1, medium+) finds nothing.
+- Each xtask check fails when its rule is broken once: the unit tests in
+  `ci_rules.rs` take a passing made-up workflow, drop one `save-if` (or
+  comment it out, or put it on the next step), and add one light call or
+  an unfiltered `pull_request` trigger; on the real tree the light check
+  first failed on `demo.yml`'s butler call.
+
+Test legs, median of 3 (before: runs 46114193691, 46112543852,
+46112314992): Windows 17m36s, Ubuntu 16m55s, macOS 17m22s, `coverage`
+19m16s. After: see the PR (filled in once its three runs finish).
+
+Follow-ups: none.
