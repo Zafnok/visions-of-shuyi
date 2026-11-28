@@ -27,6 +27,7 @@ use crate::error::ContentError;
 use crate::formats::{self, AssetPath, Formats};
 use crate::lighting::Lighting;
 use crate::terrain::TerrainDisplayTable;
+use crate::tileset::Tileset;
 
 /// Directory of map files inside the asset bundle.
 pub const MAPS_DIR: &str = "maps";
@@ -176,6 +177,73 @@ pub fn check_lights(maps: &BTreeMap<String, MapDef>, lighting: &Lighting) -> Vec
             )
         })
         .collect()
+}
+
+/// Every name a map of `maps` places on a tile (its look's `props`, ticket
+/// 1378) that a tileset of `tilesets` with the map's look has no picture
+/// for, each reported where the file places it. A tileset without that
+/// look paints the map with its own and is not asked: a test tileset
+/// knows no prop of Chapter 1's.
+pub fn check_props(
+    maps: &BTreeMap<String, MapDef>,
+    tilesets: &BTreeMap<String, Tileset>,
+) -> Vec<ContentError> {
+    let mut errors = Vec::new();
+    for (id, def) in maps.iter().filter(|(_, def)| !def.look.props.is_empty()) {
+        let path = format!("{MAPS_DIR}/{id}{MAP_EXTENSION}");
+        let source = bundle::file(&path).unwrap_or_default();
+        let file = bundle::display_path(&path);
+        let tiles = def.look.tiles.as_str();
+        for (tileset, terrain) in tilesets
+            .values()
+            .filter_map(|t| Some((t, t.terrain.as_ref()?)))
+        {
+            let look = match terrain.looks.get(tiles) {
+                Some(look) => look,
+                None if tiles == DEFAULT_TILES => &terrain.look,
+                None => continue,
+            };
+            for (&at, name) in &def.look.props {
+                if !look.props.contains_key(name) {
+                    let what = (tileset.id.as_str(), tiles);
+                    errors.push(prop_error(&file, &source, (at, name), what, &look.props));
+                }
+            }
+        }
+    }
+    errors
+}
+
+/// The error for map file `file` (its text is `source`) placing `name` on
+/// tile `at`, which tileset `tileset`'s look `look` (whose props are
+/// `props`) has no picture for: at the tile in the header's `props`, or
+/// at the file's start if it isn't found.
+pub fn prop_error<T>(
+    file: &str,
+    source: &str,
+    ((x, y), name): ((i32, i32), &str),
+    (tileset, look): (&str, &str),
+    props: &BTreeMap<String, T>,
+) -> ContentError {
+    let header = grid_map::header_lines(source);
+    let from = header.iter().position(|l| l.contains("props")).unwrap_or(0);
+    let (line, col) = [format!("({x}, {y})"), format!("({x},{y})")]
+        .iter()
+        .find_map(|needle| grid_map::header_position(&header[from..], needle))
+        .map_or((1, 1), |(line, col)| {
+            (line + u32::try_from(from).unwrap_or(0), col)
+        });
+    let known: Vec<String> = props.keys().map(|p| format!("\"{p}\"")).collect();
+    let known = if known.is_empty() {
+        "none".to_owned()
+    } else {
+        known.join(", ")
+    };
+    let message = format!(
+        "look: prop \"{name}\" at ({x}, {y}) is not a prop of tileset \"{tileset}\"'s look \"{look}\" \
+         (its props: {known})"
+    );
+    ContentError::new(file, message).at(line, Some(col))
 }
 
 /// The error for map file `file` (its text is `source`) naming `light`,
@@ -350,6 +418,103 @@ mod tests {
         let errors = check_lights(&odd, &lighting);
         assert_eq!(errors.len(), odd.len());
         assert!(errors.iter().all(|e| e.file.contains("/maps/")));
+    }
+
+    /// A name a map places must be a prop of its look in each tileset
+    /// that has the look (ticket 1378), reported where it is placed.
+    #[test]
+    fn a_placed_name_is_a_prop_of_the_maps_look() {
+        let content = crate::load_embedded().unwrap();
+        let mut tilesets = BTreeMap::new();
+        tilesets.insert(
+            "test_auto".to_owned(),
+            content.tilesets["test_auto"].clone(),
+        );
+        let display = &content.terrain.display;
+        let map = |look: &str| {
+            let source = format!(
+                "(
+  name: \"M\",
+  legend: {{'.': \"plain\"}},
+  look: ({look}),
+)
+---
+..
+..
+"
+            );
+            let mut maps = BTreeMap::new();
+            maps.insert(
+                "m".to_owned(),
+                parse_map("m.map", &source, display).unwrap(),
+            );
+            maps
+        };
+        let indoor = map("tiles: \"indoor\", props: { (1, 1): \"lamp\" }");
+        let errors = check_props(&indoor, &tilesets);
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert_eq!(
+            errors[0].message,
+            "look: prop \"lamp\" at (1, 1) is not a prop of tileset \"test_auto\"'s look \"indoor\" \
+             (its props: none)"
+        );
+        // Where the file places it.
+        let source = "(
+  name: \"M\",
+  look: (
+    tiles: \"indoor\",
+    props: {
+      (0, 1): \"sign\",
+      (1, 1): \"lamp\",
+    },
+  ),
+)
+---
+..
+";
+        let props = BTreeMap::from([("sign".to_owned(), 1_u8)]);
+        let error = prop_error("m.map", source, ((1, 1), "lamp"), ("t", "indoor"), &props);
+        assert_eq!((error.line, error.column), (Some(7), Some(7)));
+        assert!(
+            error.message.ends_with("(its props: \"sign\")"),
+            "{}",
+            error.message
+        );
+        // Not found in the header: the file's start.
+        let error = prop_error(
+            "m.map",
+            "(name: \"M\")
+---
+.
+",
+            ((1, 1), "lamp"),
+            ("t", "indoor"),
+            &props,
+        );
+        assert_eq!((error.line, error.column), (Some(1), Some(1)));
+        // The look has it: nothing to report.
+        let tileset = tilesets.get_mut("test_auto").unwrap();
+        let terrain = tileset.terrain.as_mut().unwrap();
+        let rect = crate::ImageRect {
+            x: 0,
+            y: 0,
+            w: 16,
+            h: 32,
+        };
+        let look = terrain.looks.get_mut("indoor").unwrap();
+        look.props.insert("lamp".to_owned(), rect);
+        assert_eq!(check_props(&indoor, &tilesets), []);
+        // The default look is the tileset's own, which has no lamp.
+        assert_eq!(
+            check_props(&map("props: { (0, 0): \"lamp\" }"), &tilesets).len(),
+            1
+        );
+        // A tileset without the map's look paints it with its own, and is
+        // not asked.
+        let ra = map("tiles: \"rogue_adventure\", props: { (0, 0): \"lamp\" }");
+        assert_eq!(check_props(&ra, &tilesets), []);
+        // Every shipped map places only names its tilesets have.
+        assert_eq!(check_props(&load_all().unwrap(), &content.tilesets), []);
     }
 
     #[test]

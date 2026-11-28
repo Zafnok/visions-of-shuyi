@@ -367,10 +367,13 @@
     // The fire pit's 4 frames run down its column, 2 rows apart (the
     // sheet is 16 tiles across); the candle's along its row, its first 4
     // of 5 (the fifth is a guttering flame that jumps out of the loop).
+    // The lamp's 4 frames run down its column too, 2 rows apart, 150 ms
+    // each (ticket 1378, as 0096's mockups ran them).
     moving: {
         "elv-games/tilesets/rogue-adventure/RA_Animated_Water.png": (frames: 8, step: 4, ms: 160),
         "elv-games/tilesets/rogue-adventure/RA_Village_Animations.png": (frames: 4, step: 32, ms: 150),
         "electric-lemon/tilesets/dungeons/classic_dungeons_animated_candles.png": (frames: 4, step: 1, ms: 150),
+        "elv-games/tilesets/rogue-adventure/RA_Jungle_Animation.png": (frames: 4, step: 32, ms: 150),
     },
     // Lonesome Forest's four stone colours (PICO-8's) in a sandy brown
     // (0096: "two shades lighter" than the first brown shown).
@@ -434,6 +437,12 @@
                      "well", "rack", "campfire", "desk", "papers", "candle", "shelf", "rug", "banner",
                      "crest",
                      "ra_wall_face", "ra_wall", "ra_tower", "ra_keep"],
+            // What a map places by hand (ticket 1378): the lamps at Harl's
+            // gate and the road bridge, a lit stone lamp two tiles tall,
+            // (0, 16) of the jungle's animations over the tile below it.
+            props: {
+                "lamp": ("elv-games/tilesets/rogue-adventure/RA_Jungle_Animation.png", 256),
+            },
             // The forest's trees (ticket 1356; 0096: trees by footprint):
             // ELV's animated green trees, the two wide ones, which fit a
             // crown of 3 x 3 tiles. Each sheet is 12 frames of 64 x 80 px,

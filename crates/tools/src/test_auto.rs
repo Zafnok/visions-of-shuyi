@@ -287,11 +287,13 @@ pub fn looks(src: &Sources) -> (LookText, LookText) {
                 sides: TURNED.iter().map(|&mix| (mix, turned)).collect(),
             },
         ],
+        props: vec![],
         trees: None,
     };
     let indoor = LookText {
         terrain: terrain_tiles(src),
         layers: vec![corner_layer(src, 2)],
+        props: vec![],
         trees: None,
     };
     (outdoor, indoor)
