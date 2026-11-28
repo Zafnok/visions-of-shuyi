@@ -2942,6 +2942,36 @@ pub(crate) mod testing {
         }
         panic!("the AI phase never ended: {:?}", s.mode());
     }
+
+    /// The tile at column `x`, row `y`.
+    pub const fn p(x: i32, y: i32) -> Pos {
+        Pos::new(x, y)
+    }
+
+    /// The debug Quick Battle's screen.
+    pub fn quick() -> super::BattleScreen {
+        let c = crate::screen::tests::ctx();
+        super::BattleScreen::new(super::quick_battle(&c.game.content).unwrap())
+    }
+
+    pub(crate) use super::tests::render;
+
+    /// One frame with `actions`.
+    pub fn step(s: &mut super::BattleScreen, c: &mut Ctx, actions: &[Action]) {
+        s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
+    }
+
+    /// One frame of `dt` seconds with `actions`, Confirm held if `held`.
+    pub fn frame(
+        s: &mut super::BattleScreen,
+        c: &mut Ctx,
+        actions: &[Action],
+        dt: f32,
+        held: bool,
+    ) {
+        let held = if held { vec![Action::Confirm] } else { vec![] };
+        s.update(c, &FrameInput::new(actions.to_vec(), dt, held));
+    }
 }
 
 #[cfg(test)]

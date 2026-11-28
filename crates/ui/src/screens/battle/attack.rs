@@ -478,9 +478,7 @@ mod tests {
     use crate::screen::tests::ctx;
     use crate::screens::battle::testing::{battle_with, skirmish};
 
-    fn p(x: i32, y: i32) -> Pos {
-        Pos::new(x, y)
-    }
+    use crate::screens::battle::testing::p;
 
     /// The lord of `state` selected with its path to `dest`.
     fn at(state: &BattleState, dest: Pos) -> Selection {

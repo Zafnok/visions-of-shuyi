@@ -440,6 +440,7 @@ impl Validator<'_> {
 
 #[cfg(test)]
 mod tests {
+    use trpg_core::testing;
     use trpg_core::{Affinity, ArmourWeight, UnitTag, WeaponKind, WeaponRank};
 
     use super::*;
@@ -522,9 +523,7 @@ mod tests {
         assert_eq!(t.cp_per_class_level, [10, 17, 25]);
         let a = t.get(&ClassId("a".into()));
         let expected = ClassDef {
-            id: ClassId("a".into()),
             name: "N".into(),
-            tier: 1,
             movement_type: MovementTypeId(2),
             move_points: 5,
             base: Stats::from_growable([18, 5, 0, 7, 8, 3, 1], 5),
@@ -546,14 +545,12 @@ mod tests {
             promotes_to: vec![ClassId("b".into())],
             active: Some(SkillId("keen".into())),
             passives: vec![SkillId("p1".into()), SkillId("p2".into())],
-            enemy_only: false,
-            lord_only: false,
-            weapon_slots: 3,
             spells: vec![(1, SpellId("fire".into())), (5, SpellId("frost".into()))],
             affinities: vec![
                 (Element::Fire, Affinity::Absorb),
                 (Element::Ice, Affinity::Weak),
             ],
+            ..testing::class("a")
         };
         assert_eq!(a, Some(&expected));
         let c = t.get(&ClassId("c".into()));
@@ -1010,7 +1007,6 @@ mod tests {
         let t = embedded();
         let sp = |kind, start, max| WeaponProficiency { kind, start, max };
         let iron_rider = ClassDef {
-            id: ClassId("iron_rider".into()),
             name: "Iron Rider".into(),
             tier: 2,
             movement_type: MovementTypeId(1),
@@ -1027,35 +1023,21 @@ mod tests {
             promotes_to: vec![ClassId("juggernaut".into())],
             active: Some(SkillId("trample".into())),
             passives: vec![SkillId("charge_1".into()), SkillId("steadfast_1".into())],
-            enemy_only: false,
-            lord_only: false,
-            weapon_slots: 3,
-            spells: vec![],
-            affinities: vec![],
+            ..testing::class("iron_rider")
         };
         assert_eq!(t.get(&iron_rider.id), Some(&iron_rider));
         let frost = ClassDef {
-            id: ClassId("frost_elemental".into()),
             name: "Frost Elemental".into(),
-            tier: 1,
-            movement_type: MovementTypeId(0),
-            move_points: 4,
             base: Stats::from_growable([30, 0, 8, 4, 5, 8, 4], 4),
             growths: Growths([80, 0, 50, 35, 30, 40, 40]),
-            weapons: vec![],
-            max_armour: None,
-            tags: UnitTags::default(),
-            promotes_to: vec![],
-            active: None,
-            passives: vec![],
             enemy_only: true,
-            lord_only: false,
             weapon_slots: 0,
             spells: vec![(1, SpellId("frost".into()))],
             affinities: vec![
                 (Element::Ice, Affinity::Absorb),
                 (Element::Fire, Affinity::Weak),
             ],
+            ..testing::class("frost_elemental")
         };
         assert_eq!(t.get(&frost.id), Some(&frost));
         let archmage = t.get(&ClassId("archmage".into()));

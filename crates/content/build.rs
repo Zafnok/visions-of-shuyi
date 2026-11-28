@@ -319,7 +319,7 @@ fn write_no_demo(demo: bool) {
 fn write_demo(files: &[String], content: &[String], private: bool) {
     let list =
         std::fs::read_to_string(DEMO_LIST).unwrap_or_else(|e| panic!("reading {DEMO_LIST}: {e}"));
-    let plan = demo_bundle::Plan::parse(&list).unwrap_or_else(|e| panic!("{DEMO_LIST}: {e}"));
+    let mut plan = demo_bundle::Plan::parse(&list).unwrap_or_else(|e| panic!("{DEMO_LIST}: {e}"));
     let mut art = if private {
         files_of(PRIVATE)
     } else {
@@ -327,6 +327,16 @@ fn write_demo(files: &[String], content: &[String], private: bool) {
     };
     plan.left_out(files, private.then_some(&art[..]))
         .unwrap_or_else(|e| panic!("{DEMO_LIST}: {e}"));
+    let folder = |path: &str| {
+        if content.binary_search_by(|f| f.as_str().cmp(path)).is_ok() {
+            CONTENT
+        } else {
+            ASSETS
+        }
+    };
+    plan.hold(files, |path| {
+        std::fs::read_to_string(Path::new(folder(path)).join(path)).ok()
+    });
     let edition = edition::EDITION_FILE.to_owned();
     let mut kept: Vec<String> = files
         .iter()
@@ -339,10 +349,8 @@ fn write_demo(files: &[String], content: &[String], private: bool) {
     let source = |path: &String| -> PathBuf {
         if *path == edition {
             out_dir().join(format!("demo/{edition}"))
-        } else if content.binary_search(path).is_ok() {
-            demo_copy(&plan, CONTENT, "demo", path)
         } else {
-            demo_copy(&plan, ASSETS, "demo", path)
+            demo_copy(&plan, folder(path), "demo", path)
         }
     };
     write_out("demo_files.rs", &table(kept.iter(), source));

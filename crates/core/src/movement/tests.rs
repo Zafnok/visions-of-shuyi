@@ -13,10 +13,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use proptest::prelude::*;
 
 use super::*;
-use crate::class::{ClassDef, UnitTags};
+use crate::class::ClassDef;
 use crate::geom::Grid;
 use crate::stats::{Growths, StatValue, Stats};
 use crate::terrain::{TerrainId, TerrainRules};
+use crate::testing;
 
 const TERRAIN_CHARS: [char; 7] = ['.', 'F', '^', 'A', '~', '=', '#'];
 const CLASSES: [&str; 4] = ["foot", "mounted", "armored", "flying"];
@@ -47,24 +48,11 @@ fn terrain() -> TerrainTable {
 /// One class per movement type, named after it.
 fn classes() -> ClassTable {
     let class = |i: u8, id: &str| ClassDef {
-        id: ClassId(id.into()),
-        name: id.into(),
-        tier: 1,
         movement_type: MovementTypeId(i),
         move_points: 5,
         base: Stats::from_growable([10; 7], 5),
         growths: Growths([0; 7]),
-        weapons: vec![],
-        max_armour: None,
-        tags: UnitTags::default(),
-        promotes_to: vec![],
-        active: None,
-        passives: vec![],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
-        spells: vec![],
-        affinities: vec![],
+        ..testing::class(id)
     };
     ClassTable {
         classes: (0u8..)

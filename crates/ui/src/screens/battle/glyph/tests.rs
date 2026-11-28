@@ -10,7 +10,8 @@ use crate::input::Action;
 use crate::screen::Screen;
 use crate::screen::tests::ctx;
 use crate::screens::battle::BattleScreen;
-use crate::screens::battle::tests::{knight_in_forest, lord_menu, quick, render, step};
+use crate::screens::battle::testing::{quick, render, step};
+use crate::screens::battle::tests::{knight_in_forest, lord_menu};
 use crate::screens::battle::view::{
     BannerView, MenuHeader, MessageView, ObjectiveLine, ObjectiveView, PanelCellView,
     PanelPreviewView, PanelUnitView, QuestionView, TerrainView, TogglesView, UsesView,

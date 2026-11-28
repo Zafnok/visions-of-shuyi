@@ -183,11 +183,11 @@ fn the_demos_suspend_save_continues_in_the_demo() {
     bundle::reading(demo(), || {
         let mut h = launch();
         h.keys("f f f Up f");
-        crate::playthrough::skip_scenes(&mut h);
+        crate::support::skip_scenes(&mut h);
         assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
         // The notes, the phase's banner and the first turn's scene.
         h.keys("f").wait(3.0).keys("f");
-        crate::playthrough::skip_scenes(&mut h);
+        crate::support::skip_scenes(&mut h);
         // The map menu's `Suspend`, and Confirm on its question.
         h.keys("d Down Down Down Down f f");
         assert_eq!(h.screens(), ["title"], "{}", h.snapshot());

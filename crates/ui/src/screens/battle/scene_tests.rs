@@ -9,12 +9,13 @@ use proptest::prelude::*;
 use trpg_content::MapLook;
 use trpg_core::{BattleMap, Grid, Pos, TerrainId, UnitId};
 
+use super::BattleScreen;
 use super::ai_phase::{AiAction, PACING, Pacing};
 use super::layout::MAP_VIEW;
 use super::mode::Mode;
 use super::testing::{Stacked, battle, quick_units, skirmish, vaulted};
+use super::testing::{p, quick, step};
 use super::walk::{SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S};
-use super::{BattleScreen, quick_battle};
 use crate::color::{Rgb, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
@@ -24,19 +25,6 @@ use crate::map_view::{CursorStyle, Facing, MapScene, MapSkin, RangeName, UnitVie
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, FrameInput, IdleMotion, Screen};
 use shuyi_ui::grid::skin::{GridSkin, Looks, UnitPainter, WalkSpeeds};
-
-fn p(x: i32, y: i32) -> Pos {
-    Pos::new(x, y)
-}
-
-fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
-}
-
-/// One frame of no time with `actions`.
-fn step(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
-    s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
-}
 
 /// One frame of `seconds` with no keys.
 fn wait(s: &mut BattleScreen, c: &mut Ctx, seconds: f32) {

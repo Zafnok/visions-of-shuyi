@@ -12,6 +12,7 @@ use super::cursor::Cursor;
 use super::glyph::{in_top_half, lesson_rect};
 use super::layout::MAP_VIEW;
 use super::mode::Selection;
+use super::testing::step;
 use super::testing::{Stacked, skirmish_charged, vaulted, wait};
 use super::*;
 use crate::audio::AudioRequest;
@@ -46,11 +47,6 @@ fn lessoned() -> Ctx {
 /// The Quick Battle at its start, as the game flow names it.
 fn quick() -> BattleScreen {
     BattleScreen::new(quick_battle(&ctx().game.content).unwrap()).in_battle(QUICK_BATTLE)
-}
-
-/// One instant frame with `actions`.
-fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
-    s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
 }
 
 /// A lesson `id` of `level`, started by the first turn, done by `items`.
@@ -93,7 +89,7 @@ fn the_test_lesson_opens_on_the_first_turn_and_the_four_directions_close_it() {
     let mut c = lessoned();
     let mut s = quick();
     assert_eq!(s.shown_lesson(), None, "nothing before the first frame");
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert_eq!(s.shown_lesson(), Some(TEST_LESSON));
     assert!(s.lesson_open());
     let view = s.view(&c).lesson.unwrap();
@@ -114,8 +110,8 @@ fn the_test_lesson_opens_on_the_first_turn_and_the_four_directions_close_it() {
     );
     assert_eq!(view.progress, "0 of 4 done");
     // Right, then left: ticked in the order of the list, not the presses.
-    press(&mut s, &mut c, &[Action::CursorRight]);
-    press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorRight]);
+    step(&mut s, &mut c, &[Action::CursorRight]);
+    step(&mut s, &mut c, &[Action::CursorLeft, Action::CursorRight]);
     assert_eq!(s.lesson_ticks(), [false, false, true, true]);
     let view = s.view(&c).lesson.unwrap();
     assert_eq!(view.progress, "2 of 4 done");
@@ -123,19 +119,19 @@ fn the_test_lesson_opens_on_the_first_turn_and_the_four_directions_close_it() {
     assert_eq!(done, [false, false, true, true]);
     // The map works under it: the cursor moved.
     assert_eq!(s.cursor().pos, Pos::new(4, 5));
-    press(&mut s, &mut c, &[Action::CursorDown]);
+    step(&mut s, &mut c, &[Action::CursorDown]);
     assert!(s.lesson_open());
-    press(&mut s, &mut c, &[Action::CursorUp]);
+    step(&mut s, &mut c, &[Action::CursorUp]);
     assert_eq!(s.shown_lesson(), None);
     assert!(!s.lesson_open());
     assert!(c.game.campaign_lessons.contains(TEST_LESSON));
     assert_eq!(s.view(&c).lesson, None);
     // The first turn goes on: it doesn't come back.
-    press(&mut s, &mut c, &[Action::CursorUp]);
+    step(&mut s, &mut c, &[Action::CursorUp]);
     assert_eq!(s.shown_lesson(), None);
     // Nor in another battle of the campaign.
     let mut again = quick();
-    press(&mut again, &mut c, &[]);
+    step(&mut again, &mut c, &[]);
     assert_eq!(again.shown_lesson(), None);
 }
 
@@ -151,7 +147,7 @@ proptest! {
     ) {
         let mut c = lessoned();
         let mut s = quick();
-        press(&mut s, &mut c, &[]);
+        step(&mut s, &mut c, &[]);
         let mut seen = std::collections::BTreeSet::new();
         for i in order {
             // Info and Cancel come and go; neither is on the list.
@@ -160,7 +156,7 @@ proptest! {
                 4 => Action::Info,
                 _ => Action::Cancel,
             };
-            press(&mut s, &mut c, &[action]);
+            step(&mut s, &mut c, &[action]);
             if i < 4 {
                 seen.insert(i);
             }
@@ -171,7 +167,7 @@ proptest! {
             }
             prop_assert_eq!(c.game.campaign_lessons.contains(TEST_LESSON), seen.len() == 4);
             // Back to browsing for the next key.
-            press(&mut s, &mut c, &[Action::Cancel, Action::Cancel]);
+            step(&mut s, &mut c, &[Action::Cancel, Action::Cancel]);
         }
     }
 }
@@ -183,25 +179,25 @@ proptest! {
 fn the_turn_waits_for_the_open_lesson() {
     let mut c = lessoned();
     let mut s = quick();
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     sounds(&mut c);
-    press(&mut s, &mut c, &[Action::EndTurn]);
+    step(&mut s, &mut c, &[Action::EndTurn]);
     assert_eq!(s.mode(), &Mode::default(), "no End turn prompt");
     assert_eq!(sounds(&mut c), [crate::audio::AUDIO.cue(MenuSound::Denied)]);
     // The map menu's End turn: the menu stays open.
     let menu = map_menu::map_menu(&s.state, map_menu::MapEntry::EndTurn);
     s.mode = Mode::MapMenu { menu };
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
     assert_eq!(sounds(&mut c), [crate::audio::AUDIO.cue(MenuSound::Denied)]);
-    press(&mut s, &mut c, &[Action::Cancel]);
+    step(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!(s.state().phase(), Phase::Player);
     // Done: End turn asks (units are ready), and yes ends the phase.
-    press(&mut s, &mut c, &CURSORS);
+    step(&mut s, &mut c, &CURSORS);
     assert!(!s.lesson_open());
-    press(&mut s, &mut c, &[Action::EndTurn]);
+    step(&mut s, &mut c, &[Action::EndTurn]);
     assert!(matches!(s.mode(), Mode::EndTurnPrompt { .. }));
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.state().phase(), Phase::Enemy);
 }
 
@@ -213,7 +209,7 @@ fn auto_end_waits_for_the_open_lesson() {
     let mut c = lessoned();
     let _ = c.change_settings(|s| s.game.auto_end_turn = true);
     let mut s = quick();
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     let ready: Vec<Unit> = s
         .state()
         .units()
@@ -230,10 +226,10 @@ fn auto_end_waits_for_the_open_lesson() {
         });
     }
     for _ in 0..5 {
-        press(&mut s, &mut c, &[]);
+        step(&mut s, &mut c, &[]);
     }
     assert_eq!(s.state().phase(), Phase::Player, "auto-end waits");
-    press(&mut s, &mut c, &CURSORS);
+    step(&mut s, &mut c, &CURSORS);
     assert_ne!(s.state().phase(), Phase::Player, "and then ends the phase");
 }
 
@@ -244,7 +240,7 @@ fn auto_end_waits_for_the_open_lesson() {
 fn levels_battles_and_the_switch_gate_the_lessons() {
     /// The lesson `s` shows after its first frame.
     fn shown(c: &mut Ctx, mut s: BattleScreen) -> Option<String> {
-        press(&mut s, c, &[]);
+        step(&mut s, c, &[]);
         s.shown_lesson().map(str::to_owned)
     }
     let mut c = lessoned();
@@ -284,7 +280,7 @@ fn levels_battles_and_the_switch_gate_the_lessons() {
 fn only(c: &mut Ctx, state: BattleState, items: &[DoneWhen]) -> BattleScreen {
     c.game.content.lessons.lessons = vec![lesson("only", LessonLevel::Full, items)];
     let mut s = BattleScreen::new(state);
-    press(&mut s, c, &[]);
+    step(&mut s, c, &[]);
     assert!(s.lesson_open());
     s
 }
@@ -301,7 +297,7 @@ fn moving_after_an_action_ticks_the_move() {
     let here = s.state().unit(unit).map(|u| u.pos);
     let to = tiles.into_iter().find(|&t| Some(t) != here);
     s.send(&Command::MoveAfter { unit, to });
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert_eq!(s.lesson_ticks(), [true, false]);
 }
 
@@ -315,16 +311,16 @@ fn a_selection_from_before_the_lesson_doesnt_count() {
     s.mode = Mode::Selected(Selection::new(s.state(), lord).expect("the lord can act"));
     c.game.content.lessons.lessons =
         vec![lesson("only", LessonLevel::Full, &[DoneWhen::UnitSelected])];
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert!(s.lesson_open());
-    press(&mut s, &mut c, &[]);
-    press(&mut s, &mut c, &[Action::CursorRight]);
+    step(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[Action::CursorRight]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.lesson_ticks(), [false]);
     // Backed out, then selected again.
-    press(&mut s, &mut c, &[Action::CursorLeft, Action::Cancel]);
+    step(&mut s, &mut c, &[Action::CursorLeft, Action::Cancel]);
     assert_eq!(s.mode(), &Mode::default());
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert!(!s.lesson_open(), "done: {:?}", s.lesson_ticks());
 }
 
@@ -362,21 +358,21 @@ fn the_lesson_waits_for_the_notes_and_the_banner() {
     let setup = campaign.battle_setup(def, &c.game.content.tables());
     let (state, events) = BattleState::new(setup);
     let mut s = BattleScreen::start(state, &events).in_battle("test");
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert!(s.notes_open());
     assert_eq!(s.shown_lesson(), None);
     assert!(!s.lesson_open());
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert!(!s.notes_open() && s.banner().is_some());
     assert_eq!(s.shown_lesson(), None);
     assert!(!s.lesson_open());
     // Keys while waiting tick nothing; the objective's banner (0481), then
     // the phase banner.
-    press(&mut s, &mut c, &[Action::CursorUp]);
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::CursorUp]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert!(s.banner().is_some());
     assert_eq!(s.shown_lesson(), None);
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.banner(), None);
     assert_eq!(s.shown_lesson(), Some(TEST_LESSON));
     assert!(s.lesson_open());
@@ -390,29 +386,29 @@ fn a_tip_comes_first_then_tips_wait_for_the_open_lesson() {
     let mut c = lessoned();
     c.game.tips_enabled = true;
     let mut s = quick();
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
     assert_eq!(s.shown_lesson(), None);
     assert!(!s.lesson_open());
     // The tip takes the keys: the lesson isn't open, nothing ticks.
-    press(&mut s, &mut c, &[Action::CursorUp]);
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::CursorUp]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.shown_tip(), None);
     assert_eq!(s.shown_lesson(), Some(TEST_LESSON));
     assert!(s.lesson_open());
     assert_eq!(s.lesson_ticks(), [false; 4]);
     // Selecting the lord fires the "Moving a unit" tip: it waits.
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), None);
     assert_eq!(s.view(&c).tip, None);
     // Keys go to the map, not the tip.
-    press(&mut s, &mut c, &CURSORS);
+    step(&mut s, &mut c, &CURSORS);
     assert_eq!(s.shown_lesson(), None);
     // The lesson done while still selecting: the tip's trigger still
     // fires and nothing is in the way, so it comes up at once (1292). It
     // is drawn before a key can close it (0495).
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstUnitSelected));
 }
@@ -426,18 +422,18 @@ fn a_tip_that_fired_under_a_lesson_waits_for_its_trigger() {
     let mut c = lessoned();
     c.game.tips_enabled = true;
     let mut s = quick();
-    press(&mut s, &mut c, &[]);
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert!(s.lesson_open());
     // Selecting the lord under the lesson: no tip then.
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), None);
     // Put back down, and the lesson finished on the map: still no tip.
-    press(&mut s, &mut c, &[Action::Cancel]);
+    step(&mut s, &mut c, &[Action::Cancel]);
     assert!(matches!(s.mode(), Mode::Idle { .. }));
-    press(&mut s, &mut c, &CURSORS);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &CURSORS);
+    step(&mut s, &mut c, &[]);
     assert!(!s.lesson_open());
     assert_eq!(s.shown_lesson(), None);
     assert_eq!(s.shown_tip(), None);
@@ -445,8 +441,8 @@ fn a_tip_that_fired_under_a_lesson_waits_for_its_trigger() {
     let seen = seen.ok().flatten();
     assert!(!seen.unwrap_or_default().contains("unit_selected"));
     // The next unit selected: *Moving a unit* comes up.
-    press(&mut s, &mut c, &[Action::Confirm]);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstUnitSelected));
 }
@@ -548,7 +544,7 @@ fn rewinding_keeps_the_ticks_and_the_lessons_done() {
 fn the_box_never_hides_the_cursor() {
     let mut c = lessoned();
     let mut s = quick();
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     let tiles = &s.state().map().tiles;
     let (w, h) = (i32::from(tiles.width()), i32::from(tiles.height()));
     let mut places = std::collections::BTreeSet::new();
@@ -700,11 +696,11 @@ fn threat_arrows_while_browsing_dont_tick_the_path_items() {
     );
     // The cursor on the lord, whom a brigand reaches: arrows, browsing.
     assert!(s.scene(&c).threat.is_some());
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert_eq!(s.lesson_ticks(), [false, false]);
     // Selected, on his own tile: the path points at a tile with arrows.
-    press(&mut s, &mut c, &[Action::Confirm]);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[]);
     assert_eq!(s.lesson_ticks(), [true, false]);
 }
 
@@ -825,13 +821,13 @@ fn a_lesson_done_goes_straight_to_the_next_never_to_a_tip() {
         ),
     ];
     let mut s = quick();
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.shown_lesson(), Some("first"));
     // Selecting the lord finishes the first lesson.
-    press(&mut s, &mut c, &[Action::Confirm]);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
     assert_eq!(s.shown_lesson(), Some("second"));
     assert_eq!(s.shown_tip(), None);
@@ -846,14 +842,14 @@ fn the_end_box_waits_for_a_press_after_the_last_lesson() {
     let mut c = lessoned();
     c.game.campaign_tutorial = Some(TutorialLevel::Full);
     let mut s = quick();
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert!(s.lesson_open());
-    press(&mut s, &mut c, &CURSORS);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &CURSORS);
+    step(&mut s, &mut c, &[]);
     assert!(!s.lesson_open());
     assert!(!s.lessons_end_shown(&c), "it waits for a press");
     // A press on the map that changes nothing (Zoom, with glyphs).
-    press(&mut s, &mut c, &[Action::ZoomMap]);
+    step(&mut s, &mut c, &[Action::ZoomMap]);
     assert!(s.lessons_end_shown(&c));
 }
 
@@ -914,10 +910,10 @@ fn two_swords(c: &mut Ctx, lessons: Vec<Lesson>) -> BattleScreen {
 /// Selects the lord, moves him one tile right and opens his forecast on
 /// the raider.
 fn to_swap_forecast(s: &mut BattleScreen, c: &mut Ctx) {
-    press(s, c, &[Action::Confirm]);
-    press(s, c, &[Action::CursorRight, Action::Confirm]);
+    step(s, c, &[Action::Confirm]);
+    step(s, c, &[Action::CursorRight, Action::Confirm]);
     s.update(c, &FrameInput::new(vec![], 1.0, vec![]));
-    press(s, c, &[Action::Confirm]);
+    step(s, c, &[Action::Confirm]);
     let swaps = matches!(s.mode(), Mode::Targeting(t) if t.can_swap());
     assert!(swaps, "{:?}", s.mode());
 }
@@ -937,24 +933,24 @@ fn swapping_the_forecasts_weapon_ticks() {
     let swap = at_swap("swap", &[DoneWhen::WeaponSwapped]);
     let mut s = two_swords(&mut c, vec![swap]);
     to_swap_forecast(&mut s, &mut c);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert_eq!(s.shown_lesson(), Some("swap"));
     // Down picks another target, or none: no swap.
-    press(&mut s, &mut c, &[Action::CursorDown]);
+    step(&mut s, &mut c, &[Action::CursorDown]);
     assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
     assert_eq!(s.lesson_ticks(), [false]);
     // Backed out to his menu: open, it stays while he could still swap.
-    press(&mut s, &mut c, &[Action::Cancel]);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[Action::Cancel]);
+    step(&mut s, &mut c, &[]);
     assert!(
         matches!(s.mode(), Mode::ActionMenu { .. }),
         "{:?}",
         s.mode()
     );
     assert!(s.lesson_open());
-    press(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
-    press(&mut s, &mut c, &[Action::CursorLeft]);
+    step(&mut s, &mut c, &[Action::CursorLeft]);
     assert!(c.game.campaign_lessons.contains("swap"));
 }
 
@@ -970,11 +966,11 @@ fn the_swap_lesson_opens_only_in_a_forecast_that_swaps() {
     let swap = at_swap("swap", &[DoneWhen::WeaponSwapped]);
     let mut s = two_swords(&mut c, vec![first, swap]);
     to_swap_forecast(&mut s, &mut c);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert_eq!(s.shown_lesson(), Some("first"));
     // Back out: "first" is done, and the forecast is gone.
-    press(&mut s, &mut c, &[Action::Cancel]);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[Action::Cancel]);
+    step(&mut s, &mut c, &[]);
     assert!(c.game.campaign_lessons.contains("first"));
     assert!(
         matches!(s.mode(), Mode::ActionMenu { .. }),
@@ -984,11 +980,11 @@ fn the_swap_lesson_opens_only_in_a_forecast_that_swaps() {
     assert_eq!(s.shown_lesson(), None);
     assert!(!s.lesson_open());
     // `Attack` again: the forecast that swaps, and the lesson with it.
-    press(&mut s, &mut c, &[Action::Confirm]);
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[]);
     assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
     assert_eq!(s.shown_lesson(), Some("swap"));
-    press(&mut s, &mut c, &[Action::CursorRight]);
+    step(&mut s, &mut c, &[Action::CursorRight]);
     assert!(c.game.campaign_lessons.contains("swap"));
 }
 
@@ -1094,10 +1090,10 @@ fn the_end_box_shows_only_while_browsing() {
     let mut c = lessoned();
     c.game.campaign_tutorial = Some(TutorialLevel::Full);
     let mut s = quick();
-    press(&mut s, &mut c, &[]);
-    press(&mut s, &mut c, &CURSORS);
-    press(&mut s, &mut c, &[]);
-    press(&mut s, &mut c, &[Action::ZoomMap]);
+    step(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &CURSORS);
+    step(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[Action::ZoomMap]);
     assert!(s.lessons_end_shown(&c));
     let lord = s.state().units()[0].id;
     s.mode = Mode::Selected(Selection::new(s.state(), lord).unwrap());
@@ -1110,16 +1106,16 @@ fn the_end_box_shows_only_while_browsing() {
 fn the_lesson_steps_aside_for_unit_info() {
     let mut c = lessoned();
     let mut s = quick();
-    press(&mut s, &mut c, &[]);
+    step(&mut s, &mut c, &[]);
     assert_eq!(s.shown_lesson(), Some(TEST_LESSON));
-    press(&mut s, &mut c, &[Action::Info]);
+    step(&mut s, &mut c, &[Action::Info]);
     assert!(matches!(s.mode(), Mode::Info { .. }), "{:?}", s.mode());
     let view = s.view(&c);
     assert!(view.info.is_some());
     assert_eq!(view.lesson, None);
     assert_eq!(s.shown_lesson(), None);
     assert!(s.lesson_open());
-    press(&mut s, &mut c, &[Action::Cancel]);
+    step(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!(s.mode(), &Mode::default());
     assert_eq!(s.shown_lesson(), Some(TEST_LESSON));
     assert_eq!(s.view(&c).lesson.unwrap().progress, "0 of 4 done");

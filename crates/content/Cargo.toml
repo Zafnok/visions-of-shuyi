@@ -65,6 +65,8 @@ shuyi-embed.workspace = true
 shuyi-embed.workspace = true
 # Turns on `test-fixtures` for this crate's own tests in any profile.
 trpg-content = { path = ".", features = ["test-fixtures"] }
+# The content definitions' fixtures, for the tests' literals (ticket 1237).
+trpg-core = { path = "../core", default-features = false, features = ["testing"] }
 proptest.workspace = true
 # `ContentHash`, for a test's pack (ticket 1284).
 shuyi-core.workspace = true

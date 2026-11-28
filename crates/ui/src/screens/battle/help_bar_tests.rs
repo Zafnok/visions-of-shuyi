@@ -10,7 +10,7 @@ use proptest::prelude::*;
 use trpg_core::Pos;
 
 use super::layout::{HELP_BAR, HELP_ROW, MAP_VIEW};
-use super::tests::{quick, render, step};
+use super::testing::{quick, render, step};
 use super::view::TogglesView;
 use super::*;
 use crate::harness::Harness;

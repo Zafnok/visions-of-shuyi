@@ -18,6 +18,8 @@ use trpg_core::{
 };
 use trpg_ui::harness::Harness;
 
+use crate::support::{skip_scenes, state as battle};
+
 /// The player's commands in fixture `source` (`name` for errors).
 pub fn commands(name: &str, source: &str) -> Vec<Command> {
     ron::from_str(source).unwrap_or_else(|e| panic!("{name}: {e}"))
@@ -44,33 +46,6 @@ pub fn play(state: &mut BattleState, content: &Content, commands: &[Command]) {
         }
     }
     play_others(state, content);
-}
-
-/// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
-/// Chapter 3's last fight and its four victory scenes come one after the
-/// other.
-pub fn skip_scenes(h: &mut Harness) {
-    for _ in 0..12 {
-        // A chapter's title card first (0812): Confirm closes it.
-        if h.top_screen() == "chapter_card" {
-            h.keys("f");
-            continue;
-        }
-        if h.top_screen() != "dialogue" {
-            return;
-        }
-        h.keys("d f");
-    }
-    panic!("the scenes never end: {:?}", h.screens());
-}
-
-/// The battle on screen.
-pub fn battle(h: &Harness) -> BattleState {
-    let battle = h.battle();
-    battle
-        .unwrap_or_else(|| panic!("no battle"))
-        .state()
-        .clone()
 }
 
 fn send(h: &mut Harness, command: &Command) {
