@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-28
 ---
 
 # 0131 — Ticket numbers and blockers checked across parallel PRs
@@ -107,18 +107,22 @@ rule about 20, wiring 10).
 
 ## Acceptance criteria
 
-- [ ] `next_free("03", …)` returns the number after the highest taken,
+- [x] `next_free("03", …)` returns the number after the highest taken,
       and `None` for a full block (unit tests).
-- [ ] With a fake PR list holding `tickets/open/0855-x.md` and a local
+- [x] With a fake PR list holding `tickets/open/0855-x.md` and a local
       highest of 0854 in block 08, `ticket-next 08` answers `0856` and
       names the PR (a test with the `gh` output injected).
-- [ ] Without `gh` on `PATH`, `ticket-next` prints the local answer and
+- [x] Without `gh` on `PATH`, `ticket-next` prints the local answer and
       the warning, exit 0.
-- [ ] ticket-lint fails on a done ticket blocked by an open one (unit
+- [x] ticket-lint fails on a done ticket blocked by an open one (unit
       test) and passes on the real repository after 0804 and 1050 are
       fixed.
-- [ ] `write-ticket` and `work-ticket` name `cargo xtask ticket-next`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `write-ticket` and `work-ticket` name `cargo xtask ticket-next`.
+- [ ] All gates in the `run-gates` skill pass. Not all locally: the
+      ones this change can reach pass (fmt, clippy and tests of `xtask`,
+      doc, check-mentions, check-leaks, check-skills, the skill loaders,
+      ticket-lint); the workspace-wide builds (wasm, Playdate, the game's tests) were left
+      to CI, since only `xtask` changed.
 
 ## Tests required
 
@@ -128,5 +132,48 @@ rule about 20, wiring 10).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+Done 2026-11-28. 1423 is still open, so the Rust part is ported as
+planned (1423 deletes it when the engine ships its crate).
+
+- **`cargo xtask ticket-next <block>`** (`crates/xtask/src/tickets.rs`,
+  wired in `main.rs` with its usage line): prints the next free number
+  after the highest in the block across both folders and the new ticket
+  files of open PRs (`gh pr list --state open --json
+  number,headRefName,files --limit 100`). The number alone goes to stdout
+  (so `n=$(cargo xtask ticket-next 03)` works); the notes go to stderr:
+  `0855 is taken by PR #402`, or `warning: open PRs not checked (<reason>)`
+  with exit 0 when `gh` is missing or fails. An empty block starts at
+  `BB01`. `--pr-list <file>` reads `gh`'s JSON from a file, which is how
+  the CLI tests stay off the network.
+- **`check_done_blockers`** in the lint: a done ticket whose `blocked_by`
+  names an open ticket is an error, with the ticket's wording.
+- **0804 and 1050**: `blocked_by` emptied, with the line in each
+  Completion notes. Checked first that their seven open blockers (0741,
+  0742, 0847, 1046, 1058, 1060, 1062) each say `blocks: ["1064"]`.
+- **Skills**: `write-ticket` step 2 runs `ticket-next`; `work-ticket` §6
+  runs `ticket-lint` and `ticket-next` before the PR and says how to
+  renumber.
+
+Deviations, each small and in the same direction (fewer false answers):
+
+- A PR's ticket counts only when the PR **adds** it (`changeType:
+  ADDED`) and doesn't delete the same number: a PR that archives a ticket
+  (adds `done/NNNN`, deletes `open/NNNN`), renames or edits one holds no
+  new number.
+- **A collision with a local number is reported too**
+  (`0855 is taken by PR #402 and by a ticket here: renumber the new one`).
+  Without it, the §6 check could never fire: the branch's own new ticket
+  is local, so a PR holding the same number sat below "the local highest"
+  that the ticket's step 2 reports above.
+- **This checkout's own PR is skipped** (by `headRefName` against `git
+  branch --show-current`), so running the check after pushing doesn't
+  name the branch's own ticket.
+- The rule also reads the other side of `blocked_by`: a done ticket named
+  in an open ticket's `blocks` is an error too (`tickets/README.md` counts
+  both as its blockers). No ticket in the repository trips it.
+
+Friction: 2.4× (estimate 80, the ticket's; measured 188), accepted: the
+extra is the scope above, no engine signal; a row in
+`docs/engine/friction.md`.
+
+No gameplay rules; nothing for the Act 1 playtest.

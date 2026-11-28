@@ -15,11 +15,17 @@ without asking questions.
 1. **Pick the block** (see `tickets/README.md`): the hundreds digit is the
    milestone/system the work belongs to. Bugs go in the block of the system
    they're in (a combat bug → `03xx`). Post–Chapter 1 features → `10xx`+.
-2. **Pick the number:** the next unused number in that block across *both*
-   `tickets/open/` and `tickets/done/`:
+2. **Pick the number:** the next unused number in that block across
+   `tickets/open/`, `tickets/done/` *and* the ticket files open pull
+   requests add (two sessions building side by side once filed the same
+   0855 and turned `main` red; ticket 0131):
    ```bash
-   ls tickets/open tickets/done | grep -E '^03[0-9]{2}-' | sort | tail -1
+   cargo xtask ticket-next 03
    ```
+   It prints the number, and names the PR holding any number past the
+   local highest. A `warning: open PRs not checked` line means `gh` or the
+   network was missing: the number is only the local answer, so check
+   again before opening the PR (the `work-ticket` skill, §6).
 3. Copy `tickets/TEMPLATE.md` to `tickets/open/NNNN-short-kebab-title.md`.
    Keep a bare `@word` out of the `title:` (it becomes the PR title, where
    GitHub reads it as a mention of a user; see `work-ticket` step 6).

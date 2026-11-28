@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: done
-blocked_by: ["1036", "1039", "1041", "1043", "1044", "1045", "1046", "1047", "1055", "1058", "1060", "1062", "0464", "0467", "0841"]
+blocked_by: []
 nick_input: sign-off
 completed: 2026-10-21
 ---
@@ -91,3 +91,5 @@ times; measured by the bots' Playdate run, 0512) and whether the enemy's
 pauses feel long. 1051 no longer waits for that answer: Act 1's bigger
 battles make it worth doing before the playtest. 1052 (selling it on
 itch.io) now waits for 1064.
+
+`blocked_by` emptied by 0131; the list carried over to 1064.

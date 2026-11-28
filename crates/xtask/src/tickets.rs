@@ -9,8 +9,12 @@
 //! says `blocks: ["1064"]` is one of 1064's blockers (ticket 1352). A PR that
 //! files a blocker then edits only its own ticket's file, so two such PRs
 //! never touch the same line.
+//!
+//! `cargo xtask ticket-next <block>` picks a new ticket's number from both
+//! folders and the ticket files of open pull requests (ticket 0131), so two
+//! sessions building side by side don't file the same one.
 
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::fs;
 use std::path::Path;
 use std::process::Command;
@@ -121,6 +125,7 @@ pub fn run(repo_root: &Path, pr_branch: Option<&str>, check_engine: bool) -> Vec
     errors.extend(check_unique_ids(&tickets));
     errors.extend(check_blocked_by_exists(&tickets));
     errors.extend(check_blocks(&tickets));
+    errors.extend(check_done_blockers(&tickets));
 
     if let Some(branch) = pr_branch {
         errors.extend(check_pr_branch(&tickets, branch));
@@ -484,6 +489,185 @@ fn check_blocks(tickets: &[Ticket]) -> Vec<String> {
         }
     }
     errors
+}
+
+/// A ticket in `tickets/done/` whose blockers are still in `tickets/open/`
+/// (ticket 0131): 0740 merged while its blocker 1177 was open. Its blockers
+/// are its `blocked_by` and every open ticket that names it in `blocks`.
+fn check_done_blockers(tickets: &[Ticket]) -> Vec<String> {
+    let open: Vec<&Ticket> = tickets
+        .iter()
+        .filter(|t| t.folder == Folder::Open)
+        .collect();
+    let is_open = |id: &str| open.iter().any(|t| t.fields.id.as_deref() == Some(id));
+    let mut errors = Vec::new();
+    for ticket in tickets.iter().filter(|t| t.folder == Folder::Done) {
+        let path = &ticket.display_path;
+        for dep in ticket.fields.blocked_by.iter().flatten() {
+            if is_open(dep) {
+                errors.push(format!(
+                    "{path}: done, but its blocker `{dep}` is still open; drop it from \
+                     `blocked_by` if it was not needed, or finish it first"
+                ));
+            }
+        }
+        let Some(own_id) = ticket.fields.id.as_deref() else {
+            continue;
+        };
+        for blocker in &open {
+            if blocker
+                .fields
+                .blocks
+                .iter()
+                .flatten()
+                .any(|id| id == own_id)
+            {
+                errors.push(format!(
+                    "{path}: done, but {} (`blocks: [\"{own_id}\"]`) is still open; drop \
+                     it from that `blocks` if it was not needed, or finish it first",
+                    blocker.display_path
+                ));
+            }
+        }
+    }
+    errors
+}
+
+/// `cargo xtask ticket-next <block>`'s usage.
+pub const NEXT_USAGE: &str = "usage: cargo xtask ticket-next <block> [--pr-list <file>]\n\
+  <block> is the hundreds of the number, two digits (`03` for 03xx); --pr-list reads\n\
+  `gh pr list --json number,headRefName,files` from a file instead of asking GitHub";
+
+/// The next free ticket number in `block` (two digits, `"03"`): the one
+/// after the highest of `taken` in the block (`BB01` in an empty block),
+/// `None` when the block is full. Numbers are never reused, so a gap below
+/// the highest is not free.
+pub fn next_free(block: &str, taken: &BTreeSet<String>) -> Option<String> {
+    let highest = taken
+        .iter()
+        .filter(|id| is_ticket_number(id) && id.starts_with(block))
+        .filter_map(|id| id[2..].parse::<u8>().ok())
+        .max()
+        .unwrap_or(0);
+    (highest < 99).then(|| format!("{block}{:02}", highest + 1))
+}
+
+/// The new tickets that open pull requests add, as (number, PR), from `gh
+/// pr list --json number,headRefName,files`: each `NNNN-*.md` a PR adds
+/// under `tickets/open/` or `tickets/done/`, unless it also deletes that
+/// number (a ticket moving to `done/`, or renamed). The PR from
+/// `own_branch`, this checkout's, is skipped: its tickets are local.
+pub fn pr_ticket_numbers(
+    json: &str,
+    own_branch: Option<&str>,
+) -> Result<Vec<(String, u64)>, String> {
+    let prs: serde_json::Value =
+        serde_json::from_str(json).map_err(|e| format!("not gh's JSON: {e}"))?;
+    let prs = prs.as_array().ok_or("not a list of pull requests")?;
+    let mut found = Vec::new();
+    for pr in prs {
+        let number = pr["number"]
+            .as_u64()
+            .ok_or("a pull request with no number")?;
+        if own_branch.is_some() && pr["headRefName"].as_str() == own_branch {
+            continue;
+        }
+        let mut added = Vec::new();
+        let mut deleted = Vec::new();
+        for file in pr["files"].as_array().into_iter().flatten() {
+            let path = file["path"].as_str().unwrap_or_default();
+            let name = path
+                .strip_prefix("tickets/open/")
+                .or_else(|| path.strip_prefix("tickets/done/"));
+            let Some(name) = name.filter(|n| is_valid_ticket_filename(n)) else {
+                continue;
+            };
+            match file["changeType"].as_str() {
+                Some("ADDED") => added.push(name[..4].to_owned()),
+                Some("DELETED") => deleted.push(name[..4].to_owned()),
+                _ => {}
+            }
+        }
+        added.retain(|id| !deleted.contains(id));
+        found.extend(added.into_iter().map(|id| (id, number)));
+    }
+    Ok(found)
+}
+
+/// Asks `gh` (in `repo_root`, so it reads this repository) for the files
+/// of the open pull requests.
+pub fn open_pr_files(repo_root: &Path) -> Result<String, String> {
+    let output = Command::new("gh")
+        .current_dir(repo_root)
+        .args(["pr", "list", "--state", "open"])
+        .args(["--json", "number,headRefName,files"])
+        .args(["--limit", "100"])
+        .output()
+        .map_err(|e| format!("can't run gh: {e}"))?;
+    if !output.status.success() {
+        let said = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("gh pr list failed: {}", said.trim()));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+/// What `ticket-next` says: the number, then the notes (which open PR holds
+/// a number past the local highest or one of the local ones, or the
+/// warning that PRs weren't read).
+pub struct Next {
+    pub number: String,
+    pub notes: Vec<String>,
+}
+
+/// `ticket-next <block>` over the ticket files in `repo_root` and the open
+/// PRs' files, `prs` (`gh`'s JSON, or why it couldn't be read), less the PR
+/// of `own_branch`. An open PR's new ticket that has a number of this
+/// checkout too is reported: one of the two must be renumbered.
+pub fn ticket_next(
+    repo_root: &Path,
+    block: &str,
+    prs: Result<String, String>,
+    own_branch: Option<&str>,
+) -> Result<Next, String> {
+    if block.len() != 2 || !block.bytes().all(|b| b.is_ascii_digit()) {
+        return Err(format!(
+            "the block is two digits (`03` for 03xx), not `{block}`"
+        ));
+    }
+    let mut names = Vec::new();
+    for folder in [Folder::Open, Folder::Done] {
+        let dir = repo_root.join("tickets").join(folder.dirname());
+        let files = read_ticket_files(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+        names.extend(files.into_iter().map(|(name, _)| name));
+    }
+    let mut taken: BTreeSet<String> = ticket_numbers(&names).into_iter().collect();
+    let full = || format!("block {block}xx is full");
+    let local = next_free(block, &taken).ok_or_else(full)?;
+
+    let mut notes = Vec::new();
+    match prs.and_then(|json| pr_ticket_numbers(&json, own_branch)) {
+        Ok(held) => {
+            let mut held: Vec<_> = held
+                .into_iter()
+                .filter(|(id, _)| id.starts_with(block))
+                .collect();
+            held.sort();
+            held.dedup();
+            for (id, pr) in held {
+                if id >= local {
+                    notes.push(format!("{id} is taken by PR #{pr}"));
+                } else if taken.contains(&id) {
+                    notes.push(format!(
+                        "{id} is taken by PR #{pr} and by a ticket here: renumber the new one"
+                    ));
+                }
+                taken.insert(id);
+            }
+        }
+        Err(reason) => notes.push(format!("warning: open PRs not checked ({reason})")),
+    }
+    let number = next_free(block, &taken).ok_or_else(full)?;
+    Ok(Next { number, notes })
 }
 
 /// With `--pr-branch t<NNNN>-<slug>`, ticket `NNNN` must be in `tickets/done/`
@@ -997,6 +1181,160 @@ completed:
         let errors = check_blocks(&tickets);
         assert_eq!(errors.len(), 1, "{errors:?}");
         assert!(errors[0].contains("keep one"), "{errors:?}");
+    }
+
+    // -- done tickets with open blockers (ticket 0131) --
+
+    #[test]
+    fn a_done_ticket_blocked_by_an_open_one_is_an_error() {
+        let tickets = vec![
+            ticket("1177", Folder::Open, "todo", &[]),
+            ticket("0100", Folder::Done, "done", &[]),
+            ticket(
+                "0740",
+                Folder::Done,
+                "done",
+                &["0100", "1177", "engine#2304"],
+            ),
+        ];
+        let errors = check_done_blockers(&tickets);
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(
+            errors[0]
+                .contains("tickets/done/0740-x.md: done, but its blocker `1177` is still open"),
+            "{errors:?}"
+        );
+    }
+
+    #[test]
+    fn a_done_ticket_named_in_an_open_ticket_s_blocks_is_an_error() {
+        let tickets = vec![
+            blocking("1177", Folder::Open, &["0740"]),
+            blocking("0101", Folder::Done, &["0740"]),
+            ticket("0740", Folder::Done, "done", &[]),
+        ];
+        let errors = check_done_blockers(&tickets);
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].contains("tickets/open/1177-x.md"), "{errors:?}");
+    }
+
+    #[test]
+    fn an_open_ticket_may_wait_on_open_ones() {
+        let tickets = vec![
+            ticket("1177", Folder::Open, "todo", &[]),
+            ticket("0740", Folder::Open, "todo", &["1177"]),
+        ];
+        assert_eq!(check_done_blockers(&tickets), Vec::<String>::new());
+    }
+
+    // -- ticket-next (ticket 0131) --
+
+    fn taken(ids: &[&str]) -> BTreeSet<String> {
+        ids.iter().map(|s| (*s).to_owned()).collect()
+    }
+
+    #[test]
+    fn next_free_is_the_one_after_the_highest_in_the_block() {
+        let ids = taken(&["0301", "0305", "0399x", "0401", "0298", "engine#0399"]);
+        assert_eq!(next_free("03", &ids).as_deref(), Some("0306"));
+        assert_eq!(next_free("04", &ids).as_deref(), Some("0402"));
+        assert_eq!(next_free("05", &ids).as_deref(), Some("0501"));
+    }
+
+    #[test]
+    fn next_free_is_none_for_a_full_block() {
+        assert_eq!(next_free("00", &taken(&["0012", "0099"])), None);
+    }
+
+    const PR_LIST: &str = r#"[
+      {"number": 402, "files": [
+        {"path": "crates/xtask/src/tickets.rs", "changeType": "MODIFIED"},
+        {"path": "tickets/open/0855-x.md", "changeType": "ADDED"},
+        {"path": "tickets/done/0321-y.md", "changeType": "ADDED"},
+        {"path": "tickets/open/0321-y.md", "changeType": "DELETED"},
+        {"path": "tickets/open/README.md", "changeType": "MODIFIED"},
+        {"path": "tickets/open/0131-z.md", "changeType": "MODIFIED"},
+        {"path": "tickets/done/0130-z.md", "changeType": "RENAMED"},
+        {"path": "docs/tickets/open/0999-z.md", "changeType": "ADDED"}
+      ]},
+      {"number": 401, "files": []},
+      {"number": 410, "headRefName": "t0131-mine", "files": [
+        {"path": "tickets/open/0857-mine.md", "changeType": "ADDED"}
+      ]}
+    ]"#;
+
+    #[test]
+    fn pr_list_keeps_the_new_tickets_each_pr_adds() {
+        assert_eq!(
+            pr_ticket_numbers(PR_LIST, Some("t0131-mine")),
+            Ok(vec![("0855".to_owned(), 402)])
+        );
+        assert_eq!(
+            pr_ticket_numbers(PR_LIST, None),
+            Ok(vec![("0855".to_owned(), 402), ("0857".to_owned(), 410)])
+        );
+        assert!(pr_ticket_numbers("not json", None).is_err());
+        assert!(pr_ticket_numbers("{}", None).is_err());
+    }
+
+    fn repo_with(files: &[&str], unique: &str) -> std::path::PathBuf {
+        let root = make_temp_tickets_dir(unique);
+        for file in files {
+            fs::write(root.join("tickets").join(file), "a ticket").unwrap();
+        }
+        root
+    }
+
+    #[test]
+    fn ticket_next_skips_a_number_an_open_pr_holds() {
+        let root = repo_with(&["open/0854-a.md", "done/0801-b.md"], "next-pr");
+        let next = ticket_next(&root, "08", Ok(PR_LIST.to_owned()), Some("t0131-mine")).unwrap();
+        assert_eq!(next.number, "0856");
+        assert_eq!(next.notes, ["0855 is taken by PR #402"]);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    /// The check before opening a PR (ticket 0131): this branch's new ticket
+    /// is local, so an open PR adding the same number is a collision.
+    #[test]
+    fn ticket_next_reports_a_pr_holding_a_number_this_branch_has() {
+        let root = repo_with(
+            &["open/0855-mine.md", "open/0856-mine-too.md"],
+            "next-clash",
+        );
+        let next = ticket_next(&root, "08", Ok(PR_LIST.to_owned()), None).unwrap();
+        assert_eq!(next.number, "0858");
+        assert_eq!(
+            next.notes,
+            [
+                "0855 is taken by PR #402 and by a ticket here: renumber the new one",
+                "0857 is taken by PR #410",
+            ]
+        );
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn ticket_next_without_gh_answers_locally_with_a_warning() {
+        let root = repo_with(&["open/0854-a.md"], "next-no-gh");
+        let next = ticket_next(&root, "08", Err("can't run gh".to_owned()), None).unwrap();
+        assert_eq!(next.number, "0855");
+        assert_eq!(next.notes, ["warning: open PRs not checked (can't run gh)"]);
+        let bad = ticket_next(&root, "08", Ok("[{]".to_owned()), None).unwrap();
+        assert!(bad.notes[0].starts_with("warning: open PRs not checked (not gh's JSON"));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn ticket_next_refuses_a_block_that_is_not_two_digits() {
+        let root = repo_with(&[], "next-bad-block");
+        for block in ["3", "003", "0x", ""] {
+            assert!(
+                ticket_next(&root, block, Ok("[]".to_owned()), None).is_err(),
+                "{block}"
+            );
+        }
+        let _ = fs::remove_dir_all(&root);
     }
 
     /// Runs `git` in `dir` with a fixed author and no user config, and
