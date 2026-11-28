@@ -5,10 +5,10 @@ type: infra
 milestone: M1 Engine
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1394 — The MCP server's long calls as tasks in a worktree session
@@ -73,12 +73,12 @@ None.
 
 ## Acceptance criteria
 
-- [ ] The completion notes say whether a worktree session's `start` answered
+- [x] The completion notes say whether a worktree session's `start` answered
       a task, with the times of the `start`, the `step` during the build and
       the `step` after.
-- [ ] `work-ticket` §4 and `docs/engine/README.md` say what a session sees
+- [x] `work-ticket` §4 and `docs/engine/README.md` say what a session sees
       while `start` builds.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,5 +86,33 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Found: Claude Code doesn't declare the tasks extension, so `start` still
+holds the call.** Checked 2026-11-27 in this ticket's own worktree session
+(`mcp-servers-long-calls-tasks-11c7d9`), with the main checkout at
+`230080db` and its `trpg-tools.exe` rebuilt at 20:57:08 (the server's own
+`cargo run` rebuilt it when this session connected, so step 1 needed no
+manual build and no exe moved aside).
+
+- Claude Code's `shuyi` log (`mcp-logs-shuyi`) for the connection:
+  `protocolEra: legacy`, `negotiatedProtocolVersion: 2025-11-25`. The
+  2026-07-28 protocol, which engine PRs #629 and #638 need before they
+  answer a task, wasn't negotiated. The log also says Claude Code skipped
+  its `server/discover` probe because it *"remembered"* this server as a
+  legacy peer from an earlier connect, so even a server that answers the
+  probe now isn't asked again. That memo is Claude Code's own state, out
+  of scope here (no client setting changed).
+- `start` (project `.`): sent 01:57:42.373Z, answered 01:59:26.436Z,
+  **1m 44s**, a full answer (title screen), no task.
+- `step` "during the build": sent in the same message as `start`, but
+  Claude Code didn't send it until `start` had answered (01:59:26.450Z),
+  so no `step` ran during the build and no `SH0002` came back. It
+  answered in **2 ms**, on frame 1.
+- `step` after: that same call, **2 ms**. Then `stop`.
+- Docs: `docs/engine/README.md` (*The MCP server*) and `work-ticket` §4
+  say what a session sees (the call held for the build, other `shuyi`
+  calls queued behind it, no task).
+
+No deviation from the steps but the one above: the two `step`s collapsed
+into one, since the client queued the first. No follow-up ticket: the
+server is ready, and the rest is Claude Code's to change. No engine or
+`.mcp.json` change; `MCP_TIMEOUT` untouched.

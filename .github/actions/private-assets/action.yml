@@ -163,6 +163,9 @@ runs:
       shell: bash
       env:
         KEY: ${{ inputs.key }}
+        # GitHub's API limits calls without a token by the runner's address,
+        # which shared runners share: two jobs of PR #875 got a 403 (0196).
+        GH_TOKEN: ${{ github.token }}
         BASE: ${{ steps.plan.outputs.rev }}
         PINS: ${{ steps.plan.outputs.pins }}
       run: |
@@ -173,18 +176,26 @@ runs:
         fi
         # The merge and the switch fetch the file contents they need, so git
         # gets the key for this step alone (the checkout keeps none). The
-        # host keys come from GitHub's API, over HTTPS.
+        # host keys come from GitHub's API, over HTTPS, with the workflow's
+        # token and a few retries (0196).
         key="$RUNNER_TEMP/private-assets-key"
         known="$RUNNER_TEMP/private-assets-known-hosts"
+        meta="$RUNNER_TEMP/private-assets-meta.json"
         if command -v cygpath > /dev/null; then
           # Windows runners: Git's ssh reads POSIX paths.
           key=$(cygpath -u "$key")
           known=$(cygpath -u "$known")
+          meta=$(cygpath -u "$meta")
         fi
-        trap 'rm -f "$key" "$known"' EXIT
+        trap 'rm -f "$key" "$known" "$meta"' EXIT
         printf '%s\n' "$KEY" > "$key"
         chmod 600 "$key"
-        curl -fsSL https://api.github.com/meta | jq -r '.ssh_keys[] | "github.com " + .' > "$known"
+        # To a file, not a pipe: curl empties it before a retry, so jq never
+        # reads a partial answer twice. -f still fails the step once the
+        # retries are spent.
+        curl -fsSL --retry 4 --retry-delay 5 --retry-all-errors \
+          -H "Authorization: Bearer $GH_TOKEN" -o "$meta" https://api.github.com/meta
+        jq -r '.ssh_keys[] | "github.com " + .' "$meta" > "$known"
         export GIT_SSH_COMMAND="ssh -i '$key' -o IdentitiesOnly=yes -o UserKnownHostsFile='$known' -o StrictHostKeyChecking=yes"
         # shellcheck disable=SC2086 # one word per pin
         effective=$(bash "$GITHUB_ACTION_PATH/resolve.sh" assets-private "$BASE" $PINS)

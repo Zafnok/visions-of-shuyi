@@ -17,6 +17,9 @@ pub struct LookText {
     pub terrain: Vec<(String, At)>,
     /// The layers painted over them, the first undermost.
     pub layers: Vec<LayerText>,
+    /// The pictures a map may place, in the order written: each its name,
+    /// its top-left cell and its size in pixels (ticket 1378).
+    pub props: Vec<(String, At, (u32, u32))>,
     /// The trees standing on its forest, if it has any (ticket 1356).
     pub trees: Option<TreesText>,
 }
@@ -158,6 +161,16 @@ pub fn look(look: &LookText, indent: &str) -> String {
         out.push_str(&layer(l, &format!("{indent}    ")));
     }
     let _ = writeln!(out, "{indent}],");
+    if !look.props.is_empty() {
+        let _ = writeln!(out, "{indent}props: {{");
+        for (name, (column, row), (w, h)) in &look.props {
+            let _ = writeln!(
+                out,
+                "{indent}    \"{name}\": (at: ({column}, {row}), size: ({w}, {h})),"
+            );
+        }
+        let _ = writeln!(out, "{indent}}},");
+    }
     if let Some(trees) = &look.trees {
         out.push_str(&trees_field(trees, indent));
     }
@@ -292,6 +305,7 @@ mod tests {
                     sides: vec![(5, (2, 4))],
                 },
             ],
+            props: vec![],
             trees: None,
         }
     }
@@ -302,6 +316,7 @@ mod tests {
         let with_trees = LookText {
             terrain: vec![],
             layers: vec![],
+            props: vec![],
             trees: Some(TreesText {
                 of: names(&["forest"]),
                 big: vec![kind((64, 80), (32, 74), vec![((0, 9), 160), ((4, 9), 160)])],
@@ -339,6 +354,7 @@ mod tests {
         let bare = LookText {
             terrain: vec![("plain".to_owned(), (7, 9))],
             layers: vec![],
+            props: vec![],
             trees: None,
         };
         assert_eq!(
@@ -427,6 +443,7 @@ mod tests {
         let bare = LookText {
             terrain: vec![("plain".to_owned(), (0, 0))],
             layers: vec![],
+            props: vec![],
             trees: None,
         };
         assert_eq!(

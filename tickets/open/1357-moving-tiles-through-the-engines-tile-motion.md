@@ -32,6 +32,15 @@ with_motion`, and the ground painting each rectangle through it at
 unparks both (Nick's call: the `engine-change` skill, his OK before an
 engine PR).
 
+**2026-11-27, from 1378:** a look's props (Chapter 1's lamps) move too:
+`TileFrames::look_at` (`trpg_content::tileset::frames`) swaps
+`Look::props` with the rest, so `frame_skin` paints a lamp's frame, and
+a moving cell drawn only as a prop moves at the prop's size (16 × 32).
+`moving.rs` itself only gained tests. engine#2359 covers it: its
+Context says its frames apply to `Look::props` as to the other
+rectangles; its `TileMotion` keys clips by still rectangle, which a
+prop's 16 × 32 rectangle is.
+
 ## Nick input
 
 None.

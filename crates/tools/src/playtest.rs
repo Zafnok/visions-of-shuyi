@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
-use shuyi_core::bots::playtest::{
+use shuyi_platform::prelude::test::{
     Check, Entrant as _, Found, PlaytestReport, Tried, judge, play_tries,
 };
 use trpg_bots::{

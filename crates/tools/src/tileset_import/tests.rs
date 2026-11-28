@@ -1339,6 +1339,47 @@ fn a_plain_sheets_tiles_move_along_its_strip() {
     assert_eq!(imported.image.1, 32);
 }
 
+/// A look's prop (ticket 1378: Chapter 1's lamps) is packed two cells
+/// tall, its top over the tile below it, and moves as one picture: each
+/// frame two cells tall too, its strip run down the column.
+#[test]
+fn a_prop_is_packed_two_cells_tall_with_its_frames() {
+    let temp = Temp::new("prop").with_sheet("lib");
+    with_plain(&temp);
+    let looks = format!(r#""outdoor": (layers: [], props: {{ "lamp": ("{PLAIN}", 1) }}),"#);
+    let map = plain_mapping("", &looks, "(frames: 2, step: 12, ms: 150)");
+    let imported = import(&temp.0.join("lib"), &map, &terrains(), &fire).unwrap();
+    let [(name, at, size)] = &imported.own.props[..] else {
+        panic!("{:?}", imported.own.props);
+    };
+    assert_eq!((name.as_str(), *size), ("lamp", PROP_PX));
+    let below = |(column, row): At| (column, row + 1);
+    let [moving] = &imported.moving[..] else {
+        panic!("{:?}", imported.moving);
+    };
+    assert_eq!(moving.at, *at);
+    let [(first, 150), (second, 150)] = moving.frames[..] else {
+        panic!("{moving:?}");
+    };
+    assert_eq!(first, *at);
+    let colors =
+        [first, below(first), second, below(second)].map(|cell| cell_color(&imported.image, cell));
+    assert_eq!(colors, [1, 7, 13, 19].map(plain_color));
+    // Written after the look's layers, in the engine's shape.
+    let written = tileset_ron::look(&imported.own, "");
+    let (column, row) = at;
+    let line = format!("props: {{\n    \"lamp\": (at: ({column}, {row}), size: (16, 32)),\n}},\n");
+    assert!(written.ends_with(&line), "{written}");
+    assert!(list(&map).contains("prop  lamp       pack/plain.png tile 1 and the one below"));
+    // A prop needs a name.
+    let unnamed = format!(r#""outdoor": (layers: [], props: {{ "": ("{PLAIN}", 1) }}),"#);
+    let map = plain_mapping("", &unnamed, "");
+    assert_eq!(
+        check(&map, &terrains()),
+        Err("look \"outdoor\": a prop needs a name".to_owned())
+    );
+}
+
 #[test]
 fn a_strip_and_a_patch_are_checked_with_the_mapping() {
     let terrains = terrains();

@@ -41,6 +41,11 @@ over to the engine's workflow rather than building them.
 
 **The hook chain** (2026-11-16, either order): if 1276 (the grinder bot) lands first, carry its grinder entrants and margin over from `crates/tools/src/playtest.rs`.
 
+**2026-11-27, ticket 1395:** `crates/tools/src/playtest.rs`'s import of the
+playtest runner moved from `shuyi_core::bots::playtest` to the engine's
+prelude, `shuyi_platform::prelude::test` (the same items). A `use` line
+only: engine#2532 needs no change for it.
+
 ## Nick input
 
 None. Reports and seeded results are verified against the existing

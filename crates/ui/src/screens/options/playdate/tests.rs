@@ -6,7 +6,7 @@ use crate::screen::{FrameInput, Keyboard};
 use crate::screens::options::{Row, screen};
 use crate::screens::playdate::tests::{blank, cell, find, is_bar, pd_ctx, rows};
 use crate::screens::playdate::{MORE_ABOVE, MORE_BELOW};
-use shuyi_ui::Screen;
+use shuyi_platform::prelude::Screen;
 
 /// The Playdate's context: its skins and palette, no keyboard.
 fn playdate() -> Ctx {

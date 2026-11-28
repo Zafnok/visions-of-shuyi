@@ -19,9 +19,8 @@ use std::collections::BTreeMap;
 
 use serde::Deserialize;
 use shuyi_core::bots::playtest::bot_seed;
-use shuyi_core::grid::Grid;
-use shuyi_core::path::flow_field;
-use shuyi_core::{Bot, Evaluate, Order, PlanSettings, TurnPlan};
+use shuyi_core::prelude::{Bot, Grid, flow_field};
+use shuyi_core::{Evaluate, Order, PlanSettings, TurnPlan};
 use trpg_core::{
     AiBehavior, AiWeights, BattleState, CastTarget, Command, Faction, GameMode, ItemId, Objective,
     Outcome, Phase, Pos, SideForecast, SpellId, Unit, UnitAction, UnitId, legal_commands,

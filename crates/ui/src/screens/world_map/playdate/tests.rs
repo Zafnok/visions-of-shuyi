@@ -4,7 +4,7 @@
 //! keyboard.
 
 use insta::assert_snapshot;
-use shuyi_assets::font::CellWidths;
+use shuyi_platform::prelude::text::CellWidths;
 use trpg_content::battle_campaign;
 use trpg_core::{Campaign, GameMode, LeadGender, LeadProfile};
 

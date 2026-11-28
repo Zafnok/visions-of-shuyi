@@ -3,9 +3,9 @@
 //! map's cells, the cursor's cell and each unit's; nothing is built while
 //! the channel or the debug tools are off; and looking changes nothing.
 
+use shuyi_platform::prelude::grid::GRID;
 use shuyi_ui::debug::gizmo::{DebugView, GizmoRole};
 use shuyi_ui::frame::{GizmoItem, GizmoShape};
-use shuyi_ui::grid::debug::GRID;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::layout::MAP_VIEW;

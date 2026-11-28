@@ -160,6 +160,8 @@ struct TilesetFile {
     #[serde(default)]
     layers: Vec<look::LayerFile>,
     #[serde(default)]
+    props: BTreeMap<String, look::PropAt>,
+    #[serde(default)]
     looks: BTreeMap<String, look::LookFile>,
     #[serde(default)]
     frames: Vec<frames::FramesFile>,
@@ -373,7 +375,7 @@ fn read_looks<'c>(
     refs: &TilesetRefs<'c>,
 ) -> ReadLooks {
     let tile_px = def.tile_px.unwrap_or_default();
-    let mut looking = |name, terrain, layers, trees: Option<&trees::TreesFile>| {
+    let mut looking = |name, terrain, layers, props, trees: Option<&trees::TreesFile>| {
         let mut looking = look::Looking {
             check: &mut *check,
             unknown: &mut *unknown,
@@ -381,18 +383,19 @@ fn read_looks<'c>(
             tile_px,
             name,
         };
-        let look = looking.look(terrain, layers);
+        let look = looking.look(terrain, layers, props);
         (look, trees.map(|t| looking.trees(t)))
     };
     let own = def
         .terrain
         .as_ref()
-        .map(|t| looking(None, t, &def.layers, None).0);
+        .map(|t| looking(None, t, &def.layers, &def.props, None).0);
     let mut looks = BTreeMap::new();
     let mut trees = BTreeMap::new();
     for (name, file) in &def.looks {
         let name_str = Some(name.as_str());
-        let (look, written) = looking(name_str, &file.terrain, &file.layers, file.trees.as_ref());
+        let (terrain, layers, props) = (&file.terrain, &file.layers, &file.props);
+        let (look, written) = looking(name_str, terrain, layers, props, file.trees.as_ref());
         looks.insert(name.clone(), look);
         if let Some(written) = written {
             trees.insert(name.clone(), written);
@@ -525,6 +528,9 @@ fn own_problems(def: &TilesetFile, stem: &str) -> Vec<String> {
         if !def.layers.is_empty() {
             problems.push("layers need `terrain`: they are painted over its tiles".to_owned());
         }
+        if !def.props.is_empty() {
+            problems.push("props need `terrain`: they stand on its tiles".to_owned());
+        }
         if !def.looks.is_empty() {
             problems.push("looks need `terrain`, the tileset's own look".to_owned());
         }
@@ -637,6 +643,7 @@ mod tests {
             ("tile_px", "(16, 16)".to_owned()),
             ("terrain", terrain),
             ("layers", String::new()),
+            ("props", String::new()),
             ("looks", String::new()),
             ("frames", String::new()),
             ("unit_px", "(16, 24)".to_owned()),
@@ -1259,6 +1266,59 @@ mod tests {
         // A tile layer has none of them.
         let bad = r#"[Tiles(of: ["fort"], at: (0, 0), skip: ["wall"])]"#;
         assert_eq!(f.parse(&file(&f, &[("layers", bad)])).unwrap_err().len(), 1);
+    }
+
+    /// The pictures a map may place (ticket 1378), in the engine's shape:
+    /// a cell and a size, a tile's if left out; each look its own.
+    #[test]
+    fn a_look_reads_the_props_a_map_may_place_and_checks_them() {
+        let f = Fixture::new();
+        let terrain = format!("{{ {} }}", f.terrain(""));
+        let looks = format!(
+            "{{ \"indoor\": (terrain: {terrain}, props: {{ \"lamp\": (at: (3, 0), size: (16, 32)) }}) }}"
+        );
+        let props = "{ \"sign\": (at: (1, 1)) }";
+        let t = f
+            .parse(&file(&f, &[("props", props), ("looks", &looks)]))
+            .unwrap();
+        let tiles = t.terrain.as_ref().unwrap();
+        let rect = |x, y, w, h| ImageRect { x, y, w, h };
+        let sign = ("sign".to_owned(), rect(16, 16, 16, 16));
+        assert_eq!(tiles.look.props, BTreeMap::from([sign]));
+        let lamp = ("lamp".to_owned(), rect(48, 0, 16, 32));
+        assert_eq!(tiles.looks["indoor"].props, BTreeMap::from([lamp]));
+        // Checked: a name, the size's sides, the picture inside the image.
+        let cases = [
+            ("{ \"\": (at: (0, 0)) }", "prop \"\": its name is empty"),
+            (
+                "{ \"lamp\": (at: (0, 0), size: (16, 4)) }",
+                "prop \"lamp\": size is (16, 4); each side must be 8 to 64 px",
+            ),
+            (
+                "{ \"lamp\": (at: (3, 3), size: (16, 32)) }",
+                "prop \"lamp\": its 16×32 px at (48, 48) lies outside the 64×64 px image",
+            ),
+        ];
+        for (props, problem) in cases {
+            assert_eq!(
+                f.errors(&file(&f, &[("props", props)])),
+                [problem],
+                "{props}"
+            );
+        }
+        let looks =
+            format!("{{ \"indoor\": (terrain: {terrain}, props: {{ \"lamp\": (at: (9, 0)) }}) }}");
+        assert_eq!(
+            f.errors(&file(&f, &[("looks", &looks)])),
+            [
+                "look \"indoor\": prop \"lamp\": its 16×16 px at (144, 0) lies outside the 64×64 px image"
+            ]
+        );
+        let bare = [("tile_px", ""), ("terrain", ""), ("props", props)];
+        assert_eq!(
+            f.errors(&file(&f, &bare)),
+            ["props need `terrain`: they stand on its tiles"]
+        );
     }
 
     #[test]

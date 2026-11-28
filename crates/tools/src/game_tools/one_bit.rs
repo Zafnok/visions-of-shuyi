@@ -6,7 +6,7 @@
 //! black on black, so the test `the_text_roles_are_solid_black` keeps text
 //! undithered instead.
 
-use shuyi_cli::OneBitSkin;
+use shuyi_cli::prelude::OneBitSkin;
 use trpg_content::palette::PaletteDef;
 use trpg_content::playdate_palette::{PLAYDATE_MAP_PATH, PLAYDATE_PALETTE_PATH};
 

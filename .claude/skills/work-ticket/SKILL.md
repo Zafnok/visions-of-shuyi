@@ -203,7 +203,11 @@ Run the `run-gates` skill. Everything must pass locally before you push.
 
 A change a player sees can be checked through the MCP server's session
 tools (`start`, `step`, `scene`, `frame_png`; `.mcp.json`) besides
-`cargo shuyi frame-png`.
+`cargo shuyi frame-png`. The first `start` in a worktree builds its tool
+program and holds the call for the whole build (about two minutes); no
+other `shuyi` call goes out until it answers, so don't wait on a `step`
+sent beside it. Claude Code doesn't take the server's tasks, so nothing
+answers early (`docs/engine/README.md`, ticket 1394).
 
 Measure the change against the estimate: `cargo xtask code-lines`, the
 **added** column of `total (game)` (ADR-0092). Ratio = measured ÷

@@ -6,7 +6,7 @@
 
 use std::collections::BTreeMap;
 
-use shuyi_assets::bundle::Layer;
+use shuyi_platform::prelude::Layer;
 use trpg_content::bundle::{self, Bundle};
 use trpg_content::palette::PALETTE_PATH;
 use trpg_ui::color::UiColor;

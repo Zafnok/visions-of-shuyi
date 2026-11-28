@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use serde::Deserialize;
 use shuyi_core::bots::playtest::{Band, Check, Condition, Entrant, Measure, Measures, Want};
-use shuyi_core::{Bot, Report};
+use shuyi_core::prelude::{Bot, Report};
 use trpg_core::{
     AiWeights, BattleDef, BattleKind, BattleSetup, BattleState, Command, Difficulty, Event,
     GameMode, Objective, Outcome, Phase, UnitId,

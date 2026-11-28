@@ -12,7 +12,7 @@ use crate::screen::{FrameInput, ShuyiCtx};
 use crate::settings::{SETTINGS_KEY, TextSpeed};
 use crate::storage::{Storage, StorageError};
 use crate::tips::{TIPS_SEEN_KEY, TipsSeen};
-use shuyi_ui::Screen;
+use shuyi_platform::prelude::Screen;
 use trpg_content::ambience::AMBIENCE;
 
 fn press(s: &mut OptionsScreen, c: &mut Ctx, actions: &[Action]) -> String {

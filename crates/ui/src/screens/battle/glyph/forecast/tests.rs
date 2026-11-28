@@ -9,7 +9,7 @@ use crate::screens::battle::testing::skirmish;
 use crate::screens::battle::view::{ForecastHp, TotalView};
 use crate::words::Words;
 use insta::assert_snapshot;
-use shuyi_assets::font::CellWidths;
+use shuyi_platform::prelude::text::CellWidths;
 
 /// The lord's forecast against the brigand at `brigand_hp`, changed by
 /// `change`.

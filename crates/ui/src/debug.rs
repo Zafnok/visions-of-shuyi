@@ -320,7 +320,7 @@ mod tests {
     use crate::color::tests::game_palette;
     use crate::input::Action;
     use crate::screen::FrameInput;
-    use shuyi_ui::Screen;
+    use shuyi_platform::prelude::Screen;
     use shuyi_ui::debug::glyph::{
         GLYPHS_PER_ROW, SWATCH_COLUMNS, SWATCH_W, palette_top, panels_top, panels_top_for,
     };

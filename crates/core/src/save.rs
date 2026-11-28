@@ -32,7 +32,7 @@
 use crate::prelude::*;
 
 use serde::{Deserialize, Serialize};
-use shuyi_core::save::SaveFormat;
+use shuyi_core::prelude::SaveFormat;
 
 use crate::campaign::Campaign;
 use crate::history::BattleHistory;

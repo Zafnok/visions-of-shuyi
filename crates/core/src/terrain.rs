@@ -9,7 +9,7 @@ pub struct MovementTypeId(pub u8);
 
 /// Index of a terrain in [`TerrainTable`]: the tactics kit's terrain id
 /// (`shuyi_core::TerrainId`, ticket 1115).
-pub use shuyi_core::TerrainId;
+pub use shuyi_core::prelude::TerrainId;
 
 /// The game rules of one terrain type.
 #[derive(Debug, Clone, PartialEq, Eq)]

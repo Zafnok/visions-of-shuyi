@@ -17,7 +17,7 @@ use std::fs;
 use std::path::Path;
 
 use shuyi_cli::export::playdate::audio as bake;
-use shuyi_cli::game::GameAudio;
+use shuyi_cli::prelude::GameAudio;
 use trpg_content::ambience::AMBIENCE;
 use trpg_content::audio::{self, AudioManifest};
 

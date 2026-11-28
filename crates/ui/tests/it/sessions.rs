@@ -13,8 +13,7 @@
 
 use std::path::PathBuf;
 
-use shuyi_platform::harness::{assert_session, check_session};
-use shuyi_platform::session::{SessionRecord, Stamps};
+use shuyi_platform::prelude::test::{SessionRecord, Stamps, assert_session, check_session};
 use trpg_ui::harness::Core;
 use trpg_ui::screens::BattleScreen;
 use trpg_ui::start::{Startup, start};

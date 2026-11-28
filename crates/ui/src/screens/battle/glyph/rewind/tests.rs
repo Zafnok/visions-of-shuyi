@@ -4,7 +4,7 @@
 use super::*;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
-use shuyi_assets::font::CellWidths;
+use shuyi_platform::prelude::text::CellWidths;
 
 #[test]
 fn wrap_keeps_lines_within_the_panel_and_indents_the_rest() {

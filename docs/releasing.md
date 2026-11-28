@@ -118,37 +118,35 @@ gh release download debug-v0.2.0 -R Zafnok/visions-of-shuyi-assets -p '*windows-
 
 It holds the program's symbols and line tables at the same places as the
 shipped program (`scripts/check-release-package.sh` checks it), so a
-code address in the shipped program reads as a function, file and line
-(MSYS2's binutils on Windows: `addr2line`, `objdump`).
+code address in the shipped program reads as a function, file and line.
 
 **Read a player's report** (`crash-<when>.ron`, from the game's data
 folder; ticket 0918), with the `logs/latest.log` they sent beside it
 (`docs/session-records.md`, *The log file*: the panic's line and the
-warnings before it). Its `game` names the version and its `target` the
-package (`windows x86_64 release`). Its `backtrace` names nothing in a
-release, but its `frames` are the stack as offsets into the program
-(engine ticket 2598), innermost first; `offset: None` is a frame in a
-system library. With that version's debug file, in Git Bash or a Linux
-shell:
+warnings before it), and the debug file of the version its `game` names
+(its `target` names the package: `windows x86_64 release`):
 
 ```bash
-debug=dist/debug/visions-of-shuyi-0.2.0-windows-x64.debug
-report=crash-1700000000123.ron
-base=$(objdump -p "$debug" | awk '/^ImageBase/ {print "0x" $2}')
-base=$((${base:-0}))
-grep -o 'offset: Some([0-9]*)' "$report" | grep -o '[0-9]\+' |
-  while read -r offset; do printf '0x%x\n' $((base + offset - 1)); done |
-  addr2line -f -C -i -p -e "$debug"
+cargo shuyi crash crash-1700000000123.ron --symbols dist/debug/visions-of-shuyi-0.2.0-windows-x64.debug
 ```
 
-`base` is the image base the Windows program was linked at (`objdump`
-prints none for Linux, whose offsets are the file's own addresses, so it
-is 0 there). Each offset is where a call returns to, so 1 is taken off to
-land on the call's line. The first lines are the engine's crash hook and
-the standard library's panic; the panicking function follows them, at
-the report's `location`. A line of `??` is a frame the debug file
-doesn't know: a debug file of another version, or code outside the
-program.
+It needs no game (ticket 1393, engine tickets 2520 and 3441): the panic's
+message and place, the versions, the frame, the screen on top, the log's
+last lines, whether the report holds a battle record (`a record of play:
+replay --crash replays it`, below), then the stack's `frames`, innermost
+first, each named with its function, file and line, inlined frames
+included. `--json` gives the same as JSON (`has_record`, `frames`). The
+first frames are the engine's crash hook and the standard library's
+panic; the panicking function follows them, at the report's `location`.
+`in another module` is a frame in a system library. Without `--symbols`
+the frames are offsets into the program.
+
+- `SH3020` (`cargo shuyi explain SH3020`): the file isn't a debug file,
+  the package's program or something else given in its place.
+- A `limits` line saying that N of M frames fall outside every function:
+  the debug file is of another version. Not every wrong file says so: a
+  debug file of another build can name frames with functions that never
+  ran there, so fetch the one whose version is the report's `game`.
 
 **Why there.** The file is as private as the content it embeds (ADR-0117
 §4), so it can't be on this repository's release or an artifact. Compared:

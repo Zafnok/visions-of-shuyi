@@ -14,7 +14,7 @@ use std::path::Path;
 
 use trpg_content::FontAtlasDef;
 
-use shuyi_cli::codec::{decode_png, encode_png};
+use shuyi_cli::prelude::{decode_png, encode_png};
 
 /// One design: a glyph in a colour on a background with a border.
 struct Option_ {
@@ -189,8 +189,8 @@ impl Atlas {
 
 #[cfg(test)]
 mod tests {
-    use shuyi_cli::Project;
     use shuyi_cli::app_info;
+    use shuyi_cli::prelude::Project;
     use shuyi_cli::project::AppPart;
 
     use super::*;

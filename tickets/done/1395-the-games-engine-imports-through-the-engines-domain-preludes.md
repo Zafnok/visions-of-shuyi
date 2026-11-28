@@ -5,10 +5,10 @@ type: infra
 milestone: M1 Engine
 model: haiku-4.5 / gpt-6-luna
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1395 — The game's engine imports through the engine's domain preludes
@@ -85,13 +85,13 @@ None.
 
 ## Acceptance criteria
 
-- [ ] No `use` in `crates/` names a deep engine path for an item a prelude
+- [x] No `use` in `crates/` names a deep engine path for an item a prelude
       its crate links re-exports (a `grep` per prelude in the completion
       notes, with the counts before and after).
-- [ ] No snapshot or test changes besides its `use` lines.
-- [ ] The Playdate `no_std` builds of `trpg-core`, `trpg-content` and
+- [x] No snapshot or test changes besides its `use` lines.
+- [x] The Playdate `no_std` builds of `trpg-core`, `trpg-content` and
       `trpg-ui` still build (`run-gates`).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -99,5 +99,54 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** Every engine `use` whose item a prelude re-exports, in a crate
+(and a context) that links that prelude, now names the prelude: 61 files (core 4, bots 6, ui 28, tools 22, story-preview 1),
+`use` lines only (+94 / −102 after `cargo fmt`). A `use` that mixed covered
+and uncovered items was split: the covered ones go to the prelude, the rest
+keep their path.
+
+How it was found: a script read the three preludes' `pub use` trees at pin
+`230080db` (with each crate's root re-exports, so `shuyi_core::grid::Grid`
+and `shuyi_core::Grid` are both the prelude's `Grid`), parsed every `use`
+tree in `crates/`, and moved each leaf the statement's context links. The
+context per statement: `shuyi_core::prelude` in `trpg-core`, `trpg-bots`,
+`trpg-ui`, `trpg-tools` and `trpg-content`'s tests (a dev-dependency);
+`shuyi_platform::prelude::*` in `trpg-tools`, and in `trpg-ui` only in its
+tests and in code behind `cfg(feature = "std")` or `cfg(test)` (a gated
+module, a gated `mod … {}` or an attribute on the `use`), so the `no_std`
+build is unchanged; `shuyi_cli::prelude` in `trpg-tools`.
+
+Leaves moved, before → after (the same check run again after the rewrite
+finds none left, by any path spelling):
+
+| Prelude | Deep paths before | After |
+| --- | --- | --- |
+| `shuyi_core::prelude` | 21 | 0 |
+| `shuyi_cli::prelude` | 72 | 0 |
+| `shuyi_platform::prelude` (top) | 24 | 0 |
+| `shuyi_platform::prelude::text` | 16 | 0 |
+| `shuyi_platform::prelude::test` | 21 | 0 |
+| `shuyi_platform::prelude::grid` | 2 | 0 |
+| `shuyi_platform::prelude::audio` | 1 | 0 |
+| `shuyi::prelude` (facade, `trpg-story-preview`) | 1 | 0 |
+
+What stays deep, as the ticket's *Out* says: `shuyi_assets::*` and
+`shuyi_ui::*` items no prelude holds; items a prelude holds but the context
+doesn't link (`trpg-ui`'s `no_std` code, such as `shuyi_assets::font::CellWidths`
+in the skins; `trpg-content`'s and `trpg-bots`' playtest and asset types,
+whose prelude is `shuyi-platform`'s); module globs that re-export a whole
+engine module (`pub use shuyi_ui::storage::*`); modules imported as
+modules (`shuyi_core::path`, `shuyi_cli::contract::check`); and
+`crates/app/src/app_info.rs`'s `shuyi::platform::AppInfo`, which `cargo
+shuyi app-info` writes and checks (the engine's own `imports.ron` allows
+it for the same reason).
+
+Deviations: `trpg-story-preview`'s one `use` (`shuyi::assets::bundle::Layer`
+→ `shuyi::prelude::Layer`) was included, though the ticket's *In* doesn't
+name it, because the acceptance criterion covers all of `crates/`
+(`trpg-content`'s tests were checked too and name no covered item).
+
+Gates: every `run-gates` command passed locally, the three Playdate `no_std` builds among them; `cargo test --workspace` unchanged and green. PR size about 270 lines. `pr-size` flagged `crates/tools/src/playtest.rs` (engine#2532's marker): a dated line in 1207 says the `use` change needs nothing there.
+
+Engine friction: none: `use` lines only. No follow-up tickets. Nothing
+for Nick: no behavior change.
