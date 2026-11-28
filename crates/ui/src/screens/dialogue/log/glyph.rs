@@ -7,7 +7,7 @@
 
 use super::{LogView, RowKind};
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::portrait::draw_portrait_in;
 use crate::prelude::*;
 use crate::screen::Ctx;
@@ -42,8 +42,9 @@ pub fn paint(ctx: &Ctx, view: &LogView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     let panel = buf.bounds();
-    buf.fill_rect(panel, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(panel, BoxStyle::Single, c(UiColor::PanelBorder), bg);
+    let look =
+        PanelLook::new(BoxStyle::Single, c(UiColor::Text), bg).with_border(c(UiColor::PanelBorder));
+    buf.panel(panel, &look, None);
     let title = format!(" {} ", view.title);
     buf.print(panel.x + 3, panel.y, &title, c(UiColor::TextHighlight), bg);
     let mut help = StyledText::from(" ");

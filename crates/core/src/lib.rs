@@ -15,6 +15,7 @@ mod prelude {
 
 pub mod ai;
 pub mod art;
+pub mod bare_id;
 pub mod battle;
 pub mod camp;
 pub mod campaign;
@@ -36,6 +37,8 @@ pub mod spell;
 pub mod stats;
 pub mod support;
 pub mod terrain;
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
 pub mod unit;
 pub mod weapon;
 pub mod worldmap;

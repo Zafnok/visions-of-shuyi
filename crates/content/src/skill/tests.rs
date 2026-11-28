@@ -1,11 +1,10 @@
 //! Tests of the skill file: the embedded data matches `progression.md`, and
 //! every validation rule reports its error.
 
-use trpg_core::{
-    ClassDef, ClassId, CombatMods, Condition, StatKind, TimedMods, UnitTags, WeaponKind,
-};
+use trpg_core::{ClassDef, CombatMods, Condition, StatKind, TimedMods, WeaponKind};
 
 use super::*;
+use trpg_core::testing;
 
 fn embedded() -> SkillTable {
     load().unwrap_or_else(|e| panic!("{e:?}"))
@@ -525,24 +524,11 @@ fn errors_point_at_the_skill_and_parse_errors_have_a_position() {
 
 fn class(id: &str, active: Option<&str>, passives: &[&str]) -> ClassDef {
     ClassDef {
-        id: ClassId(id.into()),
-        name: id.into(),
-        tier: 1,
-        movement_type: trpg_core::MovementTypeId(0),
         move_points: 5,
         base: trpg_core::Stats::default(),
-        growths: trpg_core::Growths::default(),
-        weapons: vec![],
-        max_armour: None,
-        tags: UnitTags::default(),
-        promotes_to: vec![],
         active: active.map(|s| SkillId(s.into())),
         passives: passives.iter().map(|s| SkillId((*s).into())).collect(),
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
-        spells: vec![],
-        affinities: vec![],
+        ..testing::class(id)
     }
 }
 

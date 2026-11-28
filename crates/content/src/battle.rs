@@ -8,14 +8,14 @@ use alloc::collections::{BTreeMap, BTreeSet};
 use serde::Deserialize;
 use trpg_core::{
     AiBehavior, BattleDef, BattleKind, BattleMap, BattleMusic, BattleNote, CharacterId, ClassTable,
-    Defeat, Difficulty, Faction, ItemDef, ItemId, ItemTable, Leftovers, Level, Loot, Objective,
-    PlayerSlot, Pos, Reinforcement, Role, TerrainId, TerrainTable, TileRect, Trigger, Turn, Unit,
-    UnitId, VillageGoal, default_map_label,
+    Defeat, Difficulty, Faction, ItemDef, ItemId, ItemTable, Leftovers, Level, LoadoutDef, Loot,
+    Objective, PlayerSlot, Pos, Reinforcement, Role, TerrainId, TerrainTable, TileRect, Trigger,
+    Turn, Unit, UnitId, VillageGoal, default_map_label,
 };
 
 use crate::audio::AudioManifest;
 use crate::bundle;
-use crate::character::{CharacterTable, RawLoadout, character_unit, check_map_labels};
+use crate::character::{CharacterTable, character_unit, check_map_labels};
 use crate::dialogue::DialogueTable;
 use crate::error::ContentError;
 use crate::lighting::Lighting;
@@ -183,7 +183,7 @@ struct RawEnemy {
     #[serde(default)]
     ai: AiBehavior,
     #[serde(default)]
-    loadout: Option<RawLoadout>,
+    loadout: Option<LoadoutDef>,
     #[serde(default)]
     boss: bool,
     /// A non-combat unit (a villager, a wild beast): no arts or actives.
@@ -614,7 +614,7 @@ impl<'a, 'r> Checker<'a, 'r> {
                     template.level = level;
                 }
                 if let Some(loadout) = &e.loadout {
-                    template.loadout = loadout.to_def();
+                    template.loadout = loadout.clone();
                 }
                 template.unit(id, refs.classes, refs.items, Faction::Enemy, at)
             }
@@ -630,7 +630,7 @@ impl<'a, 'r> Checker<'a, 'r> {
                 }
                 let mut def = def.clone();
                 if let Some(loadout) = &e.loadout {
-                    def.loadout = loadout.to_def();
+                    def.loadout = loadout.clone();
                 }
                 character_unit(&def, id, refs.classes, refs.items, Faction::Enemy, at)
             }

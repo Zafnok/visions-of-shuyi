@@ -10,7 +10,8 @@ use super::banner::{BannerKind, PHASE_BANNER_S};
 use super::info;
 use super::objective;
 use super::testing::{Stacked, wait};
-use super::tests::{frame, lord_menu, quick, step};
+use super::testing::{frame, quick, step};
+use super::tests::lord_menu;
 use super::view::{
     BannerView, BattleMenuView, DialogView, MenuPlace, MessageKind, MessageView, NotesView,
 };

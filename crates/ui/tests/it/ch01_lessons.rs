@@ -10,11 +10,11 @@
 //! without the game's content; the lessons' mechanism is tested on the
 //! test lesson (`lessons.rs`, `screens/battle/lesson_tests.rs`).
 
+use crate::support::{battle, skip_scenes};
 use trpg_content::bundle::skip_without_the_game;
 use trpg_core::{Phase, Pos, TutorialLevel};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
-use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::mode::{MenuEntry, Mode, list_entry};
 use trpg_ui::screens::battle::rewind::RewindScreen;
 
@@ -48,22 +48,6 @@ fn downs(level: TutorialLevel) -> &'static str {
         TutorialLevel::Short => "Down",
         TutorialLevel::None => "Down Down",
     }
-}
-
-/// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
-fn skip_scenes(h: &mut Harness) {
-    for _ in 0..8 {
-        // A chapter's title card first (0812): Confirm closes it.
-        if h.top_screen() == "chapter_card" {
-            h.keys("f");
-            continue;
-        }
-        if h.top_screen() != "dialogue" {
-            return;
-        }
-        h.keys("d f");
-    }
-    panic!("the scenes never end: {:?}", h.screens());
 }
 
 /// Chapter 1 from New Game in Classic at tutorial `level`, with the lessons
@@ -100,10 +84,6 @@ fn start_chapter_1(mut h: Harness, level: TutorialLevel, without: &[&str]) -> Ha
         .map(|c| c.tutorial);
     assert_eq!(campaign, Some(level));
     h
-}
-
-fn battle(h: &Harness) -> &BattleScreen {
-    h.battle().unwrap_or_else(|| panic!("no battle"))
 }
 
 fn shown(h: &Harness) -> Option<&str> {

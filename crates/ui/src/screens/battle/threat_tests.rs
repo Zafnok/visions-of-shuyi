@@ -10,6 +10,7 @@ use trpg_core::{
     WeaponInstance, WeaponKind, WeaponRank,
 };
 
+use super::testing::p;
 use super::testing::{Stacked, battle_with, quick_units, skirmish_charged};
 use super::threat::KeptThreat;
 use super::{BattleScreen, quick_battle, threat_enemies};
@@ -21,10 +22,6 @@ use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 
 const LORD: UnitId = UnitId(1);
-
-fn p(x: i32, y: i32) -> Pos {
-    Pos::new(x, y)
-}
 
 /// The arrows the scene shows: the tile and the enemies' tiles.
 fn shown(s: &BattleScreen, c: &Ctx) -> Option<(Pos, Vec<Pos>)> {

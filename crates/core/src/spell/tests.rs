@@ -3,10 +3,10 @@ use std::collections::BTreeMap;
 use proptest::prelude::*;
 
 use super::*;
-use crate::class::{ClassDef, ClassId, UnitTags};
+use crate::class::{ClassDef, ClassId};
 use crate::geom::Pos;
-use crate::stats::{Growths, Stats};
-use crate::terrain::MovementTypeId;
+use crate::stats::Stats;
+use crate::testing;
 use crate::unit::{ClassRecord, Faction, UnitId};
 
 fn sid(id: &str) -> SpellId {
@@ -15,8 +15,6 @@ fn sid(id: &str) -> SpellId {
 
 fn attack(id: &str, uses: u8) -> SpellDef {
     SpellDef {
-        id: sid(id),
-        name: id.into(),
         kind: SpellKind::Attack {
             might: 5,
             hit: 90,
@@ -24,7 +22,6 @@ fn attack(id: &str, uses: u8) -> SpellDef {
             effective: vec![(UnitTag::Flying, 2)],
         },
         element: Element::Fire,
-        min_range: 1,
         max_range: 2,
         uses,
         terrain_effect: Some(TerrainEffect {
@@ -35,21 +32,15 @@ fn attack(id: &str, uses: u8) -> SpellDef {
                 damage: 5,
             },
         }),
-        no_counter: false,
+        ..testing::spell(id)
     }
 }
 
 fn heal(id: &str, uses: u8) -> SpellDef {
     SpellDef {
-        id: sid(id),
-        name: id.into(),
         kind: SpellKind::Heal { heal_power: 10 },
-        element: Element::None,
-        min_range: 1,
-        max_range: 1,
         uses,
-        terrain_effect: None,
-        no_counter: false,
+        ..testing::spell(id)
     }
 }
 
@@ -70,24 +61,9 @@ fn table() -> SpellTable {
 
 fn class(id: &str, spells: &[(u8, &str)]) -> ClassDef {
     ClassDef {
-        id: ClassId(id.into()),
-        name: id.into(),
-        tier: 1,
-        movement_type: MovementTypeId(0),
         move_points: 5,
-        base: Stats::default(),
-        growths: Growths::default(),
-        weapons: vec![],
-        max_armour: None,
-        tags: UnitTags::default(),
-        promotes_to: vec![],
-        active: None,
-        passives: vec![],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
         spells: spells.iter().map(|&(l, s)| (l, sid(s))).collect(),
-        affinities: vec![],
+        ..testing::class(id)
     }
 }
 

@@ -21,6 +21,14 @@
 # A new file under one of these folders is left out of the demo until a
 # `+` line keeps it. A new entry in a cut file is left out until its
 # `keep` line names it.
+#
+# Every language pack (`lang/<code>/`) is cut by these same lines, with no
+# line of its own (ticket 0934): its `data.ron` keeps the names, the
+# characters, the chapters and the battles the demo holds (and every entry
+# of a table it holds whole), its `dialogue/<file>.ron` goes with
+# `dialogue/<file>.dlg`, and a dialogue file of no script keeps the lines
+# and captions of the scenes the demo holds. `ui.ron` and `lang.ron` stay
+# whole.
 
 # Every chapter, battle, script, map and conversation opening, but
 # Chapter 1's. Chapter 1's scenes play on the `harrowby_yard` and

@@ -1,10 +1,11 @@
 use trpg_core::{
-    ArmourWeight, ClassId, ClassTable, CombatRules, Faction, Forecast, LoadoutDef, Pos,
-    SideForecast, TerrainRules, TerrainTable, Unit, UnitId, forecast,
+    ArmourWeight, ClassId, ClassTable, CombatRules, Faction, Forecast, LoadoutDef, MitigationStat,
+    Pos, SideForecast, TerrainRules, TerrainTable, Unit, UnitId, forecast,
 };
 
 use super::*;
 use crate::terrain::TerrainDef;
+use trpg_core::testing;
 
 fn items() -> ItemTable {
     let t = load();
@@ -27,8 +28,6 @@ fn row(
     (range, durability, price): (u32, u32, u32),
 ) -> WeaponDef {
     WeaponDef {
-        short_name: None,
-        name: name.into(),
         kind,
         rank,
         might,
@@ -37,12 +36,9 @@ fn row(
         weight,
         min_range: range,
         max_range: range,
-        damage_type: DamageType::Physical,
         durability,
-        effective: vec![],
-        arts: vec![],
         price,
-        special: None,
+        ..testing::sword_def(name)
     }
 }
 

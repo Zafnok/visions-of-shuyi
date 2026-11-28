@@ -28,6 +28,16 @@
 //!
 //! A line that matches nothing stops the build, so the list can't go
 //! stale without anyone noticing.
+//!
+//! The language packs (`lang/<code>/`) are cut by the same lines, with no
+//! line of their own (ticket 0934), once [`Plan::hold`] has told the plan
+//! the game's files: an entry of a pack's `data.ron` stays when the data
+//! the demo holds has its key (`names.<id>` and `characters.<id>.…` by the
+//! `keep` lines of their file, `chapters.<id>.…` and `battles.<id>.…` when
+//! `chapters/<id>.ron` or `battles/<id>.ron` is in the demo, any other
+//! key always); `dialogue/<file>.ron` goes with `dialogue/<file>.dlg`, and
+//! a dialogue file of no script keeps the entries of the scenes the demo
+//! holds. `ui.ron` and `lang.ron` stay whole.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Range;
@@ -61,6 +71,63 @@ pub struct Plan {
     swaps: BTreeMap<String, Vec<(String, String)>>,
     /// The paths `art` lines name, of `assets-private/game/`.
     art: BTreeSet<String>,
+    /// What the demo holds, for the cut of the language packs ([`Plan::hold`]).
+    held: Option<Held>,
+}
+
+/// What the demo holds, for the cut of a language pack (ticket 0934).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+struct Held {
+    /// Every file of the full game.
+    all: BTreeSet<String>,
+    /// The scene ids of the scripts the demo holds.
+    scenes: BTreeSet<String>,
+}
+
+/// Whether `key` is `kept` or one of its `.` forms (`retainer.first`).
+fn dotted(kept: &str, key: &str) -> bool {
+    key.strip_prefix(kept)
+        .is_some_and(|rest| rest.is_empty() || rest.starts_with('.'))
+}
+
+/// Whether `key` is a line's or a caption's of the scene `scene`:
+/// `<scene>_<8 hex>`, `_2`… on a repeat, `caption.` before a caption's.
+fn of_scene(scene: &str, key: &str) -> bool {
+    let line = key.strip_prefix("caption.").unwrap_or(key);
+    let Some(hash) = line.strip_prefix(scene).and_then(|r| r.strip_prefix('_')) else {
+        return false;
+    };
+    let Some((hex, repeat)) = hash.split_at_checked(8) else {
+        return false;
+    };
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    hex.bytes().all(|b| b.is_ascii_hexdigit())
+        && (repeat.is_empty() || repeat.strip_prefix('_').is_some_and(digits))
+}
+
+/// The scene ids a script's `@scene` lines open.
+fn scenes_of(script: &str) -> impl Iterator<Item = &str> {
+    script.lines().filter_map(|line| {
+        let mut words = line.split_whitespace();
+        (words.next() == Some("@scene"))
+            .then(|| words.next())
+            .flatten()
+    })
+}
+
+/// The path in its pack of a language pack's file `lang/<code>/<file>`.
+fn pack_file(path: &str) -> Option<&str> {
+    let (code, file) = path.strip_prefix("lang/")?.split_once('/')?;
+    (!code.is_empty()).then_some(file)
+}
+
+/// The script a pack's dialogue file `lang/<code>/dialogue/<file>.ron`
+/// translates by its name: `dialogue/<file>.dlg`.
+fn script_of(path: &str) -> Option<String> {
+    let file = pack_file(path)?
+        .strip_prefix("dialogue/")?
+        .strip_suffix(".ron")?;
+    Some(format!("dialogue/{file}.dlg"))
 }
 
 impl Plan {
@@ -183,10 +250,81 @@ impl Plan {
         Ok(out)
     }
 
-    /// Whether the demo leaves out the file at `path`.
-    pub fn leaves_out(&self, path: &str) -> bool {
+    /// Tells the plan every file of the full game (`files`) and how to read
+    /// a script of them, for the cut of the language packs (ticket 0934):
+    /// [`Plan::leaves_out`] then leaves out a pack's dialogue file of a
+    /// script the demo leaves out, and [`Plan::rewrite`] cuts a pack's
+    /// `data.ron` and its other dialogue files to what the demo holds.
+    pub fn hold(&mut self, files: &[String], read: impl Fn(&str) -> Option<String>) {
+        let all: BTreeSet<String> = files.iter().cloned().collect();
+        let scenes = all
+            .iter()
+            .filter(|f| f.starts_with("dialogue/") && !self.listed_out(f))
+            .filter(|f| f.rsplit_once('.').is_some_and(|(_, ext)| ext == "dlg"))
+            .filter_map(|f| read(f))
+            .flat_map(|script| scenes_of(&script).map(str::to_owned).collect::<Vec<_>>())
+            .collect();
+        self.held = Some(Held { all, scenes });
+    }
+
+    /// Whether the list leaves out the file at `path`.
+    fn listed_out(&self, path: &str) -> bool {
         self.leave_out.iter().any(|r| r.matches(path))
             && !self.keep_back.iter().any(|r| r.matches(path))
+    }
+
+    /// Whether the demo leaves out the file at `path`: the list does, or
+    /// it is a pack's dialogue file of a script the list leaves out
+    /// (once [`Plan::hold`] has told the plan the game's files).
+    pub fn leaves_out(&self, path: &str) -> bool {
+        let script_out = || {
+            let held = self.held.as_ref()?;
+            let script = script_of(path)?;
+            Some(held.all.contains(&script) && self.listed_out(&script))
+        };
+        self.listed_out(path) || script_out() == Some(true)
+    }
+
+    /// Whether the demo keeps the entry `key` of a pack's `data.ron`: the
+    /// data it holds has its key.
+    fn holds_data_key(&self, held: &Held, key: &str) -> bool {
+        let Some((table, rest)) = key.split_once('.') else {
+            return true;
+        };
+        if let Some(fields) = self.keeps.get(&format!("data/{table}.ron")) {
+            return fields.values().flatten().any(|k| dotted(k, rest));
+        }
+        let id = rest.split('.').next().unwrap_or(rest);
+        let file = format!("{table}/{id}.ron");
+        !held.all.contains(&file) || !self.listed_out(&file)
+    }
+
+    /// The cut of the language pack's file at `path` holding `text`
+    /// (without comments): `None` for a file kept whole.
+    fn cut_pack(&self, path: &str, text: &str) -> Result<Option<String>, String> {
+        let Some(file) = pack_file(path) else {
+            return Ok(None);
+        };
+        let script = script_of(path);
+        let whole = file != "data.ron" && script.is_none();
+        let held = self.held.as_ref();
+        if whole
+            || script
+                .as_ref()
+                .zip(held)
+                .is_some_and(|(s, h)| h.all.contains(s))
+        {
+            return Ok(None);
+        }
+        let held = held.ok_or("the demo's files are unknown: `Plan::hold` first")?;
+        let cut = if script.is_some() {
+            keep_by(text, None, "key", |key| {
+                held.scenes.iter().any(|scene| of_scene(scene, key))
+            })?
+        } else {
+            keep_by(text, None, "key", |key| self.holds_data_key(held, key))?
+        };
+        Ok(Some(cut))
     }
 
     /// The demo's copy of the file at `path` holding `text`: without its
@@ -214,6 +352,9 @@ impl Plan {
         };
         for (field, keep) in cuts.into_iter().flatten() {
             out = keep_entries(&out, field.as_deref(), keep).map_err(err)?;
+        }
+        if let Some(cut) = self.cut_pack(path, &out).map_err(err)? {
+            out = cut;
         }
         for (old, new) in swaps.into_iter().flatten() {
             let times = out.matches(old.as_str()).count();
@@ -438,6 +579,32 @@ pub fn keep_entries(
     field: Option<&str>,
     keep: &BTreeSet<String>,
 ) -> Result<String, String> {
+    let mut found = BTreeSet::new();
+    let out = keep_by(text, field, "id", |key| {
+        let by = keep.iter().find(|k| dotted(k, key));
+        found.extend(by.cloned());
+        by.is_some()
+    })?;
+    if let Some(missing) = keep.iter().find(|k| !found.contains(*k)) {
+        return Err(format!("keeps `{missing}`, which is no entry"));
+    }
+    Ok(out)
+}
+
+/// `text` (RON, without comments) holding only the entries of its
+/// top-level map or list (`field` `None`), or of the top-level struct's
+/// field `field`, whose key `keep` keeps. An entry's key is a map's key, a
+/// list's string, or a struct's field `key_field`.
+///
+/// # Errors
+///
+/// No such map, list or field; an entry with no key.
+fn keep_by(
+    text: &str,
+    field: Option<&str>,
+    key_field: &str,
+    mut keep: impl FnMut(&str) -> bool,
+) -> Result<String, String> {
     let shape = Shape::of(text)?;
     let bytes = text.as_bytes();
     let opening = |i: usize| shape.code[i] && matches!(bytes[i], b'(' | b'[' | b'{');
@@ -467,28 +634,17 @@ pub fn keep_entries(
             start = i + 1;
         }
     }
-    let mut found = BTreeSet::new();
     let mut kept = Vec::new();
     for entry in entries {
         let key = string_at(text, entry.start)
             .or_else(|| {
-                let id = shape.field(text, "id", inside + 1, entry.clone())?;
+                let id = shape.field(text, key_field, inside + 1, entry.clone())?;
                 string_at(text, id)
             })
             .ok_or_else(|| format!("line {}: an entry with no key", line_of(text, entry.start)))?;
-        let by = keep.iter().find(|k| {
-            key == k.as_str()
-                || key
-                    .strip_prefix(k.as_str())
-                    .is_some_and(|r| r.starts_with('.'))
-        });
-        if let Some(by) = by {
-            found.insert(by.clone());
+        if keep(key) {
             kept.push(&text[entry]);
         }
-    }
-    if let Some(missing) = keep.iter().find(|k| !found.contains(*k)) {
-        return Err(format!("keeps `{missing}`, which is no entry"));
     }
     let mut out = String::from(&text[..=open]);
     out.push('\n');

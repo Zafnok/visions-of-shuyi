@@ -51,9 +51,17 @@ says; the mods folder (1014).
 ## Implementation steps
 
 1. Read 1011's ADR, `ron_loader.rs` and each table's `load` function.
-2. Add a bundle function that returns **every** layer's copy of a path in
-   order (`bundle::all_versions(path) -> Vec<(display, &'static str)>`),
-   game first, mods after.
+2. Read every layer's copy of a path with the engine's
+   `Bundle::versions(path)` (`LayerCopy`: layer, shown name, bytes,
+   `text()`), or decode each copy with `Formats::load_versions::<K>(&bundle,
+   id)`, which names each copy's errors under its own shown name (engine
+   PR #628, engine ticket 2228, in the pin since the pin move of
+   2026-11-27). Write no bundle function of the game's own. The copies
+   come in the bundle's read order, the copy `bytes` reads first and the
+   game's last, so the merge walks them `.iter().rev()` (game first, mods
+   after). A layer over a pack read file by file can have a copy it can't
+   read: `versions` is then empty and `load_versions` answers one `SH2003`
+   error; report it, never merge without it.
 3. In `ron_loader.rs`, add `load_merged<T, K>(path, key_of: fn(&T) -> K)`
    for list-shaped tables and a map version for map-shaped ones. A mod
    file is the same shape as the game's, plus an optional `remove` field;

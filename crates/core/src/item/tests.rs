@@ -3,12 +3,11 @@ use std::collections::BTreeMap;
 use proptest::prelude::*;
 
 use super::*;
-use crate::class::{ClassId, UnitTags, WeaponProficiency};
+use crate::class::{ClassId, WeaponProficiency};
 use crate::geom::Pos;
 use crate::magic::Element;
 use crate::spell::{SpellDef, SpellId, SpellKind, SpellTable};
-use crate::stats::Growths;
-use crate::terrain::MovementTypeId;
+use crate::testing;
 use crate::unit::{Faction, UnitId};
 
 pub(crate) fn id(s: &str) -> ItemId {
@@ -17,22 +16,16 @@ pub(crate) fn id(s: &str) -> ItemId {
 
 fn weapon(kind: WeaponKind, rank: WeaponRank, range: (u32, u32)) -> ItemDef {
     ItemDef::Weapon(WeaponDef {
-        short_name: None,
-        name: "W".into(),
         kind,
         rank,
         might: 5,
         hit: 90,
-        crit: 0,
         weight: 2,
         min_range: range.0,
         max_range: range.1,
-        damage_type: DamageType::Physical,
         durability: 20,
-        effective: vec![],
-        arts: vec![],
         price: 100,
-        special: None,
+        ..testing::sword_def("W")
     })
 }
 
@@ -102,28 +95,15 @@ pub(crate) fn items() -> ItemTable {
 
 pub(crate) fn class() -> ClassDef {
     ClassDef {
-        id: ClassId("fencer".into()),
         name: "Fencer".into(),
-        tier: 1,
-        movement_type: MovementTypeId(0),
         move_points: 5,
-        base: Stats::default(),
-        growths: Growths::default(),
         weapons: vec![WeaponProficiency {
             kind: WeaponKind::Sword,
             start: WeaponRank::E,
             max: WeaponRank::C,
         }],
         max_armour: Some(ArmourWeight::Leather),
-        tags: UnitTags::default(),
-        promotes_to: vec![],
-        active: None,
-        passives: vec![],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
-        spells: vec![],
-        affinities: vec![],
+        ..testing::class("fencer")
     }
 }
 
@@ -700,15 +680,11 @@ fn loadout_error_messages() {
 /// `fire` (attack, might 5, range 1–2, 10 uses) and `heal`.
 fn spells() -> SpellTable {
     let def = |name: &str, kind| SpellDef {
-        id: SpellId::new(name),
-        name: name.into(),
         kind,
         element: Element::Fire,
-        min_range: 1,
         max_range: 2,
         uses: 10,
-        terrain_effect: None,
-        no_counter: false,
+        ..testing::spell(name)
     };
     let fire = def(
         "fire",

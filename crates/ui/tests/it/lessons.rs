@@ -5,6 +5,7 @@
 //! done after the battle is suspended and continued. The guide says a
 //! lesson's and a tip's line as its box opens (ticket 0476).
 
+use crate::support::battle;
 use trpg_content::{TipTrigger, Variant};
 use trpg_core::{Phase, TutorialLevel};
 use trpg_ui::AudioRequest;
@@ -12,7 +13,6 @@ use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::save::SUSPEND_KEY;
-use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::{Ctx, MemoryStorage, Storage};
 
 /// The test lesson.
@@ -77,11 +77,6 @@ fn from_the_lead(h: &mut Harness) {
         .wait(0.1)
         .keys("f")
         .wait(0.1);
-}
-
-fn battle(h: &Harness) -> &BattleScreen {
-    let battle = h.battle();
-    battle.unwrap_or_else(|| panic!("no battle"))
 }
 
 fn lessons_done(h: &Harness) -> Vec<String> {

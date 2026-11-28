@@ -32,7 +32,8 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 
 use crate::ch03_winnable::{chapter_3, chapter_3_won, winning_commands as chapter_3_commands};
-use crate::playthrough::{self, battle, lost, skip_scenes};
+use crate::playthrough::{self, lost};
+use crate::support::{skip_scenes, state as battle};
 
 const FIXTURE: &str = include_str!("fixtures/ch04_winning.ron");
 const ALDWATER: &str = include_str!("fixtures/aldwater_winning.ron");

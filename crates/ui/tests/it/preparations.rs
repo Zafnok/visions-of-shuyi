@@ -3,6 +3,7 @@
 //! first, with a stock of spare gear, six Potions and two Elixirs, and a
 //! scout left out of the battle who carries a Steel Bow.
 
+use crate::support::state as battle;
 use trpg_core::{BattleState, ItemId, UnitId};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, Chord, LEFT_HANDED, RIGHT_HANDED};
@@ -17,15 +18,6 @@ fn preparations() -> Harness {
     h.keys("Down f");
     assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h
-}
-
-/// The battle on screen.
-fn battle(h: &Harness) -> BattleState {
-    let battle = h.battle();
-    battle
-        .unwrap_or_else(|| panic!("no battle"))
-        .state()
-        .clone()
 }
 
 /// The lord's weapons in the battle on screen, by slot.

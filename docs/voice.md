@@ -274,9 +274,11 @@ each run in its lab environment.
 1. `cargo shuyi private-assets` (the checkout must have `voice/`).
 2. `cargo xtask voice generate`, then `cargo xtask voice status` to see
    what is left.
-3. In `assets-private/`: commit `voice/` and push.
-4. Here: `cargo shuyi private-assets --pin`, and commit
-   `assets-private.rev` in the ticket's PR.
+3. In `assets-private/`, on the ticket's branch there: commit `voice/`,
+   push the branch and open its pull request (the `content-change` skill).
+4. Here: `cargo xtask assets-pin --add`, and commit the pin file
+   (`assets-private.d/<branch>.rev`) in the ticket's PR; the game's merge
+   lands the private one (ADR-0135).
 
 ## How the game plays them
 

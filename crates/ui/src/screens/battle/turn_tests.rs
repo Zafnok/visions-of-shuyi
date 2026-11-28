@@ -8,26 +8,14 @@ use trpg_core::{ItemId, Objective, Outcome, UnitAction, danger_zone};
 use super::banner::{BannerKind, PHASE_BANNER_S};
 use super::layout::{ABOVE_HELP_BAR, MAP_VIEW, snap};
 use super::testing::{Stacked, battle_with, skirmish, through_ai_phases, wait};
+use super::testing::{quick, render};
 use super::*;
-use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::Cell;
 use crate::map_view::{RangeName, range};
 use crate::screen::tests::ctx;
 use crate::screens::popped_with;
 use crate::settings::SETTINGS_KEY;
 use crate::storage::Storage;
-
-fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
-}
-
-fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
-    let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
-    screen.draw(c, &mut buf);
-    buf
-}
 
 /// One frame of `dt` seconds with `actions`; the screen's answer.
 fn frame(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action], dt: f32) -> String {

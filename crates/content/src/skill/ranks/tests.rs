@@ -4,14 +4,14 @@
 use trpg_core::{Area, Condition, Stance, WeaponKind, WeaponReq};
 
 use super::*;
+use trpg_core::testing;
 
 fn skill(id: &str, family: &str, rank: u8, kind: SkillKind) -> SkillDef {
     SkillDef {
-        id: SkillId(id.into()),
-        name: id.into(),
         family: family.into(),
         rank,
         kind,
+        ..testing::skill(id)
     }
 }
 

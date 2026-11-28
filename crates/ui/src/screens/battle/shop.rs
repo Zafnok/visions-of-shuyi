@@ -203,6 +203,9 @@ pub struct SellConfirm {
     pub count: usize,
 }
 
+/// How many lines the shop's list shows.
+const ROWS: usize = glyph::LIST_ROWS.cast_unsigned() as usize;
+
 /// The open shop screen.
 #[derive(Debug, Clone)]
 pub struct ShopScreen {
@@ -244,6 +247,7 @@ impl ShopScreen {
             special: None,
         };
         screen.cursor = ListCursor::new(screen.offers().len());
+        screen.cursor.window(ROWS);
         Some(screen)
     }
 
@@ -401,7 +405,9 @@ impl ShopScreen {
             Action::Cancel => ShopEffect::Close,
             Action::CursorDown | Action::CursorUp => {
                 let down = action == Action::CursorDown;
-                if self.cursor.step(down, true, |_| true) {
+                let moved = self.cursor.step(down, true, |_| true);
+                self.cursor.window(ROWS);
+                if moved {
                     ShopEffect::Moved
                 } else {
                     ShopEffect::None
@@ -415,6 +421,7 @@ impl ShopScreen {
                 let forward = matches!(action, Action::CursorRight);
                 self.tab = wrap_step(self.tab, tabs, forward);
                 self.cursor = ListCursor::new(self.offers().len());
+                self.cursor.window(ROWS);
                 ShopEffect::Moved
             }
             Action::Confirm => self.choose(),
@@ -450,6 +457,7 @@ impl ShopScreen {
         }
         // A line repaired may be gone.
         self.cursor.set_len(self.offers().len());
+        self.cursor.window(ROWS);
         ShopEffect::Chosen
     }
 
@@ -544,6 +552,7 @@ impl ShopScreen {
         }
         // A line sold may be gone.
         self.cursor.set_len(self.offers().len());
+        self.cursor.window(ROWS);
         if sold == 0 {
             ShopEffect::Denied
         } else {
@@ -635,6 +644,7 @@ impl ShopScreen {
             tab: self.tab,
             lines: offers.iter().map(|o| self.line(words, o)).collect(),
             focus: self.cursor.focus(),
+            first: self.cursor.first_shown(),
             empty: ctx.text("battle.shop.empty").to_owned(),
             selling: self.sell_view(ctx, &offers),
             special: self.special_view(ctx, &offers),

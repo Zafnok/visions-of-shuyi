@@ -6,6 +6,7 @@
 //! data), not from the glyphs a skin painted; the snapshots pin the glyph
 //! look, pictures included.
 
+use crate::support::title;
 use insta::assert_snapshot;
 use shuyi_assets::target::Quit;
 use trpg_content::LangCode;
@@ -16,11 +17,6 @@ use trpg_ui::input::Layout;
 use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screens::title::TitleView;
 use trpg_ui::screens::{LayoutPickerScreen, TitleScreen};
-
-/// A launch after the right-handed layout was picked.
-fn title() -> Harness {
-    Harness::with_layout(RIGHT_HANDED)
-}
 
 /// The title screen on the stack, as it shows itself now.
 fn view(h: &Harness) -> TitleView {

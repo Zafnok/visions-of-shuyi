@@ -11,14 +11,11 @@ use trpg_core::Pos;
 use trpg_ui::RawInputEvent;
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::{FRAME_DT, Harness};
-use trpg_ui::input::RIGHT_HANDED;
 
 /// The Quick Battle from the title, its banners closed: the cursor on the
 /// lord at (3, 5) of a map 14 tiles wide.
 fn quick_battle() -> Harness {
-    let mut h = Harness::with_layout(RIGHT_HANDED);
-    h.keys("Down f Left f").keys("f f");
-    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    let mut h = crate::support::quick_battle();
     assert_eq!(h.cursor_tile(), Some(Pos::new(3, 5)));
     h.clear_audio();
     h

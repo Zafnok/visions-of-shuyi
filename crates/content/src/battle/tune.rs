@@ -179,7 +179,7 @@ fn entry(e: &RawEnemy) -> Entry {
         template: e.template.clone(),
         level: e.level,
         pos: e.pos,
-        loadout: e.loadout.as_ref().map(super::RawLoadout::to_def),
+        loadout: e.loadout.clone(),
         unnamed: e.template.is_some()
             && e.id.is_none()
             && e.name.is_none()

@@ -62,7 +62,7 @@ assets-private/game/tilesets/tiny_tales.png, and writes tiny_tales.ron beside it
 the terrain looks, and the unit pictures of `map-sprite-import`'s table.\n\
 --list  print which bought tiles each terrain and layer uses, and write nothing\n\n\
 Run `cargo shuyi private-assets --library` first. Afterwards commit and push in\n\
-assets-private/, then run `cargo shuyi private-assets --pin`.";
+assets-private/, then run `cargo xtask assets-pin --add`.";
 
 /// The sorted bought packs, relative to the repo root: a plain sheet
 /// (`….png`) of the mapping is named by its path under it.
