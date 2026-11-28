@@ -1,5 +1,8 @@
-//! Tests of `@if` blocks and of who is there when a scene plays (0715,
-//! ADR-0055).
+//! Tests of this game's rules on `@if` blocks and of who is there when a
+//! scene plays (0715, ADR-0055): the cast, [`check_presence`] and its
+//! property. The format's own cases (parsing, errors, printing, ids,
+//! `Scene::resolved`) are the engine's tests (`shuyi_assets::dialogue`,
+//! ticket 1231).
 
 use std::collections::BTreeSet;
 
@@ -29,46 +32,7 @@ fn ids(characters: &[&str]) -> BTreeSet<CharacterId> {
     characters.iter().map(|c| id(c)).collect()
 }
 
-/// A block for the knight with an `@else`, and one for the archer without.
-const BLOCKS: &str = "\
-@if test_knight
-test_knight: Here.
-@else
-> Nobody answers.
-@endif
-@if test_archer
-> She waves.
-@endif";
-
 // --- Parsing ------------------------------------------------------------------
-
-#[test]
-fn parses_if_blocks() {
-    let src = scene(BLOCKS);
-    let (parsed, errs) = parse_dlg("t.dlg", &src);
-    assert_eq!(errs, []);
-    assert_eq!(
-        bare(&parsed[0].scene.steps)[2..],
-        [
-            when(
-                "test_knight",
-                vec![say("test_knight", None, "Here.")],
-                vec![narrate("Nobody answers.")]
-            ),
-            when("test_archer", vec![narrate("She waves.")], vec![]),
-        ]
-    );
-    assert_eq!(parsed[0].lines.steps, [2, 3, 4, 9]);
-    // A block without an `@else` has its second part on the `@if`'s line.
-    assert_eq!(
-        parsed[0].lines.blocks,
-        [
-            vec![part(4, &[5]), part(6, &[7])],
-            vec![part(9, &[10]), part(9, &[])]
-        ]
-    );
-    assert_eq!(errors(&src), Vec::<String>::new());
-}
 
 /// Blocks nest, hold choices, and stand in a reply's reaction (indented
 /// like the rest of it), where a line still continues the one above.
@@ -141,115 +105,6 @@ fn blocks_nest_and_stand_in_reactions() {
     assert_eq!(errors(&src), Vec::<String>::new());
 }
 
-#[test]
-fn if_block_syntax_errors() {
-    let bad_id = "\"Knight\" is not a valid id; use lowercase letters, digits and _";
-    let cases: [(&str, &[&str]); 12] = [
-        ("@else\n> x", &["t.dlg:4: @else without an open @if"]),
-        ("> x\n@endif", &["t.dlg:5: @endif without an open @if"]),
-        (
-            "@if test_knight\n> a\n@else\n> b\n@else\n> c\n@endif",
-            &["t.dlg:8: @if already has an @else, on line 6"],
-        ),
-        ("@if test_knight\n> a", &["t.dlg:4: @if has no @endif"]),
-        (
-            "@if Knight\n> a\n@endif",
-            &[
-                &format!("t.dlg:4: {bad_id}"),
-                "t.dlg:4: unknown character \"Knight\"",
-            ],
-        ),
-        (
-            "@if\n> a\n@endif",
-            &[
-                "t.dlg:4: @if needs one character id",
-                "t.dlg:4: unknown character \"\"",
-            ],
-        ),
-        (
-            "@if test_knight test_archer\n> a\n@endif",
-            &[
-                "t.dlg:4: @if needs one character id",
-                "t.dlg:4: unknown character \"\"",
-            ],
-        ),
-        (
-            "@if test_knight\n> a\n@else now\n@endif soon",
-            &[
-                "t.dlg:6: @else takes nothing after it",
-                "t.dlg:7: @endif takes nothing after it",
-            ],
-        ),
-        // A reaction's block ends in its reaction.
-        (
-            "@choice\n* a: One.\n  @if test_knight\n  > x\n* b: Two.\n  > y\n@endchoice",
-            &["t.dlg:6: @if has no @endif"],
-        ),
-        (
-            "@choice\n* a: One.\n  > x\n* b: Two.\n  @if test_knight\n  > y\n@endchoice",
-            &["t.dlg:8: @if has no @endif"],
-        ),
-        // A block's lines aren't indented: an indented line continues.
-        (
-            "> x\n@if test_knight\n  > a\n@endif",
-            &["t.dlg:6: indented line doesn't continue a speech or narration line"],
-        ),
-        (
-            "> x\n@choice\n  @if test_knight\n* a: One.\n  @endif\n* b: Two.\n@endchoice",
-            &[
-                "t.dlg:6: a reaction line needs an option above it: \"* tone: text\"",
-                "t.dlg:8: @endif without an open @if",
-            ],
-        ),
-    ];
-    for (body, expected) in cases {
-        assert_eq!(errors(&scene(body)), expected, "{body}");
-    }
-}
-
-#[test]
-fn blocks_left_open_and_out_of_place() {
-    // Both left open at `@end`, the inner one first in the file's order.
-    assert_eq!(
-        errors("@scene a\n> x\n@if test_lord\n@if test_knight\n@end\n"),
-        ["t.dlg:3: @if has no @endif", "t.dlg:4: @if has no @endif"]
-    );
-    // Left open at the next scene and at the end of the file.
-    assert_eq!(
-        errors("@scene a\n> x\n@if test_lord\n@scene b\n> y\n@if test_lord\n> z\n"),
-        [
-            "t.dlg:1: scene \"a\" has no @end",
-            "t.dlg:3: @if has no @endif",
-            "t.dlg:4: scene \"b\" has no @end",
-            "t.dlg:6: @if has no @endif",
-        ]
-    );
-    assert_eq!(
-        errors("@if test_lord\n@scene a\n> x\n@end\n"),
-        ["t.dlg:1: line is outside a scene; start one with @scene <id>"]
-    );
-    // A choice in a block in a reaction is a choice in a choice.
-    let nested =
-        "> x\n@choice\n* a: One.\n  @if test_knight\n  @choice\n  @endif\n* b: Two.\n@endchoice";
-    assert_eq!(
-        errors(&scene(nested)),
-        ["t.dlg:8: @choice can't be nested inside another @choice"]
-    );
-    // Inside a choice, a block's lines are reaction lines.
-    let column_0 = "@if test_knight\n> x\n@choice\n* a: One.\n@else\n* b: Two.\n@endchoice\n@endif";
-    let inside = "inside @choice, a line is an option (\"* tone: text\"), an indented reaction \
-                  line or @endchoice";
-    assert_eq!(errors(&scene(column_0)), [format!("t.dlg:8: {inside}")]);
-    // `@endchoice` in a reaction ends the choice, and a block left open.
-    let indented = "> x\n@choice\n* a: One.\n* b: Two.\n  @if test_knight\n  @endchoice";
-    assert_eq!(errors(&scene(indented)), ["t.dlg:8: @if has no @endif"]);
-    let (parsed, _) = parse_dlg("t.dlg", &scene(indented));
-    assert!(matches!(
-        parsed[0].scene.steps.last(),
-        Some(Step::Choice { options }) if options.len() == 2
-    ));
-}
-
 // --- The scene checks ---------------------------------------------------------
 
 #[test]
@@ -258,60 +113,26 @@ fn a_blocks_character_must_be_known() {
         errors(&scene("@if ghost\n> x\n@endif")),
         ["t.dlg:4: unknown character \"ghost\""]
     );
+    // An id the format refuses, or none, is looked up too.
+    let bad_id = "\"Knight\" is not a valid id; use lowercase letters, digits and _";
+    assert_eq!(
+        errors(&scene("@if Knight\n> a\n@endif")),
+        [
+            format!("t.dlg:4: {bad_id}"),
+            "t.dlg:4: unknown character \"Knight\"".to_owned(),
+        ]
+    );
+    assert_eq!(
+        errors(&scene("@if\n> a\n@endif")),
+        [
+            "t.dlg:4: @if needs one character id",
+            "t.dlg:4: unknown character \"\"",
+        ]
+    );
     // Someone who only speaks may be asked about too.
     assert_eq!(
         errors(&scene("@if test_voice\n> x\n@endif")),
         Vec::<String>::new()
-    );
-}
-
-#[test]
-fn both_parts_leave_the_same_screen_and_caption() {
-    let screens = |with: &str, without: &str| {
-        format!(
-            "with \"test_knight\" here test_lord is on the left and {with} on the right; \
-             without, test_lord is on the left and {without} on the right; an @if block must \
-             leave the same characters on screen either way"
-        )
-    };
-    // Without an `@else`: reported on the `@if`.
-    assert_eq!(
-        errors(&scene("@if test_knight\n@right clear\n> a\n@endif")),
-        [format!("t.dlg:4: {}", screens("nobody", "test_knight"))]
-    );
-    // With one: on the `@else`.
-    assert_eq!(
-        errors(&scene(
-            "@if test_knight\n> a\n@else\n@right test_archer neutral\n> b\n@endif"
-        )),
-        [format!(
-            "t.dlg:6: {}",
-            screens("test_knight", "test_archer")
-        )]
-    );
-    let caption = "this @if block leaves a different caption with \"test_knight\" here and \
-                   without; it must leave the same caption either way";
-    assert_eq!(
-        errors(&scene(
-            "@if test_knight\n@caption Dusk\n> a\n@else\n> b\n@endif"
-        )),
-        [format!("t.dlg:7: {caption}")]
-    );
-    assert_eq!(
-        errors(&scene(
-            "@caption Dawn\n@if test_knight\n@caption Dusk\n> a\n@endif"
-        )),
-        [format!("t.dlg:5: {caption}")]
-    );
-    // The same either way: fine, and the scene goes on from there.
-    let swap = "@if test_knight\n@right test_archer neutral\n@caption Dusk\n> a\n@else\n\
-                @right test_archer sad\n@caption Dusk\n@endif\ntest_archer: Hi.\ntest_knight: Hi.";
-    assert_eq!(
-        errors(&scene(swap)),
-        [
-            "t.dlg:13: \"test_knight\" speaks but is not on screen; place them with @left or \
-             @right first"
-        ]
     );
 }
 
@@ -369,138 +190,7 @@ fn a_scene_whose_text_is_all_in_blocks_has_text() {
     assert_eq!(step(only_then).text(), None);
 }
 
-#[test]
-fn lines_in_both_parts_get_ids_in_script_order() {
-    let (parsed, _) = parse_dlg("t.dlg", &scene(NESTED));
-    let lines = parsed[0].scene.lines();
-    let texts: Vec<&str> = lines.iter().map(|l| l.text).collect();
-    assert_eq!(
-        texts,
-        [
-            "Both of us.",
-            "Only me.",
-            "Good.",
-            "She nods. Twice.",
-            "Nobody nods.",
-            "Move.",
-            "Moving."
-        ]
-    );
-    let ids: BTreeSet<&str> = lines.iter().map(|l| l.id.as_str()).collect();
-    assert_eq!(ids.len(), 7);
-    assert!(ids.iter().all(|id| id.starts_with("s_") && id.len() == 10));
-    // The same line in both parts is a repeat.
-    let (parsed, _) = parse_dlg(
-        "t.dlg",
-        "@scene s\n@if test_knight\n> x\n@else\n> x\n@endif\n@end\n",
-    );
-    let lines = parsed[0].scene.lines();
-    assert_eq!(format!("{}_2", lines[0].id), lines[1].id.as_str());
-}
-
-#[test]
-fn blocks_print_as_written() {
-    let src = scene(&format!("{BLOCKS}\n{NESTED}"));
-    let (parsed, _) = parse_dlg("t.dlg", &src);
-    // Printing puts one space after `@left`/`@right` and joins a
-    // continuation line to its line.
-    let expected = src.replace("  > She nods.\n    Twice.", "  > She nods. Twice.");
-    assert_eq!(print_scene(&parsed[0].scene), expected);
-    // An `@else` with nothing after it isn't printed.
-    let (parsed, _) = parse_dlg(
-        "t.dlg",
-        "@scene s\n@if test_knight\n> x\n@else\n@endif\n@end\n",
-    );
-    assert_eq!(
-        print_scene(&parsed[0].scene),
-        "@scene s\n@if test_knight\n> x\n@endif\n@end\n"
-    );
-}
-
 // --- Who is there -------------------------------------------------------------
-
-#[test]
-fn present_is_everyone_or_only_some() {
-    assert!(Present::Everyone.has(&id("anyone")));
-    let some = Present::only([id("test_knight")]);
-    assert!(some.has(&id("test_knight")));
-    assert!(!some.has(&id("test_archer")));
-    assert_eq!(some, Present::Only(ids(&["test_knight"])));
-}
-
-#[test]
-fn a_resolved_scene_keeps_the_parts_that_hold() {
-    let (parsed, _) = parse_dlg("t.dlg", &scene(&format!("{BLOCKS}\n{NESTED}")));
-    let scene = &parsed[0].scene;
-    let texts = |present: &Present| -> Vec<String> {
-        let resolved = scene.resolved(present);
-        assert_eq!(resolved.id, scene.id);
-        // No block is left, in the scene or in a reaction.
-        let no_blocks = |steps: &[Step]| !steps.iter().any(|s| matches!(s, Step::If { .. }));
-        assert!(no_blocks(&resolved.steps));
-        for step in &resolved.steps {
-            if let Step::Choice { options } = step {
-                assert!(options.iter().all(|o| no_blocks(&o.steps)));
-            }
-        }
-        // Each line that stays keeps its id.
-        let all = scene.lines();
-        for line in resolved.lines() {
-            assert!(all.contains(&line), "{line:?}");
-        }
-        resolved.lines().iter().map(|l| l.text.to_owned()).collect()
-    };
-    assert_eq!(
-        texts(&Present::Everyone),
-        [
-            "Here.",
-            "She waves.",
-            "Both of us.",
-            "Good.",
-            "She nods. Twice.",
-            "Move.",
-            "Moving."
-        ]
-    );
-    assert_eq!(
-        texts(&Present::only([id("test_knight")])),
-        [
-            "Here.",
-            "Only me.",
-            "Good.",
-            "Nobody nods.",
-            "Move.",
-            "Moving."
-        ]
-    );
-    assert_eq!(
-        texts(&Present::only([id("test_archer")])),
-        ["Nobody answers.", "She waves."]
-    );
-    assert_eq!(texts(&Present::only([])), ["Nobody answers."]);
-    // The steps outside blocks stay, in order.
-    let resolved = scene.resolved(&Present::only([]));
-    assert_eq!(
-        bare(&resolved.steps),
-        [
-            place(Side::Left, "test_lord", "neutral"),
-            place(Side::Right, "test_knight", "neutral"),
-            narrate("Nobody answers."),
-        ]
-    );
-}
-
-#[test]
-fn a_scene_with_nothing_left_to_say_has_no_text() {
-    let (parsed, _) = parse_dlg(
-        "t.dlg",
-        "@scene s\n@left test_lord neutral\n@if test_knight\n> x\n@endif\n@end\n",
-    );
-    let scene = &parsed[0].scene;
-    assert!(scene.has_text());
-    assert!(scene.resolved(&Present::Everyone).has_text());
-    assert!(!scene.resolved(&Present::only([])).has_text());
-}
 
 // --- The presence check ---------------------------------------------------------
 

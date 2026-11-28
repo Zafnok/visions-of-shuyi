@@ -1,4 +1,8 @@
-//! Tests of the `.dlg` parser, validator and printer.
+//! Tests of this game's dialogue: its directives ([`Stage`]), its scene
+//! rules (the cast, portraits, plain ASCII, music cues), the embedded
+//! scripts and the README's examples. The format's own cases (parsing,
+//! errors, printing, ids, `Scene::resolved`) are the engine's tests
+//! (`shuyi_assets::dialogue`, ticket 1231).
 
 use alloc::collections::BTreeMap;
 
@@ -128,77 +132,6 @@ fn scene(body: &str) -> String {
 }
 
 #[test]
-fn parses_every_line_type() {
-    let src = "\
-# a comment
-@scene ch01
-
-@caption Village of Heth, dusk
-  # an indented comment
-@left  ana neutral
-@right bors angry
-bors: You're late.
-ana[happy]: Better late: than... well.
->   The rain had not stopped.
-@right clear
-@end
-";
-    assert_eq!(
-        scenes(src),
-        [Scene {
-            id: "ch01".into(),
-            steps: vec![
-                Step::Caption {
-                    text: "Village of Heth, dusk".into()
-                },
-                place(Side::Left, "ana", "neutral"),
-                place(Side::Right, "bors", "angry"),
-                say("bors", None, "You're late."),
-                say("ana", Some("happy"), "Better late: than... well."),
-                narrate("The rain had not stopped."),
-                Step::Clear { side: Side::Right },
-            ],
-        }]
-    );
-}
-
-#[test]
-fn records_the_line_of_every_step() {
-    let (parsed, _) = parse_dlg("t.dlg", "\n@scene a\n\n> one\n  more\nx: two\n@end\n");
-    assert_eq!(parsed.len(), 1);
-    assert_eq!(parsed[0].line, 2);
-    assert_eq!(parsed[0].lines.steps, [4, 6]);
-    assert_eq!(parsed[0].file, "t.dlg");
-}
-
-#[test]
-fn continuation_lines_join_with_one_space() {
-    let src = "@scene a\nx: One\n  two   \n     three\n> Four\n  five\n\n  six\n@end\n";
-    assert_eq!(
-        scenes(src)[0].steps,
-        [say("x", None, "One two three"), narrate("Four five six")]
-    );
-}
-
-#[test]
-fn several_scenes_per_file_and_crlf() {
-    let src = "@scene a\r\n> One\r\n@end\r\n\r\n@scene b\r\n> Two\r\n  more\r\n@end";
-    assert_eq!(
-        scenes(src),
-        [
-            Scene {
-                id: "a".into(),
-                steps: vec![narrate("One")]
-            },
-            Scene {
-                id: "b".into(),
-                steps: vec![narrate("Two more")]
-            },
-        ]
-    );
-}
-
-#[test]
 fn a_valid_scene_loads() {
     let src = scene("test_lord[sad]: Hi.\n@left clear\n@left test_archer happy\ntest_archer: Yo.");
     let table = from_sources(
@@ -231,121 +164,6 @@ fn without_characters_ids_are_not_checked() {
 // --- Syntax errors ---------------------------------------------------------
 
 #[test]
-fn unknown_directive() {
-    assert_eq!(
-        errors(&scene("@center test_lord neutral\n> x")),
-        ["t.dlg:4: unknown directive \"@center\""]
-    );
-}
-
-#[test]
-fn directive_arguments() {
-    assert_eq!(
-        errors("@scene\n> x\n@end\n@scene a b\n> x\n@end x\n"),
-        [
-            "t.dlg:1: @scene needs one scene id",
-            "t.dlg:4: @scene needs one scene id",
-            "t.dlg:6: @end takes nothing after it",
-        ]
-    );
-    assert_eq!(
-        errors(&scene(
-            "@caption\n@left test_lord\n@right a b c\n@left clear now\n> x"
-        )),
-        [
-            "t.dlg:4: @caption has no text",
-            "t.dlg:5: @left needs a character id and an expression, or \"clear\"",
-            "t.dlg:6: @right needs a character id and an expression, or \"clear\"",
-            "t.dlg:7: @left needs a character id and an expression, or \"clear\"",
-        ]
-    );
-}
-
-#[test]
-fn invalid_ids() {
-    assert_eq!(
-        errors("@scene Ch-1\n@left Bors Angry\nBors[Mad]: Hi.\n@end\n"),
-        [
-            "t.dlg:1: \"Ch-1\" is not a valid id; use lowercase letters, digits and _",
-            "t.dlg:2: \"Bors\" is not a valid id; use lowercase letters, digits and _",
-            "t.dlg:2: \"Angry\" is not a valid id; use lowercase letters, digits and _",
-            "t.dlg:2: unknown character \"Bors\"",
-            "t.dlg:2: unknown expression \"Angry\"; use one of neutral, happy, angry, sad, surprised",
-            "t.dlg:3: \"Bors\" is not a valid id; use lowercase letters, digits and _",
-            "t.dlg:3: \"Mad\" is not a valid id; use lowercase letters, digits and _",
-            "t.dlg:3: unknown character \"Bors\"",
-            "t.dlg:3: unknown expression \"Mad\"; use one of neutral, happy, angry, sad, surprised",
-        ]
-    );
-}
-
-#[test]
-fn unrecognised_lines() {
-    assert_eq!(
-        errors(&scene("Hello there: friend\nJust some words\n> x")),
-        [
-            "t.dlg:4: unrecognised line; expected \"@directive\", \"> narration\", \"speaker: text\" or \"# comment\"",
-            "t.dlg:5: unrecognised line; expected \"@directive\", \"> narration\", \"speaker: text\" or \"# comment\"",
-        ]
-    );
-}
-
-#[test]
-fn empty_text() {
-    assert_eq!(
-        errors(&scene(">\ntest_lord:   \ntest_lord[sad]:\n> x")),
-        [
-            "t.dlg:4: narration has no text",
-            "t.dlg:5: \"test_lord:\" has no text",
-            "t.dlg:6: \"test_lord[sad]:\" has no text",
-        ]
-    );
-}
-
-#[test]
-fn misplaced_indented_lines() {
-    assert_eq!(
-        errors(&scene("  stray\n@caption c\n  more\n> x\n  @left clear")),
-        [
-            "t.dlg:4: indented line doesn't continue a speech or narration line",
-            "t.dlg:6: indented line doesn't continue a speech or narration line",
-            "t.dlg:8: directives can't be indented",
-        ]
-    );
-    // A speech outside a scene can't be continued either.
-    assert_eq!(
-        errors("x: hi\n  more\n"),
-        [
-            "t.dlg:1: line is outside a scene; start one with @scene <id>",
-            "t.dlg:2: indented line doesn't continue a speech or narration line",
-        ]
-    );
-}
-
-#[test]
-fn lines_outside_scenes() {
-    assert_eq!(
-        errors("> before\n@scene a\n> x\n@end\n@left test_lord neutral\n@end\n"),
-        [
-            "t.dlg:1: line is outside a scene; start one with @scene <id>",
-            "t.dlg:5: line is outside a scene; start one with @scene <id>",
-            "t.dlg:6: @end without an open @scene",
-        ]
-    );
-}
-
-#[test]
-fn missing_end() {
-    assert_eq!(
-        errors("@scene a\n> x\n@scene b\n> y\n"),
-        [
-            "t.dlg:1: scene \"a\" has no @end",
-            "t.dlg:3: scene \"b\" has no @end",
-        ]
-    );
-}
-
-#[test]
 fn non_ascii_text() {
     assert_eq!(
         errors(&scene(
@@ -364,6 +182,11 @@ fn non_ascii_text() {
             "t.dlg:8:20: unsupported character '\\t'; dialogue text is plain ASCII",
         ]
     );
+    // A reply's text too.
+    assert_eq!(
+        errors(&scene("> x\n@choice\n* a: Xyz\u{e9}.\n* b: B.\n@endchoice")),
+        ["t.dlg:6:9: unsupported character '\u{e9}'; dialogue text is plain ASCII"]
+    );
 }
 
 // --- Scene checks ----------------------------------------------------------
@@ -377,6 +200,19 @@ fn unknown_characters() {
             "t.dlg:5: unknown character \"bors\"",
             "t.dlg:6: unknown character \"mira\"",
         ]
+    );
+    // An id the format refuses is still looked up, with its expression.
+    let errs = errors("@scene a\n@left Bors Angry\n> x\n@end\n");
+    assert!(
+        errs.contains(&"t.dlg:2: unknown character \"Bors\"".to_owned()),
+        "{errs:?}"
+    );
+    assert!(
+        errs.contains(
+            &"t.dlg:2: unknown expression \"Angry\"; use one of neutral, happy, angry, sad, surprised"
+                .to_owned()
+        ),
+        "{errs:?}"
     );
 }
 
@@ -544,70 +380,6 @@ fn scene_without_text() {
     );
 }
 
-#[test]
-fn duplicate_scene_ids_across_files() {
-    let a = "@scene one\n> x\n@end\n@scene two\n> x\n@end\n";
-    let b = "\n@scene two\n> y\n@end\n@scene one\n> y\n@end\n";
-    let errs: Vec<String> = from_sources(&[("a.dlg", a), ("b.dlg", b)], None, None, None, None)
-        .err()
-        .unwrap_or_default()
-        .iter()
-        .map(ToString::to_string)
-        .collect();
-    assert_eq!(
-        errs,
-        [
-            "b.dlg:2: duplicate scene id \"two\"; first used at a.dlg:4",
-            "b.dlg:5: duplicate scene id \"one\"; first used at a.dlg:1",
-        ]
-    );
-}
-
-#[test]
-fn every_error_is_reported_in_line_order() {
-    let src = "@scene a\n@left nobody neutral\n@caption \u{2019}\n> x\n";
-    assert_eq!(
-        errors(src),
-        [
-            "t.dlg:1: scene \"a\" has no @end",
-            "t.dlg:2: unknown character \"nobody\"",
-            "t.dlg:3:10: non-ASCII punctuation '\u{2019}'; use ' instead",
-        ]
-    );
-}
-
-#[test]
-fn files_that_are_not_utf8() {
-    let ok = "@scene a
-> x
-@end
-";
-    let bad = "@scene b
-@end
-";
-    let load = |files: &[(&str, Option<&str>)]| {
-        let files: Vec<(String, Option<&str>)> =
-            files.iter().map(|&(f, s)| (f.to_owned(), s)).collect();
-        load_files(&files, None, None, None, None)
-            .map_err(|e| e.iter().map(ToString::to_string).collect::<Vec<_>>())
-    };
-    assert_eq!(
-        load(&[("a.dlg", Some(ok))]).map(|t| (t.table.scenes.len(), t.parsed.len())),
-        Ok((1, 1))
-    );
-    assert_eq!(
-        load(&[("a.dlg", Some(ok)), ("x.dlg", None)]).map(|t| t.table.scenes.len()),
-        Err(vec!["x.dlg: file is not valid UTF-8".to_owned()])
-    );
-    assert_eq!(
-        load(&[("x.dlg", None), ("b.dlg", Some(bad))]).map(|t| t.table.scenes.len()),
-        Err(vec![
-            "x.dlg: file is not valid UTF-8".to_owned(),
-            "b.dlg:1: scene \"b\" has no speech or narration".to_owned(),
-        ])
-    );
-}
-
 mod ambience;
 mod choice;
 mod deaths;
@@ -687,25 +459,6 @@ fn readme_example_is_valid() {
     );
 }
 
-#[test]
-fn side_names() {
-    assert_eq!(Side::Left.name(), "left");
-    assert_eq!(Side::Right.name(), "right");
-    assert_eq!(Side::Left.other(), Side::Right);
-    assert_eq!(Side::Right.other(), Side::Left);
-}
-
-#[test]
-fn step_text() {
-    assert_eq!(say("a", None, "hi").text(), Some("hi"));
-    assert_eq!(narrate("n").text(), Some("n"));
-    assert_eq!(Step::Caption { text: "c".into() }.text(), None);
-    assert_eq!(place(Side::Left, "a", "sad").text(), None);
-    assert_eq!(Step::Clear { side: Side::Left }.text(), None);
-    assert_eq!(music("talk_calm").text(), None);
-    assert_eq!(Step::Music(MusicLine::Stop).text(), None);
-}
-
 // --- Music ------------------------------------------------------------------
 
 /// Every error for `t.dlg`, with `@music` cues checked against the
@@ -720,70 +473,6 @@ fn errors_with_audio(src: &str) -> Vec<String> {
         .collect()
 }
 
-#[test]
-fn music_lines_parse_anywhere_in_a_scene() {
-    let src = "\
-@scene s
-@music talk_calm
-> One.
-@music  stop
-@choice
-* wry: Hm.
-  @music scene_sad
-  > Two.
-* blunt: No.
-@endchoice
-@music talk_calm
-@end
-";
-    let (parsed, errors) = parse_dlg("t.dlg", src);
-    assert_eq!(errors, []);
-    assert_eq!(
-        bare(&parsed[0].scene.steps),
-        [
-            music("talk_calm"),
-            narrate("One."),
-            Step::Music(MusicLine::Stop),
-            Step::Choice {
-                options: vec![
-                    ChoiceOption {
-                        tone: "wry".into(),
-                        text: "Hm.".into(),
-                        line: LineId::default(),
-                        steps: vec![music("scene_sad"), narrate("Two.")],
-                    },
-                    ChoiceOption {
-                        tone: "blunt".into(),
-                        text: "No.".into(),
-                        line: LineId::default(),
-                        steps: vec![],
-                    },
-                ],
-            },
-            music("talk_calm"),
-        ]
-    );
-    assert_eq!(parsed[0].lines.steps, [2, 3, 4, 5, 11]);
-    assert_eq!(parsed[0].lines.blocks[0][0].lines.steps, [7, 8]);
-    assert_eq!(errors_with_audio(src), [] as [&str; 0]);
-}
-
-#[test]
-fn music_needs_exactly_one_argument() {
-    let needs = "@music needs one music cue id, or \"stop\"";
-    assert_eq!(
-        errors(&scene(
-            "@music\n@music talk_calm scene_sad\n@music stop now\n@music Talk\n> x"
-        )),
-        [
-            format!("t.dlg:4: {needs}"),
-            format!("t.dlg:5: {needs}"),
-            format!("t.dlg:6: {needs}"),
-            "t.dlg:7: \"Talk\" is not a valid id; use lowercase letters, digits and _".to_owned(),
-        ]
-    );
-}
-
 /// The music example in `assets/dialogue/README.md` is valid and names
 /// real music cues.
 #[test]
@@ -794,31 +483,6 @@ fn readme_music_example_is_valid() {
     assert_eq!(parsed[0].scene.id, "ch01_bad_news");
     assert_eq!(parsed[0].scene.steps[0], music("talk_calm"));
     assert_eq!(parsed[0].scene.steps[4], music("scene_sad"));
-}
-
-#[test]
-fn music_line_arguments() {
-    assert_eq!(MusicLine::Cue("talk_calm".into()).arg(), "talk_calm");
-    assert_eq!(MusicLine::Stop.arg(), "stop");
-    assert_eq!(MusicLine::STOP, "stop");
-}
-
-#[test]
-fn music_prints_as_written() {
-    let scene = Scene {
-        id: "s".into(),
-        steps: vec![
-            music("talk_calm"),
-            narrate("x"),
-            Step::Music(MusicLine::Stop),
-        ],
-    };
-    let printed = print_scene(&scene);
-    assert_eq!(
-        printed,
-        "@scene s\n@music talk_calm\n> x\n@music stop\n@end\n"
-    );
-    assert_eq!(scenes(&printed), [scene]);
 }
 
 /// `@music` must name a music cue of `assets/audio/audio.ron`: not an
@@ -870,19 +534,13 @@ fn the_embedded_scripts_are_checked_against_the_audio_manifest() {
     assert_eq!(errs.map(|e| e.len()), Some(1));
 }
 
-// --- Round trip -------------------------------------------------------------
+// --- Round trip of the game's directives -------------------------------------
+//
+// The engine's own round trip covers every step of the format; these are
+// the lines the game adds.
 
 fn arb_id() -> impl Strategy<Value = String> {
-    "[a-z][a-z0-9_]{0,8}".prop_filter("reserved", |s| s != "clear")
-}
-
-/// Printable ASCII, no spaces at either end.
-fn arb_text() -> impl Strategy<Value = String> {
-    "[!-~]([ -~]{0,40}[!-~])?"
-}
-
-fn arb_side() -> impl Strategy<Value = Side> {
-    prop_oneof![Just(Side::Left), Just(Side::Right)]
+    "[a-z][a-z0-9_]{0,8}"
 }
 
 /// No brightness, or one from 1% to 100%.
@@ -890,109 +548,41 @@ fn arb_bright() -> impl Strategy<Value = Option<Bright>> {
     proptest::option::of(1u8..=100).prop_map(|n| n.and_then(Bright::new))
 }
 
-/// Any step but a choice.
-fn arb_simple_step() -> impl Strategy<Value = Step> {
+/// Any of the game's directives.
+fn arb_stage() -> impl Strategy<Value = Stage> {
+    let at = || (0..100, 0..100).prop_map(|(x, y)| Pos::new(x, y));
     prop_oneof![
-        arb_text().prop_map(|text| Step::Caption { text }),
-        (arb_side(), arb_id(), arb_id()).prop_map(|(side, c, expression)| Step::Place {
-            side,
-            character: CharacterId(c),
-            expression,
-        }),
-        arb_side().prop_map(|side| Step::Clear { side }),
-        (arb_id(), proptest::option::of(arb_id()), arb_text()).prop_map(|(s, expression, text)| {
-            Step::Say {
-                direction: None,
-                speaker: CharacterId(s),
-                expression,
-                text,
-                line: LineId::default(),
-            }
-        }),
-        // Narration opening `(…):` would read as `> (direction): text`.
-        arb_text()
-            .prop_filter("a direction", |t| !(t.starts_with('(') && t.contains("):")))
-            .prop_map(|text| Step::Narrate {
-                direction: None,
-                text,
-                line: LineId::default(),
-            }),
-        // A cue named "stop" would print as `@music stop`.
-        arb_id()
-            .prop_filter("reserved", |s| s != MusicLine::STOP)
-            .prop_map(|cue| Step::Music(MusicLine::Cue(cue))),
-        Just(Step::Music(MusicLine::Stop)),
-        // A map named "battle", "none" or "bright" would print as those.
-        (arb_id(), 0..100, 0..100, arb_bright())
+        // A map named "battle" or "none" would print as those.
+        (arb_id(), at(), arb_bright())
             .prop_filter("reserved", |(m, ..)| m != PlaceLine::BATTLE
-                && m != PlaceLine::NONE
-                && m != Bright::WORD)
-            .prop_map(
-                |(map, x, y, bright)| Step::Directive(Stage::Setting(PlaceLine::Map {
-                    map,
-                    at: Pos::new(x, y),
-                    bright,
-                }))
-            ),
-        (0..100, 0..100, arb_bright()).prop_map(|(x, y, bright)| Step::Directive(Stage::Setting(
-            PlaceLine::Battle {
-                at: Pos::new(x, y),
-                bright,
-            }
-        ))),
-        Just(Step::Directive(Stage::Setting(PlaceLine::None))),
-        arb_id().prop_map(|id| Step::Directive(Stage::Opening(id))),
+                && m != PlaceLine::NONE)
+            .prop_map(|(map, at, bright)| Stage::Setting(PlaceLine::Map { map, at, bright })),
+        (at(), arb_bright())
+            .prop_map(|(at, bright)| Stage::Setting(PlaceLine::Battle { at, bright })),
+        Just(Stage::Setting(PlaceLine::None)),
+        arb_id()
+            .prop_filter("reserved", |a| a != AmbienceLine::NONE)
+            .prop_map(|a| Stage::Ambience(AmbienceLine::Bed(a))),
+        Just(Stage::Ambience(AmbienceLine::None)),
+        arb_id().prop_map(Stage::Opening),
+        arb_id().prop_map(|c| Stage::Dies(CharacterId(c))),
+        arb_id().prop_map(|c| Stage::Joins(CharacterId(c))),
     ]
 }
 
-/// `leaf` steps, and `@if` blocks of them, nested up to three deep.
-fn arb_with_ifs(leaf: impl Strategy<Value = Step> + 'static) -> impl Strategy<Value = Step> {
-    leaf.prop_recursive(3, 16, 3, |inner| {
-        let steps = || proptest::collection::vec(inner.clone(), 0..3);
-        (arb_id(), steps(), steps()).prop_map(|(c, then, otherwise)| Step::If {
-            character: CharacterId(c),
-            then,
-            otherwise,
-        })
-    })
-}
-
-/// Any step: choices (whose reactions have `@if` blocks) and `@if` blocks
-/// (with choices in them) included.
-fn arb_step() -> impl Strategy<Value = Step> {
-    let option = (
-        arb_id(),
-        arb_text(),
-        proptest::collection::vec(arb_with_ifs(arb_simple_step()), 0..4),
-    )
-        .prop_map(|(tone, text, steps)| ChoiceOption {
-            tone,
-            text,
-            line: LineId::default(),
-            steps,
-        });
-    arb_with_ifs(prop_oneof![
-        4 => arb_simple_step(),
-        1 => proptest::collection::vec(option, 0..4).prop_map(|options| Step::Choice { options }),
-    ])
-}
-
-fn arb_scene() -> impl Strategy<Value = Scene> {
-    (arb_id(), proptest::collection::vec(arb_step(), 0..12)).prop_map(|(id, steps)| {
-        let mut scene = Scene { id, steps };
-        scene.assign_line_ids();
-        scene
-    })
-}
-
 proptest! {
+    /// Every directive of the game prints as a line that parses back to it.
     #[test]
-    fn print_parse_round_trip(scenes in proptest::collection::vec(arb_scene(), 1..4)) {
-        let printed: Vec<String> = scenes.iter().map(print_scene).collect();
-        let (parsed, errors) = parse_dlg("t.dlg", &printed.join("\n"));
+    fn the_games_directives_print_and_parse_back(
+        stages in proptest::collection::vec(arb_stage(), 1..8),
+    ) {
+        let mut steps: Vec<Step> = stages.into_iter().map(Step::Directive).collect();
+        steps.push(narrate("x"));
+        let scene = Scene { id: "s".into(), steps };
+        let (parsed, errors) = parse_dlg("t.dlg", &print_scene(&scene));
         prop_assert_eq!(errors, []);
-        let parsed: Vec<Scene> = parsed.into_iter().map(|p| p.scene).collect();
-        prop_assert_eq!(parsed, scenes);
+        prop_assert_eq!(parsed.len(), 1);
+        prop_assert_eq!(bare(&parsed[0].scene.steps), scene.steps);
     }
 }
 

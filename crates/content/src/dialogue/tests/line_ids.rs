@@ -1,4 +1,7 @@
-//! Tests of line ids (ADR-0045 §3, ticket 0717).
+//! Tests of line ids (ADR-0045 §3, ticket 0717) that the engine's tests
+//! don't hold yet: how stable an id stays as a script changes. The format's
+//! own cases (parsing, errors, printing, ids, `Scene::resolved`) are the
+//! engine's tests (`shuyi_assets::dialogue`, ticket 1231).
 
 use shuyi_assets::dialogue::line_hash;
 
@@ -18,50 +21,6 @@ fn lines(src: &str) -> Vec<(String, String, String)> {
 /// The line ids of the one scene in `src`.
 fn ids(src: &str) -> Vec<String> {
     lines(src).into_iter().map(|(id, ..)| id).collect()
-}
-
-/// Ids are stored in translation and voice files, so these strings must
-/// never change. (Computed by hand: the low 32 bits of FNV-1a 64 over
-/// `speaker`, a newline, `text`.)
-#[test]
-fn the_hash_of_known_lines_is_fixed() {
-    assert_eq!(line_hash("a", "b"), "0415e670");
-    assert_eq!(line_hash("test_lord", "Hello."), "9e73f1df");
-    assert_eq!(line_hash(NARRATION_SPEAKER, "Hello."), "10c29f83");
-    assert_eq!(line_hash(REPLY_SPEAKER, "Hello."), "bc2c818f");
-}
-
-#[test]
-fn speech_narration_replies_and_reactions_get_ids() {
-    let src = scene(
-        "test_lord: Hello.\n> Hello.\n@choice\n* wry: Hello.\n  test_knight: Charming.\n\
-         * blunt: Move.\n  > He moves.\n@endchoice\ntest_lord: Good.",
-    );
-    let line = |id: &str, speaker: &str, text: &str| (id.into(), speaker.into(), text.into());
-    assert_eq!(
-        lines(&src),
-        [
-            line("s_9e73f1df", "test_lord", "Hello."),
-            line("s_10c29f83", ">", "Hello."),
-            line("s_bc2c818f", "*", "Hello."),
-            line("s_3bb6f82c", "test_knight", "Charming."),
-            line("s_a971fd9e", "*", "Move."),
-            line("s_62a513e2", ">", "He moves."),
-            line("s_ce2602c2", "test_lord", "Good."),
-        ]
-    );
-    assert_eq!(errors(&src), [] as [&str; 0]);
-}
-
-#[test]
-fn an_id_shows_as_its_text() {
-    let (parsed, _) = parse_dlg("t.dlg", "@scene ab\n> Hello.\n@end\n");
-    let scene = &parsed[0].scene;
-    let Some(Step::Narrate { line, .. }) = scene.steps.first() else {
-        panic!("no narration: {scene:?}");
-    };
-    assert_eq!(line.as_str(), "ab_10c29f83");
-    assert_eq!(line.to_string(), "ab_10c29f83");
 }
 
 /// The id is of the scene, the speaker and the text as written: tokens
@@ -107,27 +66,6 @@ fn scenes_without_an_end_get_ids_too() {
 }
 
 #[test]
-fn repeats_of_a_line_in_a_scene_are_numbered() {
-    let src = scene(
-        "test_lord: Go.\ntest_knight: Go.\ntest_lord: Go.\n@choice\n* wry: Go.\n  test_lord: Go.\n\
-         * blunt: No.\n@endchoice",
-    );
-    let lord = format!("s_{}", line_hash("test_lord", "Go."));
-    assert_eq!(
-        ids(&src),
-        [
-            lord.clone(),
-            format!("s_{}", line_hash("test_knight", "Go.")),
-            format!("{lord}_2"),
-            format!("s_{}", line_hash("*", "Go.")),
-            format!("{lord}_3"),
-            format!("s_{}", line_hash("*", "No.")),
-        ]
-    );
-    assert_eq!(errors(&src), [] as [&str; 0]);
-}
-
-#[test]
 fn inserting_or_moving_a_line_leaves_the_other_ids_unchanged() {
     let before = ids(&scene("test_lord: One.\ntest_knight: Two.\n> Three."));
     let inserted = ids(&scene(
@@ -150,43 +88,51 @@ fn changing_one_word_changes_that_lines_id_only() {
     assert_eq!(after[2], before[2]);
 }
 
-/// Two different lines whose hashes collide (found by search) would swap
-/// ids when reordered, so they are an error naming both.
-#[test]
-fn different_lines_with_the_same_hash_are_an_error() {
-    assert_eq!(line_hash("test_lord", "Count 52392."), "88faeb87");
-    assert_eq!(line_hash("test_lord", "Count 148280."), "88faeb87");
-    assert_eq!(
-        errors(&scene("test_lord: Count 52392.\ntest_lord: Count 148280.")),
-        [
-            "t.dlg:5: this line and line 4 (\"Count 52392.\") get the same line id hash \
-             88faeb87; reword one of them"
-        ]
-    );
-    // In a reply's reaction too.
-    let src = scene(
-        "@choice\n* wry: Hm.\n  test_lord: Count 52392.\n* blunt: No.\n  test_lord: Count 148280.\n\
-         @endchoice",
-    );
-    assert_eq!(
-        errors(&src),
-        [
-            "t.dlg:8: this line and line 6 (\"Count 52392.\") get the same line id hash \
-             88faeb87; reword one of them"
-        ]
-    );
+fn arb_id() -> impl Strategy<Value = String> {
+    "[a-z][a-z0-9_]{0,8}"
 }
 
-#[test]
-fn a_scene_built_by_hand_gets_ids_when_asked() {
-    let mut scene = Scene {
-        id: "s".into(),
-        steps: vec![narrate("Hello."), say("test_lord", None, "Hello.")],
-    };
-    assert!(scene.lines().iter().all(|l| l.id.as_str().is_empty()));
-    scene.assign_line_ids();
-    let ids: Vec<&str> = scene.lines().iter().map(|l| l.id.as_str()).collect();
-    assert_eq!(ids, ["s_10c29f83", "s_9e73f1df"]);
+/// Printable ASCII, no spaces at either end, no `(…):` that would read
+/// as a direction.
+fn arb_text() -> impl Strategy<Value = String> {
+    "[!-~]([ -~]{0,40}[!-~])?"
+        .prop_filter("a direction", |t| !(t.starts_with('(') && t.contains("):")))
+}
+
+/// A speech or narration line.
+fn arb_line() -> impl Strategy<Value = Step> {
+    prop_oneof![
+        (arb_id(), arb_text()).prop_map(|(s, text)| say(&s, None, &text)),
+        arb_text().prop_map(|text| narrate(&text)),
+    ]
+}
+
+/// Lines, choices whose reactions hold lines, and `@if` blocks of lines.
+fn arb_step() -> impl Strategy<Value = Step> {
+    let lines = || proptest::collection::vec(arb_line(), 0..3);
+    let option = (arb_id(), arb_text(), lines()).prop_map(|(tone, text, steps)| ChoiceOption {
+        tone,
+        text,
+        line: LineId::default(),
+        steps,
+    });
+    prop_oneof![
+        3 => arb_line(),
+        1 => proptest::collection::vec(option, 0..4).prop_map(|options| Step::Choice { options }),
+        1 => (arb_id(), lines(), lines()).prop_map(|(c, then, otherwise)| Step::If {
+            character: CharacterId(c),
+            then,
+            otherwise,
+        }),
+    ]
+}
+
+fn arb_scene() -> impl Strategy<Value = Scene> {
+    (arb_id(), proptest::collection::vec(arb_step(), 0..12)).prop_map(|(id, steps)| {
+        let mut scene = Scene { id, steps };
+        scene.assign_line_ids();
+        scene
+    })
 }
 
 proptest! {
@@ -212,35 +158,5 @@ proptest! {
             .filter(|id| *id != new)
             .collect();
         prop_assert_eq!(rest, before);
-    }
-}
-
-#[test]
-fn a_line_id_names_its_scene() {
-    let scene_of = |id: &str| LineId::new(id).scene_id().to_owned();
-    assert_eq!(scene_of("s_9e73f1df"), "s");
-    assert_eq!(scene_of("ch1_gate_9e73f1df"), "ch1_gate");
-    assert_eq!(scene_of("ch1_gate_9e73f1df_2"), "ch1_gate");
-    assert_eq!(scene_of("ch1_gate_9e73f1df_12"), "ch1_gate");
-    // A scene id that itself ends like a hash or a number.
-    assert_eq!(scene_of("turn_3_d962db86"), "turn_3");
-    assert_eq!(scene_of("deadbeef_9e73f1df_2"), "deadbeef");
-    // Not line ids: returned whole.
-    for odd in [
-        "",
-        "scene",
-        "scene_2",
-        "scene_xyz",
-        "scene_9e73f1d",
-        "scene_9e73f1df_x",
-        "_",
-    ] {
-        assert_eq!(scene_of(odd), odd);
-    }
-    // Every parsed line's id names the scene it is in.
-    let src = scene("test_lord: Hello.\ntest_lord: Hello.");
-    let (parsed, _) = parse_dlg("t.dlg", &src);
-    for line in parsed[0].scene.lines() {
-        assert_eq!(line.id.scene_id(), "s", "{}", line.id);
     }
 }

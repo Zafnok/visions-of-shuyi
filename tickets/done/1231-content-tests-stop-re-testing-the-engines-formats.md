@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-28
 ---
 
 # 1231 — Content tests stop re-testing the engine's formats
@@ -139,12 +139,12 @@ None.
 
 ## Acceptance criteria
 
-- [ ] None of the tests named in steps 2-6 is left, except those kept by
+- [x] None of the tests named in steps 2-6 is left, except those kept by
       step 1's or step 6's rule (named in the completion notes).
-- [ ] The tests named as kept in *Scope* and *Context* pass unchanged.
-- [ ] Only test files under `crates/content/src/` and this ticket change.
-- [ ] `cargo xtask pr-size` reports the PR under 2,000 lines.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The tests named as kept in *Scope* and *Context* pass unchanged.
+- [x] Only test files under `crates/content/src/` and this ticket change.
+- [x] `cargo xtask pr-size` reports the PR under 2,000 lines.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -153,5 +153,51 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done against the engine at the pin (`230080d`), test by test. 1230 and
+1223 are not done, so `dialogue::load`, `Lang::new` and the rest stay
+as they are; 1237 is done and touched none of the deleted tests.
+
+**Deleted** (each checked against its engine twin): every test named in
+steps 2-6, except the ones below. `print_parse_round_trip` and its
+`arb_*` generators gave way to `the_games_directives_print_and_parse_back`,
+a property over every `Stage` line (`@place` map/battle/none, with or
+without `bright`, `@ambience` bed/none, `@opening`, `@dies`, `@joins`).
+`@ambience` (ticket 1383) came after this ticket was written; it is in
+the round trip too. Helpers left with no caller went with them (`option`,
+`CHOICE`, `BLOCKS`, `files`).
+
+**Kept by step 1's rule** (the engine lacks the case):
+- `non_ascii_text`: plain ASCII is this game's rule
+  (`dialogue.rs:443`), not the format's.
+- `the_id_comes_from_the_scene_the_speaker_and_the_text_as_written`: the
+  engine doesn't check that the expression, a reply's tone and the tokens
+  as written stay out of a line id.
+- `known_name_tokens_pass`, `unknown_name_ids` (`names.rs`): the
+  capitalised `{N:...}` form and the game's hint naming `names.ron`.
+  Only `unterminated_name_token` went.
+- The gaps the ticket listed, all kept. The line-id property got its own
+  small scene generator in `line_ids.rs`, since the old one went with
+  the round trip.
+- `status_lists_what_a_pack_lacks_of_each_kind`, cut down and renamed
+  `status_lists_screen_text_then_data_then_dialogue`: the engine checks
+  what a status holds, not its order or the game's counts.
+- `an_orphan_is_paired_with_the_nearest_untranslated_line_of_its_scene`,
+  cut down to the cases the engine lacks: an orphan is not missing or
+  stale, a translated line is no candidate, a line never pairs with a
+  caption, a caption with no candidate, repeats (`_2`) and key order.
+
+**Game asserts moved** before deleting (step 1): from `invalid_ids`, an
+invalid id is still looked up as a character with its expression (into
+`unknown_characters`); from `choice_syntax_errors`, a reply's text is
+plain ASCII too (into `non_ascii_text`); from `if_block_syntax_errors`,
+an `@if` on an invalid id or no id is still looked up (into
+`a_blocks_character_must_be_known`).
+
+**Reach (step 7):** `load_files` is still reached by
+`the_embedded_scripts_are_checked_against_the_audio_manifest`;
+`lang::from_files` by every test of the embedded languages (`load`);
+`Stage::parse`/`print` by the new property; `Lang::item_name` and
+`class_name` by `the_test_pack_translates_a_little_of_every_kind`.
+
+No gameplay rule decided. Follow-up: none (porting the kept cases to the
+engine is the engine's call, outside this ticket).
