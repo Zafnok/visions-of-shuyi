@@ -213,10 +213,10 @@ completion notes.
 - **Credits:** two *Shipped items* rows (one per kit, each with its own
   link) and two entries in `credits.ron` (`barely_pixel_quest`, its recolor
   said; `barely_post_baroque`, its plate cut down), author "Barely Apes".
-- **The private pictures:** the private repository's PR #43, merged;
-  `assets-private.rev` names its merge (`80e6e856`), which also carries
-  1384's content (its game PR merged first) and not the later #44 (1378's
-  lamps, whose game PR moves the pin past it).
+- **The private pictures:** the private repository's PR #43, merged
+  before ADR-0135's pin files (0195). The base pin reached it when 1378's
+  lamps landed (`0b2df2d2`), so this PR leaves `assets-private.rev` as
+  `main` has it.
 - Friction: game production lines about 880 added against an estimate of
   900 (under 2×). PR size about 1,560 lines of this ticket's own (the
   branch also carries 1238's, under it).
