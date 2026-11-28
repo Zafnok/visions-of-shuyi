@@ -197,17 +197,6 @@ pub fn longest(token: &str) -> Option<usize> {
         .max()
 }
 
-/// Characters `text` can take once every lead token is filled in, at most
-/// (unknown tokens count as written).
-pub fn longest_len(text: &str) -> usize {
-    split_tokens(text)
-        .map(|part| match part {
-            Part::Text(t) | Part::Unclosed(t) => t.chars().count(),
-            Part::Token(t) => longest(t).unwrap_or(t.chars().count() + 2),
-        })
-        .sum()
-}
-
 /// The `{token}` splitter, from the engine (ticket 1105).
 pub use shuyi_core::text::{Part, split_tokens};
 

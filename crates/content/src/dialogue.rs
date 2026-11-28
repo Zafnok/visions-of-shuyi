@@ -472,21 +472,12 @@ pub fn check_scene(
     errors
 }
 
-/// Loads and validates every `*.dlg` file in the bundle. Character ids are
-/// checked against `characters`, expressions against the characters'
-/// `portraits`, name tokens and names written out against `names`, and
-/// `@music` cues against `audio`, when given (each is skipped if its files
-/// failed to load). Reports every error of every file.
-pub fn load(
-    characters: Option<&CharacterTable>,
-    portraits: Option<&PortraitTable>,
-    names: Option<&Names>,
-    audio: Option<&AudioManifest>,
-) -> Result<DialogueTable, Vec<ContentError>> {
-    load_scripts(characters, portraits, names, audio).map(|s| s.table)
-}
-
-/// [`load`], keeping where each scene was written.
+/// Loads and validates every `*.dlg` file in the bundle, keeping where
+/// each scene was written. Character ids are checked against
+/// `characters`, expressions against the characters' `portraits`, name
+/// tokens and names written out against `names`, and `@music` cues
+/// against `audio`, when given (each is skipped if its files failed to
+/// load). Reports every error of every file.
 pub fn load_scripts(
     characters: Option<&CharacterTable>,
     portraits: Option<&PortraitTable>,

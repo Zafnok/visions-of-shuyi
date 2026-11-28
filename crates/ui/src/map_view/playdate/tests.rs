@@ -13,7 +13,9 @@ use crate::map_view::scene::{
 };
 use crate::map_view::scene::{RangeName, range};
 use crate::map_view::skin::{MapSkin, with_looks};
-use crate::map_view::{path, threat};
+use shuyi_ui::grid::path;
+
+use crate::map_view::threat;
 use crate::onebit::{FRAME_BYTES, Font, Frame, is_white, render};
 use crate::prelude::*;
 use crate::screen::ShuyiCtx;

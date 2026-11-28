@@ -44,7 +44,7 @@ use crate::screen::Ctx;
 use crate::screens::battle::walk::SPRITE_WALK;
 use crate::settings::MapZoom;
 
-pub use shuyi_ui::grid::sprite::{side, src_rect, tile_sprite};
+pub use shuyi_ui::grid::sprite::{side, src_rect};
 
 impl MapSkin {
     /// The battle map painted from `tileset`, at the art's own size: named

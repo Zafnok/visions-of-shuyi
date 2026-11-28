@@ -5,6 +5,7 @@
 //! tiles: 23 × 20 of them in the map area at 1×, 11 × 10 at 2×).
 
 use insta::assert_snapshot;
+use trpg_content::keymap::ActionSet;
 use trpg_core::Pos;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord, PadKind};

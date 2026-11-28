@@ -17,7 +17,7 @@ use serde::Deserialize;
 use shuyi_assets::voice::{self as engine, ClipVariant};
 use trpg_core::lead::{self, LeadGender, LeadProfile, Part};
 
-use crate::dialogue::{self, DialogueTable, LineId};
+use crate::dialogue::{self, DialogueTable};
 use crate::error::ContentError;
 use crate::names::Names;
 
@@ -137,17 +137,14 @@ pub fn changes_with_gender(text: &str) -> bool {
     })
 }
 
-/// A clip's file, relative to its language's folder:
-/// `<scene id>/<line id>.ogg`, with `.m` or `.f` before `.ogg` for a
-/// gendered variant (ADR-0046 rule 2).
-pub fn clip_file(line: &LineId, variant: Variant) -> String {
-    engine::clip_file(line, variant)
-}
+/// A clip's file, relative to its language's folder (ADR-0046 rule 2).
+pub use engine::clip_file;
 
 /// Parses and validates manifest `source`, attributing errors to `file`:
 /// every clip's line exists in `dialogue`, no line has the same variant
 /// twice, a line has either one clip or an `M` and `F` pair, and `spoken`
-/// and `voice` aren't empty. Reports every problem found.
+/// and `voice` aren't empty. Reports every problem found. It fixes the
+/// engine's variant to the game's [`Variant`].
 ///
 /// A stale clip is not an error (see [`playable`]).
 pub fn from_source(

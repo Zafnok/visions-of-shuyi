@@ -54,6 +54,8 @@ pub fn check_ui_text_keys(bundle: &Bundle) -> Result<(), Vec<ContentError>> {
 
 #[cfg(test)]
 mod tests {
+    use trpg_content::keymap::ActionSet;
+
     use super::*;
     use shuyi_assets::error::codes;
     use shuyi_platform::prelude::Layer;

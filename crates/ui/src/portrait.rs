@@ -3,7 +3,7 @@
 //! Fitting a picture to an area is Shuyi Engine's
 //! ([`shuyi_ui::frame::portrait`], ticket 1108).
 
-pub use shuyi_ui::frame::portrait::{dim_opacity, draw_fitted, fit_whole_scale};
+pub use shuyi_ui::frame::portrait::{dim_opacity, draw_fitted};
 use trpg_content::Portrait;
 
 use crate::glyph_buffer::GlyphBuffer;

@@ -47,7 +47,7 @@ pub mod talk;
 pub use action::{FALL_MS, FLASH_MS, LUNGE_MS, LUNGE_TILES, action_state, facing_of};
 use combat::Duel;
 use faces::{Face, FaceLook, draw_faces, first_x};
-pub use shuyi_ui::cinematic::{Moment, Pan, ShotAt, Timeline, ease_in_out, millis};
+pub use shuyi_ui::cinematic::{Moment, Pan, Timeline, millis};
 use talk::{TalkBox, talk_at};
 
 /// A whole map as the map skin painted it, to pan over: the engine's

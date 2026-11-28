@@ -12,7 +12,7 @@ use trpg_core::{BattleDef, BattleState, Faction, Grid, Pos, TerrainId};
 use super::scene::{MapScene, UnitView};
 use crate::glyph_buffer::Rect;
 use crate::screen::Ctx;
-use crate::screens::battle::camera::Camera;
+use shuyi_ui::grid::Camera;
 
 /// How many tiles, across × down, `ctx`'s map skin fits on the whole
 /// screen: the size of a place shown behind everything.

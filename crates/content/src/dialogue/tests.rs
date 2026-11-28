@@ -622,7 +622,7 @@ mod presence;
 
 #[test]
 fn embedded_test_scene_loads() {
-    let table = load(Some(&characters()), None, Some(&names()), None);
+    let table = load_scripts(Some(&characters()), None, Some(&names()), None).map(|s| s.table);
     assert!(table.is_ok(), "{table:?}");
     let steps = table
         .ok()
@@ -859,7 +859,7 @@ fn music_must_be_a_music_cue() {
 #[test]
 fn the_embedded_scripts_are_checked_against_the_audio_manifest() {
     let mut audio = crate::audio::load().unwrap_or_default();
-    assert!(load(None, None, None, Some(&audio)).is_ok());
+    assert!(load_scripts(None, None, None, Some(&audio)).is_ok());
     let files = [(
         "t.dlg".to_owned(),
         Some("@scene s\n@music talk_calm\n> x\n@end\n"),

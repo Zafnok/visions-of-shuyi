@@ -5,14 +5,12 @@ use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::{
-    ClassDef, ClassId, ClassPoints, ClassTable, Element, GrowthValue, Growths, MovementTypeId,
-    SkillId, SpellId, StatKind, StatValue, Stats, Tier, UnitTags, WeaponProficiency,
+    Affinity, ArmourWeight, ClassDef, ClassId, ClassPoints, ClassTable, Element, GrowthValue,
+    Growths, MovementTypeId, SkillId, SpellId, StatKind, StatValue, Stats, Tier, UnitTag, UnitTags,
+    WeaponKind, WeaponProficiency, WeaponRank,
 };
 
 use crate::bundle;
-use crate::enums::{
-    RawAffinity, RawArmourWeight, RawElement, RawUnitTag, RawWeaponKind, RawWeaponRank,
-};
 use crate::error::ContentError;
 use crate::ron_loader::parse_ron;
 use crate::terrain::line_of;
@@ -48,17 +46,17 @@ struct RawClass {
     movement_type: String,
     mov: StatValue,
     #[serde(default)]
-    tags: Vec<RawUnitTag>,
-    weapons: Vec<(RawWeaponKind, RawWeaponRank, RawWeaponRank)>,
+    tags: Vec<UnitTag>,
+    weapons: Vec<(WeaponKind, WeaponRank, WeaponRank)>,
     #[serde(default)]
-    max_armour: Option<RawArmourWeight>,
+    max_armour: Option<ArmourWeight>,
     weapon_slots: u8,
     base: [StatValue; 7],
     growths: [GrowthValue; 7],
     #[serde(default)]
     spells: Vec<(u8, String)>,
     #[serde(default)]
-    affinities: Vec<(RawElement, RawAffinity)>,
+    affinities: Vec<(Element, Affinity)>,
     #[serde(default)]
     active: Option<String>,
     #[serde(default)]
@@ -185,7 +183,6 @@ impl Validator<'_> {
         let weapons = self.weapons(&c.id, &what, &c.weapons);
         let mut elements = BTreeSet::new();
         for &(element, _) in &c.affinities {
-            let element = Element::from(element);
             if !elements.insert(element) {
                 self.err(
                     &c.id,
@@ -202,8 +199,8 @@ impl Validator<'_> {
             base,
             growths: Growths(c.growths),
             weapons,
-            max_armour: c.max_armour.map(Into::into),
-            tags: UnitTags::from_tags(&c.tags.iter().map(|&t| t.into()).collect::<Vec<_>>()),
+            max_armour: c.max_armour,
+            tags: UnitTags::from_tags(&c.tags),
             promotes_to: c.promotes_to.iter().map(|p| ClassId(p.clone())).collect(),
             active: c.active.clone().map(SkillId),
             passives: c.passives.iter().map(|p| SkillId(p.clone())).collect(),
@@ -215,11 +212,7 @@ impl Validator<'_> {
                 .iter()
                 .map(|(level, s)| (*level, SpellId(s.clone())))
                 .collect(),
-            affinities: c
-                .affinities
-                .iter()
-                .map(|&(e, a)| (e.into(), a.into()))
-                .collect(),
+            affinities: c.affinities.clone(),
         }
     }
 
@@ -266,16 +259,12 @@ impl Validator<'_> {
         &mut self,
         id: &str,
         what: &str,
-        weapons: &[(RawWeaponKind, RawWeaponRank, RawWeaponRank)],
+        weapons: &[(WeaponKind, WeaponRank, WeaponRank)],
     ) -> Vec<WeaponProficiency> {
         weapons
             .iter()
             .map(|&(kind, start, max)| {
-                let p = WeaponProficiency {
-                    kind: kind.into(),
-                    start: start.into(),
-                    max: max.into(),
-                };
+                let p = WeaponProficiency { kind, start, max };
                 if p.start > p.max {
                     self.err(
                         id,

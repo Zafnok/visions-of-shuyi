@@ -9,8 +9,7 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | ------ | ---- |
 | `glyph_buffer`, `color`, `snapshot`, `console` | The 100×32 `GlyphBuffer` virtual console (cells, plus rectangles and sprites placed in pixels, and a backdrop behind see-through cells; see *What a frame holds*), palette colours, the text snapshot format |
 | `onebit` | The Playdate's one-bit renderer (ADR-0074): `render` draws a frame made with `ConsoleSpec::PLAYDATE` into a 400 × 240 one-bit `Frame` in the Playdate's layout. `playdate_map` draws each colour of the Playdate's palette (`assets/data/palettes/playdate.ron`) by its role's patterns in the pattern map beside it (`playdate@onebit.ron`, engine ADR-0026): white, black, a white-edged black glyph, grey, dots, diagonals, dashes, or an invert rectangle. `render_changed` redraws only where a frame differs from the last one drawn (ADR-0077); `reference` (tests and the `onebit-reference` feature only) is 1032's plain renderer the fast one must equal |
-| `cinema` | `view`: where a backdrop's window starts to look at a point at a zoom, stopping at the scene's edges (ADR-0048) |
-| `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks: one of the tactics kit's grid skins and the painter of this game's units, ADR-0094), the glyph skin, the one-bit Playdate skin and the sprite skin (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins), `path` (the path arrow for any tile size) and `threat` (the arrows from the enemies that could attack a tile, and the mark over each: ticket 0448). See *Map view* below |
+| `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks: one of the tactics kit's grid skins and the painter of this game's units, ADR-0094), the glyph skin, the one-bit Playdate skin and the sprite skin (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), the engine's `shuyi_ui::grid::{corners, path}` (which tiles a picture between tiles joins; the path arrow for any tile size) and `threat` (the arrows from the enemies that could attack a tile, and the mark over each: ticket 0448). See *Map view* below |
 | `input` | `Action`s, `Layout`, `Keymap`, `InputState` (key repeat) |
 | `screen` | Shuyi Engine's `Screen` trait, `Transition`, `FrameInput`, `ScreenStack` and `Ctx` (`shuyi_ui`, ADR-0080) with this game's part, `Shuyi` (`ctx.game`: the content, the campaign's mode, tutorial level and lessons, the map skin, the lead), the aliases screens are written with (`Ctx`, `FrameInput`, `Transition`) and `ShuyiCtx` (`Ctx::embedded()`, `ctx.words()`, `ctx.set_map_skin(…)`) |
 | `settings` | `Settings`: every player preference, saved as one RON record (ADR-0050): the engine's (text speed, fullscreen, theme, volumes, the layout picked) and this game's in `settings.game` (`ShuyiSettings`: speeds, combat animations, auto-end, cursor, map look and zoom). Read with `ctx.settings()`, changed with `ctx.change_settings(…)`, which saves, or (Options, ADR-0072) `ctx.preview_settings(…)` then `keep_settings` / `restore_settings` |
@@ -19,7 +18,7 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | `widgets` | The engine's `Menu` (vertical list in a box) and word wrap (`shuyi_ui::widgets`, 1112), `help` (help text that names keys, or controller buttons when a pad was pressed last), and typing a name (`name_entry`, the engine's since 1164, with the game's one-bit skin) |
 | `flow` | `FlowScreen`: the game flow (ADR-0035, ADR-0093). One screen on the stack that owns the `Campaign` and pushes the flow's screens over itself, one at a time, reading what each pops with: mode, lead, a chapter's scenes, Preparations, its battle (with its Game Over), the results of a won battle, "To be continued" |
 | `screens` | Game screens: `TitleScreen` (`screens/title`: left alone it plays the intro cinematic in time with the title song, 0819; `song` is where the cinematic's time comes from), `ModeSelectScreen`, `FamiliarityScreen` (the tutorial level, 0835; painted by the mode screen's skin), `LeadSelectScreen` (with the name grid), `PreparationsScreen` (loadouts and the pack before a battle, 0408; its Options tab is where a Classic campaign can switch to Casual), `GameOverScreen`, `ToBeContinuedScreen`, `ResultsScreen` (a won battle's gold, rewind bonus and EXP bars, then its level-up pages, 0810), `LayoutPickerScreen` (first launch, and from Options to switch layout), `OptionsScreen` (0805: from the title, the map menu and Preparations), `KeyBindingsScreen` (rebinding, 0815; opened from Options), `CreditsScreen` (0808), `DialogueScreen` (full-screen or over the map), `ClassChangeScreen` (`screens/class_change`: promotion and reclass between battles, 0603), `BattleScreen` (`screens/battle`: its `mode` state machine, `attack` targeting, `forecast` panel and combat `playback`, which runs as a mode of the battle screen, ADR-0025) |
-| `portrait` | `draw_portrait`: a portrait's PNG as one sprite item at the largest whole scale that fits the 32×16-cell frame, dimmed and/or mirrored (ADR-0043); `fit_whole_scale` for any picture in any frame |
+| `portrait` | `draw_portrait`: a portrait's PNG as one sprite item at the largest whole scale that fits the 32×16-cell frame, dimmed and/or mirrored (ADR-0043); the engine's `shuyi_ui::frame::portrait::fit_whole_scale` for any picture in any frame |
 | `debug` | Debug menu (F2 in debug builds; the engine's menu with this game's tools, `debug::menu`): glyph sampler, portrait viewer, test scene (full-screen or overlay), sprite test, class change on a test unit (promote, reclass), test cinematic (plays `assets-test/cinematics/test.ron` in a loop: a map pan, text boxes of the test scene, faces crossing, the logo), scene camera (the test map as a backdrop: pan, zoom 1× to 4×), Map skin (the glyph skin, then every tileset in turn; not saved) |
 | `dialogue` | `DialoguePlayer` (the engine's, with this game's `Hooks`: the lead's and the story's tokens, `@place` and `@opening`): plays a dialogue `Scene` one text box at a time, as it is for those `Present` when it starts (ADR-0055), and gives the `View` (portraits, speaker, text, caption) to draw |
 | `harness` | Headless test driver (tests, or the `harness` feature) |
@@ -105,7 +104,7 @@ let scene: Rc<GlyphBuffer> = Rc::new(scene);
 // 2. Mark the window: cells with no background.
 buf.fill_rect(window, Cell::see_through(' ', text));
 // 3. Where the window starts in the scene, to look at `centre` at 2×.
-let origin = cinema::view(scene_px, window_px, centre, 2);
+let origin = shuyi_ui::frame::cinema::view(scene_px, window_px, centre, 2);
 buf.set_backdrop(Rc::clone(&scene), window, origin, 2);
 // 4. Anything drawn now is over the scene.
 buf.print_fg(x, y, "Text over the scene", hi);   // glyphs, no box
@@ -116,7 +115,7 @@ buf.fill_rect(text_box, Cell::new(' ', text, panel_bg));   // a solid box
   (`Cell::see_through(glyph, fg)`); every other cell is solid and hides
   it. `print_fg` keeps a cell see-through; `print`, `set`, `fill_rect`,
   `draw_box` and `blit` make it solid.
-- `zoom` is a whole number, 1 to 4 (`cinema::MAX_ZOOM`): Nick ruled out
+- `zoom` is a whole number, 1 to 4 (`shuyi_ui::frame::cinema::MAX_ZOOM`): Nick ruled out
   smooth zoom (`docs/design/title-screen.md`, *Intro cinematic*).
   `origin_px` is in scene pixels and may be a fraction; the renderer
   rounds the scene's place to whole window pixels, so glyphs stay sharp.
@@ -491,7 +490,7 @@ fn select_opens_new_game() {
   lets both go in the next.
 - `hold("Right", 0.5)`: holds a key for 0.5 simulated seconds (so it
   repeats), then releases it. `wait(0.2)`: time passes with no input. One
-  call runs at most `MAX_FRAMES` (2 000, ~33 s); longer ones panic.
+  call runs at most the engine's `shuyi_platform::harness::MAX_FRAMES` (2 000, ~33 s); longer ones panic.
 - `top_screen()`, `screens()`, `quit_requested()`, `snapshot()`, `game()`.
 - `map_scene()`: what the battle on the stack shows on its map, as a
   `MapScene` (`None` with no battle); `map_text()`: the same as text.

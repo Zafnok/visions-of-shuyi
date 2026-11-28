@@ -173,6 +173,8 @@ pub fn key_spans(text: &StyledText) -> Vec<String> {
 /// the arrows, four for W A S D).
 #[cfg(any(test, feature = "harness"))]
 pub fn spans_of(keys: HelpKeys<'_>, actions: &[&str]) -> Vec<String> {
+    use trpg_content::keymap::ActionSet;
+
     let of = |name: &&str| match Action::from_name(name) {
         Some(action) => vec![key_name(keys, action)],
         // check-text: not player text (the cursor keys' placeholder name)

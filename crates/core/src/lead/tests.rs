@@ -115,10 +115,6 @@ fn tokens_and_their_longest_forms() {
     assert_eq!(longest("theirs"), Some(4));
     assert_eq!(longest("themself"), Some(7));
     assert_eq!(longest("bogus"), None);
-    assert_eq!(
-        longest_len("Hi {lead}, {they} {x} {"),
-        3 + 12 + 2 + 3 + 1 + 3 + 1 + 1
-    );
 }
 
 #[test]
@@ -130,10 +126,11 @@ fn round_trips_through_serde() {
 }
 
 proptest! {
-    /// Substituting never gets longer than [`longest_len`] promises, for
-    /// any name up to the limit.
+    /// Substituting never gets longer than each token's [`longest`] form
+    /// summed with the text around it, for any name up to the limit, and
+    /// leaves no token.
     #[test]
-    fn longest_len_bounds_substitution(
+    fn longest_bounds_substitution(
         name in "[A-Za-z]{1,12}",
         female_lead: bool,
         words in proptest::collection::vec(
@@ -150,7 +147,13 @@ proptest! {
         let gender = if female_lead { LeadGender::Female } else { LeadGender::Male };
         let text = words.concat();
         let out = LeadProfile::new(name, gender).substitute(&text);
-        prop_assert!(out.chars().count() <= longest_len(&text));
+        let bound: usize = split_tokens(&text)
+            .map(|part| match part {
+                Part::Text(t) | Part::Unclosed(t) => t.chars().count(),
+                Part::Token(t) => longest(t).unwrap_or(t.chars().count() + 2),
+            })
+            .sum();
+        prop_assert!(out.chars().count() <= bound);
         let left = ["{they}", "{lead}"].iter().any(|t| out.contains(t));
         prop_assert!(!left, "tokens left in {}", out);
     }

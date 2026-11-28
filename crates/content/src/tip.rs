@@ -5,6 +5,7 @@
 //! The tip schema and its checks are the engine's (`shuyi_assets::tip`,
 //! ticket 1105); the game adds its triggers ([`TipTrigger`]), its box, its
 //! placeholders and the guide who speaks every tip.
+use crate::keymap::ActionSet;
 use crate::prelude::*;
 
 use alloc::collections::BTreeMap;
