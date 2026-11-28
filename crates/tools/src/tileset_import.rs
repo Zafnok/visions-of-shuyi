@@ -52,7 +52,7 @@ use crate::map_sprite_import::{self, GAME_DIR, MapSprite, TILESET_ID};
 use crate::tileset_ron::{
     self, At, FramesText, LayerText, LookText, Place, TreeKindText, TreesText,
 };
-use shuyi_cli::codec::{decode_png, encode_png};
+use shuyi_cli::prelude::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask tileset-import [--list]\n\n\

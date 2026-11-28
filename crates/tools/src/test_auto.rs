@@ -29,7 +29,7 @@ use trpg_content::bundle::test_display_path;
 use crate::test_tileset::{Canvas, Sources, TerrainLook};
 use crate::test_units;
 use crate::tileset_ron::{self, At, FramesText, LayerText, LookText, Place};
-use shuyi_cli::codec::encode_png;
+use shuyi_cli::prelude::encode_png;
 
 /// The tileset's id.
 pub const ID: &str = "test_auto";
@@ -345,7 +345,7 @@ pub fn run(root: &Path) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use shuyi_cli::codec::decode_png;
+    use shuyi_cli::prelude::decode_png;
 
     fn sources() -> Sources {
         Sources::embedded().unwrap()

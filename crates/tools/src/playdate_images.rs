@@ -26,7 +26,7 @@ use trpg_content::playdate_images::{Job, jobs, make, touch_ups};
 use trpg_ui::ImageId;
 use trpg_ui::onebit::{Image, Images};
 
-use shuyi_cli::codec::encode_png;
+use shuyi_cli::prelude::encode_png;
 
 /// Where the pictures of `assets/` go, under the repository's root.
 pub const OUT: &str = "target/playdate/images";

@@ -24,7 +24,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 
-use shuyi_cli::codec::{decode_png, encode_png};
+use shuyi_cli::prelude::{decode_png, encode_png};
 use trpg_content::image::png_size;
 
 /// Shown for `--help` and after a bad argument.

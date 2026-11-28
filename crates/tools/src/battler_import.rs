@@ -22,7 +22,7 @@ use std::path::Path;
 use trpg_content::battler::{BACKDROP_PX, BACKDROPS_DIR, BACKDROPS_PATH, BATTLERS_DIR};
 use trpg_content::image::png_size;
 
-use shuyi_cli::codec::{decode_png, encode_png};
+use shuyi_cli::prelude::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask battler-import [--list]\n\n\

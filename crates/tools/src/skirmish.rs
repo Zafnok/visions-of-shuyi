@@ -8,14 +8,13 @@
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
 
-use shuyi_cli::contract::Answer;
-use shuyi_cli::contract::autobalance::{
-    AutobalanceInput, AutobalanceOutput, autobalance, parse_args as search_args, text,
+use shuyi_cli::contract::autobalance::{parse_args as search_args, text};
+use shuyi_cli::game::unsupported;
+use shuyi_cli::prelude::{
+    Answer, AutobalanceInput, AutobalanceOutput, AutobalancePlan, GameArg, GameLang, GameOption,
+    GameTools, Script, Shot, autobalance,
 };
-use shuyi_cli::frame_png::{Script, Shot};
-use shuyi_cli::game::{GameLang, GameOption, GameTools, unsupported};
-use shuyi_cli::{AutobalancePlan, GameArg};
-use shuyi_core::bots::playtest::Tries;
+use shuyi_platform::prelude::test::Tries;
 use trpg_bots::{
     Kind, Request, TunedBattle, Units, add_place, add_to_pool, generate, generated_knobs,
 };

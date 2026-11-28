@@ -6,13 +6,12 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use shuyi_assets::font::{CellWidths, FontAtlasDef};
-use shuyi_cli::Project;
-use shuyi_cli::codec::decode_png;
 use shuyi_cli::contract::{check, lint, playtest, replay, target};
 use shuyi_cli::font_atlas::{ATLAS_RANGES, AtlasChars, ONE_BIT_FILE, read_font};
 use shuyi_cli::frame_png::{self, Options};
 use shuyi_cli::lang_status::{self, Part};
+use shuyi_cli::prelude::{Project, decode_png};
+use shuyi_platform::prelude::text::{CellWidths, FontAtlasDef};
 
 use super::*;
 use crate::repo_root;

@@ -9,7 +9,7 @@
 //! [`xtask::content_layer`], which `check-leaks` reads too (ADR-0129);
 //! this adds the project `check-keys` scans.
 
-use shuyi_cli::Project;
+use shuyi_cli::prelude::Project;
 use trpg_content::bundle::DISPLAY_ROOT;
 
 pub use xtask::content_layer::{CONTENT, STORY, files_in};

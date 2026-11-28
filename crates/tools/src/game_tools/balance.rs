@@ -8,11 +8,9 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use shuyi_cli::contract::autobalance::AutobalanceInput;
 use shuyi_cli::game::StageWrite;
-use shuyi_cli::{AutobalancePlan, Tunable};
-use shuyi_core::Knob;
-use shuyi_core::bots::playtest::play_try;
+use shuyi_cli::prelude::{AutobalanceInput, AutobalancePlan, Tunable};
+use shuyi_platform::prelude::test::{Knob, play_try};
 use trpg_bots::{BattleEntrant, Persona, Targets, TunedBattle, is_hold, knobs, personas_from_ron};
 use trpg_content::battle::BATTLES_DIR;
 use trpg_content::battle::tune::BattleText;
