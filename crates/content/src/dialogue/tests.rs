@@ -184,7 +184,7 @@ fn non_ascii_text() {
     );
     // A reply's text too.
     assert_eq!(
-        errors(&scene("> x\n@choice\n* a: Caf\u{e9}.\n* b: B.\n@endchoice")),
+        errors(&scene("> x\n@choice\n* a: Xyz\u{e9}.\n* b: B.\n@endchoice")),
         ["t.dlg:6:9: unsupported character '\u{e9}'; dialogue text is plain ASCII"]
     );
 }
