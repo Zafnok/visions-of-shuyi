@@ -599,7 +599,7 @@ Nothing for the game: 4 PRs (#585, #588, #591, #595). #585 and #588 are the engi
 
 Nothing for the game: 13 PRs (#596, #597, #599, #600, #607, #609, #610, #616, #618, #621, #622, #624, #626). #607 and #610 are parts of 2243 and 3247 whose rows are above; #609 and #626 are the MCP server's skills, tasks and elicitation and the names agents guess (doc aliases, a plain-text API), which the game's agents get through `cargo shuyi`; the rest are the engine's benchmarks, publish list, rustdoc and link checks, site gate and README.
 
-## 2026-11-27: 10cbb98b → 230080db (11 engine PRs), #PRNUM
+## 2026-11-27: 10cbb98b → 230080db (11 engine PRs), #882
 
 | Engine PR | Ticket | What | Decision |
 | --- | --- | --- | --- |
