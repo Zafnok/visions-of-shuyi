@@ -2,8 +2,8 @@ name: Story mirror
 
 # Copies the writer's files into the private mirror
 # Zafnok/visions-of-shuyi-story (ticket 0152, ADR-0122): the scripts and
-# story documents from the private assets repository at the pin
-# (assets-private.rev), and the public files tools/story-mirror/files.txt
+# story documents from the private assets repository at the effective pin
+# (assets-private.rev with the pin files of assets-private.d/, ADR-0135), and the public files tools/story-mirror/files.txt
 # lists. Commits on top of the mirror's main, never a force push, with the
 # game's commit and the pin as trailers; then closes each mirror pull
 # request named by a `Story-PR: <n>` trailer in the pushed range: its
@@ -18,6 +18,7 @@ on:
     branches: [main]
     paths:
       - assets-private.rev
+      - assets-private.d/**
       - assets/dialogue/README.md
       - docs/design/audio.md
       - docs/design/death-and-difficulty.md
@@ -60,6 +61,7 @@ jobs:
           fetch-depth: 0
       # The scripts and the story documents at the pin (ADR-0117).
       - uses: ./.github/actions/private-assets
+        id: private
         if: steps.token.outputs.ok == 'true'
         with:
           key: ${{ secrets.PRIVATE_ASSETS_KEY }}
@@ -119,10 +121,12 @@ jobs:
           git -C mirror status --short | head -50
       - name: Commit and push
         if: steps.token.outputs.ok == 'true'
+        env:
+          PIN: ${{ steps.private.outputs.pin }}
         run: |
           set -euo pipefail
           sha=$(git rev-parse HEAD)
-          pin=$(tr -d '[:space:]' < assets-private.rev)
+          pin="$PIN"
           subject=$(git log -1 --format=%s HEAD)
           if git -C mirror rev-parse -q --verify HEAD > /dev/null && git -C mirror diff --cached --quiet; then
             echo "The mirror already holds these files."
