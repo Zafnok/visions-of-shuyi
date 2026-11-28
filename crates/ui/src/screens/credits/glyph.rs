@@ -7,7 +7,7 @@
 
 use super::view::{CreditRowKind, CreditsView};
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use shuyi_ui::screens::print_centred_styled;
@@ -50,10 +50,10 @@ pub fn paint(ctx: &Ctx, view: &CreditsView, buf: &mut GlyphBuffer) {
     let (black, bg) = (c(UiColor::Black), c(UiColor::PanelBg));
     let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
     buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
-    buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-    buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-    let title = format!(" {} ", view.title);
-    buf.print(HEADING_X, PANEL.y, &title, c(UiColor::TextHighlight), bg);
+    let look = PanelLook::new(BoxStyle::Single, text, bg)
+        .with_border(c(UiColor::PanelBorder))
+        .with_title(c(UiColor::TextHighlight));
+    buf.panel(PANEL, &look, Some(&view.title));
 
     for (y, row) in (LIST_Y..).zip(&view.rows) {
         let fg = match row.kind {

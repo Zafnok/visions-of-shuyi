@@ -9,12 +9,12 @@
 //! without the game's content; the tips' mechanism is tested on the test
 //! files (`lessons.rs`, `battle.rs`, `crates/ui/src/tips.rs`).
 
+use crate::support::{battle, skip_scenes};
 use trpg_content::TipTrigger;
 use trpg_content::bundle::skip_without_the_game;
 use trpg_core::{Pos, TutorialLevel};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
-use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::mode::Mode;
 
 // Chapter 1's party where it starts (`assets-private/content/battles/ch01.ron`).
@@ -23,22 +23,6 @@ const LEAD: Pos = Pos::new(4, 12);
 const MAGE: Pos = Pos::new(4, 13);
 /// A forest tile on Chapter 1's map (`maps/ch01.map`).
 const FOREST: Pos = Pos::new(2, 10);
-
-/// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
-fn skip_scenes(h: &mut Harness) {
-    for _ in 0..8 {
-        // A chapter's title card first (0812): Confirm closes it.
-        if h.top_screen() == "chapter_card" {
-            h.keys("f");
-            continue;
-        }
-        if h.top_screen() != "dialogue" {
-            return;
-        }
-        h.keys("d f");
-    }
-    panic!("the scenes never end: {:?}", h.screens());
-}
 
 /// Chapter 1 from New Game in Classic at `Full` on a fresh profile, with
 /// the tips and lessons on: turn 1, its scenes skipped and its banners
@@ -63,10 +47,6 @@ fn chapter_1() -> Harness {
     assert_eq!(h.cursor_tile(), Some(LEAD));
     assert_eq!(battle(&h).shown_lesson(), Some("cursor"));
     h
-}
-
-fn battle(h: &Harness) -> &BattleScreen {
-    h.battle().unwrap_or_else(|| panic!("no battle"))
 }
 
 /// Moves the cursor from where the map shows it to `to` with the arrow

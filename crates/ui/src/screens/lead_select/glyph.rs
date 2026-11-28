@@ -9,7 +9,7 @@
 use super::Row;
 use super::view::{GenderView, LeadSelectView, NameRowView};
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::portrait::draw_portrait;
 use crate::prelude::*;
 use crate::screen::Ctx;
@@ -84,8 +84,8 @@ fn paint_gender(ctx: &Ctx, buf: &mut GlyphBuffer, gender: &GenderView, focused: 
         (false, _) => (BoxStyle::Single, UiColor::PanelBorder),
     };
     let frame = Rect::new(x, FRAME_Y, FRAME.0, FRAME.1);
-    buf.fill_rect(frame, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(frame, style, c(border), bg);
+    let look = PanelLook::new(style, c(UiColor::Text), bg).with_border(c(border));
+    buf.panel(frame, &look, None);
     if let Some(art) = ctx.game.content.portraits.get(gender.portrait) {
         let dim = if gender.chosen { 0.0 } else { DIM_NOT_CHOSEN };
         let at = (x + 1, FRAME_Y + 1);

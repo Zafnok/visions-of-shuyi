@@ -11,12 +11,11 @@ use super::view::{
     PrepBody, PreparationsView, SlotRowView,
 };
 use crate::color::{Rgb, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, PxRect, Rect, Sprite};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, PanelLook, PxRect, Rect, Sprite};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::glyph::shop as shop_glyph;
 use crate::screens::print_centred;
-use crate::widgets::ListCursor;
 use shuyi_ui::screens::print_centred_styled;
 use trpg_content::Portrait;
 
@@ -55,11 +54,8 @@ const READY_ROW: i32 = 14;
 /// Row of the message.
 const MESSAGE_ROW: i32 = 29;
 
-/// The first row shown of a list of `len` in a window of `rows` rows, so
-/// that row `focus` is in it.
-fn window_start(focus: usize, len: usize, rows: usize) -> usize {
-    ListCursor::new(len).at(focus).window(rows).start
-}
+/// How many rows of a list the units, spare and pack boxes show.
+pub const LIST_ROWS: usize = (UNITS_BOX.h - 2).cast_unsigned() as usize;
 
 /// Paints the Preparations screen over the whole of `buf`.
 pub fn paint(ctx: &Ctx, view: &PreparationsView, buf: &mut GlyphBuffer) {
@@ -122,8 +118,7 @@ fn paint_list<Row>(
 ) {
     paint_frame(ctx, buf, rect, list);
     let height = usize::try_from(rect.h - 2).unwrap_or(0);
-    let start = window_start(list.cursor, list.rows.len(), height);
-    let shown = list.rows.iter().enumerate().skip(start).take(height);
+    let shown = list.rows.iter().enumerate().skip(list.first).take(height);
     for (y, (i, item)) in (rect.y + 1..).zip(shown) {
         let (text, enabled) = row(item);
         let (fg, row_bg) = row_colours(ctx, list, i, enabled);
@@ -143,10 +138,10 @@ fn paint_frame<Row>(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, list: &ListVie
     } else {
         UiColor::PanelBorder
     };
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Single, c(border), bg);
-    let title = format!(" {} ", list.title);
-    buf.print(rect.x + 2, rect.y, &title, c(UiColor::TextHighlight), bg);
+    let look = PanelLook::new(BoxStyle::Single, c(UiColor::Text), bg)
+        .with_border(c(border))
+        .with_title(c(UiColor::TextHighlight));
+    buf.panel(rect, &look, Some(&list.title));
 }
 
 /// The text and background colours of row `i` of `list` (`enabled` or

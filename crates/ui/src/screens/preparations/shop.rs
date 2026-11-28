@@ -18,15 +18,16 @@ use trpg_core::{
     sell_price,
 };
 
-use super::{Focus, PreparationsScreen};
+use super::{Focus, PreparationsScreen, glyph};
 use crate::audio::MenuSound;
 use crate::input::Action;
 use crate::screen::Ctx;
+use crate::screens::battle::glyph::shop as shop_glyph;
 use crate::screens::battle::shop::{
     SELL_SPECIAL, SellConfirm, Tab as ShopTab, gold_text, kind_key, new_uses, stat_line,
 };
 use crate::screens::battle::view::{SellConfirmView, ShopLineView, ShopScreenView};
-use crate::widgets::{Ask, AskView, wrap_step};
+use crate::widgets::{Ask, AskView, ListCursor, wrap_step};
 use crate::words::Words;
 
 /// Text key of the help line in the shop's lists.
@@ -81,6 +82,10 @@ impl Deal {
 }
 
 impl PreparationsScreen {
+    /// How many lines the shop's list shows.
+    pub(super) const DEAL_ROWS: usize =
+        shop_glyph::list_rows(glyph::SHOP_BOX).cast_unsigned() as usize;
+
     /// The shop's tabs (Buy, Sell, Repair).
     fn shop_tabs() -> &'static [ShopTab] {
         ShopTab::of(ShopKind::Basic)
@@ -93,7 +98,7 @@ impl PreparationsScreen {
 
     /// The highlighted line of the shop.
     pub fn deal_focus(&self) -> usize {
-        self.deal
+        self.deal.focus()
     }
 
     /// The sale being asked about, if any.
@@ -223,12 +228,13 @@ impl PreparationsScreen {
         match action {
             Action::CursorUp | Action::CursorDown => {
                 let down = action == Action::CursorDown;
-                self.deal = Self::moved(self.deal, self.deals().len(), down, ctx);
+                let (len, rows) = (self.deals().len(), Self::DEAL_ROWS);
+                Self::step_list(&mut self.deal, len, down, rows, ctx);
             }
             Action::CursorLeft | Action::CursorRight => {
                 let forward = action == Action::CursorRight;
                 self.shop_tab = wrap_step(self.shop_tab, Self::shop_tabs().len(), forward);
-                self.deal = 0;
+                self.deal = ListCursor::new(self.deals().len());
                 ctx.audio.menu(MenuSound::Move);
             }
             Action::Confirm => self.make_deal(ctx),
@@ -241,7 +247,7 @@ impl PreparationsScreen {
     /// refuses what the party can't pay for); a Sell line asks how many
     /// first.
     fn make_deal(&mut self, ctx: &mut Ctx) {
-        let line = self.deal;
+        let line = self.deal.focus();
         let Some(deal) = self.deals().into_iter().nth(line) else {
             ctx.audio.menu(MenuSound::Denied);
             return;
@@ -339,7 +345,8 @@ impl PreparationsScreen {
         } else {
             MenuSound::Denied
         });
-        self.deal = self.deal.min(self.deals().len().saturating_sub(1));
+        let len = self.deals().len();
+        Self::resize_list(&mut self.deal, len, Self::DEAL_ROWS);
     }
 
     /// The line `deal` shows, in `words`: `Iron Sword  460  Mt 5 …`, a
@@ -410,7 +417,8 @@ impl PreparationsScreen {
                 .iter()
                 .map(|d| self.deal_line(ctx, words, d))
                 .collect(),
-            focus: self.deal,
+            focus: self.deal.focus(),
+            first: self.deal.first_shown(),
             empty: ctx.text(empty).to_owned(),
             selling: self.sell_view(ctx, &deals),
             special: self.special_view(ctx, &deals),

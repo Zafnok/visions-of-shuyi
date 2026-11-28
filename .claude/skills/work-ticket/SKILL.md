@@ -25,6 +25,13 @@ discipline here is the whole quality system.
   names in `blocks` (`tickets/README.md`). Prefer the lowest number on
   the Act 1 critical path in `docs/ROADMAP.md`. Tell the user which one you
   picked and why in one sentence.
+- **Balance upstream first** (ticket 0532, retro 2026-11-17 T2): a
+  `tuning` ticket, or any ticket that re-records the winning playthroughs
+  (`crates/ui/tests/it/fixtures/*_winning.ron`), lists in its PR the open
+  balance tickets upstream of the chapters it tunes (their order is in
+  0876's `blocked_by` and `docs/ROADMAP.md` Lane I). Any of them that
+  waits on no Nick decision goes first, or the PR says why not. Ones
+  waiting on Nick don't hold it.
 - **An `engine#NNNN` in `blocked_by`** is a Shuyi Engine ticket. It is done
   only when it is in the engine's `tickets/done/` **and** the game's pin is
   at or past the commit that closed it. Check both, for a ticket you picked
@@ -178,12 +185,14 @@ Set `status: in-progress` in the ticket frontmatter.
   `assets/data/credits.ron`, with the row's source link. **Bought art**
   (ADR-0051): add the new files' path in `assets-private/game/` to its
   credit's `private` list, the pack to its row and the artist to the
-  credit's `author`. `cargo shuyi private-assets --pin` refuses files
-  without a credit; don't widen an old path just to get past it.
+  credit's `author`. The run-gates test `every_bought_file_has_a_credit`
+  refuses files without a credit; don't widen an old path just to get
+  past it.
 - **A change to the game's private content or story documents**
   (`assets-private/content/`, `assets-private/story/`, ADR-0117): follow
-  the `content-change` skill, a pull request in the private repository
-  first, then this PR moves `assets-private.rev`.
+  the `content-change` skill: a pull request in the private repository,
+  and this PR adds its pin file (`cargo xtask assets-pin --add`); the
+  game's merge lands the private one (ADR-0135).
 - A new architectural choice (new dependency with wide impact, new pattern,
   new file format) needs an ADR in the same PR (`write-adr` skill). Adding a
   small, well-known crate for a local need does not.

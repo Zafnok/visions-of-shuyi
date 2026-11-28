@@ -15,6 +15,8 @@ completed:
 
 ## Context
 
+2026-11-27 (1238): `paint_sell`'s box in `glyph/shop.rs` now goes through `GlyphBuffer::panel` (`PanelLook`, no title); the code is otherwise as the engine ticket copies it. No gap in the engine ticket.
+
 The game/engine boundary audit of 2026-11-03 found that the shops' "Sell
 how many?" box names nothing of the game. Today it is the game's
 `SellConfirm { line, count }` (`crates/ui/src/screens/battle/shop.rs:197`),

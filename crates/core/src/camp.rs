@@ -17,11 +17,15 @@
 
 use crate::prelude::*;
 
+use serde::Deserialize;
+
 use crate::campaign::Campaign;
 use crate::unit::CharacterId;
 
-/// One camp event, as the camp file describes it.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// One camp event, as the camp file describes it (and read as it writes
+/// it, ticket 1392).
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CampEvent {
     /// The event's id, unique among camp events.
     pub id: String,
@@ -30,10 +34,13 @@ pub struct CampEvent {
     /// The dialogue scene it plays.
     pub scene: String,
     /// Story flags that must all be set.
+    #[serde(default)]
     pub flags: Vec<String>,
     /// Battles (by id) that must all have been won.
+    #[serde(default)]
     pub battles: Vec<String>,
     /// Characters who must all be in the army.
+    #[serde(default)]
     pub units: Vec<CharacterId>,
 }
 

@@ -58,6 +58,10 @@ None. Verified by the tests below and one real draft PR.
   if 1207 is done, add step 2's expansion wherever its workflow builds the
   changed-path list.
 - Caching or encrypting the playtest's build (0171, 0178).
+- Pin files (0195). Either order: if 0195 is done, step 2 diffs the
+  effective pins (`cargo xtask assets-pin --resolve` on each side), not the
+  two `assets-private.rev` lines; a PR that only adds
+  `assets-private.d/*.rev` is a pin move too.
 
 ## Implementation steps
 

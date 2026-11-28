@@ -9,6 +9,7 @@ use super::art::{art_attack, art_setup, artist};
 use super::*;
 use crate::combat::{Reactions, StrikeReaction};
 use crate::skill::{StanceReaction, TimedEffect};
+use crate::testing;
 
 fn aid(id: &str) -> ArtId {
     ArtId::new(id)
@@ -25,12 +26,11 @@ fn reacting_arts() -> Vec<ArtDef> {
         }
     };
     let art = |id: &str, kind, cost, effect| ArtDef {
-        id: ArtId::new(id),
-        name: id.into(),
         kind,
         rank: Some(WeaponRank::D),
         cost,
         effect,
+        ..testing::art(id)
     };
     vec![
         art(

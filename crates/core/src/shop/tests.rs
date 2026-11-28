@@ -8,29 +8,18 @@ use proptest::prelude::*;
 
 use super::*;
 use crate::class::ArmourWeight;
-use crate::combat::DamageType;
 use crate::item::{AccessoryDef, ArmourDef, ConsumableDef, ConsumableEffect, SealDef, SealKind};
 use crate::stats::Stats;
-use crate::weapon::{WeaponKind, WeaponRank};
+use crate::testing;
 
 fn weapon(price: u32, durability: u32) -> ItemDef {
     ItemDef::Weapon(WeaponDef {
-        short_name: None,
-        name: "w".into(),
-        kind: WeaponKind::Sword,
-        rank: WeaponRank::E,
         might: 5,
         hit: 90,
-        crit: 0,
         weight: 5,
-        min_range: 1,
-        max_range: 1,
-        damage_type: DamageType::Physical,
         durability,
-        effective: vec![],
-        arts: vec![],
         price,
-        special: None,
+        ..testing::sword_def("w")
     })
 }
 

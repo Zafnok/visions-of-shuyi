@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1237 — Shared test drivers and fixtures
@@ -155,23 +155,23 @@ the fixture here.
 
 ## Acceptance criteria
 
-- [ ] `grep -rn "fn skip_scenes" crates/ui/tests/it` finds one, in
+- [x] `grep -rn "fn skip_scenes" crates/ui/tests/it` finds one, in
       `support.rs`.
-- [ ] `grep -rnE "^fn (quick|render|step)\(" crates/ui/src/screens/battle/*_tests.rs`
+- [x] `grep -rnE "^fn (quick|render|step)\(" crates/ui/src/screens/battle/*_tests.rs`
       finds only copies whose body differs, each named in the
       completion notes.
-- [ ] `grep -rn "affinities: vec!\[\]," crates/core crates/content`
+- [x] `grep -rn "affinities: vec!\[\]," crates/core crates/content`
       finds only the fixture in `crates/core/src/testing.rs`.
 - [ ] `SkillDef`, `SpellDef`, `ArtDef` and `BattleDef` test literals
       each name only their own fields and end with `..testing::`; the
       number of local `fn class(` / `fn skill(` / `fn spell(` /
       `fn sword(` test builders is down from about 37, each one left
       named in the completion notes.
-- [ ] Step 6 is done, or filed as its own ticket blocked by this one.
-- [ ] `tests/it/battle.rs` asserts the banner and the help bar through
+- [x] Step 6 is done, or filed as its own ticket blocked by this one.
+- [x] `tests/it/battle.rs` asserts the banner and the help bar through
       `BattleView`.
-- [ ] The same tests pass, none removed (`cargo test --no-fail-fast`).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The same tests pass, none removed (`cargo test --no-fail-fast`).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -179,5 +179,79 @@ the fixture here.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+**Done.**
+- *Battle drivers:* `battle::testing` has `p`, `quick`, `step` and `frame`,
+  and re-exports `render`. `render` itself stays in `battle/tests.rs`
+  (now `pub(crate)`): `title/tests.rs`'s
+  `the_logic_modules_name_no_cells_or_colours` forbids the word `Cell` in
+  `battle/mod.rs`, and the render fills its buffer with stale cells.
+  Deleted the copies in `ai_phase`, `art`, `item`, `magic`, `scene`,
+  `skill`, `tip`, `turn`, `heal_aim` and `threat` `_tests.rs` (and the
+  inner `p` of `attack.rs`, `mode.rs` and `path.rs`). The blank-filled
+  `render`s of `ai_phase`, `tip` and `turn` went too: their tests pass on
+  the stale-filled one. `press` of `ai_phase`, `lesson` and `tip` was the
+  same as `step` and its calls are now `step` (method calls `.press` on
+  `Stacked` untouched).
+- *Copies kept, their bodies differ:* `lesson_tests.rs` `quick` (puts the
+  screen in `QUICK_BATTLE`), `threat_tests.rs` `quick(c)` (another
+  receiver) and `press` (an `FRAME_DT` frame per action), `tip_tests.rs`
+  `frame` (no `held`), `turn_tests.rs` `frame`/`press` and
+  `notes`/`trigger`/`scene_voice` `frame` (return the transition as
+  text), `progress`/`zoom` `press` (frame timing), `rewind_tests.rs`
+  `press` (`Stacked`), `help_bar_tests.rs` `frame(h)` (a harness).
+- *tests/it support:* `support.rs` has `title`, `quick_battle`,
+  `skip_scenes` (moved from `playthrough.rs`), `battle(h) ->
+  &BattleScreen` and `state(h) -> BattleState` (the four copies that
+  cloned the state: `flow`, `playthrough`, `preparations`, `save`, named
+  `battle` there by `use … state as battle`). `threat.rs` and
+  `sound_cues.rs` keep `quick_battle` as thin wrappers (a cursor assert,
+  `clear_audio`). Kept: `battle.rs` `quick_battle` (closes the banner
+  too), `ambience`, `debug_view` and `map_zoom`'s (other setup),
+  `language.rs`'s `title`/`quick_battle` (the test language),
+  `focus.rs` and `title_cinematic.rs`'s `title` (a wait, the test
+  title), `hot_reload.rs`/`sessions.rs` `title` (not a harness).
+  `playdate.rs`'s `skip_scenes` presses pad buttons; it is renamed
+  `pad_through_scenes`.
+- *Fixtures:* `trpg-core` feature `testing` and
+  `#[cfg(any(test, feature = "testing"))] pub mod testing` with
+  `class`, `skill`, `spell`, `art`, `battle`, `sword_def` (a weapon's
+  `WeaponDef`, the type most literals build) and `sword` (it as an
+  `ItemDef`). `trpg-content` and `trpg-core`'s own tests take the
+  feature as a dev-dependency. 56 test literals (47 in `trpg-core`, 9 in
+  `trpg-content`) now name only their own fields and end with
+  `..testing::x(id)`; the rewrite dropped exactly the fields equal to the
+  fixture's value. Literals that already ended with a base of their own
+  (`..base`, `..def`) were left as they are.
+- *Views:* `tests/it/battle.rs` reads the banner (`banner(h)`: title,
+  subtitle and objective lines) and the help line from `BattleView`; its
+  `wait_for` became `wait_for_banner`. `flow.rs` reads the results'
+  gold, rewinds, bonus and EXP bars from `ResultsView`'s tally; the
+  frame snapshot stays, commented as the end-to-end check.
+
+**Deviations.**
+- *Step 6 filed as 1392* (blocked by this ticket): the branch measured
+  1,747 changed lines before it, past the 1,500 *Scope* sets.
+- *Builders not fewer:* every local builder (`fn class(`, `fn skill(`,
+  `fn spell(`, `fn weapon(`, …) sets more than its fixture, so each
+  stays as a thin wrapper over it (step 5's rule): 29 before and after.
+  Left: content `skill/ranks/tests.rs` `skill`, `skill/tests.rs`
+  `class`, `spell.rs` `heal` and `class` (the latter reads loaded
+  classes); core `ai/tests.rs` `strike`, `art/tests.rs` `art`, `weapon`,
+  `class`, `battle/tests.rs` `class`, `test_rending_arrow`,
+  `test_skill`, `sword`, `seal`, `campaign/tests.rs` `def`,
+  `item/tests.rs` `class`, `mage_class`,
+  `progression/class_change/tests.rs` `def`, `progression/tests.rs`
+  `swordsman`, `custom`, `shop/tests.rs` `weapon`, `armour`,
+  `skill/tests.rs` `passive`, `active`, `class`, `spell/tests.rs`
+  `attack`, `heal`, `unit.rs` `class`, `tests/it/replay.rs` `blade`;
+  ui `battle/shop/tests.rs` `item` (reads loaded items). The ticket's
+  "about 37" counted the builders of other types too.
+- `unit.rs`'s test `class(id)` stays as a thin wrapper rather than going:
+  its tests read the Brigand stats and weapons it sets.
+- 1231 and 1232 aren't done: their files were changed here as well.
+
+**Size.** Engine friction: estimate 110 production lines (six struct
+literals of the definitions, one per fixture), measured 122 (1.1×),
+under 2×. PR size: estimate 2,000 (the ticket's), measured 1,958 (with this ticket and 1392).
+
+**Follow-ups:** 1392 (step 6). Nothing for Nick: tests only.

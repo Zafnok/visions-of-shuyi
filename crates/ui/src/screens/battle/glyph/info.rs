@@ -10,7 +10,7 @@
 //! accessory and spells on the right. Lists stop where the box does.
 
 use crate::color::{Palette, Rgb, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, GlyphBuffer, PanelLook, Rect};
 use crate::portrait::draw_portrait_in;
 use crate::prelude::*;
 use crate::screen::Ctx;
@@ -104,9 +104,12 @@ impl Pen<'_> {
 pub fn paint(ctx: &Ctx, view: &InfoView, buf: &mut GlyphBuffer) {
     let palette = &ctx.palette;
     let bg = palette.get(UiColor::PanelBg);
-    buf.fill_rect(INFO, Cell::new(' ', palette.get(UiColor::Text), bg));
-    let border = palette.get(UiColor::PanelBorder);
-    buf.draw_box(INFO, BoxStyle::Double, border, bg);
+    let look = PanelLook::new(BoxStyle::Double, palette.get(UiColor::Text), bg);
+    buf.panel(
+        INFO,
+        &look.with_border(palette.get(UiColor::PanelBorder)),
+        None,
+    );
     let dim = palette.get(UiColor::TextDim);
     buf.draw_box(PORTRAIT, BoxStyle::Single, dim, bg);
     let inside = (PORTRAIT.x + 1, PORTRAIT.y + 1);

@@ -263,7 +263,7 @@ hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 �
 | ---- | ------- |
 | first line | Battle, its tier (its `difficulty`, which picks the bands), the bots, the turn cap. |
 | `army · …` | The army the bots fielded (*The army*): where it comes from, each unit's class and level, the pack, the gold. |
-| `N/100 succeed … band …` | How many tries met the bot's success rule, and the band its tier wants: **✓** in the band, **✗ too hard** under it, **⚠ too easy** over it. `blocked` after it: under the 20% floor. |
+| `N/100 succeed … band … · 95% lo–hi%` | How many tries met the bot's success rule, the band its tier wants, and the 95% interval of that share (below): **✓** in the band, **✗ too hard** when the whole interval is under it, **⚠ too easy** when the whole interval is over it, **~ maybe too hard** or **~ maybe too easy** when the share is outside but the interval still reaches the band. `blocked` after it: under the 20% floor. |
 | `turns median … lower` | Hardcore's median turns against Normal's, both over the tries won with nobody dying: **✓** when Hardcore is faster. A **✗** here says the bots are wrong, not the map. **–** when one has no such try. |
 | `try N · …` | One line per try: `N` is its seed, how it ended (`Victory`, `Defeat`, or `unfinished` at the turn cap), the turn it stopped on, then its measures: `deaths` (Classic) or `retreats` (Casual), each unit that fell (`fell keeper 1`) and on which turn (`fell keeper turn 6`), `items` used, whether the `lord fell`, `turns` played (the cap if it stopped there), `won`, and what each player unit did (*Units that fall behind*): `dealt Rue 58`, `kills Rue 4`, `exp Rue 112`, `levels Rue 1` (a 0 is left out). |
 | `… · units (…)` | A table per bot, a line per player unit: *Units that fall behind*. |
@@ -272,6 +272,29 @@ hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 �
 
 To watch one try again: `cargo xtask playtest ch01 --bot normal --seed 17
 --runs 1`.
+
+**How sure a count is** (ticket 0532, engine#2149). A count of 100 tries
+is noisy: a bot that really wins half the time lands anywhere from about
+40 to 60 out of 100 by luck of the seeds (±10 points), and a band is 25
+points wide. At 200 tries the noise is about ±7 points. So each rate line
+since 2026-11-24 prints the share's 95% interval (a Wilson score
+interval, in whole percents), the range the true rate is in 19 times out
+of 20:
+
+```
+casual   · 44/100 succeed                band 30–55% · 95% 35–53%   ✓
+normal   · 49/100 succeed                band 50–75% · 95% 40–58%   ~ maybe too hard
+hardcore · 15/100 succeed                band 50–75% · 95% 10–23%   ✗ too hard
+```
+
+Only a ✗ or ⚠ says the battle is out of its band for sure; retune for
+those. A **~ maybe** is a share a little outside whose interval still
+reaches the band: run another seed range (`--seed 101`) before
+retuning, as 0529 had to by hand (ch05 Hardcore, 71 on seeds 1–100, 77
+on 101–200). The 20% floor and `blocked` are judged on the share itself,
+not the interval, so CI fails a battle exactly when Casual is under its
+floor. Autobalance also still aims at the band on the share itself.
+(The older examples on this page were printed before the interval.)
 
 Chapter 2 on 2026-11-03 (ticket 0520), with the army Chapter 1 leaves,
 after the autobalance raised every unnamed Hound from level 1 to 5:

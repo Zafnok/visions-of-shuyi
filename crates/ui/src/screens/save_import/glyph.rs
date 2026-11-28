@@ -7,7 +7,7 @@
 
 use super::{ImportRowView, ImportView};
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::clip;
@@ -57,10 +57,10 @@ pub fn paint(ctx: &Ctx, view: &ImportView, buf: &mut GlyphBuffer) {
         c(UiColor::TextHighlight),
     );
     buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
-    buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-    buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-    let title = format!(" {} ", view.title);
-    buf.print(LEFT - 1, PANEL.y, &title, high, bg);
+    let look = PanelLook::new(BoxStyle::Single, text, bg)
+        .with_border(c(UiColor::PanelBorder))
+        .with_title(high);
+    buf.panel(PANEL, &look, Some(&view.title));
     if let Some(waiting) = &view.waiting {
         print_centred(buf, PANEL.y + PANEL.h / 2, waiting, high, bg);
     }

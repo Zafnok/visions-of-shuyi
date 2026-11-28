@@ -21,8 +21,8 @@ use proptest::prelude::*;
 use super::*;
 use crate::art::{ArtDef, ArtEffect, ArtTable, Debuff};
 use crate::battle::{BattleSetup, Event, Objective, Reinforcement};
-use crate::class::{ClassDef, ClassId, ClassTable, UnitTags, WeaponProficiency};
-use crate::combat::{CombatMods, DamageType, SideForecast};
+use crate::class::{ClassDef, ClassId, ClassTable, WeaponProficiency};
+use crate::combat::{CombatMods, SideForecast};
 use crate::item::{
     BattlePack, ConsumableDef, ConsumableEffect, ItemDef, ItemId, ItemTable, Loadout, Stock,
     WeaponDef, WeaponInstance,
@@ -36,6 +36,7 @@ use crate::skill::{
 use crate::spell::{SpellDef, SpellState, SpellTable};
 use crate::stats::{StatKind, Stats};
 use crate::terrain::{TerrainId, TerrainRules, TerrainTable};
+use crate::testing;
 use crate::unit::Role;
 use crate::weapon::{WeaponKind, WeaponRank};
 
@@ -64,13 +65,7 @@ fn terrain() -> TerrainTable {
 
 fn classes() -> ClassTable {
     let fighter = ClassDef {
-        id: ClassId("fighter".into()),
         name: "Fighter".into(),
-        tier: 1,
-        movement_type: MovementTypeId(0),
-        move_points: 4,
-        base: Stats::default(),
-        growths: crate::stats::Growths::default(),
         weapons: [
             WeaponKind::Sword,
             WeaponKind::Bow,
@@ -83,16 +78,7 @@ fn classes() -> ClassTable {
             max: WeaponRank::S,
         })
         .to_vec(),
-        max_armour: None,
-        tags: UnitTags::default(),
-        promotes_to: vec![],
-        active: None,
-        passives: vec![],
-        enemy_only: false,
-        lord_only: false,
-        weapon_slots: 3,
-        spells: vec![],
-        affinities: vec![],
+        ..testing::class("fighter")
     };
     ClassTable {
         classes: BTreeMap::from([(fighter.id.clone(), fighter)]),
@@ -103,22 +89,12 @@ fn classes() -> ClassTable {
 /// A sword-kind weapon.
 fn weapon(name: &str, might: StatValue, hit: StatValue, (min, max): (u32, u32)) -> WeaponDef {
     WeaponDef {
-        short_name: None,
-        name: name.into(),
-        kind: WeaponKind::Sword,
-        rank: WeaponRank::E,
         might,
         hit,
-        crit: 0,
-        weight: 0,
         min_range: min,
         max_range: max,
-        damage_type: DamageType::Physical,
         durability: 20,
-        effective: vec![],
-        arts: vec![],
-        price: 0,
-        special: None,
+        ..testing::sword_def(name)
     }
 }
 
@@ -189,7 +165,6 @@ fn items() -> ItemTable {
 /// with 1 use) and `heal` (power 5, range 1, 3 uses).
 fn spells() -> SpellTable {
     let fire = SpellDef {
-        id: SpellId::new("fire"),
         name: "Fire".into(),
         kind: SpellKind::Attack {
             might: 5,
@@ -198,22 +173,15 @@ fn spells() -> SpellTable {
             effective: vec![],
         },
         element: Element::Fire,
-        min_range: 1,
         max_range: 2,
         uses: 5,
-        terrain_effect: None,
-        no_counter: false,
+        ..testing::spell("fire")
     };
     let heal = SpellDef {
-        id: SpellId::new("heal"),
         name: "Heal".into(),
         kind: SpellKind::Heal { heal_power: 5 },
-        element: Element::None,
-        min_range: 1,
-        max_range: 1,
         uses: 3,
-        terrain_effect: None,
-        no_counter: false,
+        ..testing::spell("heal")
     };
     let ember = SpellDef {
         id: SpellId::new("ember"),
@@ -239,12 +207,11 @@ fn spells() -> SpellTable {
 /// `sidestep` (3: a stance of avoid +20).
 fn arts() -> ArtTable {
     let art = |id: &str, kind, rank, cost, effect| ArtDef {
-        id: ArtId::new(id),
-        name: id.into(),
         kind,
         rank,
         cost,
         effect,
+        ..testing::art(id)
     };
     let sure = || ArtEffect {
         hit: 20,
@@ -326,10 +293,6 @@ fn arts() -> ArtTable {
 /// A combat active.
 fn strike(id: &str, cost: SkillCost, with: WeaponReq, mods: CombatMods, range: u32) -> SkillDef {
     SkillDef {
-        id: SkillId::new(id),
-        name: id.into(),
-        family: id.into(),
-        rank: 1,
         kind: SkillKind::Active {
             cost,
             effect: ActiveEffect::Strike {
@@ -341,6 +304,7 @@ fn strike(id: &str, cost: SkillCost, with: WeaponReq, mods: CombatMods, range: u
                 drain: false,
             },
         },
+        ..testing::skill(id)
     }
 }
 
@@ -424,20 +388,15 @@ fn skills() -> SkillTable {
         ),
     ];
     let skirmish = SkillDef {
-        id: SkillId::new("skirmish"),
         name: "Skirmish".into(),
-        family: "skirmish".into(),
-        rank: 1,
         kind: SkillKind::Passive(vec![PassiveEffect::PostActionMove {
             tiles: 1,
             when: Condition::WeaponKindEquipped(WeaponKind::Bow),
         }]),
+        ..testing::skill("skirmish")
     };
     let charge = SkillDef {
-        id: SkillId::new("charge"),
         name: "Charge".into(),
-        family: "charge".into(),
-        rank: 1,
         kind: SkillKind::Passive(vec![PassiveEffect::CombatMod {
             mods: CombatMods {
                 might: 2,
@@ -445,6 +404,7 @@ fn skills() -> SkillTable {
             },
             when: Condition::MovedAtLeast(4),
         }]),
+        ..testing::skill("charge")
     };
     SkillTable {
         skills: [skirmish, charge]

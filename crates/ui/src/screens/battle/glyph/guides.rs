@@ -6,12 +6,10 @@
 
 use super::{clear, paint_help};
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
-use crate::prelude::*;
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::screen::Ctx;
 use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
 use crate::screens::battle::view::{GuidesScreenView, GuidesView};
-use crate::widgets::ListCursor;
 
 /// The box: the map view and the side panel together.
 pub const AREA: Rect = Rect::new(
@@ -51,20 +49,14 @@ pub fn paint_list(ctx: &Ctx, view: &GuidesView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     let border = c(UiColor::PanelBorder);
-    buf.fill_rect(AREA, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(AREA, BoxStyle::Double, border, bg);
-    buf.print(
-        LIST_X,
-        AREA.y,
-        &format!(" {} ", view.title),
-        c(UiColor::TextHighlight),
-        bg,
-    );
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg)
+        .with_border(border)
+        .with_title(c(UiColor::TextHighlight));
+    buf.panel(AREA, &look, Some(&view.title));
     for y in AREA.y + 1..AREA.y + AREA.h - 1 {
         buf.set(DIVIDER_X, y, Cell::new('│', border, bg));
     }
-    let first = first_shown(view.focus, LIST_ROWS);
-    let shown = view.topics.iter().enumerate().skip(first);
+    let shown = view.topics.iter().enumerate().skip(view.first);
     for ((i, title), y) in shown.zip(TOP_ROW..TOP_ROW + LIST_ROWS) {
         let (fg, row_bg) = if i == view.focus {
             (bg, c(UiColor::PanelBorderFocus))
@@ -90,13 +82,6 @@ pub fn paint_list(ctx: &Ctx, view: &GuidesView, buf: &mut GlyphBuffer) {
         y += 1;
         buf.print(TEXT_X, y, line, c(UiColor::Text), bg);
     }
-}
-
-/// The first topic shown so that `focus` is within `rows` rows.
-fn first_shown(focus: usize, rows: i32) -> usize {
-    // The topics after the focus never move the window.
-    let rows = usize::try_from(rows).unwrap_or(1);
-    ListCursor::new(focus + 1).at(focus).window(rows).start
 }
 
 #[cfg(test)]
@@ -130,11 +115,12 @@ mod tests {
         use crate::Rgb;
         use crate::console::{ConsoleSizes, ConsoleSpec};
         let c = crate::screen::tests::ctx();
-        let paint_at = |focus: usize| {
+        let paint_at = |focus: usize, first: usize| {
             let view = GuidesView {
                 title: "G".into(),
                 topics: (0..40).map(|i| format!("t{i}")).collect(),
                 focus,
+                first,
                 heading: "Head".into(),
                 lines: vec!["one".into(), "two".into()],
             };
@@ -145,12 +131,12 @@ mod tests {
         };
         let last = TOP_ROW + LIST_ROWS - 1;
         assert_eq!(last, 27);
-        let top = paint_at(0);
+        let top = paint_at(0, 0);
         assert!(row(&top, TOP_ROW).contains("t0 "));
         assert!(row(&top, last).contains("t25 "));
         assert!(!row(&top, last + 1).contains('t'));
         assert!(row(&top, AREA.h - 1).starts_with("╚═══"));
-        let end = paint_at(39);
+        let end = paint_at(39, 14);
         assert!(row(&end, TOP_ROW).contains("t14 "));
         assert!(row(&end, last).contains("t39 "));
         // The heading, a blank row, then the text.
@@ -158,14 +144,5 @@ mod tests {
         assert!(!row(&top, TOP_ROW + 1).contains("one"));
         assert!(row(&top, TOP_ROW + 2).contains("one"));
         assert!(row(&top, TOP_ROW + 3).contains("two"));
-    }
-
-    #[test]
-    fn the_list_scrolls_to_keep_the_focus_in_view() {
-        assert_eq!(first_shown(0, 5), 0);
-        assert_eq!(first_shown(4, 5), 0);
-        assert_eq!(first_shown(5, 5), 1);
-        assert_eq!(first_shown(9, 5), 5);
-        assert_eq!(first_shown(3, 0), 3);
     }
 }

@@ -28,9 +28,7 @@ mod tests {
     use crate::screen::tests::ctx;
     use crate::screens::battle::{quick_battle, testing};
 
-    fn p(x: i32, y: i32) -> Pos {
-        Pos::new(x, y)
-    }
+    use crate::screens::battle::testing::p;
 
     /// The Quick Battle's units on `map`: the lord is unit 1, Mov 5.
     fn battle(map: BattleMap) -> BattleState {

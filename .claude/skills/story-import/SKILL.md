@@ -63,20 +63,22 @@ Then run it for real:
 cargo xtask story-import <n>
 ```
 
-It commits with the writer as the author, pushes `story/<n>-<slug>` to the
+It commits with the writer as the author, pushes `story-<n>-<slug>` to the
 assets repository and opens its pull request, titled
 `[story#<n>] <their title>`. The checkout's own branch and files are
 untouched.
 
 ## 3. The game's side
 
-Point the pin at the new commit (`content-change`, "The game's CI reads the new content before either merges"), so CI checks the
-game with the writer's change before anything merges:
+Give the game's change the assets branch's pin file (`content-change`,
+"Its own pin file, and the merge lands it"), so CI checks the game with
+the writer's change before anything merges:
 
 ```bash
-git -C assets-private fetch origin story/<n>-<slug>
-git -C assets-private checkout --detach FETCH_HEAD
-git -C assets-private rev-parse HEAD > assets-private.rev
+git -C assets-private fetch origin story-<n>-<slug>
+git -C assets-private switch --no-track -C story-<n>-<slug> origin/story-<n>-<slug>
+cargo xtask assets-pin --add
+git add assets-private.d
 ```
 
 Run `cargo xtask check-script`, then every gate (`run-gates`). What may
@@ -106,16 +108,18 @@ git commit -m "[story#<n>] <their title>" -m "Story-PR: <n>"
 Open the game's pull request, titled `[story#<n>] <their title>`; its
 body links the assets one (`Zafnok/visions-of-shuyi-assets#<N>`) and the
 mirror's (`Zafnok/visions-of-shuyi-story#<n>`), says the assets one merges
-first, and has the usual `PR size:` and `Engine friction:` lines (`none:
+is landed by the game's merge, and has the usual `PR size:` and `Engine friction:` lines (`none:
 no code` when there is none). The assets pull request's body links the
 game's back.
 
 ## 4. Merge in order
 
-`content-change` ("What the pin carries") and `shuyi-private-files` §4: when the assets pull request has merged, check
-what the pin carries, `cargo shuyi private-assets --pin`, commit
-`assets-private.rev`, and merge the game's pull request once CI is green.
-Nick merges; don't merge it for him unless he said to.
+`content-change` ("Its own pin file, and the merge lands it"): the game's
+pull request carries the assets branch's pin file (`cargo xtask
+assets-pin --add`), so nothing waits for the assets pull request. Nick
+merges the game's pull request once CI is green; don't merge it for him
+unless he said to. `private-land.yml` then merges the assets pull request
+and folds the pin.
 
 When the game's pull request merges, `story-mirror.yml` copies the files
 into the mirror and closes the writer's pull request with a note (it

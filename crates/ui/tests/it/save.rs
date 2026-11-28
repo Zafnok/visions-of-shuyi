@@ -4,10 +4,9 @@
 //! storage is the Harness's `MemoryStorage`, carried from one launch to the
 //! next.
 
+use crate::support::state as battle;
 use insta::assert_snapshot;
-use trpg_core::{
-    BattleState, Campaign, Command, GameMode, Pos, SAVE_VERSION, SaveFile, UnitAction, UnitId,
-};
+use trpg_core::{Campaign, Command, GameMode, Pos, SAVE_VERSION, SaveFile, UnitAction, UnitId};
 use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
@@ -120,15 +119,6 @@ fn send(h: &mut Harness, cmd: &Command) {
 fn wait_at(h: &mut Harness, unit: UnitId, dest: Pos) {
     let action = UnitAction::Wait;
     send(h, &Command::Act { unit, dest, action });
-}
-
-/// The battle on screen.
-fn battle(h: &Harness) -> BattleState {
-    let battle = h.battle();
-    battle
-        .unwrap_or_else(|| panic!("no battle"))
-        .state()
-        .clone()
 }
 
 /// The battle on screen and its history, serialised.

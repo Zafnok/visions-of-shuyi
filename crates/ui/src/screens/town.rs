@@ -57,6 +57,9 @@ pub struct Deal {
     pub enabled: bool,
 }
 
+/// How many lines the shop's list shows.
+const ROWS: usize = glyph::LIST_ROWS.cast_unsigned() as usize;
+
 /// A town's shop screen. See the module docs.
 #[derive(Debug, Clone)]
 pub struct TownScreen {
@@ -248,8 +251,8 @@ impl TownScreen {
             MenuSound::Denied
         });
         let len = self.deals(ctx).len();
-        let focus = self.cursor.focus().min(len.saturating_sub(1));
-        self.cursor = ListCursor::new(len).at(focus);
+        self.cursor.set_len(len);
+        self.cursor.window(ROWS);
     }
 
     /// The confirmation of `sale`: up and down change how many (1 to the
@@ -319,12 +322,14 @@ impl TownScreen {
             }
             Action::CursorDown | Action::CursorUp => {
                 let len = self.deals(ctx).len();
-                let mut cursor =
-                    ListCursor::new(len).at(self.cursor.focus().min(len.saturating_sub(1)));
-                if cursor.step(action == Action::CursorDown, true, |_| true) {
+                self.cursor.set_len(len);
+                if self
+                    .cursor
+                    .step(action == Action::CursorDown, true, |_| true)
+                {
                     ctx.audio.menu(MenuSound::Move);
                 }
-                self.cursor = cursor;
+                self.cursor.window(ROWS);
             }
             Action::CursorLeft | Action::CursorRight => {
                 // A town's shop has one tab or two (never the Basic shop's
@@ -332,6 +337,7 @@ impl TownScreen {
                 if Tab::of(self.shop.kind).len() == 2 {
                     self.tab = 1 - self.tab;
                     self.cursor = ListCursor::new(self.deals(ctx).len());
+                    self.cursor.window(ROWS);
                     ctx.audio.menu(MenuSound::Move);
                 }
             }
@@ -427,6 +433,7 @@ impl TownScreen {
             tab: self.tab,
             lines: deals.iter().map(|d| self.line(ctx, d)).collect(),
             focus: self.cursor.focus().min(deals.len().saturating_sub(1)),
+            first: self.cursor.first_shown(),
             empty: ctx.text("battle.shop.empty").to_owned(),
             selling: self.sell_view(ctx, &deals),
             special: self.special_view(ctx, &deals),

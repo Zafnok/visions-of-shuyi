@@ -6,12 +6,13 @@
 
 use crate::screens::battle::testing::{Lines as _, Values as _};
 use insta::assert_snapshot;
-use trpg_core::{BattleState, CastTarget, Objective, Pos, SpellId, StatValue, UnitId};
+use trpg_core::{BattleState, CastTarget, Objective, SpellId, StatValue, UnitId};
 
 use super::BattleScreen;
 use super::attack::aim_tile;
 use super::magic::{can_heal, heal_choices, heal_tile};
 use super::mode::{Line, MenuEntry, Mode, Selection, step};
+use super::testing::p;
 use super::testing::{battle_with, quick_units};
 use crate::console::ConsoleSizes;
 use crate::harness::Harness;
@@ -27,10 +28,6 @@ const ARCHER: UnitId = UnitId(3);
 
 /// The Quick Battle's knight.
 const KNIGHT: UnitId = UnitId(2);
-
-fn p(x: i32, y: i32) -> Pos {
-    Pos::new(x, y)
-}
 
 /// The Quick Battle with the archer moved to (1, 6), two tiles left of the
 /// mage, at `archer_hp` HP; with `vigil` the mage also knows Vigil Light

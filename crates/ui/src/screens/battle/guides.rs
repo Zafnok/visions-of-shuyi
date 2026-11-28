@@ -57,6 +57,9 @@ pub enum GuidesEffect {
     Close,
 }
 
+/// How many topics the list's box shows.
+const ROWS: usize = glyph::LIST_ROWS.cast_unsigned() as usize;
+
 /// The open Guides list: which topic is highlighted.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GuidesScreen {
@@ -69,9 +72,9 @@ impl GuidesScreen {
 
     /// The list of `content`'s topics, on the first.
     pub fn new(content: &Content) -> Self {
-        Self {
-            cursor: ListCursor::new(topics(content).len()),
-        }
+        let mut cursor = ListCursor::new(topics(content).len());
+        cursor.window(ROWS);
+        Self { cursor }
     }
 
     /// The highlighted topic's place in the list.
@@ -89,6 +92,7 @@ impl GuidesScreen {
                     .cursor
                     .step(action == Action::CursorDown, true, |_| true) =>
             {
+                self.cursor.window(ROWS);
                 GuidesEffect::Moved
             }
             _ => GuidesEffect::None,
@@ -134,6 +138,7 @@ impl GuidesScreen {
             title: ctx.text(TITLE).to_owned(),
             topics: titles,
             focus: self.cursor.focus(),
+            first: self.cursor.first_shown(),
             heading,
             lines,
         }

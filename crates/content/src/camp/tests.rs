@@ -1,5 +1,7 @@
 //! Tests of the camp file's checks.
 
+use trpg_core::CharacterId;
+
 use super::*;
 
 /// The embedded game's tables, for the references.

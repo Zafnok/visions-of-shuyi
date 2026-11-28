@@ -53,13 +53,25 @@ jobs:
     if: always()
     needs: [changes, analyze]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # To read the pull request's head now (scripts/ci-result.sh).
+      pull-requests: read
     steps:
-      - name: Fail if any needed job failed or was cancelled
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci-result.sh
+          sparse-checkout-cone-mode: false
+      # A cancelled leg is red only on the commit still at the head: a run
+      # a newer push cancelled passes with a notice (ticket 0150).
+      - name: Fail if a needed job failed, or was cancelled on the head commit
         env:
           NEEDS: ${{ toJSON(needs) }}
-        run: |
-          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
-          if echo "$NEEDS" | jq -e '[.[].result] | any(. == "failure" or . == "cancelled")' > /dev/null; then
-            echo "::error::A required job failed or was cancelled."
-            exit 1
-          fi
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/ci-result.sh
