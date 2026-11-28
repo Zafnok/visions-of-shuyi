@@ -438,6 +438,9 @@ fn every_bought_file_has_a_credit() {
             "Lonesome Forest (modified: stones recolored)",
             // The candle in Veyne Hall's study (ticket 1384).
             "Classic Dungeons",
+            // The windows' frames and title plate (ticket 1380).
+            "2D Pixel Quest Vol.3 – The UI/GUI (modified: a panel recolored)",
+            "Post-Baroque UI/GUI Kit (modified: a plate cut down)",
             // The title's campfire (ticket 0922).
             "Idylwild's Chromatic Campfires",
         ]
@@ -501,4 +504,30 @@ fn chapter_three_speakers_have_their_own_faces_and_the_prior_his_picture() {
     assert_eq!(prior.id, "greywater_prior");
     let shown = display_path(prior.image.path());
     assert!(is_private(&shown), "{shown}");
+}
+
+/// The windows' frames (`cargo xtask ui-import`, ticket 1380): with the
+/// bought pictures every frame and plate the windows ask for is there,
+/// from its picture in `ui/`.
+#[test]
+fn the_bought_ui_pictures_give_every_frame() {
+    use trpg_content::frames::{FRAME_NAMES, PLATE_NAMES};
+
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    for name in FRAME_NAMES {
+        let frame = content
+            .frames
+            .frame(name)
+            .unwrap_or_else(|| panic!("no frame {name}"));
+        assert!(
+            frame.slice.picture.image.path().starts_with("ui/"),
+            "{name}"
+        );
+    }
+    for name in PLATE_NAMES {
+        assert!(content.frames.plate(name).is_some(), "no plate {name}");
+    }
 }

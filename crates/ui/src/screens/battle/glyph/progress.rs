@@ -7,6 +7,7 @@
 
 use super::fight_box::BOX;
 use crate::color::{Rgb, UiColor};
+use crate::frames;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::portrait::draw_portrait;
 use crate::prelude::*;
@@ -89,13 +90,11 @@ pub fn paint(ctx: &Ctx, view: &ProgressView, buf: &mut GlyphBuffer) {
 /// The EXP box: `Test Lord   EXP ████████░░░░ 80`.
 fn paint_exp(ctx: &Ctx, page: &ExpView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(
-        EXP_BOX,
-        &look.with_border(c(UiColor::PanelBorderFocus)),
-        None,
-    );
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg))
+        .with_border(c(UiColor::PanelBorderFocus));
+    let look = frames::framed(ctx, frames::PANEL, look);
+    let bg = look.bg;
+    buf.panel(EXP_BOX, &look, None);
     let y = EXP_BOX.y + 1;
     let x = EXP_BOX.x + 2;
     // check-text: not a data name (the view's own)
@@ -113,10 +112,11 @@ fn paint_exp(ctx: &Ctx, page: &ExpView, buf: &mut GlyphBuffer) {
 /// what changed, and the stat rows shown so far.
 fn paint_gains(ctx: &Ctx, page: &GainsView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
     let focus = c(UiColor::PanelBorderFocus);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(LEVEL_PANEL, &look.with_border(focus), None);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg));
+    let look = frames::framed(ctx, frames::PANEL, look.with_border(focus));
+    let bg = look.bg;
+    buf.panel(LEVEL_PANEL, &look, None);
     let border = c(UiColor::PanelBorder);
     buf.draw_box(PORTRAIT_FRAME, BoxStyle::Single, border, bg);
     let drawn = page.face.as_ref().is_some_and(|face| {
@@ -166,12 +166,13 @@ fn paint_gains(ctx: &Ctx, page: &GainsView, buf: &mut GlyphBuffer) {
 /// line each for what was learned or stowed.
 fn paint_class(ctx: &Ctx, page: &ClassProgressView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
+    let bg = frames::bg(ctx, frames::PANEL);
     let mastery = i32::from(page.mastered.is_some());
     let h = 3 + mastery + i32::try_from(page.lines.len()).unwrap_or(0);
     let rect = Rect::new(BOX.x, BOX.y, BOX.w, h);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(rect, &look.with_border(c(UiColor::PanelBorderFocus)), None);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg))
+        .with_border(c(UiColor::PanelBorderFocus));
+    buf.panel(rect, &frames::framed(ctx, frames::PANEL, look), None);
     let x = rect.x + 2;
     let mut y = rect.y + 1;
     // check-text: not a data name (the view's own)

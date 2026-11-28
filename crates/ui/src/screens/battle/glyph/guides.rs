@@ -6,6 +6,7 @@
 
 use super::{clear, paint_help};
 use crate::color::UiColor;
+use crate::frames;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::screen::Ctx;
 use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
@@ -47,11 +48,12 @@ pub fn paint(ctx: &Ctx, view: &GuidesScreenView, buf: &mut GlyphBuffer) {
 /// Paints `view` over the map and the side panel.
 pub fn paint_list(ctx: &Ctx, view: &GuidesView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
     let border = c(UiColor::PanelBorder);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg)
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg))
         .with_border(border)
         .with_title(c(UiColor::TextHighlight));
+    let look = frames::framed(ctx, frames::PANEL, look);
+    let bg = look.bg;
     buf.panel(AREA, &look, Some(&view.title));
     for y in AREA.y + 1..AREA.y + AREA.h - 1 {
         buf.set(DIVIDER_X, y, Cell::new('│', border, bg));
@@ -144,5 +146,27 @@ mod tests {
         assert!(!row(&top, TOP_ROW + 1).contains("one"));
         assert!(row(&top, TOP_ROW + 2).contains("one"));
         assert!(row(&top, TOP_ROW + 3).contains("two"));
+    }
+
+    /// Ticket 1380: the guides' box wears the panel frame in the picture
+    /// look, its title on the plate.
+    #[test]
+    fn the_picture_look_frames_the_guides_and_plates_their_title() {
+        use crate::Rgb;
+        use crate::console::{ConsoleSizes, ConsoleSpec};
+        use crate::frames::tests::{assert_framed, assert_plated, framed_ctx};
+        let view = GuidesView {
+            title: "Guides".into(),
+            topics: vec!["t0".into()],
+            focus: 0,
+            first: 0,
+            heading: "Head".into(),
+            lines: vec!["one".into()],
+        };
+        let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
+        paint_list(&framed_ctx(), &view, &mut buf);
+        assert_framed(&buf, "ui/panel.png", AREA);
+        assert_plated(&buf, Rect::new(AREA.x + 3, AREA.y, 6, 1));
     }
 }

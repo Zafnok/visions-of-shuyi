@@ -47,7 +47,7 @@ use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
 use crate::screens::Skins;
 use crate::settings::{
     AnimSpeed, AutoAdvance, EnemyPhaseSpeed, LogVoice, MapLook, MapZoom, PortraitStyle, RangeStyle,
-    Settings, ThreatArrows, TownsOpen,
+    Settings, ThreatArrows, TownsOpen, WindowLook,
 };
 use crate::tips::reset_tips;
 
@@ -87,14 +87,16 @@ fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
 /// nothing on the Playdate's skins (`SkinSet::Playdate`). `Theme`: one bit has the
 /// Playdate palette's inks, not a colour theme. `Map look` and `Map
 /// zoom`: its map has one skin, which doesn't zoom, whatever the look.
+/// `Window look`: its windows are one-bit, whatever the look.
 /// `Open towns on arrival`: it has no world map yet (1007; the row comes
 /// with it). The voices' four rows: it plays no voice yet (1048 brings
 /// them back with its clips). (`Intro` is on both since the Playdate's
 /// title has the cinematic, ticket 1044.) `Ambience volume`: it plays no
 /// sound bed until the bench says they run well there (1332).
-pub const PC_ONLY: [Row; 9] = [
+pub const PC_ONLY: [Row; 10] = [
     Row::Theme,
     Row::MapLook,
+    Row::WindowLook,
     Row::MapZoom,
     Row::Towns,
     Row::AmbienceVolume,
@@ -129,6 +131,9 @@ pub enum Row {
     /// [`ShuyiSettings::map_look`](crate::ShuyiSettings::map_look) (only when
     /// the game has pictures).
     MapLook,
+    /// [`ShuyiSettings::window_look`](crate::ShuyiSettings::window_look)
+    /// (only when the game has the windows' pictures; ticket 1380).
+    WindowLook,
     /// [`ShuyiSettings::map_zoom`](crate::ShuyiSettings::map_zoom) (only when
     /// the map can be zoomed).
     MapZoom,
@@ -186,7 +191,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 29] = [
+    pub const ALL: [Row; 30] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -195,6 +200,7 @@ impl Row {
         Row::Fullscreen,
         Row::Cursor,
         Row::MapLook,
+        Row::WindowLook,
         Row::MapZoom,
         Row::ThreatArrows,
         Row::RangeStyle,
@@ -231,6 +237,7 @@ impl Row {
             Row::Fullscreen => "options.row.fullscreen",
             Row::Cursor => "options.row.cursor",
             Row::MapLook => "options.row.map_look",
+            Row::WindowLook => "options.row.window_look",
             Row::MapZoom => "options.row.map_zoom",
             Row::ThreatArrows => "options.row.threat_arrows",
             Row::RangeStyle => "options.row.range_style",
@@ -271,12 +278,7 @@ impl Row {
     /// row of each group (`Language`, `Reset tips`) after a blank one.
     pub fn option(self) -> OptionRow {
         let row = match self {
-            Row::Language => OptionRow::new(
-                self.key(),
-                RowValue::names(language_list::names, language_list::in_use, |ctx, i| {
-                    language_list::pick(ctx, i, false)
-                }),
-            ),
+            Row::Language => language_row(),
             Row::TextSpeed => OptionRow::text_speed(),
             Row::Fullscreen => OptionRow::fullscreen(),
             Row::MusicVolume => OptionRow::music_volume(),
@@ -294,6 +296,7 @@ impl Row {
             Row::AnimSpeed => choice::<AnimSpeed>(self),
             Row::EnemyPhaseSpeed => choice::<EnemyPhaseSpeed>(self),
             Row::MapLook => choice::<MapLook>(self),
+            Row::WindowLook => choice::<WindowLook>(self),
             Row::MapZoom => choice::<MapZoom>(self),
             Row::ThreatArrows => choice::<ThreatArrows>(self),
             Row::RangeStyle => choice::<RangeStyle>(self),
@@ -519,6 +522,7 @@ pub fn shown_rows(ctx: &Ctx) -> Vec<Row> {
     let campaign = ctx.game.campaign_mode.is_some();
     let tutorial = ctx.game.campaign_tutorial.is_some();
     let pictures = has_pictures(&ctx.game.content);
+    let frames = !ctx.game.content.frames.frames.is_empty();
     let zooms = pictures || ctx.game.map_skin.zoom().is_some();
     let keyboard = ctx.platform.keyboard == Keyboard::Present;
     let pc = ctx.game.skin_set == SkinSet::Glyph;
@@ -527,12 +531,23 @@ pub fn shown_rows(ctx: &Ctx) -> Vec<Row> {
         .filter(|&r| r != Row::GameMode || campaign)
         .filter(|&r| r != Row::Tutorial || tutorial)
         .filter(|&r| r != Row::MapLook || pictures)
+        .filter(|&r| r != Row::WindowLook || frames)
         .filter(|&r| r != Row::MapZoom || zooms)
         .filter(|&r| r != Row::Layout || keyboard)
         .filter(|&r| r != Row::Fullscreen || ctx.platform.windowed)
         .filter(|r| pc || !PC_ONLY.contains(r))
         .filter(|r| !pc || !PLAYDATE_ONLY.contains(r))
         .collect()
+}
+
+/// The Language row: the languages by name, the one in use picked.
+fn language_row() -> OptionRow {
+    OptionRow::new(
+        Row::Language.key(),
+        RowValue::names(language_list::names, language_list::in_use, |ctx, i| {
+            language_list::pick(ctx, i, false)
+        }),
+    )
 }
 
 /// What `row` shows beside its name ([`options::OptionsScreen::value`]).
@@ -593,6 +608,20 @@ impl Named for MapLook {
     }
     fn put(self, s: &mut Settings) {
         s.game.map_look = self;
+    }
+}
+
+// engine-friction: engine#2314, moves (game 1168 deletes it)
+impl Named for WindowLook {
+    const ALL: &'static [Self] = &WindowLook::ALL;
+    fn key(self) -> &'static str {
+        WindowLook::key(self)
+    }
+    fn get(s: &Settings) -> Self {
+        s.game.window_look
+    }
+    fn put(self, s: &mut Settings) {
+        s.game.window_look = self;
     }
 }
 

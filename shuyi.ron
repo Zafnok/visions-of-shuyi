@@ -767,6 +767,7 @@
             "title/meadows_dusk.png",
             "title/meadows_night.png",
             "title/title.ron",
+            "ui/frames.ron",
             "worldmaps/act1.ron",
         ],
         // The test files (ADR-0057), as files and as the names they have when
@@ -1123,6 +1124,7 @@
                     "title/meadows_dusk.png",
                     "title/meadows_night.png",
                     "title/title.ron",
+                    "ui/frames.ron",
                 ],
                 // The project's, and the paths the later chapters' files have
                 // when embedded.
@@ -1433,6 +1435,7 @@
                     "title/meadows_dusk.png",
                     "title/meadows_night.png",
                     "title/title.ron",
+                    "ui/frames.ron",
                     "worldmaps/act1.ron",
                 ],
                 forbidden_paths: [
@@ -1666,6 +1669,7 @@
                     "title/meadows_dusk.png",
                     "title/meadows_night.png",
                     "title/title.ron",
+                    "ui/frames.ron",
                 ],
                 forbidden_paths: [
                     "assets-test/lang/test/ui.ron",

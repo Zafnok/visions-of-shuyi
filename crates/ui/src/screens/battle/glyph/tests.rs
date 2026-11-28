@@ -825,3 +825,85 @@ fn a_dialog_box_fits_a_title_wider_than_its_lines() {
     )];
     assert_eq!(dialog_size("Notes", &long, &NARROW), (27 + 4, 5));
 }
+
+/// The cells of the menu `view` shows, where the skin paints it.
+fn menu_cells(ctx: &Ctx, view: &BattleView) -> Rect {
+    let menu = view.menu.as_ref().expect("a menu");
+    let MenuPlace::Beside(tile) = menu.place else {
+        panic!("a menu beside a tile");
+    };
+    let skin = &ctx.game.map_skin;
+    let at = |pos| skin.tile_cells(&view.scene, MAP_VIEW, pos);
+    let anchor = menu_anchor(at, menu, tile).unwrap();
+    let size = menu::glyph::size(ctx, &menu.menu);
+    let (x, y) = menu_origin(anchor, size);
+    Rect::new(x, y, size.0, size.1)
+}
+
+/// Ticket 1380: in the picture look the side panel wears the panel frame,
+/// a unit's menu the menu frame with its header on the title plate, and
+/// the map menu its royal-blue frame.
+#[test]
+fn the_picture_look_frames_the_side_panel_and_the_menus() {
+    use crate::frames::tests::{assert_framed, assert_plated, framed_ctx};
+    let mut c = framed_ctx();
+    let s = quick();
+    assert_framed(&render(&s, &c), "ui/panel.png", SIDE_PANEL);
+    let s = lord_menu(&mut c);
+    let mut view = s.view(&c);
+    let cells = menu_cells(&c, &view);
+    let mut buf = render(&s, &c);
+    assert_framed(&buf, "ui/menu.png", cells);
+    assert!(
+        buf.sprites()
+            .iter()
+            .all(|s| s.image.path() != "ui/map_menu.png")
+    );
+    // A list's header (the Arts list's weapon) sits on the plate.
+    view.menu.as_mut().unwrap().header = Some(MenuHeader {
+        name: "Iron Sword".into(),
+        uses: Some(UsesView {
+            text: "20/20".into(),
+            spent: false,
+        }),
+    });
+    paint(&c, &view, &mut buf);
+    // `Iron Sword 20/20`: the name and the uses on one plate.
+    assert_plated(&buf, Rect::new(cells.x + 3, cells.y, 16, 1));
+    let mut s = quick();
+    step(&mut s, &mut c, &[Action::Cancel]);
+    let view = s.view(&c);
+    assert!(view.menu.as_ref().is_some_and(|m| m.map_menu));
+    assert_framed(&render(&s, &c), "ui/map_menu.png", menu_cells(&c, &view));
+}
+
+/// Ticket 1380: a question and a banner wear the panel frame in the
+/// picture look, and the glyph look keeps the lines and no pictures.
+#[test]
+fn the_picture_look_frames_a_question_and_a_banner() {
+    use crate::frames::tests::framed_ctx;
+    let c = framed_ctx();
+    let s = quick();
+    let mut view = s.view(&c);
+    view.dialog = Some(DialogView::Question(QuestionView {
+        question: "End your turn?".into(),
+        answers: "Yes  No".into(),
+    }));
+    let mut buf = render(&s, &c);
+    paint(&c, &view, &mut buf);
+    let frames = buf
+        .sprites()
+        .iter()
+        .filter(|s| s.image.path() == "ui/panel.png")
+        .count();
+    // The side panel's and the question's.
+    assert!(frames > 8, "{frames} frame sprites");
+    let glyphs = ctx();
+    let mut buf = render(&s, &glyphs);
+    paint(&glyphs, &view, &mut buf);
+    assert!(
+        buf.sprites()
+            .iter()
+            .all(|s| !s.image.path().starts_with("ui/"))
+    );
+}

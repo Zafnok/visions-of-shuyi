@@ -21,6 +21,7 @@ use trpg_core::{Side, StatValue};
 use super::{TEXT_X, print_clipped};
 use crate::color::{Rgb, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
+use crate::frames;
 use crate::glyph_buffer::{
     BoxStyle, Cell, GlyphBuffer, Layer, Overlay, Paint, PanelLook, PxRect, Rect, Sprite,
 };
@@ -187,12 +188,11 @@ pub fn swap_arrows(x: i32, y: i32, color: Rgb) -> Vec<Overlay> {
 /// Paints the forecast `view` over the side panel.
 pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(SIDE_PANEL, &look.with_border(c(UiColor::PanelBorder)), None);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg))
+        .with_border(c(UiColor::PanelBorder));
+    buf.panel(SIDE_PANEL, &frames::framed(ctx, frames::PANEL, look), None);
     let top = Rect::new(SIDE_PANEL.x, SIDE_PANEL.y, SIDE_PANEL.w, 1);
-    let title = format!(" {} ", view.title);
-    buf.print_centred(top, &title, c(UiColor::TextHighlight));
+    frames::centred_title(ctx, buf, top, &view.title, c(UiColor::TextHighlight));
     for ((side, by), x) in view.sides.iter().zip(SIDES).zip([LEFT_X, RIGHT_X]) {
         paint_side(ctx, view, (side, by), x, buf);
     }
@@ -387,7 +387,7 @@ fn paint_bar(
     let c = |u| ctx.palette.get(u);
     let (kept, color) = lit_fill(after, max, HP_BAR_CELLS);
     let (now, now_color) = lit_fill(hp.max(after), max, HP_BAR_CELLS);
-    let bg = c(UiColor::PanelBg);
+    let bg = frames::bg(ctx, frames::PANEL);
     let lost = if shaded {
         Cell::new('▒', c(UiColor::HpLow), bg)
     } else {

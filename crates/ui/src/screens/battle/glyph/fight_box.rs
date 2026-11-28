@@ -4,6 +4,7 @@
 //! while it flashes), HP with a bar, and the result under the target.
 
 use crate::color::UiColor;
+use crate::frames;
 use crate::glyph_buffer::{BoxStyle, GlyphBuffer, PanelLook, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
@@ -31,13 +32,15 @@ pub const BOX_COLUMNS: [i32; 2] = [BOX.x + 2, BOX.x + 2 + BOX_W / 2];
 /// Paints the fight box `view`.
 pub fn paint(ctx: &Ctx, view: &FightBoxView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
-    buf.panel(BOX, &look.with_border(c(UiColor::PanelBorderFocus)), None);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), c(UiColor::PanelBg))
+        .with_border(c(UiColor::PanelBorderFocus));
+    let look = frames::framed(ctx, frames::PANEL, look);
+    let bg = look.bg;
+    buf.panel(BOX, &look, None);
     if let Some(name) = &view.banner {
         // Between the corners.
         let top = Rect::new(BOX.x + 1, BOX.y, BOX.w - 2, 1);
-        buf.print_centred(top, &format!(" {name} "), c(UiColor::TextHighlight));
+        frames::centred_title(ctx, buf, top, name, c(UiColor::TextHighlight));
     }
     for (f, x) in view.sides.iter().zip(BOX_COLUMNS) {
         let color = c(faction_color(f.faction));
@@ -76,7 +79,10 @@ mod tests {
     }
 
     fn painted(change: impl FnOnce(&mut FightBoxView)) -> GlyphBuffer {
-        let c = ctx();
+        painted_in(&ctx(), change)
+    }
+
+    fn painted_in(c: &Ctx, change: impl FnOnce(&mut FightBoxView)) -> GlyphBuffer {
         let mut view = FightBoxView {
             banner: None,
             hp_name: "HP".into(),
@@ -89,7 +95,7 @@ mod tests {
         let p = &c.palette;
         let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
         let mut buf = GlyphBuffer::new(100, 32, blank);
-        paint(&c, &view, &mut buf);
+        paint(c, &view, &mut buf);
         buf
     }
 
@@ -144,5 +150,16 @@ mod tests {
         assert_eq!(text(&buf, x, BOX.y, 11), "Guard Break");
         let fg = buf.get(x, BOX.y).unwrap().fg;
         assert_eq!(fg, ctx().palette.get(UiColor::TextHighlight));
+    }
+
+    /// Ticket 1380: the box wears the panel frame in the picture look,
+    /// its banner on the title plate.
+    #[test]
+    fn the_picture_look_frames_the_box_and_plates_its_banner() {
+        use crate::frames::tests::{assert_framed, assert_plated, framed_ctx};
+        let buf = painted_in(&framed_ctx(), |v| v.banner = Some("Guard Break".into()));
+        assert_framed(&buf, "ui/panel.png", BOX);
+        let x = BOX.x + 1 + (BOX.w - 2 - 13) / 2;
+        assert_plated(&buf, Rect::new(x + 1, BOX.y, 11, 1));
     }
 }

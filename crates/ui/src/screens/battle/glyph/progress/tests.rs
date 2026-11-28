@@ -7,11 +7,14 @@ use crate::screens::battle::view::StatGainView;
 use crate::tips::view::FaceView;
 
 fn painted(view: &ProgressView) -> GlyphBuffer {
-    let c = ctx();
+    painted_in(&ctx(), view)
+}
+
+fn painted_in(c: &Ctx, view: &ProgressView) -> GlyphBuffer {
     let p = &c.palette;
     let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
     let mut buf = GlyphBuffer::new(100, 32, blank);
-    paint(&c, view, &mut buf);
+    paint(c, view, &mut buf);
     buf
 }
 
@@ -164,4 +167,17 @@ fn the_class_box_is_as_tall_as_its_lines() {
     assert_eq!(fg, c.palette.get(UiColor::TextHighlight));
     assert_eq!(text(&buf, BOX.y + 3), "Learned: Fire");
     assert_eq!(buf.get(BOX.x, BOX.y + 4).unwrap().glyph, '╚');
+}
+
+/// Ticket 1380: the EXP box wears the panel frame in the picture look.
+#[test]
+fn the_picture_look_frames_the_exp_box() {
+    let view = ProgressView::Exp(ExpView {
+        name: "Test Lord".into(),
+        exp_name: "EXP".into(),
+        exp: 45,
+        max: 100,
+    });
+    let buf = painted_in(&crate::frames::tests::framed_ctx(), &view);
+    crate::frames::tests::assert_framed(&buf, "ui/panel.png", EXP_BOX);
 }

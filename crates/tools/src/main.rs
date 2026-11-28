@@ -36,6 +36,7 @@ mod test_units;
 mod tileset_import;
 mod tileset_ron;
 mod title_art;
+mod ui_import;
 mod voice;
 mod voice_test;
 
@@ -54,6 +55,7 @@ title-art [--bought]               write the title logo and placeholder backdrop
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
 battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \
 tileset-import [--list]            pack the bought terrain tiles and write the game's tileset there\n  \
+ui-import [--list]                 cut the bought UI kit's window frames into assets-private/game/ui/\n  \
 playtest <battle-id> [options]     a bot plays a battle many times and reports (playtest --help)\n  \
 bot-wins (<battle-id> | --all)     record the bots' own wins, the lines their armies come from (bot-wins --help)\n  \
 skirmish new --at <x,y> --level <n> generate a skirmish whose bots land in their bands (skirmish --help)\n  \
@@ -97,6 +99,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("map-sprite-import") => map_sprite_import(&args.collect::<Vec<_>>()),
         Some("battler-import") => battler_import_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("tileset-import") => tileset_import(&args.collect::<Vec<_>>()),
+        Some("ui-import") => ui_import_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("playtest") => playtest(&args.collect::<Vec<_>>()),
         Some("bot-wins") => bot_wins::command(&repo_root(), &args.collect::<Vec<_>>()),
         Some("skirmish") => skirmish::command(&repo_root(), &args.collect::<Vec<_>>()),
@@ -435,6 +438,29 @@ fn tileset_import_in(root: &Path, args: &[String]) -> u8 {
         }
         Err(e) => {
             eprintln!("tileset-import: {e}");
+            1
+        }
+    }
+}
+
+/// `ui-import` with the repo at `root`.
+fn ui_import_in(root: &Path, args: &[String]) -> u8 {
+    let done = match args {
+        [] => ui_import::run(root).map(|summary| format!("{summary}\n")),
+        [flag] if flag == "--list" => ui_import::read_sources(root).map(|s| ui_import::list(&s)),
+        [flag] if flag == "--help" => Ok(format!("{}\n", ui_import::USAGE)),
+        _ => {
+            eprintln!("{}", ui_import::USAGE);
+            return 2;
+        }
+    };
+    match done {
+        Ok(text) => {
+            print!("{text}");
+            0
+        }
+        Err(e) => {
+            eprintln!("ui-import: {e}");
             1
         }
     }
@@ -982,6 +1008,19 @@ mod tests {
             dispatch(args(&["map-sprite-import", "--list", "x"]).into_iter()),
             2
         );
+    }
+
+    #[test]
+    fn ui_import_help_list_and_bad_args() {
+        // Only the arguments: a real run writes into `assets-private/`.
+        let here = repo_root();
+        assert_eq!(ui_import_in(&here, &args(&["--help"])), 0);
+        assert_eq!(ui_import_in(&here, &args(&["--list"])), 0);
+        assert_eq!(ui_import_in(&here, &args(&["--bogus"])), 2);
+        // No arguments runs it: with no source list there, that fails.
+        let bare = std::env::temp_dir().join(format!("xtask-ui-none-{}", std::process::id()));
+        assert_eq!(ui_import_in(&bare, &[]), 1);
+        assert_eq!(ui_import_in(&bare, &args(&["--list"])), 1);
     }
 
     #[test]

@@ -1,0 +1,41 @@
+// The bought UI kit's pictures the windows are framed with (ticket 1380;
+// `docs/design/look-and-feel.md`, *Windows (the picture look)*). Read by
+// `cargo xtask ui-import`, which writes each into
+// assets-private/game/ui/<out>, where assets/ui/frames.ron names them.
+// Names and numbers only: the art itself is never in this repository.
+//
+// `from` is a path under assets-private/ (`cargo shuyi private-assets
+// --library` checks the bought packs out). `recolour` moves every pixel
+// that isn't clear or gold to `hue` (degrees), its saturation raised to at
+// least 0.35 and multiplied by `sat`, its brightness multiplied by `val`.
+// `plate` keeps `left` and `right` columns as end caps and the one plain
+// column `column` between them, which the game stretches to a title.
+(
+    pictures: [
+        // Barely Games' 2D Pixel Quest Vol.3: the side panel and the
+        // battle's boxes (gold corner studs)...
+        (
+            out: "panel.png",
+            from: "library/barely-games/ui/pixel-quest-vol3/Panels/Panels/F-UI_Panel_H.png",
+        ),
+        // ...the unit menu and its sub-menus...
+        (
+            out: "menu.png",
+            from: "library/barely-games/ui/pixel-quest-vol3/Panels/Panels/F-UI_Panel_E.png",
+        ),
+        // ...and the map menu: the side panel's frame, its fill royal blue
+        // (1379's mockup: hue 218, saturation × 1.6, brightness × 1.5).
+        (
+            out: "map_menu.png",
+            from: "library/barely-games/ui/pixel-quest-vol3/Panels/Panels/F-UI_Panel_H.png",
+            recolour: Some((hue: 218.0, sat: 1.6, val: 1.5)),
+        ),
+        // Barely Games' Post-Baroque UI/GUI Kit: the title plate, its gold
+        // end caps and a plain column of its dark body.
+        (
+            out: "plate.png",
+            from: "library/barely-games/ui/post-baroque/Titles/UI_TitleB1.png",
+            plate: Some((left: 16, column: 60, right: 16)),
+        ),
+    ],
+)

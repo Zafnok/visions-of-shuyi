@@ -30,6 +30,7 @@ pub mod crash;
 pub mod debug;
 pub mod dialogue;
 pub mod flow;
+pub mod frames;
 pub mod game;
 
 pub mod glyph_buffer;
@@ -69,7 +70,7 @@ pub use glyph_buffer::{
 pub use screen::{
     Ctx, FrameInput, KeyPrompt, LoadError, Screen, ScreenStack, Shuyi, ShuyiCtx, Transition,
 };
-pub use settings::{PortraitStyle, RangeStyle, Settings, ShuyiSettings, ThreatArrows};
+pub use settings::{PortraitStyle, RangeStyle, Settings, ShuyiSettings, ThreatArrows, WindowLook};
 pub use shuyi_ui::{FileDrops, GraphicsTier, PlatformFacts};
 pub use shuyi_ui::{GameHooks, ScreenHook};
 pub use storage::{MemoryStorage, Storage, StorageError};

@@ -47,7 +47,7 @@ the PR's changed lines against the ~3,000 limit; warns, never fails (ADR-0101)\n
 the game's tool program, trpg-tools, runs these (they build the game; cargo xtask <command>\n\
 still runs each, and `cargo run -p trpg-tools -- --help` lists them):\n  \
 skill-pack, sfx, test-tileset, lettering, title-art,\n  \
-map-sprite-import, battler-import, tileset-import, playtest, bot-wins, skirmish, portrait-import,\n  \
+map-sprite-import, battler-import, tileset-import, ui-import, playtest, bot-wins, skirmish, portrait-import,\n  \
 lines, check-script, story-import, voice, voice-test-clips, icon, playdate, playdate-images,\n  \
 readme-pictures, and Shuyi's tools: shuyi (`cargo shuyi`), check-keys, check-text,\n  \
 lang-status, font-atlas, frame-png, web, private-assets (ADR-0129)";

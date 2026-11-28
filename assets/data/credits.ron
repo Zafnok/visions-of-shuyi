@@ -128,6 +128,22 @@
          license: "Custom (Electric Lemon)",
          private: ["tilesets/tiny_tales.png", "tilesets/tiny_tales.ron"]),
 
+        // Barely Games' UI kits (1380): the battle's window frames, the map
+        // menu's recolored royal blue (a change, so the credit says so), and
+        // the title plate, cut to its caps and one column of its body.
+        (id: "barely_pixel_quest", group: Art,
+         title: "2D Pixel Quest Vol.3 – The UI/GUI (modified: a panel recolored)",
+         author: "Barely Apes",
+         source: "https://barely-games.itch.io/2d-pixel-quest-the-uigui",
+         license: "Custom (Barely Games)",
+         private: ["ui/panel.png", "ui/menu.png", "ui/map_menu.png"]),
+        (id: "barely_post_baroque", group: Art,
+         title: "Post-Baroque UI/GUI Kit (modified: a plate cut down)",
+         author: "Barely Apes",
+         source: "https://barely-games.itch.io/post-baroque-uigui-kit",
+         license: "Custom (Barely Games)",
+         private: ["ui/plate.png"]),
+
         // The title screen's campfire (0922).
         (id: "idylwild_campfires", group: Art, title: "Idylwild's Chromatic Campfires",
          author: "Idylwild", source: "https://opengameart.org/content/idylwilds-chromatic-campfires",
