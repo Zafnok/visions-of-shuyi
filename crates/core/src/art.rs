@@ -61,6 +61,12 @@ impl ArtId {
     }
 }
 
+impl From<String> for ArtId {
+    fn from(id: String) -> Self {
+        Self(id)
+    }
+}
+
 /// A stat lowered on a unit until the end of its next phase (Pinning Shot,
 /// Pressure Point). It never takes the stat below 0.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -371,9 +377,12 @@ impl ArtEffect {
 }
 
 /// One Combat Art.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// Read as `arts.ron` writes it (ticket 1392).
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ArtDef {
     /// String id.
+    #[serde(deserialize_with = "crate::bare_id::one")]
     pub id: ArtId,
     /// Display name.
     pub name: String,
@@ -385,6 +394,7 @@ pub struct ArtDef {
     /// Durability it costs, paid once per combat (at least 1).
     pub cost: u32,
     /// What it does.
+    #[serde(default)]
     pub effect: ArtEffect,
 }
 

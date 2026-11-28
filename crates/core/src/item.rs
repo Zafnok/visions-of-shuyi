@@ -86,6 +86,12 @@ impl ItemId {
     }
 }
 
+impl From<String> for ItemId {
+    fn from(id: String) -> Self {
+        Self(id)
+    }
+}
+
 /// Weapon slots in every loadout.
 pub const WEAPON_SLOTS: usize = 3;
 
@@ -141,11 +147,15 @@ pub struct SpecialWeapon {
 
 /// A weapon's passive: costs nothing and applies to every strike made with
 /// the weapon, attacks and counters.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Read as `items.ron` writes it, e.g. `(name: "Moonlit", mitigation:
+/// Some(Res))` (ticket 1392).
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct WeaponPassive {
     /// Display name (`Moonlit`).
     pub name: String,
     /// Its strikes are mitigated by this stat instead (Moonlit: Res).
+    #[serde(default)]
     pub mitigation: Option<MitigationStat>,
 }
 
@@ -274,9 +284,10 @@ impl ItemDef {
     }
 }
 
-/// Item numbers that aren't per item (`items.ron`). [`Default`] is the
-/// design's values.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Item numbers that aren't per item (`items.ron`, read as it writes
+/// them: ticket 1392). [`Default`] is the design's values.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct WeaponRules {
     /// Attack speed bonus per rank, E to S.
     pub rank_speed: [StatValue; 6],
@@ -543,13 +554,19 @@ impl Loadout {
 }
 
 /// A loadout as written in data: item ids, weapons at full durability.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+/// Read as the data files write it (characters, generics, battle files;
+/// ticket 1392).
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LoadoutDef {
     /// Weapons, in slot order (at most the class's weapon slots).
+    #[serde(default, deserialize_with = "crate::bare_id::list")]
     pub weapons: Vec<ItemId>,
     /// Armour.
+    #[serde(default, deserialize_with = "crate::bare_id::option")]
     pub armour: Option<ItemId>,
     /// Accessory.
+    #[serde(default, deserialize_with = "crate::bare_id::option")]
     pub accessory: Option<ItemId>,
 }
 

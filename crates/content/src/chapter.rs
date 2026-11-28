@@ -72,8 +72,9 @@ impl ChapterDef {
     }
 }
 
-/// How a new game starts.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+/// How a new game starts, read as `data/new_game.ron` writes it.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NewGameDef {
     /// The first chapter, by id.
     pub first_chapter: String,
@@ -81,9 +82,11 @@ pub struct NewGameDef {
     /// include the lead.
     pub roster: Vec<CharacterId>,
     /// Starting gold.
+    #[serde(default)]
     pub gold: u32,
 
     /// Starting stock, one entry per item.
+    #[serde(default, deserialize_with = "trpg_core::bare_id::list")]
     pub stock: Vec<ItemId>,
 }
 
@@ -102,18 +105,6 @@ impl NewGameDef {
             stock: Vec::new(),
         }
     }
-}
-
-/// The New Game file as written.
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawNewGame {
-    first_chapter: String,
-    roster: Vec<CharacterId>,
-    #[serde(default)]
-    gold: u32,
-    #[serde(default)]
-    stock: Vec<String>,
 }
 
 /// Loads every chapter file in the bundle, keyed by id (the file stem),
@@ -218,13 +209,7 @@ pub fn new_game_from_source(
     characters: &CharacterTable,
     items: &trpg_core::ItemTable,
 ) -> Result<NewGameDef, Vec<ContentError>> {
-    let raw: RawNewGame = parse_ron(file, source).map_err(|e| vec![e])?;
-    let def = NewGameDef {
-        first_chapter: raw.first_chapter,
-        roster: raw.roster,
-        gold: raw.gold,
-        stock: raw.stock.iter().map(|i| ItemId::new(i)).collect(),
-    };
+    let def: NewGameDef = parse_ron(file, source).map_err(|e| vec![e])?;
 
     let mut errors = Vec::new();
     let mut err = |m: String| errors.push(ContentError::new(file, m));

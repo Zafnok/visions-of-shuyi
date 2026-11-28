@@ -664,6 +664,131 @@ starting places (2026-11-24):
   none). **Lamps** burn at the fort's gate and the bridges.
 - **Rocks** are few: "the rocks are too numerous".
 
+### Particles and small touches
+
+Ticket 1323, asked 2026-11-23 to 2026-11-27 over five rounds of moving
+mockups: real Chapter 1 fights and walks captured from the game, with the
+effects laid over them (kept in the session, never committed: they show
+bought art). This is the third palette the chapter passes pick from, with
+0096's *Moving tiles and effects* and 1322's ambient sound. Nick on
+Stardew Valley (2026-11-23): "I see they have particle effect for hits
+[...] we need to take some inspiration from here for giving the game more
+life even if its not a direct 1:1 copy".
+
+- **The art is ByteWright's**: the *Pixel VFX & SFX Mega Pack* for every
+  burst, and *Ambient Critters* for the creatures, both from the *Everything
+  So Far* bundle Nick bought on 2026-11-24 (licence and credit in
+  `THIRD_PARTY_ASSETS.md`: any number of games, commercial or not; edits
+  allowed; credit optional, and we credit ByteWright; no resale or
+  redistribution of the files; no AI training). Each effect is a sheet of
+  frames drawn by the artist, with its own frame times and anchor point in
+  its `.json`, played once from the moment it starts; nothing is drawn per
+  pixel by the game (ADR-0038). Round 1's free pack (Ninja Adventure, CC0)
+  was turned down: "look for other asset packs with these particle effects
+  these look bad … probably I want a high quality pack".
+- **Only the picture look was shown.** Nick: "dont need to render glyphs
+  look option for now". *Claude's starting rule:* the glyph look shows the
+  same moments with the font's own marks (`*`, `+`, `•`, `°`) snapped to
+  the text grid and fading by darkening, like the title's embers.
+
+#### Hits in the fight
+
+Everything the combat stage does today stays (the white flash, the shake,
+the crit's stage flash, `HIT -8` and `CRITICAL! -27`); the bursts go on
+top, starting at the strike's impact, at the target's near edge where the
+blow lands, drawn at the stage's 2×.
+
+- **C: a burst for every blow, and a crit gets its own.** Nick: "C looks
+  best but some of the vfx look weird", and on how busy: "many bursts but
+  crit gets the star". No blood.
+- **By kind of strike** (the pack's effect, variant, colourway and size in
+  pixels before the 2×):
+
+  | Strike | What flies off | Effect |
+  | ------ | -------------- | ------ |
+  | Sword, spear, axe | a dense shower of sparks | `spark` `dense` `spark` 64 |
+  | Bow | an arrow flies from the bow to the target, then a small star pops where it lands | `arrow` `standard` `stone` 32, then `impact` `light` `holy` 32 |
+  | Gauntlet | a puff of dust off the target, and dust at its feet | `poof` `standard` `dust` 48, `dust` `small` `dust` 32 |
+  | Fire | a small explosion that goes to smoke | `explosion` `standard` `fire` 48 |
+  | A miss | dust kicked up at the dodger's feet | `landdust` `standard` `dust` 48 |
+  | A crit (any kind) | a big four-point star with a snapping ring, under the kind's own burst | `crit` `standard` `spark` 64 |
+
+  - **The arrow:** wood splinters (round 2) were "weird"; of a white
+    thrust line, a ring hit marker and sparks only (round 3): "the thrust
+    line should be reversed but all look p bad"; then, of the reversed
+    line, a flying arrow and a lone star (round 4), the flying arrow.
+  - **The fire:** the ember pop (round 2) was "weird"; of fiery sparks, a
+    small explosion and a fire ring: "small explosion looks best but
+    probably bigger"; it grew twice ("bigger", then "A notch bigger
+    again"), to the size in the table.
+  - **The crit's star and the miss's dust** were shown in round 2 and
+    kept.
+- *Claude's starting rules, not shown to Nick* (judge them in the Act 1
+  playtest, 1064): an **ice** spell plays the same explosion in the pack's
+  `ice` colourway, and a spell with **no element** in `arcane`; an
+  **Absorb** strike plays the fire or element burst on the target and the
+  heal (below) on the striker; a strike that is **deflected or does no
+  damage** still plays its burst.
+
+#### A heal and a level up
+
+On the unit's tile on the map (where a heal's `+6` already shows), drawn
+at the map's 2×. Nick: "B crosses + D rays".
+
+- **A heal:** green crosses rise out of a glowing ring (`heal` `small`
+  `heal` 48), as the `+6` shows.
+- **A level up:** rays of light shoot up out of a ring on the unit's tile
+  (`levelup` `standard` `holy` 48), as the EXP bar fills past 100, before
+  the level-up page opens.
+
+#### Under units' feet
+
+On the battle map, as a unit walks (at the game's own walking speed), one
+touch per tile it steps onto. Nick: "B. Light".
+
+- **Plain and road:** a small puff of dust (`dust` `small` `dust` 24).
+- **Forest:** the same puff, and a few leaves falling from the canopy for
+  one loop of the pack's falling leaves (`leaves` `light` `nature` 32).
+- **Water** (a foot unit wading): a small splash and a ripple (`splash`
+  `small` `water` 24, then `ripple` `small` `water` 24).
+- *Claude's starting rule:* thicket counts as forest; every other terrain
+  (bridge, floor, fort, hills and peaks, buildings) has no touch.
+
+#### Hits on the map (combat animations off)
+
+With combat animations off, fights still resolve at once, with no stage;
+the map now marks each blow that lands.
+
+- **One drawn frame, not an animation:** the small white star
+  (`impact` `light` `holy` 16, its third frame) pops on the struck unit's
+  tile for a tenth of a second, at the moment of each blow, one after the
+  other (Tamsin's hit, then Harl's counter). Nick's path: the round 2
+  bursts, "small burst but not these vfx"; three smaller ones, "all look
+  bad, the animation should be small and fast"; three tiny fast ones,
+  "these are all multi step animations it should be one step"; then the
+  one-frame pops, "1. Small white star", one per blow.
+- *Claude's starting rule:* a miss shows no star.
+
+#### Creatures on the map
+
+0096 put ByteWright's critters on open plain (*Moving tiles and effects*).
+This decides what they do when a unit comes near. Nick: "C. Startle and
+run".
+
+- **A critter on a tile next to where a unit steps startles** (the pack's
+  `startle` row), **runs a couple of tiles away** over open plain, and
+  settles again, as Stardew Valley's critters do.
+- The pack's birds (robin, duck, heron, gull) hop and walk; none takes
+  off. Only butterflies, bees and dragonflies fly.
+- Never on a tile the rules use for a unit, and never under the cursor or
+  a unit (0096: only on open plain; Nick: "its weird that there are
+  animals being occluded by hills").
+
+#### The Playdate
+
+None of it: the Playdate (`Reduced`, 1314) keeps today's flash and shake,
+and its map stays still (0096). Nick: "None".
+
 ### Units on the map (the glyph look)
 
 - A unit is drawn as **two letters: an initial pair from its name** (`Al`,

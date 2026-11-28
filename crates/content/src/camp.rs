@@ -10,7 +10,7 @@ use crate::prelude::*;
 use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
-use trpg_core::{BattleDef, CampEvent, CharacterId};
+use trpg_core::{BattleDef, CampEvent};
 
 use crate::bundle;
 use crate::character::CharacterTable;
@@ -25,21 +25,7 @@ pub const CAMP_PATH: &str = "data/camp.ron";
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawFile {
-    events: Vec<RawEvent>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawEvent {
-    id: String,
-    title: String,
-    scene: String,
-    #[serde(default)]
-    flags: Vec<String>,
-    #[serde(default)]
-    battles: Vec<String>,
-    #[serde(default)]
-    units: Vec<String>,
+    events: Vec<CampEvent>,
 }
 
 /// What camp events refer to, each `None` (not checked) if its files
@@ -114,23 +100,16 @@ pub fn from_sources<F: AsRef<str>, S: AsRef<str>>(
                     at(format!("unknown battle \"{b}\""));
                 }
             }
-            let units: Vec<CharacterId> = e.units.into_iter().map(CharacterId).collect();
             if let Some(characters) = refs.characters {
-                for u in units
+                for u in e
+                    .units
                     .iter()
                     .filter(|u| !characters.characters.contains_key(*u))
                 {
                     at(format!("unknown character \"{}\"", u.0));
                 }
             }
-            events.push(CampEvent {
-                id: e.id,
-                title: e.title,
-                scene: e.scene,
-                flags: e.flags,
-                battles: e.battles,
-                units,
-            });
+            events.push(e);
         }
     }
     if errors.is_empty() {

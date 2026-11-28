@@ -7,9 +7,8 @@ use alloc::collections::BTreeMap;
 use serde::Deserialize;
 use trpg_core::{
     AccessoryDef, ArmourDef, ArtId, CharacterId, ClassTable, ConsumableDef, ConsumableEffect,
-    DamageType, ItemDef, ItemId, ItemTable, MitigationStat, SealDef, SealKind, SpecialWeapon,
-    StatValue, Stats, Tier, UnitTag, WeaponDef, WeaponKind, WeaponPassive, WeaponRank, WeaponRules,
-    WeaponTrait,
+    DamageType, ItemDef, ItemId, ItemTable, SealDef, SealKind, SpecialWeapon, StatValue, Stats,
+    Tier, UnitTag, WeaponDef, WeaponKind, WeaponPassive, WeaponRank, WeaponRules, WeaponTrait,
 };
 
 use crate::bundle;
@@ -46,7 +45,7 @@ const ALL_KINDS: [WeaponKind; 5] = [
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawFile {
-    rules: RawRules,
+    rules: WeaponRules,
     kinds: Vec<RawKind>,
     weapons: Vec<RawWeapon>,
     armour: Vec<RawArmour>,
@@ -55,20 +54,6 @@ struct RawFile {
     /// Promotion and reclass seals (`progression.md`).
     #[serde(default)]
     seals: Vec<RawSeal>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawRules {
-    rank_speed: [StatValue; 6],
-    rank_exp: [u32; 5],
-    broken_might_divisor: StatValue,
-    broken_hit_penalty: StatValue,
-    exp_hit: u32,
-    exp_miss: u32,
-    exp_damage_divisor: u32,
-    exp_art_multiplier: u32,
-    default_pack_cap: usize,
 }
 
 #[derive(Deserialize)]
@@ -112,16 +97,7 @@ struct RawWeapon {
     wielder: Option<String>,
     /// Its passive; special weapons only.
     #[serde(default)]
-    passive: Option<RawPassive>,
-}
-
-/// A weapon's passive, e.g. `(name: "Moonlit", mitigation: Some(Res))`.
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawPassive {
-    name: String,
-    #[serde(default)]
-    mitigation: Option<MitigationStat>,
+    passive: Option<WeaponPassive>,
 }
 
 fn physical() -> DamageType {
@@ -208,7 +184,7 @@ pub fn from_source(file: &str, source: &str) -> Result<ItemTable, Vec<ContentErr
         errors: Vec::new(),
         items: BTreeMap::new(),
     };
-    let rules = v.rules(&raw.rules);
+    v.rules(&raw.rules);
     let traits = v.traits(&raw.kinds);
     for w in raw.weapons {
         v.weapon(w);
@@ -235,7 +211,7 @@ pub fn from_source(file: &str, source: &str) -> Result<ItemTable, Vec<ContentErr
         Ok(ItemTable {
             items: v.items,
             traits,
-            rules,
+            rules: raw.rules,
         })
     } else {
         Err(v.errors)
@@ -266,7 +242,8 @@ impl Validator<'_> {
         self.err(&format!("id: \"{id}\""), message);
     }
 
-    fn rules(&mut self, r: &RawRules) -> WeaponRules {
+    /// Checks the rules `r`.
+    fn rules(&mut self, r: &WeaponRules) {
         if !r.rank_exp.windows(2).all(|w| w[0] < w[1]) || r.rank_exp[0] == 0 {
             self.err(
                 "rank_exp",
@@ -281,17 +258,6 @@ impl Validator<'_> {
             if value < 1 {
                 self.err(name, format!("{name} must be at least 1"));
             }
-        }
-        WeaponRules {
-            rank_speed: r.rank_speed,
-            rank_exp: r.rank_exp,
-            broken_might_divisor: r.broken_might_divisor,
-            broken_hit_penalty: r.broken_hit_penalty,
-            exp_hit: r.exp_hit,
-            exp_miss: r.exp_miss,
-            exp_damage_divisor: r.exp_damage_divisor,
-            exp_art_multiplier: r.exp_art_multiplier,
-            default_pack_cap: r.default_pack_cap,
         }
     }
 
@@ -372,10 +338,7 @@ impl Validator<'_> {
         }
         let special = w.special.then(|| SpecialWeapon {
             wielder: w.wielder.map(CharacterId),
-            passive: w.passive.map(|p| WeaponPassive {
-                name: p.name,
-                mitigation: p.mitigation,
-            }),
+            passive: w.passive,
         });
         let def = WeaponDef {
             short_name: w.short_name,

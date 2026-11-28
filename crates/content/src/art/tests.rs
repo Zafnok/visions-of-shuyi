@@ -2,7 +2,8 @@
 //! every validation rule reports its error.
 
 use trpg_core::{
-    ArtArea, ArtStatus, CombatMods, Debuff, OnKill, StanceReaction, StatKind, TimedMods, UnitTag,
+    ArtArea, ArtId, ArtStatus, CombatMods, Debuff, OnKill, StanceReaction, StatKind, TimedMods,
+    UnitTag, WeaponRank,
 };
 
 use super::*;

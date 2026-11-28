@@ -135,9 +135,11 @@ from another seller gets its own row and credit.
   - **AI-assisted:** no ("No generative AI was used" on every pack; the
     licence: "hand-crafted pixel art and sound made by us, never produced
     by an AI tool").
-  - **In the game:** nothing yet; candidates: Weather Overlays for the
-    drifting effects (0096), Ambient Critters (1323), the VFX & SFX mega
-    pack and the sound effects pack (1322, 1323).
+  - **In the game:** nothing yet. Picked: Weather Overlays for the
+    drifting effects (0096); the VFX & SFX mega pack's bursts for hits,
+    heals, level ups and touches on the map, and Ambient Critters for
+    the map's creatures (1323; built by 1333 and 1334); candidates: the
+    sound effects pack (1322).
 
 - **ELV Games, "Game Assets Mega Bundle"** (293 products),
   <https://itch.io/s/79053/game-assets-mega-bundle>, store

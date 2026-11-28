@@ -1,6 +1,6 @@
 use trpg_core::{
-    ArmourWeight, ClassId, ClassTable, CombatRules, Faction, Forecast, LoadoutDef, Pos,
-    SideForecast, TerrainRules, TerrainTable, Unit, UnitId, forecast,
+    ArmourWeight, ClassId, ClassTable, CombatRules, Faction, Forecast, LoadoutDef, MitigationStat,
+    Pos, SideForecast, TerrainRules, TerrainTable, Unit, UnitId, forecast,
 };
 
 use super::*;

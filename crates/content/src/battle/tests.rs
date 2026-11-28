@@ -1090,7 +1090,7 @@ fn random_pool_rejects_each_narrative_or_unique_loot_feature() {
     };
     reject(|r| r.enemies[0].template = None);
     reject(|r| r.enemies[0].character = Some("lead".into()));
-    reject(|r| r.enemies[0].loadout = Some(RawLoadout::default()));
+    reject(|r| r.enemies[0].loadout = Some(LoadoutDef::default()));
     reject(|r| r.enemies[0].faction = Faction::Ally);
     reject(|r| r.enemies[0].boss = true);
     reject(|r| r.enemies[0].noncombatant = true);
