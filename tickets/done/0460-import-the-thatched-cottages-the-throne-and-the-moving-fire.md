@@ -179,11 +179,15 @@ zips.
   judge in the Act 1 playtest (1064).
 - **Two PRs move the tileset:** 1378's (game #875, lamps) is open and its
   art already merged in the private repository; this branch's art
-  (Zafnok/visions-of-shuyi-assets#46, built on the game's pin) leaves it
-  out. Whichever game PR merges second merges `main`, re-imports and
-  re-pins (`shuyi-private-files` §5). Zafnok/visions-of-shuyi-assets#45
+  (Zafnok/visions-of-shuyi-assets#46, built on the game's base pin) leaves
+  it out. The pin is the change's own file, `assets-private.d/t0460-art.rev`
+  (ADR-0135): merging the game PR lands #46. The packed tileset is
+  generated, so the two private branches conflict on it: when CI's merge
+  of the pins says so, merge the private `main` into `t0460-art`, run
+  `cargo xtask tileset-import` again on the merged mapping, push, and
+  `cargo xtask assets-pin --add` again. Zafnok/visions-of-shuyi-assets#45
   was opened first from the private `main`, which carries 1380's UI frames
-  that no game credit covers yet; #46 supersedes it.
+  that no game credit covers yet; #46 replaced it and #45 is closed.
 - **Checked:** `frame-png` of two staged maps (never committed): a
   village with cottages beside a burning wood at two moments, and a throne
   room (`docs/screenshots/0460-*.png`, the game's screenshots).
