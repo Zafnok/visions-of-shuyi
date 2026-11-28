@@ -35,7 +35,7 @@ and cuts the riders from assets-private/library/mattwalkden/Sprite Sheets/.\n\
 --list  print which sprite each class and character gets, and copy nothing\n\n\
 Run `cargo shuyi private-assets --library` first. Afterwards run\n\
 `cargo xtask tileset-import`, which writes the tileset that names them; commit and\n\
-push in assets-private/; then run `cargo shuyi private-assets --pin`.";
+push in assets-private/; then run `cargo xtask assets-pin --add`.";
 
 /// The sorted bought characters, relative to the repo root.
 pub const LIBRARY_DIR: &str = "assets-private/library/tiny-tales/characters";

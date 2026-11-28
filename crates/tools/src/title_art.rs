@@ -32,8 +32,8 @@ assets/title/game_over.png from assets-src/title/game_over.txt, and the placehol
 backdrops beside them.\n\
 --bought  instead copy the bought backdrops from assets-private/library/ to\n\
           assets-private/game/title/ (run `cargo shuyi private-assets --library` first;\n\
-          afterwards commit and push in assets-private/, then run\n\
-          `cargo shuyi private-assets --pin`)";
+          afterwards commit and push your branch in assets-private/, then run\n\
+          `cargo xtask assets-pin --add`)";
 
 /// The logo's source, relative to the repo root.
 pub const LOGO_SOURCE: &str = "assets-src/title/logo.txt";

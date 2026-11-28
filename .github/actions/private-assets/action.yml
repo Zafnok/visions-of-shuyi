@@ -1,9 +1,11 @@
 name: Private assets
 description: >-
-  Checks out the private repository into assets-private/, at the commit
-  named in assets-private.rev, when the run has the key: the bought art
-  (ADR-0040), the game's content (ADR-0117), or both. Run it after the
-  repository's own checkout.
+  Checks out the private repository into assets-private/, at the effective
+  pin, when the run has the key: the bought art (ADR-0040), the game's
+  content (ADR-0117), or both. The effective pin is the commit named in
+  assets-private.rev merged with each change's own pin file,
+  assets-private.d/*.rev (ADR-0135). Run it after the repository's own
+  checkout.
 
 inputs:
   key:
@@ -46,11 +48,17 @@ inputs:
     description: >-
       'true' fetches the whole history of every branch (commits and trees,
       no file contents), for `cargo xtask assets-pin --check`, which reads
-      whether the pin only moved forward (ticket 0194).
+      whether the pin only moved forward (ticket 0194). Pin files in
+      assets-private.d/ fetch it too, whatever this says (ADR-0135).
     required: false
     default: "false"
 
 outputs:
+  pin:
+    description: >-
+      The effective pin: assets-private.rev's commit, then ' + ' and each pin
+      file's commit when there are any (ADR-0135). For a trailer or a log.
+    value: ${{ steps.resolve.outputs.pin }}
   features:
     description: >-
       'private-assets' when the art was checked out, otherwise empty. Pass it
@@ -80,6 +88,7 @@ runs:
         ART: ${{ inputs.art }}
         VOICE: ${{ inputs.voice }}
         CONTENT: ${{ inputs.content }}
+        HISTORY: ${{ inputs.history }}
       run: |
         set -euo pipefail
         if [ "$HAS_KEY" != "true" ]; then
@@ -116,9 +125,22 @@ runs:
           echo "::error::Neither art nor content asked for: nothing to check out."
           exit 1
         fi
-        echo "Private repository: checking out $folders at $rev"
+        # Each change's own pin file (ADR-0135): merging them needs the
+        # history, which the checkout fetches without file contents.
+        pins=""
+        if [ -d assets-private.d ]; then
+          pins=$(find assets-private.d -maxdepth 1 -name '*.rev' -type f | LC_ALL=C sort \
+            | while read -r file; do tr -d '[:space:]' < "$file"; echo " "; done | tr -d '\n')
+        fi
+        history="$HISTORY"
+        if [ -n "${pins// /}" ]; then
+          history=true
+        fi
+        echo "Private repository: checking out $folders at $rev${pins:+ with the pins $pins}"
         {
           echo "rev=$rev"
+          echo "pins=$pins"
+          echo "history=$history"
           echo "folders<<EOF"
           echo "$folders" | tr ' ' '\n' | sed '/^$/d'
           echo "EOF"
@@ -132,9 +154,44 @@ runs:
         ssh-key: ${{ inputs.key }}
         path: assets-private
         sparse-checkout: ${{ steps.plan.outputs.folders }}
-        fetch-depth: ${{ inputs.history == 'true' && '0' || '1' }}
-        filter: ${{ inputs.history == 'true' && 'blob:none' || '' }}
+        fetch-depth: ${{ steps.plan.outputs.history == 'true' && '0' || '1' }}
+        filter: ${{ steps.plan.outputs.history == 'true' && 'blob:none' || '' }}
         persist-credentials: false
+    - name: Merge the pin files
+      id: resolve
+      if: steps.plan.outputs.rev != ''
+      shell: bash
+      env:
+        KEY: ${{ inputs.key }}
+        BASE: ${{ steps.plan.outputs.rev }}
+        PINS: ${{ steps.plan.outputs.pins }}
+      run: |
+        set -euo pipefail
+        if [ -z "${PINS// /}" ]; then
+          echo "pin=$BASE" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        # The merge and the switch fetch the file contents they need, so git
+        # gets the key for this step alone (the checkout keeps none). The
+        # host keys come from GitHub's API, over HTTPS.
+        key="$RUNNER_TEMP/private-assets-key"
+        known="$RUNNER_TEMP/private-assets-known-hosts"
+        if command -v cygpath > /dev/null; then
+          # Windows runners: Git's ssh reads POSIX paths.
+          key=$(cygpath -u "$key")
+          known=$(cygpath -u "$known")
+        fi
+        trap 'rm -f "$key" "$known"' EXIT
+        printf '%s\n' "$KEY" > "$key"
+        chmod 600 "$key"
+        curl -fsSL https://api.github.com/meta | jq -r '.ssh_keys[] | "github.com " + .' > "$known"
+        export GIT_SSH_COMMAND="ssh -i '$key' -o IdentitiesOnly=yes -o UserKnownHostsFile='$known' -o StrictHostKeyChecking=yes"
+        # shellcheck disable=SC2086 # one word per pin
+        effective=$(bash "$GITHUB_ACTION_PATH/resolve.sh" assets-private "$BASE" $PINS)
+        echo "Effective pin: $effective"
+        shown="$BASE"
+        for pin in $PINS; do shown="$shown + $pin"; done
+        echo "pin=$shown" >> "$GITHUB_OUTPUT"
     - name: Check the content is there
       if: steps.plan.outputs.rev != '' && inputs.content == 'true'
       shell: bash
