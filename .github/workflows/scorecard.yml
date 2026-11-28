@@ -1,4 +1,5 @@
 name: Scorecard
+# A throwaway comment (ticket 0174 acceptance run).
 
 on:
   push:
