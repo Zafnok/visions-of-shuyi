@@ -130,7 +130,9 @@ jobs:
             key="$RUNNER_TEMP/changes-key"
             known="$RUNNER_TEMP/changes-known-hosts"
             meta="$RUNNER_TEMP/changes-meta.json"
-            trap 'rm -f "$key" "$known" "$meta"' EXIT
+            # Expanded now: the locals are gone when the shell exits.
+            # shellcheck disable=SC2064
+            trap "rm -f '$key' '$known' '$meta'" EXIT
             printf '%s\n' "$KEY" > "$key" && chmod 600 "$key" || return 1
             curl -fsSL --retry 4 --retry-delay 5 --retry-all-errors \
               -H "Authorization: Bearer $GH_TOKEN" -o "$meta" https://api.github.com/meta || return 1
