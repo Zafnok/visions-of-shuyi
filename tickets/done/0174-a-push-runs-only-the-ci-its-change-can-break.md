@@ -162,12 +162,12 @@ None.
       a docs-only commit pushed after a code commit logs the
       `before..sha` diff and skips the jobs. The trigger is gone from the
       merged tree.
-- [ ] Every `test` leg runs nextest; no `coverage` job; the PR's
+- [x] Every `test` leg runs nextest; no `coverage` job; the PR's
       SonarCloud analysis shows coverage (link in the notes).
 - [ ] Each test leg's median of 3 runs, before and after, is in the
       notes; the Windows leg is faster (aim: under 10 min).
 - [x] One job builds the release web target.
-- [ ] `gh cache list --ref refs/pull/<this PR>/merge` is empty after the
+- [x] `gh cache list --ref refs/pull/<this PR>/merge` is empty after the
       PR's runs.
 - [x] `cargo test -p xtask every_rust_cache_step_saves_only_on_main` and
       `light_workflows_are_called_by_no_pull_request_workflow` pass, and
@@ -263,8 +263,35 @@ and deleted after; the scratch private branch too):
   an unfiltered `pull_request` trigger; on the real tree the light check
   first failed on `demo.yml`'s butler call.
 
-Test legs, median of 3 (before: runs 46114193691, 46112543852,
-46112314992): Windows 17m36s, Ubuntu 16m55s, macOS 17m22s, `coverage`
-19m16s. After: see the PR (filled in once its three runs finish).
+- Every leg ran nextest (run 46132317313, 3 attempts, all green); no
+  `coverage` job; SonarCloud's analysis of PR #901
+  (https://sonarcloud.io/summary/new_code?id=Zafnok_tactical-rpg&pullRequest=901)
+  shows coverage 97.4% (as on `main`) and 99.6% on new code.
+- `gh cache list --ref refs/pull/901/merge` is empty after its runs.
+
+Test legs, median of 3:
+
+| Leg | Before (46114193691, 46112543852, 46112314992) | After (46132317313, attempts 1–3) |
+| --- | --- | --- |
+| Windows | 17m36s (13m06s–23m38s) | 21m44s (13m25s, 22m28s, 21m44s) |
+| Ubuntu | 16m55s, **plus `coverage` 19m16s** | 18m59s (18m27s, 18m59s, 19m18s), coverage included |
+| macOS | 17m22s | 16m55s (15m26s, 18m38s, 16m55s) |
+
+**The Windows leg is not measurably faster; the box stays open.** Its time
+is the runner's speed: attempts 1 and 2 of the same commit built in 4m35s
+and 7m45s and ran the tests in 471 s and 812 s, both about 1.7× apart,
+and the seven full runs before this PR spread from 13m06s to 24m05s
+(median 22m17s). nextest on Windows pays a process per test, which eats
+what running all of them at once saves. The saving is in minutes instead:
+the 19-minute `coverage` job is gone for about 2 more minutes on Ubuntu,
+and the release web build runs once (`wasm` 3m23s, debug). The slowest
+five tests start first (`[[profile.ci.overrides]] priority = 100`): the
+first Windows run left xtask's moved-command test, which builds
+trpg-tools, running alone for its last three minutes.
+
+Notes for later: a push to a draft PR followed at once by "Ready for
+review" can run as a draft (the `synchronize` run, payload still draft,
+cancelled the `ready_for_review` one, which GitHub had queued on the old
+head); closing and reopening the PR, or pushing again, starts a full run.
 
 Follow-ups: none.
