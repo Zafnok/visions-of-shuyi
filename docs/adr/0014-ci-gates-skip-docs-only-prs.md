@@ -77,16 +77,16 @@ legs. Any new job added to such a workflow must be added to its aggregate's
 | ---- | ---- | ------- | ------------ | -------------- | ------ |
 | Formatting | `cargo fmt --check` | PR, push | skipped | via `ci-result` | 0102 |
 | Lints | `cargo clippy --all-targets -- -D warnings` (+ selected `pedantic` lints) | PR, push | skipped | via `ci-result` | 0102 |
-| Tests (3 OS) | `cargo test --workspace` on `windows-latest`, `ubuntu-latest`, `macos-latest` | PR, push | skipped | via `ci-result` | 0102 |
-| WASM build | `cargo build --target wasm32-unknown-unknown -p trpg-app` | PR, push | skipped | via `ci-result` | 0102 |
+| Tests (3 OS) | `cargo nextest run --workspace --profile ci` on `windows-latest`, `ubuntu-latest`, `macos-latest`; Ubuntu under `cargo llvm-cov nextest`, then `cargo test --doc` | PR (a draft: Ubuntu only), push | skipped | via `ci-result` | 0102, 0174 |
+| WASM build | `cargo shuyi web` (debug; `export` builds the release package) | PR, push | skipped | via `ci-result` | 0102, 0174 |
 | Docs build | `cargo doc --no-deps` with `-D warnings` | PR, push | skipped | via `ci-result` | 0102 |
-| Coverage + static analysis | `cargo-llvm-cov` → SonarCloud (Clippy report imported) | PR, push | skipped | via `ci-result` | 0104 |
+| Coverage + static analysis | `sonar`: SonarCloud reads `test`'s Ubuntu `lcov.info` and `clippy`'s `clippy.json` | PR (not a draft), push | skipped | via `ci-result` | 0104, 0174 |
 | Licences (ADR-0013), advisories, bans, sources | `cargo-deny` | PR, push, weekly | skipped | `deny` | 0103 |
 | Unused dependencies | `cargo-machete` | PR, push, weekly | skipped | `machete` | 0103 |
 | Spelling | `typos` | PR, push, weekly | **runs** (useful for Markdown) | `typos` | 0103 |
-| Workflow security | `zizmor` (medium+) | PR, push, weekly | skipped (`.github/**` is code) | `zizmor` | 0103 |
-| Code scanning | CodeQL (Rust + Actions) | PR, push, weekly | skipped | `codeql-result` | 0103 |
-| Mutation testing | `cargo-mutants --in-diff` (PR), full run weekly | PR, weekly | skipped | `mutants (diff)` | 0105 |
+| Workflow security | `zizmor` (medium+) | PR, push, weekly | runs when `.github/**` changed (`workflows`), else skipped | `zizmor` | 0103, 0174 |
+| Code scanning | CodeQL (Rust + Actions) | PR (not a draft), push, weekly | runs when `.github/**` changed (`workflows`), else skipped | `codeql-result` | 0103, 0174 |
+| Mutation testing | `cargo-mutants --in-diff` (PR), full run weekly | PR (not a draft), weekly | skipped | `mutants (diff)` | 0105, 0174 |
 | Supply-chain posture | OpenSSF Scorecard | push to main, weekly | n/a | ❌ (report only) | 0103 |
 | Dependency updates | Dependabot (cargo + github-actions), grouped weekly | schedule | n/a | n/a | 0103 |
 | Secret scanning + push protection | GitHub built-in (repo setting) | always | n/a | n/a | 0103 |
@@ -114,6 +114,43 @@ unchecked. CI's and the mutants runs' proptests use one fixed seed
 (`PROPTEST_RNG_SEED`, the same in `ci.yml` and `mutants.yml`);
 `proptest-explore.yml` tries random seeds daily on `main` and files a
 `proptest-seed` issue for a failing case.
+
+*Note, 2026-11-28 (ticket 0174):* most CI minutes went to runs the change
+couldn't fail (the retro of PRs #616–#735, T11). `changes.yml` now:
+
+- on a **push**, diffs the push's own commits, `github.event.before` to
+  `github.sha` (`before` fetched at depth 1), so a docs-only merge to
+  `main` skips the heavy jobs as its pull request did. A push with
+  `before` all zeros, or one whose `before` can't be fetched, counts as
+  code; `schedule` and `workflow_dispatch` still always do, so the weekly
+  scans keep main's baselines whole. A push to `main` in `ci.yml`,
+  `codeql.yml` and `playtest.yml` is never cancelled by the next one (its
+  concurrency group is the commit), since each diffs only its own commits;
+- has a second output, **`workflows`**: `true` when any `.github/**` path
+  changed. `zizmor` and CodeQL's `analyze` run on `code || workflows`;
+- counts as **docs** `LICENSE`, and the workflows that no pull-request
+  workflow calls and that are no pull request's check (`release.yml`,
+  `story-kit.yml`, `story-mirror.yml`, `playtest-itch.yml`,
+  `engine-watch.yml`, `sonar-triage.yml`, `scorecard.yml`,
+  `.github/dependabot.yml`): their line adds `xtask` to `doc_crates`, whose
+  tests parse every workflow. xtask's
+  `light_workflows_are_called_by_no_pull_request_workflow` keeps the list
+  true (it dropped the butler action, which `demo.yml` runs on PRs);
+- counts a **pin move** as docs when `assets-private.rev` is the only
+  non-docs path and its old and new commits have the same root tree
+  (commit objects fetched with `--filter=tree:0` and the deploy key, which
+  the four callers pass as the optional `PRIVATE_ASSETS_KEY` secret). No
+  key (a fork) or any error counts as code.
+
+A **draft** pull request (`types: [opened, synchronize, reopened,
+ready_for_review]` on `ci.yml`, `codeql.yml`, `mutants.yml`,
+`playtest.yml`) runs `test` on Ubuntu only and skips mutants' `plan`,
+CodeQL's `analyze`, `sonar` and the playtest; its `--pr-branch` ticket
+lint only warns. "Ready for review" starts the full run. The aggregates
+already pass on `skipped`. Every `Swatinem/rust-cache` step saves only on
+`main` (`save-if`; xtask's `every_rust_cache_step_saves_only_on_main`):
+pull requests restore `main`'s caches and save none, which had passed the
+10 GB cap and evicted `main`'s.
 
 Do not require checks that are not produced by a job in these workflows (for
 example the code-scanning `CodeQL` / `zizmor` result checks, or a SonarCloud app

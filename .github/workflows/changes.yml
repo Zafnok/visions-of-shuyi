@@ -1,11 +1,16 @@
 name: Changes
 
-# Reusable: decides whether a pull request touches anything besides docs, so
-# heavy jobs can be skipped with `if:` (a skipped job still reports a status,
-# unlike a workflow skipped by a `paths` filter). See ADR-0014.
+# Reusable: decides whether a pull request or a push touches anything
+# besides docs, so heavy jobs can be skipped with `if:` (a skipped job still
+# reports a status, unlike a workflow skipped by a `paths` filter). See
+# ADR-0014.
 #
-# Docs-only paths: `*.md` anywhere, `docs/**`, `tickets/**`, `.claude/**`.
-# Any other event (push, schedule, workflow_dispatch) always counts as code.
+# Docs-only paths: `*.md` anywhere, `docs/**`, `tickets/**`, `.claude/**`,
+# `LICENSE` (nothing in crates/ reads it). A pull request diffs its merge
+# commit against the base; a push diffs its own commits, `before` to `sha`
+# (ticket 0174: 13 docs-only merges ran the whole matrix on main). A push
+# with no earlier commit to compare with, `schedule` and `workflow_dispatch`
+# always count as code.
 #
 # But a Markdown file the code reads (a test checks it against the data)
 # isn't skipped: PR #464 changed only `docs/design/audio.md`, skipped the
@@ -13,15 +18,34 @@ name: Changes
 # names the crates that read it; they go in `doc_crates`, and CI's
 # `doc-tests` job runs only their tests. xtask's
 # `every_markdown_file_the_code_reads_is_tested` keeps those lines complete.
+#
+# A workflow that no pull-request workflow calls, and that isn't itself a
+# pull request's check, can't break a pull request's checks: it counts as
+# docs, and xtask's tests (they parse every workflow) run on it. xtask's
+# `light_workflows_are_called_by_no_pull_request_workflow` keeps that list
+# true. Any `.github/**` change sets `workflows`, which the workflow scans
+# (zizmor, CodeQL's actions analysis) read.
+#
+# A pin move of the private content to a commit with the same root tree
+# (a re-pin of the same files: #725, #728, #731) counts as docs. Telling
+# needs the private repository's deploy key: without it (a fork) the move
+# is code.
 
 on:
   workflow_call:
+    secrets:
+      PRIVATE_ASSETS_KEY:
+        description: "The private repository's read-only deploy key, to compare a pin move's trees; empty on forks"
+        required: false
     outputs:
       code:
-        description: "'true' unless the event is a pull request that only changes docs-only paths"
+        description: "'true' unless the pull request or push only changes docs-only paths"
         value: ${{ jobs.detect.outputs.code }}
+      workflows:
+        description: "'true' when any `.github/**` path changed, or on an event that counts as code"
+        value: ${{ jobs.detect.outputs.workflows }}
       doc_crates:
-        description: "The crates that read a Markdown file the pull request changes, space-separated (ADR-0098)"
+        description: "The crates that read a Markdown file the change touches, space-separated (ADR-0098)"
         value: ${{ jobs.detect.outputs.doc_crates }}
 
 permissions:
@@ -33,40 +57,108 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.classify.outputs.code }}
+      workflows: ${{ steps.classify.outputs.workflows }}
       doc_crates: ${{ steps.classify.outputs.doc_crates }}
     steps:
       # On pull_request, HEAD is the PR merge commit; HEAD^1 is the base tip.
+      # On push, HEAD is the pushed commit; `before` is fetched below.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
         with:
           persist-credentials: false
-          fetch-depth: 2
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 1 }}
       - name: Classify changed files
         id: classify
         env:
           EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+          KEY: ${{ secrets.PRIVATE_ASSETS_KEY }}
+          # For the host keys from GitHub's API (ticket 0196).
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" != "pull_request" ]; then
-            echo "Event $EVENT_NAME: always run everything."
+          everything() {
+            echo "$1: always run everything."
             echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "workflows=true" >> "$GITHUB_OUTPUT"
             exit 0
-          fi
+          }
+          case "$EVENT_NAME" in
+            pull_request) base=HEAD^1; head=HEAD ;;
+            push)
+              # A new branch, or an old tip the fetch can't find (a force-push).
+              if [ -z "${BEFORE//0/}" ]; then
+                everything "Push with no earlier commit"
+              fi
+              if ! git fetch --depth=1 --no-tags origin "$BEFORE"; then
+                everything "Push whose earlier commit $BEFORE can't be fetched"
+              fi
+              echo "Push: diffing $BEFORE..$SHA"
+              base=$BEFORE; head=$SHA ;;
+            *) everything "Event $EVENT_NAME" ;;
+          esac
           code=false
+          workflows=false
           doc_crates=""
+          code_paths=""
           while IFS= read -r path; do
             [ -z "$path" ] && continue
+            case "$path" in
+              .github/*) workflows=true ;;
+            esac
             case "$path" in
               THIRD_PARTY_ASSETS.md|assets/dialogue/README.md|assets/maps/README.md|docs/design/audio.md) echo "read by trpg-content: $path"; doc_crates="$doc_crates trpg-content" ;;
               docs/engine/pins.md) echo "read by trpg-engine-watch: $path"; doc_crates="$doc_crates trpg-engine-watch" ;;
               tickets/README.md) echo "read by xtask: $path"; doc_crates="$doc_crates xtask" ;;
               tools/story-mirror/README.md) echo "read by trpg-tools: $path"; doc_crates="$doc_crates trpg-tools" ;;
-              *.md|docs/*|tickets/*|.claude/*) echo "docs: $path" ;;
-              *) echo "code: $path"; code=true ;;
+              .github/workflows/release.yml|.github/workflows/story-kit.yml|.github/workflows/story-mirror.yml|.github/workflows/playtest-itch.yml|.github/workflows/engine-watch.yml|.github/workflows/sonar-triage.yml|.github/workflows/scorecard.yml|.github/dependabot.yml) echo "workflow, tested by xtask: $path"; doc_crates="$doc_crates xtask" ;;
+              *.md|docs/*|tickets/*|.claude/*|LICENSE) echo "docs: $path" ;;
+              *) echo "code: $path"; code=true; code_paths="$code_paths $path" ;;
             esac
-          done < <(git diff --name-only --no-renames HEAD^1 HEAD)
-          echo "code=$code"
+          done < <(git diff --name-only --no-renames "$base" "$head")
+
+          # A pin move alone: equal root trees are docs, anything else code.
+          same_tree() {
+            local old new key known meta
+            old=$(git show "$base:assets-private.rev" | tr -d '[:space:]') || return 1
+            new=$(git show "$head:assets-private.rev" | tr -d '[:space:]') || return 1
+            if [ -z "$KEY" ]; then
+              echo "No PRIVATE_ASSETS_KEY (a fork): the pin move counts as code."
+              return 1
+            fi
+            key="$RUNNER_TEMP/changes-key"
+            known="$RUNNER_TEMP/changes-known-hosts"
+            meta="$RUNNER_TEMP/changes-meta.json"
+            # Expanded now: the locals are gone when the shell exits.
+            # shellcheck disable=SC2064
+            trap "rm -f '$key' '$known' '$meta'" EXIT
+            printf '%s\n' "$KEY" > "$key" && chmod 600 "$key" || return 1
+            curl -fsSL --retry 4 --retry-delay 5 --retry-all-errors \
+              -H "Authorization: Bearer $GH_TOKEN" -o "$meta" https://api.github.com/meta || return 1
+            jq -r '.ssh_keys[] | "github.com " + .' "$meta" > "$known" || return 1
+            git init -q "$RUNNER_TEMP/pin" || return 1
+            # Commit objects only: the root tree's id is in the commit.
+            GIT_SSH_COMMAND="ssh -i '$key' -o IdentitiesOnly=yes -o UserKnownHostsFile='$known' -o StrictHostKeyChecking=yes" \
+              git -C "$RUNNER_TEMP/pin" fetch -q --depth=1 --filter=tree:0 \
+              git@github.com:Zafnok/visions-of-shuyi-assets.git "$old" "$new" || return 1
+            old_tree=$(git -C "$RUNNER_TEMP/pin" log -1 --format=%T "$old") || return 1
+            new_tree=$(git -C "$RUNNER_TEMP/pin" log -1 --format=%T "$new") || return 1
+            echo "Pin move $old ($old_tree) -> $new ($new_tree)"
+            [ "$old_tree" = "$new_tree" ]
+          }
+          if [ "$code_paths" = " assets-private.rev" ]; then
+            if same_tree; then
+              echo "The pin moved to a commit with the same tree: docs."
+              code=false
+            else
+              echo "The pin moved to other files, or the trees couldn't be compared: code."
+            fi
+          fi
+
+          echo "code=$code workflows=$workflows"
           echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "workflows=$workflows" >> "$GITHUB_OUTPUT"
           doc_crates=$(echo $doc_crates | xargs -n1 | sort -u | xargs)
           echo "doc_crates=$doc_crates"
           echo "doc_crates=$doc_crates" >> "$GITHUB_OUTPUT"

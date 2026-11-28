@@ -18,6 +18,10 @@ jobs:
   changes:
     name: changes
     uses: ./.github/workflows/changes.yml
+    # By name, not `secrets: inherit` (zizmor's secrets-inherit): only for
+    # comparing a pin move's trees (ticket 0174).
+    secrets:
+      PRIVATE_ASSETS_KEY: ${{ secrets.PRIVATE_ASSETS_KEY }}
 
   deny:
     name: deny
@@ -56,7 +60,8 @@ jobs:
   zizmor:
     name: zizmor
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    # It reads only the workflows (ticket 0174).
+    if: needs.changes.outputs.code == 'true' || needs.changes.outputs.workflows == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

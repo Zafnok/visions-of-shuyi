@@ -1,6 +1,26 @@
-# nextest runs only in the PR mutation gate (ADR-0073); `cargo test` runs
-# everywhere else. The `mutants` profile is chosen there by
-# `NEXTEST_PROFILE=mutants` (ticket 0127).
+# nextest runs CI's `test` legs (the `ci` profile, ticket 0174) and the PR
+# mutation gate (the `mutants` profile, ADR-0073, chosen there by
+# `NEXTEST_PROFILE=mutants`, ticket 0127); the local gates run `cargo test`.
+# nextest runs no doc tests: CI's Ubuntu leg runs `cargo test --doc`.
+
+# CI's `test` legs: every test runs, however many fail, so one run names
+# them all.
+[profile.ci]
+fail-fast = false
+
+# The tests that took a minute or more on the first Windows leg under
+# nextest (PR #901, 2026-11-28) start first, so the rest run beside them
+# instead of after: xtask's moved-command test builds trpg-tools itself and
+# was left running alone for three minutes at the end.
+[[profile.ci.overrides]]
+priority = 100
+filter = '''
+    test(=the_personas_finish_the_rule_battles)
+  | test(=playtest::tests::merged_parts_are_one_run)
+  | test(=playtest::tests::play_gives_the_same_report_on_any_thread_count)
+  | test(=screens::battle::path::tests::steered_paths_are_legal_and_follow_the_cursor)
+  | test(=a_moved_command_answers_through_xtask)
+'''
 
 # A caught mutant needs one failing test, so the run stops at the first
 # failure and also stops the tests still running, instead of waiting for

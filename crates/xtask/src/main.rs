@@ -12,6 +12,8 @@
 #![allow(clippy::print_stdout)]
 
 mod assets_pin;
+#[cfg(test)]
+mod ci_rules;
 mod clean_targets;
 mod code_lines;
 mod engine;
@@ -684,6 +686,55 @@ mod tests {
                 "{file}: {upload}"
             );
         }
+    }
+
+    /// A pull request's caches evicted `main`'s, past the 10 GB cap: every
+    /// rust-cache step saves only on `main` and restores everywhere (ticket
+    /// 0174).
+    #[test]
+    fn every_rust_cache_step_saves_only_on_main() {
+        let mut problems = Vec::new();
+        let mut steps = 0;
+        for file in workflow_files() {
+            let text = std::fs::read_to_string(&file).unwrap();
+            let name = file.file_name().unwrap().to_string_lossy().into_owned();
+            steps += text.matches("uses: Swatinem/rust-cache@").count();
+            problems.extend(ci_rules::caches_saving_off_main(&name, &text));
+        }
+        assert!(steps >= 20, "{steps}");
+        assert!(problems.is_empty(), "{}", problems.join("\n"));
+    }
+
+    /// `changes.yml` counts a change to the workflows on [`ci_rules::LIGHT`]
+    /// as docs, so none may run in, or be called by, a pull request's
+    /// checks (ticket 0174); its case line lists the same paths.
+    #[test]
+    fn light_workflows_are_called_by_no_pull_request_workflow() {
+        let root = repo_root();
+        let mut files: Vec<(String, String)> = workflow_files()
+            .into_iter()
+            .map(|path| {
+                let text = std::fs::read_to_string(&path).unwrap();
+                let rel = path
+                    .strip_prefix(&root)
+                    .unwrap()
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                (rel, text)
+            })
+            .collect();
+        files.push((
+            ".github/dependabot.yml".to_string(),
+            std::fs::read_to_string(root.join(".github/dependabot.yml")).unwrap(),
+        ));
+        for light in ci_rules::LIGHT {
+            let path = light.trim_end_matches('*');
+            assert!(root.join(path).exists(), "{light}");
+        }
+        let problems = ci_rules::light_problems(ci_rules::LIGHT, &files);
+        assert!(problems.is_empty(), "{}", problems.join("\n"));
+        let changes = std::fs::read_to_string(root.join(".github/workflows/changes.yml")).unwrap();
+        assert_eq!(ci_rules::changes_light_line(&changes), ci_rules::LIGHT);
     }
 
     /// The writer trial's preview goes to itch.io only from a run by hand

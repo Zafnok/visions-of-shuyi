@@ -2,6 +2,9 @@ name: Mutants
 
 on:
   pull_request:
+    # ready_for_review: a draft skips the heavy jobs, so marking it ready
+    # starts the full run (ticket 0174).
+    types: [opened, synchronize, reopened, ready_for_review]
   schedule:
     - cron: "0 6 * * 1" # Monday 06:00 UTC
   workflow_dispatch:
@@ -26,6 +29,10 @@ jobs:
     if: github.event_name == 'pull_request'
     name: changes
     uses: ./.github/workflows/changes.yml
+    # By name, not `secrets: inherit` (zizmor's secrets-inherit): only for
+    # comparing a pin move's trees (ticket 0174).
+    secrets:
+      PRIVATE_ASSETS_KEY: ${{ secrets.PRIVATE_ASSETS_KEY }}
 
   # Counts the mutants in the PR's diff that no earlier push of the PR
   # caught, and picks how many shards to run them on. Nothing is built
@@ -41,7 +48,8 @@ jobs:
   # run tests every mutant again.
   plan:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    # A draft waits for "Ready for review" (ticket 0174).
+    if: needs.changes.outputs.code == 'true' && !github.event.pull_request.draft
     name: mutants (diff, plan)
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -157,6 +165,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
@@ -199,6 +210,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - run: cargo fmt --all --check
       - name: Install macroquad system libraries
@@ -237,6 +251,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
@@ -447,6 +464,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
@@ -482,6 +502,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
