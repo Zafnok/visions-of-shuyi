@@ -63,12 +63,18 @@ one place. The buffer already carries sprite items
 cells (ADR-0038: a picture is a sprite item from an asset file, never
 per-pixel rectangles).
 
-**The engine has no picture frame** (no nine-slice: searched
-2026-11-26 at the pin `96eb097c`). The game must never wait on the
-engine (ADR-0092), so follow the `engine-change` skill: an engine
-ticket and PR first (Nick's OK before the engine PR, memory), then this
-game PR moving the pin. If the engine work is still waiting, build the
-frame game-side behind a marked workaround as `engine-change` says.
+**The engine's picture frame is in the pin** (done by the pin move of
+2026-11-27, `10cbb98b → 230080db`): engine PR #635 (engine ticket 3249,
+engine ADR-0163), made for this ticket. `shuyi_assets::nine_slice`
+(`NineSlice::new(picture, borders)` with `with_` methods, `Borders`,
+`EdgeFill`, `CentreFill`), `shuyi_ui::frame::slice`
+(`nine_slice_sprites`, `GlyphBuffer::nine_slice`), and in
+`shuyi_ui::frame::draw` `PanelFrame { slice, outset }`, `TitlePlate {
+slice, pad, text_top }`, `PanelLook::with_frame` and
+`PanelLook::with_plate`: `panel` draws both, with no lines and no sprite
+over the inside cells; with neither it draws as before. The menu widget
+paints its rows with `glyph::paint_with(.., &look)` under a frame, with
+no `├` `┤` joins. Run `cargo shuyi docs nine_slice` before using them.
 
 ## Nick input
 
@@ -81,15 +87,9 @@ playtest's checklist (1064).
 ## Scope
 
 **In:**
-- **Engine** (its own ticket and PR, `engine-change`): a frame drawn
-  from a picture's nine slices: four corners, four edges (tiled or
-  stretched, the picture says which), the inside (tiled, stretched or
-  left clear), and a title or name plate (left, middle and right pieces
-  around the title). Each piece is a sprite item, laid on the cell grid
-  so text inside stays on its cells. Chosen through `PanelLook` (a
-  frame by picture in place of `BoxStyle`); a buffer without the
-  picture falls back to the box lines. Tests in the engine (pixels of
-  each piece, a 1-cell and a wide panel, the fallback).
+- ~~**Engine** (its own ticket and PR, `engine-change`): a frame drawn
+  from a picture's nine slices~~ (done by the pin move of 2026-11-27:
+  engine PR #635, above).
 - **Game:** the chosen pack's pieces cut into the private repository's
   `game/ui/` by an importer (`cargo xtask ui-import`, its source list in
   `assets-src/ui/`, like `tileset-import`), and a public data file
@@ -123,12 +123,13 @@ playtest's checklist (1064).
 ## Implementation steps
 
 1. Read *Windows (the picture look)* in `docs/design/look-and-feel.md`.
-   Estimate the lines (ADR-0092): about 350 engine lines (the frame and
-   its tests) and about 900 game lines (importer, data file and its
+   Estimate the lines (ADR-0092): about 900 game lines (the engine's
+   frame and its tests are in the pin) (importer, data file and its
    loading, the switch, the battle skins' looks), measured with `cargo
    xtask code-lines`.
-2. Engine ticket and PR (`engine-change`), then move the pin in this
-   branch (`engine-change` §7).
+2. ~~Engine ticket and PR (`engine-change`), then move the pin in this
+   branch (`engine-change` §7).~~ Done by the pin move of 2026-11-27
+   (engine PR #635).
 3. `assets-src/ui/` source list and `cargo xtask ui-import`; run it,
    push the pictures to the private repository, `cargo shuyi
    private-assets --pin` (the art only, so no `content-change`).
@@ -149,7 +150,8 @@ completion notes.
 
 ## Acceptance criteria
 
-- [ ] The engine's picture frame merged, the pin moved past it.
+- [x] The engine's picture frame merged, the pin moved past it (the pin
+      move of 2026-11-27, engine PR #635).
 - [ ] `cargo xtask ui-import` writes the pieces; the private repository
       holds them and `assets-private.rev` names that commit.
 - [ ] `assets/ui/frames.ron` loads and validates; a content test fails
