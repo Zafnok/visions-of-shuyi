@@ -10,7 +10,7 @@
 //! commands, its `EndPhase` included). The enemy plays as it does in the
 //! game: the AI's command, else the end of its phase.
 
-use shuyi_core::path::flow_field;
+use shuyi_core::prelude::flow_field;
 use trpg_content::Content;
 use trpg_core::{
     AiWeights, BattleState, Command, Faction, Objective, Outcome, Phase, Pos, SimRng, UnitAction,

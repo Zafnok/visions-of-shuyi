@@ -8,7 +8,8 @@
 //! after a crash says so on the title (ticket 1245).
 
 use crate::prelude::*;
-use shuyi_platform::{Card, Look, Progress, Setup, Start};
+use shuyi_platform::Progress;
+use shuyi_platform::prelude::{Card, Look, Setup, Start};
 use trpg_core::LeadGender;
 
 use crate::console::{ConsoleSizes, ConsoleSpec};

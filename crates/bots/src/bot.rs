@@ -1,6 +1,6 @@
 //! What plays the Player phase.
 
-use shuyi_core::Bot;
+use shuyi_core::prelude::Bot;
 use trpg_core::{AiWeights, BattleState, Command, next_command};
 
 /// A player made of code: the engine's [`Bot`] over the battle.

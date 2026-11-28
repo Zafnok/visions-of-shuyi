@@ -1,4 +1,4 @@
-use shuyi_core::play;
+use shuyi_core::prelude::play;
 use trpg_core::{BattleSetup, CharacterId, Event, SimRng, Trigger, TriggerWhen, Turn};
 
 use super::*;

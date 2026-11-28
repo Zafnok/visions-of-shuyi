@@ -13,7 +13,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use shuyi_cli::codec::{decode_png, encode_png};
+use shuyi_cli::prelude::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask portrait-import <bust-folder-or-sheet> <character-id> [--shift-x <pixels>] [--generator]\n\n\

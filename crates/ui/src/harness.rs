@@ -40,7 +40,8 @@ use crate::settings::{SETTINGS_KEY, Settings};
 use crate::storage::{MemoryStorage, Storage};
 use trpg_core::Pos;
 
-pub use shuyi_platform::harness::{FRAME_DT, MAX_FRAMES};
+pub use shuyi_platform::harness::MAX_FRAMES;
+pub use shuyi_platform::prelude::test::FRAME_DT;
 
 /// The engine's Harness on this game.
 pub type Core = shuyi_platform::harness::Harness<Shuyi>;
@@ -683,7 +684,7 @@ def
     #[test]
     fn hearing_gives_the_game_the_preview_hook() {
         use crate::story_preview::{self, StoryPreview};
-        use shuyi_assets::bundle::Layer;
+        use shuyi_platform::prelude::Layer;
         let folder = Layer::owned("dialogue".to_owned(), std::collections::BTreeMap::new())
             .unwrap_or_else(|e| panic!("{e:?}"));
         let ctx = story_preview::ctx().unwrap_or_else(|e| panic!("{e}"));

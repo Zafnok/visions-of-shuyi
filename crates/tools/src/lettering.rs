@@ -16,9 +16,9 @@ use std::fs;
 use std::path::Path;
 
 use fontdue::{Font, FontSettings};
-use shuyi_assets::font::FontAtlasDef;
-use shuyi_cli::codec::encode_png;
 use shuyi_cli::font_atlas::{BitmapFont, ink_of};
+use shuyi_cli::prelude::encode_png;
+use shuyi_platform::prelude::text::FontAtlasDef;
 use trpg_content::lettering::LETTERING_GLYPHS;
 use trpg_content::title::TITLE_DIR;
 

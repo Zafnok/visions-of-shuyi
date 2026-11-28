@@ -3,7 +3,7 @@
 //! through the one-bit renderer in pixels. What is shown is tested on the
 //! view (`battle/view_tests.rs`).
 
-use shuyi_assets::font::CellWidths;
+use shuyi_platform::prelude::text::CellWidths;
 use trpg_core::{Phase, Pos};
 
 use super::*;

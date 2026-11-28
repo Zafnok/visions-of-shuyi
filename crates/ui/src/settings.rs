@@ -1081,7 +1081,7 @@ mod tests {
     /// English (the engine's pick at start, with no system language).
     #[test]
     fn the_language_round_trips_and_an_old_save_has_none() {
-        use shuyi_assets::lang::LangCode;
+        use shuyi_platform::prelude::text::LangCode;
         assert!(!Settings::default().to_ron().contains("language"));
         let mut picked = Settings::default();
         picked.language = Some(LangCode::parse("zh-Hans").unwrap());

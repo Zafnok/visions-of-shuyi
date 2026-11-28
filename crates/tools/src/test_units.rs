@@ -20,7 +20,7 @@ use std::path::Path;
 use trpg_content::bundle::test_display_path;
 
 use crate::test_tileset::{Canvas, DISC, FALLBACK_LETTERS, LETTERS, Sources};
-use shuyi_cli::codec::encode_png;
+use shuyi_cli::prelude::encode_png;
 
 /// The tileset's id.
 pub const ID: &str = "test_units";
@@ -163,7 +163,7 @@ pub fn run(root: &Path) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use shuyi_cli::codec::decode_png;
+    use shuyi_cli::prelude::decode_png;
 
     fn sources() -> Sources {
         Sources::embedded().unwrap()

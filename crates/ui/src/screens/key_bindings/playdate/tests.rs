@@ -1,8 +1,8 @@
 //! The Playdate's look of the Key bindings screen, on the game's rows and
 //! the Playdate's buttons.
 
-use shuyi_assets::font::CellWidths;
-use shuyi_ui::Screen;
+use shuyi_platform::prelude::Screen;
+use shuyi_platform::prelude::text::CellWidths;
 
 use super::*;
 use crate::input::{Action, Device, PadKind};

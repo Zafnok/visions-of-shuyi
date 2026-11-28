@@ -165,7 +165,7 @@ pub(crate) use shuyi_ui::debug::glyph::paint_hint as paint_debug_hint;
 #[cfg(test)]
 mod clip_tests {
     use super::{clip, pad_cells};
-    use shuyi_assets::font::CellWidths;
+    use shuyi_platform::prelude::text::CellWidths;
 
     /// `clip` keeps what fits in cells: a wide character counts two and is
     /// never cut in half (ticket 0236).

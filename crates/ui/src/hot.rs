@@ -12,7 +12,7 @@
 
 use crate::prelude::*;
 use shuyi_assets::hot::Reload;
-use shuyi_ui::module::{Hook, Install, Module};
+use shuyi_platform::prelude::{Hook, Install, Module};
 use trpg_content::bundle;
 use trpg_content::dialogue::DIALOGUE_DIR;
 use trpg_content::{Content, ContentErrors, Theme};

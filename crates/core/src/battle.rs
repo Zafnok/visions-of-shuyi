@@ -500,7 +500,7 @@ use alloc::sync::Arc;
 use core::fmt;
 
 use serde::{Deserialize, Serialize};
-use shuyi_core::{Determinize, Sides, TurnRules};
+use shuyi_core::prelude::{Determinize, Sides, TurnRules};
 
 use crate::art::{ArtId, ArtTable};
 use crate::campaign::GameTables;
