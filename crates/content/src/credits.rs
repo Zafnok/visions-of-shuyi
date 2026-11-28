@@ -151,6 +151,8 @@ mod tests {
                 "edermunizz_castle_and_village",
                 "armm1998_tilefantasy_castle",
                 "minifantasy_raided_village",
+                "barely_pixel_quest",
+                "barely_post_baroque"
             ]
         );
         // Rogue Adventure's tiles share Tiny Tales' packed image (1318).

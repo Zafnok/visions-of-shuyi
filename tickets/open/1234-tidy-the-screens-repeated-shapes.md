@@ -52,13 +52,6 @@ None. No snapshot should change.
 ## Scope
 
 **In:**
-- A game `ChoiceScreen<T>` (`crates/ui/src/screens/choice.rs`) over a
-  static spec: name, heading key, help key, actions, rows of `(T, name
-  key, Option<line key>)`, whether Cancel backs out, and its `Skins`.
-  Mode, familiarity and the save prompt become specs; one view type
-  replaces `ModeSelectView`, `FamiliarityView` and `SavePromptView`.
-  Keep `pub type` names (`ModeSelectScreen = ChoiceScreen<GameMode>`)
-  where callers or tests downcast.
 - `Words`: one private helper (`self.pack.map_or(english, |(l, c)| ..)`),
   each method one call.
 - `Playback::flash_on(local) -> bool` and `Playback::shown_strike() ->
@@ -78,10 +71,11 @@ None. No snapshot should change.
 - The battle notes' wrapping and `unwrap_notes` (1077).
 - An engine choice screen (only if a second game wants one).
 
-**Either order with 0860** (the New Game options menu): if 0860 is done,
-mode and familiarity are on its menu and the save prompt is the only
-pick-one screen left: skip `ChoiceScreen` and do the rest. If not, build
-it; 0860 then moves the mode and familiarity rows onto its menu.
+**No `ChoiceScreen`** (the engine's redundancy sweep of 2026-11-28): mode select, familiarity and the save
+prompt move onto engine#3257's question screen through 1418, so a game
+`ChoiceScreen<T>` would be written here and deleted there. Leave the
+three screens to 1418 (and 0860, which moves mode and familiarity onto
+its menu).
 **Either order with 1078** (the Playdate's fight at 30 frames a second):
 if 1078 is done, the shared `fighter_sprite` keeps what it changed in
 `playdate/stage.rs`; if not, 1078 works on the shared function.
@@ -92,9 +86,7 @@ done, `ModeSelectScreen::menu()` is gone: nothing else changes; if not,
 ## Implementation steps
 
 1. Read the files above and `shuyi-screen` (screens, views, skins).
-2. `ChoiceScreen`; move the three screens, one at a time, tests green
-   after each. Merge the duplicate focused-line test into a
-   `choice/tests.rs`.
+2. (Removed: the pick-one screens are 1418's.)
 3. `Words`, then `Playback`, then the stage geometry and plate, the HP
    bar, `overlap`.
 4. Run the PC and Playdate snapshot tests; none should change.
@@ -106,8 +98,6 @@ removed.
 
 ## Acceptance criteria
 
-- [ ] `mode_select.rs` and `familiarity.rs` hold only their specs (or are
-      gone), and `SavePromptScreen` is a `ChoiceScreen<bool>`.
 - [ ] `grep -c "match self.pack" crates/ui/src/words.rs` is at most 1.
 - [ ] `grep -rn "is_multiple_of(2)" crates/ui/src/screens/battle` finds
       only `Playback`.
@@ -117,9 +107,8 @@ removed.
 
 ## Tests required
 
-- Unit: `ChoiceScreen` (Confirm pops with the value, Cancel only where
-  the spec allows, the focused line); `flash_on` at each half-period.
-- Snapshot: the three screens and both stage skins (unchanged).
+- Unit: `flash_on` at each half-period.
+- Snapshot: both stage skins (unchanged).
 
 ## Completion notes
 

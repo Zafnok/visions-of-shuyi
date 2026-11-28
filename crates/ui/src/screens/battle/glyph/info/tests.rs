@@ -17,15 +17,26 @@ use crate::words::Words;
 
 /// The quick battle's lord's info screen, changed by `change`, painted.
 fn painted(change: impl FnOnce(&mut InfoView)) -> GlyphBuffer {
-    let c = ctx();
+    painted_in(&ctx(), change)
+}
+
+/// [`painted`] in `c`.
+fn painted_in(c: &Ctx, change: impl FnOnce(&mut InfoView)) -> GlyphBuffer {
     let state = quick_battle(&c.game.content).unwrap();
     let lord = state.unit(UnitId(1)).unwrap();
     let mut view = info::view((&state, Words::ENGLISH), lord);
     change(&mut view);
     let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
-    paint(&c, &view, &mut buf);
+    paint(c, &view, &mut buf);
     buf
+}
+
+/// Ticket 1380: the info screen wears the panel frame in the picture look.
+#[test]
+fn the_picture_look_frames_the_info_screen() {
+    let buf = painted_in(&crate::frames::tests::framed_ctx(), |_| {});
+    crate::frames::tests::assert_framed(&buf, "ui/panel.png", INFO);
 }
 
 /// A rank row: `kind`, rank `D`, `trait_`.

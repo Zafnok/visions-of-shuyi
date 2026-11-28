@@ -60,20 +60,20 @@ fn unsaved(c: &Ctx) -> bool {
 fn game_mode_and_tutorial_show_only_with_a_campaign() {
     let mut c = ctx();
     let rows = shown_rows(&c);
-    assert_eq!(rows.len(), Row::ALL.len() - 5);
+    assert_eq!(rows.len(), Row::ALL.len() - 6);
     assert!(!rows.contains(&Row::GameMode) && !rows.contains(&Row::Tutorial));
     c.game.campaign_mode = Some(GameMode::Casual);
     c.game.campaign_tutorial = Some(TutorialLevel::Full);
     let without_pictures: Vec<Row> = pc_rows()
         .into_iter()
-        .filter(|&r| r != Row::MapLook && r != Row::MapZoom)
+        .filter(|&r| r != Row::MapLook && r != Row::MapZoom && r != Row::WindowLook)
         .collect();
     assert_eq!(shown_rows(&c), without_pictures);
     // Map zoom shows under a skin that can zoom (a debug tool's), even
     // without the game's pictures; not under one that can't.
     let with_zoom: Vec<Row> = pc_rows()
         .into_iter()
-        .filter(|&r| r != Row::MapLook)
+        .filter(|&r| r != Row::MapLook && r != Row::WindowLook)
         .collect();
     c.set_map_skin(crate::map_view::skin_named(&c.game.content, "sprite").unwrap());
     assert_eq!(shown_rows(&c), with_zoom);
@@ -83,6 +83,13 @@ fn game_mode_and_tutorial_show_only_with_a_campaign() {
     let mut tileset = c.game.content.tilesets["test_units"].clone();
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
     c.game.content.tilesets.insert(tileset.id.clone(), tileset);
+    let without_frames: Vec<Row> = pc_rows()
+        .into_iter()
+        .filter(|&r| r != Row::WindowLook)
+        .collect();
+    assert_eq!(shown_rows(&c), without_frames);
+    // Window look shows when the game has the windows' pictures (1380).
+    c.game.content.frames = crate::frames::tests::bought_frames();
     assert_eq!(shown_rows(&c), pc_rows());
 }
 
@@ -97,6 +104,7 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
     let mut tileset = c.game.content.tilesets["test_units"].clone();
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
     c.game.content.tilesets.insert(tileset.id.clone(), tileset);
+    c.game.content.frames = crate::frames::tests::bought_frames();
     assert_eq!(shown_rows(&c), pc_rows());
     c.platform.keyboard = Keyboard::Absent;
     let no_layout: Vec<Row> = pc_rows()
@@ -214,6 +222,8 @@ fn every_setting_row_changes_its_own_setting() {
     let mut tileset = c.game.content.tilesets["test_units"].clone();
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
     c.game.content.tilesets.insert(tileset.id.clone(), tileset);
+    // And the windows' pictures, so Window look is a row too.
+    c.game.content.frames = crate::frames::tests::bought_frames();
     // The tutorial level is the campaign's, not a setting (below).
     let rows = pc_rows()
         .into_iter()
@@ -244,6 +254,10 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::Fullscreen, s.fullscreen != before.fullscreen),
             (Row::Cursor, s.game.cursor_style != before.game.cursor_style),
             (Row::MapLook, s.game.map_look != before.game.map_look),
+            (
+                Row::WindowLook,
+                s.game.window_look != before.game.window_look,
+            ),
             (Row::MapZoom, s.game.map_zoom != before.game.map_zoom),
             (
                 Row::ThreatArrows,
@@ -315,6 +329,7 @@ fn rows_show_their_values() {
             "Off*",
             "Corners*",
             "Pictures*",
+            "Pictures*",
             "2×*",
             "Arcs*",
             "Slab*",
@@ -348,6 +363,7 @@ fn rows_show_their_values() {
         s.game.anim_speed = AnimSpeed::Fast;
         s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast;
         s.game.map_look = MapLook::Glyphs;
+        s.game.window_look = crate::WindowLook::Glyphs;
         s.game.map_zoom = MapZoom::X1;
         s.game.threat_arrows = crate::ThreatArrows::Straight;
         s.game.range_style = crate::RangeStyle::Still;
@@ -367,6 +383,8 @@ fn rows_show_their_values() {
     let fast = EnemyPhaseSpeed::Fast.key();
     assert_eq!(value(&c, Row::EnemyPhaseSpeed), named(fast));
     assert_eq!(value(&c, Row::MapLook), named(MapLook::Glyphs.key()));
+    let glyphs = crate::WindowLook::Glyphs.key();
+    assert_eq!(value(&c, Row::WindowLook), named(glyphs));
     assert_eq!(value(&c, Row::MapZoom), "1×*");
     assert_eq!(value(&c, Row::ThreatArrows), "Straight*");
     assert_eq!(value(&c, Row::RangeStyle), "Still*");

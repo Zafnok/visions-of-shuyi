@@ -153,6 +153,43 @@ impl MapLook {
     }
 }
 
+/// How the windows look (ticket 1380, `docs/design/look-and-feel.md`,
+/// *Windows (the picture look)*): framed with the bought UI kit's
+/// pictures, or the box-drawn lines. A build without the pictures draws
+/// the lines whatever it says.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum WindowLook {
+    /// The UI kit's frames.
+    #[default]
+    Pictures,
+    /// Box-drawing lines.
+    Glyphs,
+}
+
+impl WindowLook {
+    /// Every look, the default first.
+    pub const ALL: [Self; 2] = [Self::Pictures, Self::Glyphs];
+
+    /// The key of the name the Options screen shows
+    /// ([`Ctx::text`](shuyi_ui::Ctx::text)).
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::Pictures => "options.window_look.pictures",
+            Self::Glyphs => "options.window_look.glyphs",
+        }
+    }
+
+    /// The look a player starts on who never set it: pictures when the
+    /// map look is pictures, glyphs when the map's is glyphs (1379's
+    /// starting rule).
+    pub const fn starting(map: MapLook) -> Self {
+        match map {
+            MapLook::Pictures => Self::Pictures,
+            MapLook::Glyphs => Self::Glyphs,
+        }
+    }
+}
+
 /// How big the battle map's pictures are drawn (ticket 0439,
 /// `docs/design/look-and-feel.md`, *Zoom*). The Zoom map key in battle
 /// flips it. Only a skin that paints the whole map from pictures zooms.
@@ -355,6 +392,8 @@ pub struct ShuyiSettings {
     pub cursor_style: CursorStyle,
     /// How the battle map looks (shown only when pictures exist).
     pub map_look: MapLook,
+    /// How the windows look (shown only when their pictures exist).
+    pub window_look: WindowLook,
     /// How big the battle map's pictures are drawn. The Zoom map key in
     /// battle flips it too.
     pub map_zoom: MapZoom,
@@ -421,6 +460,7 @@ impl Default for ShuyiSettings {
             auto_end_turn: false,
             cursor_style: CursorStyle::default(),
             map_look: MapLook::default(),
+            window_look: WindowLook::starting(MapLook::default()),
             map_zoom: MapZoom::default(),
             threat_arrows: ThreatArrows::default(),
             range_style: RangeStyle::default(),
@@ -471,6 +511,11 @@ struct SettingsFile {
     layout: Option<String>,
     cursor_style: CursorStyle,
     map_look: MapLook,
+    /// The window look when it isn't [`WindowLook::starting`] for the map
+    /// look, otherwise left out, so a save from before it (ticket 1380)
+    /// starts on that rule.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    window_look: Option<WindowLook>,
     /// [`MapZoom::factor`].
     map_zoom: i32,
     /// `Some(false)` when the intro is off, otherwise left out, so a save
@@ -541,6 +586,8 @@ fn file(s: &Settings) -> SettingsFile {
         layout: s.layout().map(|l| l.name().to_owned()),
         cursor_style: game.cursor_style,
         map_look: game.map_look,
+        window_look: (game.window_look != WindowLook::starting(game.map_look))
+            .then_some(game.window_look),
         map_zoom: game.map_zoom.factor(),
         intro: (!game.intro).then_some(false),
         towns_on_arrival: (game.towns == TownsOpen::OnConfirm).then_some(false),
@@ -613,6 +660,9 @@ impl GameSettings for ShuyiSettings {
             auto_end_turn: file.auto_end_turn,
             cursor_style: file.cursor_style,
             map_look: file.map_look,
+            window_look: file
+                .window_look
+                .unwrap_or(WindowLook::starting(file.map_look)),
             map_zoom: MapZoom::from_factor(file.map_zoom).unwrap_or_default(),
             intro: file.intro.unwrap_or(true),
             towns: if file.towns_on_arrival == Some(false) {
@@ -662,6 +712,8 @@ mod tests {
             auto_end_turn: true,
             cursor_style: CursorStyle::TileGlow,
             map_look: MapLook::Glyphs,
+            // The starting rule for glyphs, as a save from before 1380.
+            window_look: WindowLook::Glyphs,
             map_zoom: MapZoom::X1,
             // On, so the saved form below is the one before ticket 0844.
             intro: true,
@@ -923,6 +975,7 @@ mod tests {
         assert!(game.combat_animations && !game.auto_end_turn && !s.fullscreen);
         assert_eq!(game.cursor_style, CursorStyle::Corners);
         assert_eq!(game.map_look, MapLook::Pictures);
+        assert_eq!(game.window_look, WindowLook::Pictures);
         // But the map zoom: a new player starts at 2× (Nick, ticket 0439).
         assert_eq!(game.map_zoom, MapZoom::X2);
         assert_eq!(s.theme, Theme::Earthy);
@@ -1108,5 +1161,22 @@ mod tests {
     fn restoring_keeps_the_layout() {
         let restored = changed().restored();
         assert_eq!(restored, Settings::default().with_layout(LEFT_HANDED));
+    }
+
+    /// *Window look* is saved only where it differs from its starting
+    /// rule, and a save without it starts on that rule (ticket 1380).
+    #[test]
+    fn the_window_look_starts_from_the_map_look_and_saves_apart() {
+        let read = |text: &str| Settings::from_ron(text).unwrap().game.window_look;
+        let mut s = Settings::default();
+        assert!(!s.to_ron().contains("window_look"));
+        s.game.map_look = MapLook::Glyphs;
+        assert!(s.to_ron().contains("window_look: Some(Pictures)"));
+        assert_eq!(read(&s.to_ron()), WindowLook::Pictures);
+        s.game.window_look = WindowLook::Glyphs;
+        assert!(!s.to_ron().contains("window_look"));
+        assert_eq!(read(&s.to_ron()), WindowLook::Glyphs);
+        s.game.map_look = MapLook::Pictures;
+        assert_eq!(read(&s.to_ron()), WindowLook::Glyphs);
     }
 }

@@ -306,7 +306,8 @@ fn rewind_screen_sounds() {
     assert_eq!(s.history().len(), 1, "rewound the archer's wait");
 }
 
-/// Skipping a walk or a combat's playback plays nothing (ticket 0425).
+/// Skipping a walk or a combat's playback plays nothing (ticket 0425): only
+/// the EXP bar that follows the combat has its sound (0605).
 #[test]
 fn skipping_is_silent() {
     let mut c = ctx();
@@ -325,7 +326,7 @@ fn skipping_is_silent() {
     );
     assert_eq!(cues(&mut c).last().map(String::as_str), Some("menu_select"));
     press(&mut s, &mut c, &[Cancel], 0.0);
-    assert_eq!(cues(&mut c), [] as [std::string::String; 0]);
+    assert_eq!(cues(&mut c), ["exp_fill"]);
 }
 
 /// The rewind screen's map scene (ADR-0038): the battle as it was just

@@ -37,6 +37,7 @@ mod enums;
 pub mod error;
 pub mod font;
 pub mod formats;
+pub mod frames;
 pub mod image;
 pub mod item;
 pub mod keymap;
@@ -193,6 +194,9 @@ pub struct Content {
     pub battle_lights: BTreeMap<String, String>,
     /// The title screen's logo and backdrops (ADR-0059).
     pub title: TitleArt,
+    /// The windows' picture frames whose pictures this build has (ticket
+    /// 1380): none without the bought art.
+    pub frames: frames::UiFrames,
     /// Cinematics by id (file stem), ADR-0060.
     pub cinematics: BTreeMap<String, CinematicDef>,
     /// World maps by id (file stem), one an act (ticket 1007, ADR-0099).
@@ -549,6 +553,11 @@ impl Early {
             ai: ai::load(),
             credits: credits::load(audio.as_ref().ok()),
             audio,
+            // The windows' frames, checked against the images; none if the
+            // images failed to load.
+            frames: images
+                .as_ref()
+                .map_or_else(|_| Ok(frames::UiFrames::default()), frames::load),
             images,
             tilesets,
             battles,
@@ -1213,6 +1222,7 @@ struct Loaded {
     lighting: Result<Lighting, Vec<ContentError>>,
     battle_lights: Result<BTreeMap<String, String>, Vec<ContentError>>,
     title: Result<TitleArt, Vec<ContentError>>,
+    frames: Result<frames::UiFrames, Vec<ContentError>>,
     cinematics: Result<BTreeMap<String, CinematicDef>, Vec<ContentError>>,
     openings: Result<BTreeMap<String, OpeningDef>, Vec<ContentError>>,
     worldmaps: Result<BTreeMap<String, WorldMapDef>, Vec<ContentError>>,
@@ -1271,6 +1281,7 @@ fn assemble(
         lighting: take(units.lighting, &mut errors),
         battle_lights: take(units.battle_lights, &mut errors),
         title: take(units.title, &mut errors),
+        frames: take(units.frames, &mut errors),
         cinematics: take(units.cinematics, &mut errors),
         lessons: take(units.lessons, &mut errors),
         openings: take(units.openings, &mut errors),
@@ -1540,6 +1551,7 @@ mod tests {
             lighting: lighting::load(),
             battle_lights: Ok(BTreeMap::new()),
             title: ok_title(),
+            frames: Ok(frames::UiFrames::default()),
             cinematics: ok_cinematics(),
             openings: ok_openings(),
             worldmaps: Ok(BTreeMap::new()),
@@ -1702,6 +1714,7 @@ mod tests {
                     lighting: Err(e("L")),
                     battle_lights: Err(e("B")),
                     title: Err(e("T")),
+                    frames: Ok(frames::UiFrames::default()),
                     cinematics: Err(e("C")),
                     openings: Err(e("O")),
                     camp: Err(e("Q")),
@@ -1769,6 +1782,7 @@ mod tests {
                     lighting: pick(i == 26, "L", lighting::load()),
                     battle_lights: pick(i == 27, "B", Ok(BTreeMap::new())),
                     title: pick(i == 28, "T", ok_title()),
+                    frames: Ok(frames::UiFrames::default()),
                     cinematics: pick(i == 29, "C", ok_cinematics()),
                     lessons: pick(i == 30, "E", ok_lessons()),
                     openings: pick(i == 31, "O", ok_openings()),

@@ -32,6 +32,7 @@ pub const FORWARDED: &[&str] = &[
     "map-sprite-import",
     "battler-import",
     "tileset-import",
+    "ui-import",
     "portrait-import",
     "story-import",
     // The bots, the scripts and the voice.
