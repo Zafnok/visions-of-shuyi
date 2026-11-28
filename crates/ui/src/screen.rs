@@ -503,14 +503,12 @@ impl core::error::Error for LoadError {}
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use crate::input::{
-        Button, Keymap, LEFT_HANDED, Layout, LayoutBindings, PadBindings, PlayerKeys, RIGHT_HANDED,
-    };
+    use crate::input::{Keymap, LEFT_HANDED, RIGHT_HANDED};
 
     use super::*;
-    use crate::audio::groups::{MUSIC, SFX, VOICE};
+    use crate::audio::groups::VOICE;
     use crate::settings::SETTINGS_KEY;
-    use crate::storage::{MemoryStorage, Storage, StorageError};
+    use crate::storage::{MemoryStorage, Storage};
     use crate::{AudioRequest, Rgb};
     use trpg_content::{LangCode, LineId};
 
@@ -616,31 +614,6 @@ pub(crate) mod tests {
         );
     }
 
-    #[test]
-    fn preload_lists_the_playable_clips_in_order() {
-        let mut c = ctx();
-        let (manifest, lines) = test_voices(&c, &[3, 1]);
-        c.set_voice_manifest(&manifest);
-        let all: Vec<LineId> = c.game.content.dialogue.scenes[crate::debug::TEST_SCENE]
-            .lines()
-            .iter()
-            .map(|l| l.id.clone())
-            .collect();
-        c.preload_voices(&all);
-        // Script order, not manifest order; unvoiced lines left out.
-        let expected = vec![
-            (lines[1].clone(), Variant::None),
-            (lines[0].clone(), Variant::None),
-        ];
-        assert_eq!(
-            c.audio.take(),
-            [AudioRequest::PreloadVoices { lines: expected }]
-        );
-        c.preload_voices(&all[..1]);
-        c.preload_voices(&[]);
-        assert!(c.audio.pending().is_empty(), "nothing playable: no request");
-    }
-
     /// A line whose words change with the lead's gender plays the clip
     /// for the lead the player made.
     #[test]
@@ -699,25 +672,6 @@ pub(crate) mod tests {
         ctx
     }
 
-    /// [`ctx`] with a manifest holding these sound and music cues too.
-    /// Each music cue loops and is 10 s long (an existing cue, e.g.
-    /// `title`, is replaced).
-    pub(crate) fn ctx_with_cues(sounds: &[&str], music: &[&str]) -> Ctx {
-        use trpg_content::{CreditRef, MusicCue, SoundCue};
-        let mut ctx = ctx();
-        let audio = &mut ctx.game.content.audio;
-        for &cue in sounds {
-            let files = vec![format!("sfx/{cue}.wav")];
-            let sound = SoundCue::new(files, 100, CreditRef::Own);
-            audio.sounds.insert(cue.to_owned(), sound);
-        }
-        for &cue in music {
-            let track = MusicCue::new(format!("{cue}.ogg"), 10_000, CreditRef::Own);
-            audio.music.insert(cue.to_owned(), track);
-        }
-        ctx
-    }
-
     #[test]
     fn ctx_uses_the_content_palette_and_keymap() {
         let c = ctx();
@@ -731,24 +685,6 @@ pub(crate) mod tests {
         );
         assert_eq!(c.layout(), Some(RIGHT_HANDED));
         assert_eq!(c.palette.get(UiColor::Black), Rgb::new(0, 0, 0));
-    }
-
-    #[test]
-    fn text_comes_from_the_language_in_use() {
-        let mut c = ctx();
-        assert_eq!(c.lang, LangCode::default());
-        assert_eq!(c.text("title.new_game"), "New Game");
-        c.lang = LangCode::new(TEST).unwrap();
-        assert_eq!(c.text("title.new_game"), "NEW GAME");
-        // Stale and missing entries are English.
-        assert_eq!(c.text("title.continue"), "Continue");
-        assert_eq!(c.text("title.credits"), "Credits");
-        // The test pack is only for builds with debug tools.
-        c.debug_tools = false;
-        assert_eq!(c.text("title.new_game"), "New Game");
-        // A language with no pack is English.
-        c.lang = LangCode::new("zz").unwrap();
-        assert_eq!(c.text("title.new_game"), "New Game");
     }
 
     /// Ticket 0243: `! not mapped` and `arrows` come from the language.
@@ -788,49 +724,6 @@ pub(crate) mod tests {
             c.text_with("title.help", &[("Cursor", &7)]),
             "7 MOVE · f SELECT · d BACK"
         );
-    }
-
-    #[test]
-    #[cfg(debug_assertions)]
-    #[should_panic(expected = "text key not in the source text: \"title.nope\"")]
-    fn an_unknown_text_key_panics_in_debug_builds() {
-        let c = ctx();
-        let _ = c.text("title.nope");
-    }
-
-    #[test]
-    fn a_new_ctx_has_no_layout_and_the_picker_keys() {
-        let c = Ctx::embedded().unwrap();
-        assert_eq!(c.layout(), None);
-        assert_eq!(c.keymap, Keymap::layout_picker(&c.game.content.keymap));
-        assert_eq!(c.saved_layout(), None);
-    }
-
-    #[test]
-    fn use_layout_switches_without_saving() {
-        let mut c = ctx();
-        c.use_layout(LEFT_HANDED);
-        assert_eq!(c.layout(), Some(LEFT_HANDED));
-        assert_eq!(
-            c.keymap,
-            Keymap::for_layout(&c.game.content.keymap, LEFT_HANDED)
-        );
-        assert_eq!(c.storage.read(LAYOUT_KEY), Ok(None));
-    }
-
-    #[test]
-    fn choose_layout_saves_and_saved_layout_reads_it_back() {
-        for layout in [RIGHT_HANDED, LEFT_HANDED] {
-            let mut c = Ctx::embedded().unwrap();
-            assert_eq!(c.choose_layout(layout), Ok(()));
-            assert_eq!(c.layout(), Some(layout));
-            // In the settings (0805), no longer under its own key.
-            assert_eq!(c.settings().layout(), Some(layout));
-            assert_eq!(c.storage.read(LAYOUT_KEY), Ok(None));
-            let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
-            assert_eq!(saved, c.settings().to_ron());
-            assert_eq!(c.saved_layout(), Some(layout));
-        }
     }
 
     #[test]
@@ -883,75 +776,6 @@ pub(crate) mod tests {
         // The settings' layout beats the old key.
         c.choose_layout(RIGHT_HANDED).unwrap();
         assert_eq!(c.saved_layout(), Some(RIGHT_HANDED));
-    }
-
-    #[test]
-    fn settings_are_saved_on_change_and_loaded_with_the_storage() {
-        let mut c = ctx();
-        assert_eq!(*c.settings(), Settings::default());
-        // Nothing changed: nothing written.
-        assert_eq!(c.change_settings(|_| {}), Ok(()));
-        assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
-        c.change_settings(|s| {
-            s.volumes.set(MUSIC, 3);
-            s.game.combat_animations = false;
-        })
-        .unwrap();
-        assert_eq!(c.settings().volumes.get(MUSIC), Some(3));
-        let storage = std::mem::take(&mut c.storage).into_computer();
-        let mut again = Ctx::embedded().unwrap().with_storage(storage);
-        assert_eq!(again.settings(), c.settings());
-        assert_eq!(again.take_warnings(), [] as [std::string::String; 0]);
-    }
-
-    /// Ticket 0839: a previewed change applies at once and is saved only
-    /// when kept; restoring puts it back and saves nothing unless the
-    /// storage holds something else.
-    #[test]
-    fn previewed_settings_are_saved_only_when_kept() {
-        use crate::settings::MapLook;
-        use trpg_content::Theme;
-        let mut c = ctx();
-        assert!(!c.preview_settings(|_| {}));
-        let before = c.settings().clone();
-        assert!(c.preview_settings(|s| {
-            s.theme = Theme::Moonlit;
-            s.game.map_look = MapLook::Glyphs;
-            s.fullscreen = true;
-        }));
-        let moonlit = Palette::new::<UiColor>(&c.game.content.themes[&Theme::Moonlit]).unwrap();
-        assert_eq!(c.palette.get(UiColor::Text), moonlit.get(UiColor::Text));
-        assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
-        // Put back: as before, nothing written.
-        c.restore_settings(&before).unwrap();
-        assert_eq!(*c.settings(), before);
-        assert_ne!(c.palette.get(UiColor::Text), moonlit.get(UiColor::Text));
-        assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
-        // Kept: written; keeping again writes nothing new.
-        c.preview_settings(|s| s.volumes.set(MUSIC, 3));
-        c.keep_settings().unwrap();
-        let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
-        let music = Settings::from_ron(&saved).unwrap().volumes.get(MUSIC);
-        assert_eq!(music, Some(3));
-        c.storage.write(SETTINGS_KEY, "marker").unwrap();
-        c.keep_settings().unwrap();
-        assert_eq!(c.storage.read(SETTINGS_KEY).unwrap().unwrap(), "marker");
-        // A layout picked meanwhile saves only the layout.
-        c.preview_settings(|s| s.volumes.set(MUSIC, 9));
-        c.choose_layout(LEFT_HANDED).unwrap();
-        let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
-        let saved = Settings::from_ron(&saved).unwrap();
-        let saved = (saved.volumes.get(MUSIC), saved.layout());
-        assert_eq!(saved, (Some(3), Some(LEFT_HANDED)));
-    }
-
-    #[test]
-    fn change_settings_cant_change_the_layout() {
-        let mut c = ctx();
-        c.choose_layout(LEFT_HANDED).unwrap();
-        c.change_settings(|s| *s = Settings::default()).unwrap();
-        assert_eq!(c.settings().layout(), Some(LEFT_HANDED));
-        assert_eq!(c.layout(), Some(LEFT_HANDED));
     }
 
     /// Ticket 0439: the map skin is drawn at the zoom in the settings,
@@ -1042,28 +866,6 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn unreadable_settings_give_the_defaults_and_a_warning() {
-        let mut storage = MemoryStorage::new();
-        storage.write(SETTINGS_KEY, "nonsense").unwrap();
-        let mut c = Ctx::embedded().unwrap().with_storage(Box::new(storage));
-        assert_eq!(*c.settings(), Settings::default());
-        let warnings = c.take_warnings();
-        assert_eq!(warnings.len(), 1);
-        assert!(
-            warnings[0].starts_with("settings: unreadable: ")
-                && warnings[0].ends_with(", using the defaults"),
-            "{warnings:?}"
-        );
-    }
-
-    #[test]
-    fn a_failed_save_still_changes_the_settings() {
-        let mut c = Ctx::embedded().unwrap().with_storage(Box::new(Failing));
-        assert!(c.change_settings(|s| s.volumes.set(SFX, 1)).is_err());
-        assert_eq!(c.settings().volumes.get(SFX), Some(1));
-    }
-
-    #[test]
     fn only_a_classic_campaign_switches_to_casual() {
         let mut c = ctx();
         assert!(!c.game.switch_to_casual());
@@ -1077,205 +879,6 @@ pub(crate) mod tests {
         assert_eq!(c.game.campaign_mode, Some(GameMode::Casual));
         assert!(!c.game.switch_to_casual());
         assert_eq!(c.game.campaign_mode, Some(GameMode::Casual));
-    }
-
-    #[test]
-    fn a_bad_saved_layout_counts_as_none() {
-        let mut c = Ctx::embedded().unwrap();
-        c.storage.write(LAYOUT_KEY, "Vim").unwrap();
-        assert_eq!(c.saved_layout(), None);
-        c.storage
-            .write(
-                LAYOUT_KEY,
-                " LeftHanded
-",
-            )
-            .unwrap();
-        assert_eq!(c.saved_layout(), Some(LEFT_HANDED));
-    }
-
-    /// A storage whose every operation fails.
-    #[derive(Debug)]
-    struct Failing;
-
-    impl Storage for Failing {
-        fn read(&self, _: &str) -> Result<Option<String>, StorageError> {
-            Err(StorageError::Backend("down".into()))
-        }
-        fn write(&mut self, _: &str, _: &str) -> Result<(), StorageError> {
-            Err(StorageError::Backend("down".into()))
-        }
-        fn delete(&mut self, _: &str) -> Result<(), StorageError> {
-            Err(StorageError::Backend("down".into()))
-        }
-        fn list(&self) -> Result<Vec<String>, StorageError> {
-            Err(StorageError::Backend("down".into()))
-        }
-    }
-
-    #[test]
-    fn a_failed_save_still_switches_layout() {
-        let mut c = Ctx::embedded().unwrap().with_storage(Box::new(Failing));
-        assert_eq!(c.saved_layout(), None);
-        assert!(c.choose_layout(LEFT_HANDED).is_err());
-        assert_eq!(c.layout(), Some(LEFT_HANDED));
-    }
-
-    #[test]
-    fn unreadable_storage_gives_default_keys_and_a_warning() {
-        let mut c = Ctx::embedded().unwrap().with_storage(Box::new(Failing));
-        assert_eq!(c.player_keys(), &PlayerKeys::default());
-        assert_eq!(
-            c.take_warnings(),
-            [
-                "profiles: can't be read: storage error: down",
-                "keybindings: can't be read, using the default keys: storage error: down",
-                "settings: can't be read: storage error: down, using the defaults",
-                "debug_view: can't be read: storage error: down"
-            ]
-        );
-        assert_eq!(*c.settings(), Settings::default());
-        assert_eq!(c.take_warnings(), [] as [std::string::String; 0]);
-    }
-
-    /// `Info` on `g` instead of its default key.
-    fn info_on_g(c: &Ctx, layout: Layout) -> LayoutBindings {
-        let mut b = c.layout_bindings(layout);
-        let g = crate::input::Chord::plain(crate::input::Key::G);
-        assert!(b.bind(Action::Info, 0, g).is_ok());
-        b
-    }
-
-    #[test]
-    fn set_layout_bindings_saves_and_switches_the_layout_in_use() {
-        let mut c = ctx();
-        let b = info_on_g(&c, RIGHT_HANDED);
-        assert_eq!(c.set_layout_bindings(RIGHT_HANDED, b.clone()), Ok(()));
-        assert_eq!(
-            c.keymap,
-            b.keymap(c.game.content.keymap.repeat)
-                .with_default_pad(&c.game.content.keymap)
-        );
-        assert_eq!(c.layout_bindings(RIGHT_HANDED), b);
-        let saved = c.storage.read(KEYBINDINGS_KEY).unwrap().unwrap();
-        assert_eq!(saved, c.player_keys().to_ron());
-        // The other layout's keys change only the saved config.
-        let before = c.keymap.clone();
-        let left = info_on_g(&c, LEFT_HANDED);
-        c.set_layout_bindings(LEFT_HANDED, left.clone()).unwrap();
-        assert_eq!(c.keymap, before);
-        c.use_layout(LEFT_HANDED);
-        assert_eq!(
-            c.keymap,
-            left.keymap(c.game.content.keymap.repeat)
-                .with_default_pad(&c.game.content.keymap)
-        );
-        assert_eq!(c.keymap_for(RIGHT_HANDED), before);
-    }
-
-    /// Unit info also on the right stick pressed in.
-    fn info_on_right_trigger(c: &Ctx) -> PadBindings {
-        let mut b = c.pad_bindings();
-        assert!(b.bind(Action::Info, 1, Button::RightStickPress).is_ok());
-        b
-    }
-
-    #[test]
-    fn set_pad_bindings_saves_and_applies_in_every_layout_and_before_one_is_chosen() {
-        let mut c = ctx();
-        assert_eq!(
-            c.pad_bindings(),
-            PadBindings::defaults(&c.game.content.keymap)
-        );
-        let b = info_on_right_trigger(&c);
-        assert_eq!(c.set_pad_bindings(b.clone()), Ok(()));
-        assert_eq!(c.pad_bindings(), b);
-        assert_eq!(
-            c.keymap.pad_action(Button::RightStickPress),
-            Some(Action::Info)
-        );
-        let saved = c.storage.read(KEYBINDINGS_KEY).unwrap().unwrap();
-        assert_eq!(saved, c.player_keys().to_ron());
-        // The keys are the layout's own; the other layout has the buttons too.
-        assert_eq!(c.keymap, c.keymap_for(RIGHT_HANDED));
-        assert_eq!(
-            c.keymap.chords_for(Action::Info),
-            Keymap::for_layout(&c.game.content.keymap, RIGHT_HANDED).chords_for(Action::Info)
-        );
-        c.use_layout(LEFT_HANDED);
-        assert_eq!(
-            c.keymap.pad_action(Button::RightStickPress),
-            Some(Action::Info)
-        );
-        // Before a layout is chosen: the layout picker's keys, these buttons.
-        let mut none = Ctx::embedded().unwrap();
-        assert_eq!(none.set_pad_bindings(b.clone()), Ok(()));
-        assert_eq!(none.layout(), None);
-        assert_eq!(
-            none.keymap,
-            Keymap::layout_picker(&none.game.content.keymap).with_pad(b.pairs())
-        );
-        // They load with the storage, with or without a layout.
-        let storage = std::mem::take(&mut none.storage).into_computer();
-        let again = Ctx::embedded().unwrap().with_storage(storage);
-        assert_eq!(again.pad_bindings(), b);
-        assert_eq!(
-            again.keymap.pad_action(Button::RightStickPress),
-            Some(Action::Info)
-        );
-        // A failed save still applies them.
-        let mut failing = ctx().with_storage(Box::new(Failing));
-        assert!(failing.set_pad_bindings(b.clone()).is_err());
-        assert_eq!(failing.pad_bindings(), b);
-        assert_eq!(
-            failing.keymap.pad_action(Button::RightStickPress),
-            Some(Action::Info)
-        );
-    }
-
-    #[test]
-    fn saved_keys_load_with_the_storage() {
-        let mut c = ctx();
-        let b = info_on_g(&c, RIGHT_HANDED);
-        c.set_layout_bindings(RIGHT_HANDED, b.clone()).unwrap();
-        let storage = std::mem::take(&mut c.storage).into_computer();
-        // A layout already in use picks up the loaded keys.
-        let mut again = ctx().with_storage(storage);
-        assert_eq!(again.layout_bindings(RIGHT_HANDED), b);
-        assert_eq!(
-            again.keymap,
-            b.keymap(again.game.content.keymap.repeat)
-                .with_default_pad(&again.game.content.keymap)
-        );
-        assert_eq!(again.take_warnings(), [] as [std::string::String; 0]);
-    }
-
-    #[test]
-    fn repaired_keys_leave_a_warning() {
-        let mut storage = MemoryStorage::new();
-        storage.write(KEYBINDINGS_KEY, "nonsense").unwrap();
-        let mut c = Ctx::embedded().unwrap().with_storage(Box::new(storage));
-        let warnings = c.take_warnings();
-        assert_eq!(warnings.len(), 1);
-        assert!(
-            warnings[0].starts_with("keybindings: unreadable"),
-            "{warnings:?}"
-        );
-    }
-
-    #[test]
-    fn a_failed_save_still_switches_keys() {
-        let mut c = Ctx::embedded()
-            .unwrap()
-            .with_storage(Box::new(Failing))
-            .with_layout(LEFT_HANDED);
-        let b = info_on_g(&c, LEFT_HANDED);
-        assert!(c.set_layout_bindings(LEFT_HANDED, b.clone()).is_err());
-        assert_eq!(
-            c.keymap,
-            b.keymap(c.game.content.keymap.repeat)
-                .with_default_pad(&c.game.content.keymap)
-        );
     }
 
     #[test]

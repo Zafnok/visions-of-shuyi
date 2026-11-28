@@ -170,15 +170,13 @@ pub fn start_on_battle(mut ctx: Ctx, id: &str) -> Result<Game, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::audio::{AudioRequest, MusicCommand};
+    use crate::audio::AudioRequest;
     use crate::console::ConsoleSizes;
     use crate::glyph_buffer::GlyphBuffer;
-    use crate::input::{
-        Action, Button, Chord, Key, LEFT_HANDED, PadKind, PadState, Pads, RIGHT_HANDED,
-    };
+    use crate::input::{Action, Button, Chord, Key, LEFT_HANDED, PadKind, RIGHT_HANDED};
     use crate::screen::{FrameInput, KeyPrompt, ShuyiCtx};
 
-    use crate::screen::tests::{ctx, ctx_with_cues};
+    use crate::screen::tests::ctx;
     use crate::storage::Storage;
 
     fn down(key: Key) -> RawInputEvent {
@@ -282,19 +280,6 @@ mod tests {
         assert!(!game.screens().contains(&LayoutPickerScreen::NAME));
     }
 
-    /// The key that opens the picker makes the keyboard the device in
-    /// use, so the picker names keys.
-    #[test]
-    fn the_key_that_opens_the_picker_counts_as_the_keyboard() {
-        use crate::input::Device;
-        let mut game = start(first_launch());
-        pad_tap(&mut game, Button::DpadDown);
-        assert_eq!(game.ctx().device, Device::Pad(PadKind::Xbox));
-        game.frame(&[down(Key::Z)], 0.0);
-        assert_eq!(game.screens(), ["title", "layout_picker"]);
-        assert_eq!(game.ctx().device, Device::Keyboard);
-    }
-
     /// A controller button closes the asked-for picker without choosing,
     /// bound or not, and does nothing else; the next key asks again.
     #[test]
@@ -372,21 +357,6 @@ mod tests {
         assert_eq!(ctx.saved_layout(), Some(LEFT_HANDED));
     }
 
-    /// Ticket 0224: the first key press ends the title's wait; releases
-    /// don't, and a game started without the prompt never waits.
-    #[test]
-    fn a_key_press_moves_the_key_prompt_on() {
-        let mut game = start(ctx());
-        game.frame(&[down(Key::Z)], 0.0);
-        assert_eq!(game.ctx().key_prompt, KeyPrompt::Off);
-        let mut game = start(waiting(ctx()));
-        game.frame(&[RawInputEvent::Up(Key::Z)], 0.0);
-        assert_eq!(game.ctx().key_prompt, KeyPrompt::Waiting);
-        game.frame(&[down(Key::Z)], 0.0);
-        assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
-        assert_eq!(game.screens(), ["title"]);
-    }
-
     /// `c` as `app` starts it: the title waits for a key or a button.
     fn waiting(mut c: Ctx) -> Ctx {
         c.key_prompt = KeyPrompt::Waiting;
@@ -420,63 +390,6 @@ mod tests {
         quit
     }
 
-    #[test]
-    fn pad_changes_become_pad_events_with_the_pressing_pads_kind() {
-        let mut pads = Pads::new(
-            crate::input::StickDef::DEFAULT
-                .with_press_percent(50)
-                .with_release_percent(35),
-        );
-        let holding = |buttons: &[Button]| PadState::new(buttons.iter().copied().collect());
-        let pad = |id, kind, buttons: &[Button]| (id, kind, holding(buttons));
-        let sony = PadKind::PlayStation;
-        let both = [
-            pad(3, PadKind::Xbox, &[Button::Start]),
-            pad(7, sony, &[Button::South]),
-        ];
-        assert_eq!(
-            RawInputEvent::from_pads(&mut pads, &both),
-            [
-                RawInputEvent::PadDown(Button::South, sony, 7),
-                RawInputEvent::PadDown(Button::Start, PadKind::Xbox, 3),
-            ]
-        );
-        // Releases come first and carry no kind; each pad's own changes,
-        // with its id (the engine's `Game` makes a button two pads hold
-        // one press).
-        let next = [
-            pad(3, PadKind::Xbox, &[Button::South]),
-            pad(7, sony, &[Button::South, Button::North]),
-        ];
-        assert_eq!(
-            RawInputEvent::from_pads(&mut pads, &next),
-            [
-                RawInputEvent::PadUp(Button::Start, 3),
-                RawInputEvent::PadDown(Button::South, PadKind::Xbox, 3),
-                RawInputEvent::PadDown(Button::North, sony, 7),
-            ]
-        );
-        // Pressed on two pads in the same frame: each, by pad id.
-        let together = [
-            pad(3, PadKind::Xbox, &[Button::South, Button::West]),
-            pad(7, sony, &[Button::South, Button::North, Button::West]),
-        ];
-        assert_eq!(
-            RawInputEvent::from_pads(&mut pads, &together),
-            [
-                RawInputEvent::PadDown(Button::West, PadKind::Xbox, 3),
-                RawInputEvent::PadDown(Button::West, sony, 7),
-            ]
-        );
-        // Unplugged: every held button let go, then each pad removed.
-        let gone = RawInputEvent::from_pads(&mut pads, &[]);
-        assert_eq!(gone.len(), 7);
-        assert_eq!(
-            gone[5..],
-            [RawInputEvent::PadRemoved(3), RawInputEvent::PadRemoved(7)]
-        );
-    }
-
     /// Ticket 0219: with the default buttons, the bottom face button
     /// confirms and the right one cancels.
     #[test]
@@ -494,54 +407,18 @@ mod tests {
         assert!(pad_tap(&mut game, Button::South));
     }
 
-    /// Ticket 0220: screens find what was pressed last in `ctx.device`,
-    /// already in the frame of the press.
+    /// Ticket 0220: picking a layout (new bindings) doesn't forget the
+    /// device pressed last. (The rest of 0220, the device in the frame of
+    /// the press, is the engine's `the_context_knows_the_device_pressed_last`.)
     #[test]
-    fn the_context_knows_the_device_pressed_last() {
+    fn picking_a_layout_keeps_the_device_pressed_last() {
         use crate::input::Device;
-        let sony = PadKind::PlayStation;
-        let mut game = start(ctx());
-        assert_eq!(game.ctx().device, Device::Keyboard);
-        game.frame(&[RawInputEvent::PadDown(Button::DpadDown, sony, 0)], 0.0);
-        assert_eq!(game.ctx().device, Device::Pad(sony));
-        game.frame(&[RawInputEvent::PadUp(Button::DpadDown, 0)], 0.0);
-        assert_eq!(game.ctx().device, Device::Pad(sony));
-        // An unbound button on another pad changes nothing.
-        let unbound = RawInputEvent::PadDown(Button::RightStickPress, PadKind::Nintendo, 0);
-        game.frame(&[unbound], 0.0);
-        assert_eq!(game.ctx().device, Device::Pad(sony));
-        game.frame(&[down(Key::Up)], 0.0);
-        assert_eq!(game.ctx().device, Device::Keyboard);
-        // The last press of a frame wins.
-        let nintendo = RawInputEvent::PadDown(Button::DpadUp, PadKind::Nintendo, 0);
-        game.frame(
-            &[RawInputEvent::Up(Key::Up), down(Key::Down), nintendo],
-            0.0,
-        );
-        assert_eq!(game.ctx().device, Device::Pad(PadKind::Nintendo));
-        // Picking a layout (new bindings) doesn't forget it.
         let mut game = start(first_launch());
         pad_tap(&mut game, Button::DpadDown);
         game.ctx_mut().choose_layout(LEFT_HANDED).unwrap();
         game.frame(&[], 0.0);
         assert_eq!(game.input().keymap(), &game.ctx().keymap);
         assert_eq!(game.ctx().device, Device::Pad(PadKind::Xbox));
-    }
-
-    #[test]
-    fn screens_see_held_buttons() {
-        let seen = std::rc::Rc::default();
-        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
-        game.frame(
-            &[RawInputEvent::PadDown(Button::South, PadKind::Xbox, 0)],
-            0.0,
-        );
-        game.frame(&[RawInputEvent::PadUp(Button::South, 0)], 0.0);
-        let seen = seen.borrow();
-        assert_eq!(seen[0].actions, [Action::Confirm]);
-        assert!(seen[0].is_held(Action::Confirm));
-        assert_eq!(seen[1].actions, [] as [trpg_content::Action; 0]);
-        assert!(!seen[1].is_held(Action::Confirm));
     }
 
     /// Ticket 1034: on the Playdate's buttons A's Confirm comes when it is
@@ -588,45 +465,6 @@ mod tests {
         assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
     }
 
-    /// Any controller button ends the title's wait too, bound or not;
-    /// releases don't.
-    #[test]
-    fn a_pad_button_moves_the_key_prompt_on() {
-        let mut game = start(waiting(ctx()));
-        game.frame(&[RawInputEvent::PadUp(Button::RightStickPress, 0)], 0.0);
-        assert_eq!(game.ctx().key_prompt, KeyPrompt::Waiting);
-        game.frame(
-            &[RawInputEvent::PadDown(
-                Button::RightStickPress,
-                PadKind::Xbox,
-                0,
-            )],
-            0.0,
-        );
-        assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
-        // Started without the prompt, it never waits.
-        let mut game = start(ctx());
-        game.frame(
-            &[RawInputEvent::PadDown(Button::South, PadKind::Xbox, 0)],
-            0.0,
-        );
-        assert_eq!(game.ctx().key_prompt, KeyPrompt::Off);
-    }
-
-    #[test]
-    fn rebinding_keys_reaches_the_input_before_the_next_press() {
-        let mut game = start(ctx());
-        let mut b = game.ctx().layout_bindings(RIGHT_HANDED);
-        assert_eq!(b.bind(Action::Confirm, 0, Chord::plain(Key::G)), Ok(None));
-        game.ctx_mut().set_layout_bindings(RIGHT_HANDED, b).unwrap();
-        // The old key does nothing; the new one confirms at once.
-        tap(&mut game, Key::F);
-        assert_eq!(game.screens(), ["title"]);
-        tap(&mut game, Key::G);
-        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
-        assert_eq!(game.input().keymap(), &game.ctx().keymap);
-    }
-
     #[test]
     fn escape_is_ignored_by_the_first_launch_picker() {
         let mut game = start(first_launch());
@@ -649,58 +487,6 @@ mod tests {
     }
 
     #[test]
-    fn quit_stops_further_frames() {
-        let mut game = start(ctx());
-        game.frame(&[down(Key::Up)], 0.0);
-        let out = game.frame(&[RawInputEvent::Up(Key::Up), down(Key::F)], 0.0);
-        assert!(out.quit);
-        assert!(game.quit_requested());
-        let before = game.buffer().clone();
-        // Would open New Game if the game were still running.
-        game.frame(&[RawInputEvent::Up(Key::F), down(Key::Up)], 0.0);
-        game.frame(&[RawInputEvent::Up(Key::Up), down(Key::F)], 0.0);
-        assert_eq!(game.screens(), ["title"]);
-        assert_eq!(game.buffer(), &before);
-        assert!(game.frame(&[], 0.0).quit);
-    }
-
-    /// Ticket 0902: the window's shortcut flips the Fullscreen setting.
-    #[test]
-    fn toggling_fullscreen_flips_the_setting_and_tells_app() {
-        let mut game = start(ctx());
-        assert!(!game.frame(&[], 0.0).fullscreen);
-        game.toggle_fullscreen();
-        assert!(game.frame(&[], 0.0).fullscreen);
-        assert!(game.ctx().settings().fullscreen);
-        game.toggle_fullscreen();
-        assert!(!game.frame(&[], 0.0).fullscreen);
-    }
-
-    #[test]
-    fn the_clock_adds_up_frame_times() {
-        let mut game = start(ctx());
-        game.frame(&[], 0.5);
-        game.frame(&[], 0.25);
-        assert!((game.ctx().clock_s - 0.75).abs() < 1e-9);
-        // Nonsense frame times don't count.
-        for dt in [0.0, -1.0, f32::NAN, f32::INFINITY] {
-            game.frame(&[], dt);
-        }
-        assert!((game.ctx().clock_s - 0.75).abs() < 1e-9);
-    }
-
-    #[test]
-    fn popping_the_last_screen_quits() {
-        let mut game = new(
-            ctx(),
-            Box::new(crate::screens::ModeSelectScreen::new(&ctx())),
-        );
-
-        assert!(tap(&mut game, Key::D));
-        assert_eq!(game.top_screen(), None);
-    }
-
-    #[test]
     fn debug_key_opens_the_debug_menu_once() {
         let mut game = start(ctx()).with_debug_screens(true);
         tap(&mut game, Key::F2);
@@ -720,13 +506,6 @@ mod tests {
         assert_eq!(game.screens(), ["title", "debug_menu", "portrait_viewer"]);
         tap(&mut game, Key::D);
         tap(&mut game, Key::D);
-        assert_eq!(game.screens(), ["title"]);
-    }
-
-    #[test]
-    fn debug_key_does_nothing_without_debug_screens() {
-        let mut game = start(ctx()).with_debug_screens(false);
-        tap(&mut game, Key::F2);
         assert_eq!(game.screens(), ["title"]);
     }
 
@@ -763,97 +542,6 @@ mod tests {
         fn draw(&self, _: &Ctx, _: &mut GlyphBuffer) {}
     }
 
-    #[test]
-    fn screens_see_actions_dt_and_held_keys() {
-        let seen = std::rc::Rc::default();
-        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
-        assert_eq!(game.ctx().palette, ctx().palette);
-        game.frame(&[down(Key::Right), down(Key::F)], 0.1);
-        game.frame(&[RawInputEvent::Up(Key::F)], 0.0);
-        let seen = seen.borrow();
-        assert_eq!(seen[0].actions, [Action::CursorRight, Action::Confirm]);
-        assert!((seen[0].dt() - 0.1).abs() < f32::EPSILON);
-        assert!(seen[0].is_held(Action::CursorRight));
-        assert!(seen[0].is_held(Action::Confirm));
-        assert_eq!(seen[1].actions, [] as [trpg_content::Action; 0]);
-        assert!(seen[1].is_held(Action::CursorRight));
-        assert!(!seen[1].is_held(Action::Confirm));
-        // Every press of the frame, in order; releases aren't presses.
-        assert_eq!(
-            seen[0].pressed_chords(),
-            [Chord::plain(Key::Right), Chord::plain(Key::F)]
-        );
-        assert_eq!(seen[1].pressed_chords(), []);
-    }
-
-    #[test]
-    fn screens_see_unbound_and_shifted_presses_as_chords() {
-        let seen = std::rc::Rc::default();
-        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
-        let shifted = Chord::shifted(Key::Z);
-        game.frame(&[down(Key::Delete), RawInputEvent::Down(shifted)], 0.0);
-        let seen = seen.borrow();
-        assert_eq!(seen[0].actions, [] as [trpg_content::Action; 0]);
-        assert_eq!(
-            seen[0].pressed_chords(),
-            [Chord::plain(Key::Delete), shifted]
-        );
-    }
-
-    #[test]
-    fn screens_see_the_buttons_that_went_down_and_up() {
-        let seen = std::rc::Rc::default();
-        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
-        // Bound or not, in order.
-        let down = |b| RawInputEvent::PadDown(b, PadKind::Xbox, 0);
-        let events = [down(Button::RightStickUp), down(Button::South)];
-        game.frame(&events, 0.0);
-        let ups = [
-            RawInputEvent::PadUp(Button::South, 0),
-            RawInputEvent::PadUp(Button::RightStickUp, 0),
-        ];
-        game.frame(&ups, 0.0);
-        game.frame(&[], 0.0);
-        let seen = seen.borrow();
-        assert_eq!(
-            seen[0].pressed_buttons(),
-            [Button::RightStickUp, Button::South]
-        );
-        assert_eq!(seen[0].released_buttons(), []);
-        assert!(seen[0].pad_pressed());
-        assert_eq!(seen[1].pressed_buttons(), []);
-        assert_eq!(
-            seen[1].released_buttons(),
-            [Button::South, Button::RightStickUp]
-        );
-        assert!(!seen[1].pad_pressed());
-        assert!(seen[2].pressed_buttons().is_empty() && seen[2].released_buttons().is_empty());
-    }
-
-    #[test]
-    fn screens_see_the_keys_pressed_and_the_text_typed() {
-        let seen = std::rc::Rc::default();
-        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
-        let events = [
-            down(Key::A),
-            RawInputEvent::Text('a'),
-            down(Key::Backspace),
-            // Control characters some platforms send for Backspace or
-            // Enter are keys, not text.
-            RawInputEvent::Text('\u{8}'),
-            RawInputEvent::Text('\r'),
-            RawInputEvent::Text('é'),
-        ];
-        game.frame(&events, 0.0);
-        game.frame(&[RawInputEvent::Up(Key::A)], 0.0);
-        let seen = seen.borrow();
-        let pressed = [Chord::plain(Key::A), Chord::plain(Key::Backspace)];
-        assert_eq!(seen[0].pressed_chords(), pressed);
-        assert_eq!(seen[0].text(), ['a', 'é']);
-        assert_eq!(seen[1].pressed_chords(), []);
-        assert_eq!(seen[1].text(), [] as [char; 0]);
-    }
-
     /// The Harness types as the app does: each character with its key
     /// (Shift for capitals), one character per press.
     #[test]
@@ -882,149 +570,6 @@ mod tests {
                 expect(&[], 'é'),
             ]
         );
-    }
-
-    /// Plays `beep` on Confirm, switches to music `battle` on Cancel, quits
-    /// (with a quieter beep) on Up and asks for an unknown cue otherwise.
-    struct Noisy;
-
-    impl Screen<Shuyi> for Noisy {
-        fn name(&self) -> &'static str {
-            "noisy"
-        }
-        fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> crate::screen::Transition {
-            for action in &input.actions {
-                match action {
-                    Action::Confirm => ctx.audio.play_sound("beep"),
-                    Action::Cancel => ctx.audio.play_music("battle"),
-                    Action::CursorUp => {
-                        ctx.audio.play_sound_at("beep", 0.5);
-                        return crate::screen::Transition::Quit;
-                    }
-                    _ => ctx.audio.play_sound("nope"),
-                }
-            }
-            crate::screen::Transition::None
-        }
-        fn draw(&self, _: &Ctx, _: &mut GlyphBuffer) {}
-    }
-
-    /// A game on [`Noisy`] with a 0.5 s fade, `title` asked for already.
-    fn noisy() -> Game {
-        let mut ctx = ctx_with_cues(&["beep"], &["title", "battle"]);
-        ctx.game.content.audio.music_fade_ms = 500;
-        ctx.audio.play_music("title");
-        new(ctx, Box::new(Noisy))
-    }
-
-    fn beep(volume: f32) -> AudioRequest {
-        AudioRequest::play_sound("beep", volume)
-    }
-
-    fn music(cue: &str, command: fn(String) -> MusicCommand) -> MusicCommand {
-        command(cue.into())
-    }
-
-    fn load(cue: String) -> MusicCommand {
-        MusicCommand::Load { cue }
-    }
-
-    fn begin(cue: String) -> MusicCommand {
-        MusicCommand::start(cue, 1.0)
-    }
-
-    fn stop(cue: String) -> MusicCommand {
-        MusicCommand::Stop { cue }
-    }
-
-    #[test]
-    fn frames_carry_the_audio_screens_asked_for() {
-        let mut game = noisy();
-        // A request made before the first frame goes out with it.
-        let out = game.frame(&[], 0.0);
-        let title = AudioRequest::play_music("title", None);
-        assert_eq!(out.audio, [title]);
-        assert_eq!(out.music, [music("title", load), music("title", begin)]);
-        let out = game.frame(&[down(Key::F)], 0.0);
-        assert_eq!(out.audio, [beep(1.0)]);
-        assert_eq!(out.music, []);
-        // Each frame holds only its own requests.
-        let out = game.frame(&[RawInputEvent::Up(Key::F)], 0.0);
-        assert_eq!(out.audio, []);
-        assert_eq!(game.ctx().audio.pending(), []);
-    }
-
-    #[test]
-    fn frames_carry_the_music_fade() {
-        let mut game = noisy();
-        game.frame(&[], 0.0);
-        let out = game.frame(&[down(Key::D)], 0.25);
-        let half = MusicCommand::Gain {
-            cue: "title".into(),
-            gain: 0.5,
-        };
-        assert_eq!(out.music, [music("battle", load), half]);
-        assert_eq!(game.music().target(), Some("battle"));
-        let out = game.frame(&[RawInputEvent::Up(Key::D)], 0.25);
-        assert_eq!(out.music, [music("title", stop), music("battle", begin)]);
-        assert_eq!(game.music().current(), Some("battle"));
-    }
-
-    #[test]
-    fn the_quitting_frame_still_sounds_and_later_ones_are_silent() {
-        let mut game = noisy();
-        let out = game.frame(&[down(Key::Up)], 0.0);
-        assert!(out.quit);
-        assert_eq!(out.audio[1..], [beep(0.5)]);
-        let out = game.frame(&[RawInputEvent::Up(Key::Up), down(Key::F)], 0.0);
-        assert_eq!(out.audio, []);
-        assert_eq!(out.music, []);
-    }
-
-    #[test]
-    #[cfg(debug_assertions)]
-    #[should_panic(expected = "audio request for a cue not in the audio manifest")]
-    fn an_unknown_cue_panics_in_debug_builds() {
-        let mut game = noisy();
-        game.frame(&[down(Key::Right)], 0.0);
-    }
-
-    #[test]
-    fn the_fade_length_comes_from_the_manifest() {
-        let mut ctx = ctx_with_cues(&[], &["title", "battle"]);
-        ctx.game.content.audio.music_fade_ms = 1000;
-        ctx.audio.play_music("title");
-        let mut game = new(ctx, Box::new(Noisy));
-        game.frame(&[], 0.0);
-        let out = game.frame(&[down(Key::D)], 0.25);
-        let gain = MusicCommand::Gain {
-            cue: "title".into(),
-            gain: 0.75,
-        };
-        assert_eq!(out.music[1..], [gain]);
-    }
-
-    /// Ticket 0227: what `app` reports becomes the clock screens read.
-    #[test]
-    fn the_music_app_reports_becomes_the_clock() {
-        // `ctx_with_cues` tracks loop and are 10 s long.
-        let mut game = noisy();
-        assert_eq!(game.ctx().music_clock, None);
-        game.set_music_playing(Some(("battle", 12.5)));
-        let clock = game.ctx().music_clock.clone().unwrap();
-        assert_eq!(clock.cue, "battle");
-        assert!((clock.position - 2.5).abs() < 1e-5, "{clock:?}");
-        assert!((clock.length - 10.0).abs() < 1e-5, "{clock:?}");
-        // A frame leaves it as reported.
-        game.frame(&[], 0.5);
-        assert_eq!(game.ctx().music_clock, Some(clock));
-        // A cue the manifest lacks has no clock, and silence clears it.
-        game.set_music_playing(Some(("nope", 1.0)));
-        assert_eq!(game.ctx().music_clock, None);
-        game.set_music_playing(Some(("title", 1.0)));
-        assert!(game.ctx().music_clock.is_some());
-        game.set_music_playing(None);
-        assert_eq!(game.ctx().music_clock, None);
     }
 
     /// A won battle asks for its victory sting once, at the banner (0809),
