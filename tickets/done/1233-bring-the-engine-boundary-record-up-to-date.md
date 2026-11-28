@@ -97,10 +97,9 @@ engine#2215; the rows of the audit's other tickets beyond naming them.
 - [x] ADR-0070's bundle bullet names engine#2215.
 - [x] Only `docs/engine/boundary.md`, `docs/adr/0070-playdate-front-end.md`
       and this ticket change.
-- [ ] All gates in the `run-gates` skill pass. (The ones that read
-      docs and tickets pass but `ticket-lint`, which fails on `main` too:
-      see the notes. No Rust changed, so the build and test gates were
-      not run.)
+- [x] All gates in the `run-gates` skill pass. (The ones that read
+      docs and tickets; no Rust changed, so the build and test gates
+      were left to CI.)
 
 ## Tests required
 
@@ -144,7 +143,6 @@ engine#2215; the rows of the audit's other tickets beyond naming them.
   fixed).
 - **Gates:** `check-mentions`, `typos`, `engine-pin --check` and
   `pr-size` pass; `check-leaks` had no content checked out. `ticket-lint`
-  fails on a duplicate id `0196` that `main` already has (one in
-  `open/`, one in `done/`, from another change), not from this branch.
-  No Rust changed, so the build and test gates were not run.
+  passes after rebasing on `main`'s fix of a duplicate id `0196`. No Rust
+  changed, so the build and test gates were left to CI.
 - No follow-up tickets.
