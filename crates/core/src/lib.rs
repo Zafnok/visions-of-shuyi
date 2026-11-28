@@ -1,4 +1,5 @@
 //! Pure, deterministic game rules. See ADR-0004.
+// A throwaway line (ticket 0174 acceptance run).
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(not(test), deny(clippy::float_arithmetic))]
 
