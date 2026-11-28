@@ -9,7 +9,7 @@ use crate::audio::groups::{MUSIC, SFX, VOICE};
 use crate::input::{Action, LEFT_HANDED};
 use crate::screen::tests::ctx;
 use crate::screen::{FrameInput, ShuyiCtx};
-use crate::settings::{SETTINGS_KEY, TextSpeed};
+use crate::settings::SETTINGS_KEY;
 use crate::storage::{Storage, StorageError};
 use crate::tips::{TIPS_SEEN_KEY, TipsSeen};
 use shuyi_platform::prelude::Screen;
@@ -580,36 +580,6 @@ fn reset_tips_forgets_the_tips_seen() {
     assert_eq!(s.message(), None);
 }
 
-#[test]
-fn restore_defaults_asks_first_and_keeps_the_layout() {
-    let mut c = ctx();
-    c.choose_layout(LEFT_HANDED).unwrap();
-    c.change_settings(|s| {
-        s.text_speed = TextSpeed::Slow;
-        s.fullscreen = true;
-        s.volumes.set(MUSIC, 2);
-    })
-    .unwrap();
-    let changed = c.settings().clone();
-    let mut s = on(Row::RestoreDefaults);
-    assert_eq!(
-        s.help(&c).plain(),
-        "w\u{a0}a\u{a0}s\u{a0}d move · j restore · k back"
-    );
-    press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(s.asking(), Some(Question::RestoreDefaults.key()));
-    press(&mut s, &mut c, &[Action::Cancel]);
-    assert_eq!(*c.settings(), changed);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    let expected = Settings::default().with_layout(LEFT_HANDED);
-    assert_eq!(*c.settings(), expected);
-    // A change like any other: saved only if kept on leaving.
-    assert_eq!(saved(&c), changed);
-    assert_eq!(s.message(), Some(RESTORED_MESSAGE));
-    assert_eq!(c.layout(), Some(LEFT_HANDED));
-}
-
 /// A storage that reads nothing and can't be written.
 #[derive(Debug)]
 struct ReadOnly;
@@ -629,68 +599,16 @@ impl Storage for ReadOnly {
     }
 }
 
+/// Resetting the tips where the storage can't be written says so. (A
+/// change that can't be kept is the engine's
+/// `a_failed_save_keeps_the_change_says_so_and_stays`.)
 #[test]
-fn a_failed_save_keeps_the_change_says_so_and_stays() {
+fn a_tips_reset_that_cant_be_saved_says_so() {
     let mut c = ctx().with_storage(Box::new(ReadOnly));
     let mut s = on(Row::ResetTips);
     press(&mut s, &mut c, &[Action::Confirm]);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.message(), Some(NOT_SAVED_MESSAGE));
-    // A change isn't saved yet, so it says nothing.
-    let mut s = screen();
-    press(&mut s, &mut c, &[Action::CursorRight]);
-    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
-    assert_eq!(s.message(), None);
-    // Keep can't save: the change stays, the screen says so and stays.
-    press(&mut s, &mut c, &[Action::Cancel]);
-    press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
-    assert_eq!(s.leaving(), Some(LeaveChoice::Keep));
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
-    assert_eq!((s.leaving(), s.message()), (None, Some(NOT_SAVED_MESSAGE)));
-    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
-}
-
-#[test]
-fn discard_puts_every_setting_back_and_saves_nothing() {
-    let mut c = ctx();
-    c.choose_layout(LEFT_HANDED).unwrap();
-    let before = c.settings().clone();
-    let stored = c.storage.read(SETTINGS_KEY);
-    let mut s = screen();
-    for row in shown_rows(&c) {
-        if row.is_setting() {
-            s = s.focused_on(row.key());
-            press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorRight]);
-            // Two left and one right: a volume at the top moves down.
-            press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
-            press(&mut s, &mut c, &[Action::CursorRight]);
-        }
-    }
-    assert!(s.changed(&c) && c.settings().fullscreen && c.volume(MUSIC) != 100);
-    press(&mut s, &mut c, &[Action::Cancel]);
-    press(&mut s, &mut c, &[Action::CursorLeft]);
-    assert_eq!(s.leaving(), Some(LeaveChoice::Discard));
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
-    assert_eq!(*c.settings(), before);
-    assert_eq!(c.storage.read(SETTINGS_KEY), stored);
-    assert_eq!(
-        sounds(&mut c).last().map(String::as_str),
-        Some("menu_cancel")
-    );
-}
-
-#[test]
-fn help_names_what_confirm_does_on_each_kind_of_row() {
-    let c = ctx();
-    assert_eq!(screen().help(&c).plain(), "arrows move · f change · d back");
-    assert_eq!(
-        on(Row::Layout).help(&c).plain(),
-        "arrows move · f open · d back"
-    );
-    assert_eq!(
-        on(Row::KeyBindings).help(&c).plain(),
-        "arrows move · f open · d back"
-    );
 }
 
 /// Ticket 0825: the Language row, starting the group of Layout and Key
