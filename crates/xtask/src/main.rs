@@ -33,6 +33,7 @@ const USAGE: &str = "usage: cargo xtask <command>\n\n\
 available commands:\n  \
 ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n    \
 [--check-engine]                 and look up each engine#NNNN in the engine's tickets\n  \
+ticket-next <block> [--pr-list <file>] the next free ticket number in a block, open PRs' included\n  \
 check-mentions <text>              find what GitHub would read as a mention of a user, in a PR title\n  \
 check-leaks                        find a tracked file that quotes the game's lines or map rows (ADR-0118)\n  \
 engine [--off]                    build the game on Shuyi Engine checked out in shuyi-engine/\n  \
@@ -61,6 +62,7 @@ fn main() -> ExitCode {
 fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
     match args.next().as_deref() {
         Some("ticket-lint") => ticket_lint(&args.collect::<Vec<_>>()),
+        Some("ticket-next") => ticket_next(&args.collect::<Vec<_>>()),
         Some("check-mentions") => check_mentions(&args.collect::<Vec<_>>()),
         Some("check-leaks") => leaks::command(&repo_root(), &args.collect::<Vec<_>>()),
         Some("engine") => engine(&args.collect::<Vec<_>>()),
@@ -150,6 +152,47 @@ fn ticket_lint(args: &[String]) -> u8 {
         eprintln!("  {error}");
     }
     1
+}
+
+/// `ticket-next <block> [--pr-list <file>]`: the next free ticket number in
+/// the block, past the ticket files open PRs add (ticket 0131). The number
+/// alone goes to stdout; which PR holds a number, or the warning that open
+/// PRs weren't read, to stderr. The PR of this checkout's branch is left
+/// out: its tickets are local. `--pr-list` reads `gh`'s answer from a file.
+fn ticket_next(args: &[String]) -> u8 {
+    let (block, pr_list) = match args {
+        [block] => (block, None),
+        [block, flag, file] if flag == "--pr-list" => (block, Some(file)),
+        _ => {
+            eprintln!("{}", tickets::NEXT_USAGE);
+            return 2;
+        }
+    };
+    let root = repo_root();
+    let prs = match pr_list {
+        Some(file) => std::fs::read_to_string(file).map_err(|e| format!("{file}: {e}")),
+        None => tickets::open_pr_files(&root),
+    };
+    let branch = Command::new("git")
+        .current_dir(&root)
+        .args(["branch", "--show-current"])
+        .output()
+        .ok()
+        .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_owned())
+        .filter(|name| !name.is_empty());
+    match tickets::ticket_next(&root, block, prs, branch.as_deref()) {
+        Ok(next) => {
+            println!("{}", next.number);
+            for note in next.notes {
+                eprintln!("{note}");
+            }
+            0
+        }
+        Err(e) => {
+            eprintln!("ticket-next: {e}");
+            1
+        }
+    }
 }
 
 /// `check-mentions <text>`: no accidental mention of a GitHub user in a PR
@@ -1157,6 +1200,7 @@ mod tests {
     fn the_forwarded_commands_are_not_xtask_s_own() {
         for own in [
             "ticket-lint",
+            "ticket-next",
             "check-mentions",
             "check-leaks",
             "engine",

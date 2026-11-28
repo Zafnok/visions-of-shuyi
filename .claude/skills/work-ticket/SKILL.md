@@ -309,6 +309,12 @@ tickets anymore."
 ## 6. Commit and PR
 
 - Commit messages: `[NNNN] imperative summary`.
+- **Before opening the PR, check the ticket numbers** (ticket 0131): run
+  `cargo xtask ticket-lint` (also in the gates) and, for each new ticket
+  the branch adds, `cargo xtask ticket-next <its block>`. If it names an
+  open PR holding your number, another session filed it first: renumber
+  yours on the branch (the file, its `id`, and every mention of it) to
+  the number it prints.
 - Push and open a PR:
   - Title: `[NNNN] <ticket title>`
   - **No bare `@word` in a PR title, PR body, commit message or comment.**
