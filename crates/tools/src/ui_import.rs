@@ -304,6 +304,14 @@ mod tests {
         fs::create_dir_all(root.join("assets-private/game")).unwrap();
         let err = run(&root).unwrap_err();
         assert!(err.contains("private-assets --library"), "{err}");
+        // Nor the library alone.
+        fs::remove_dir_all(root.join("assets-private/game")).unwrap();
+        fs::create_dir_all(root.join("assets-private/library")).unwrap();
+        let err = run(&root).unwrap_err();
+        assert!(err.contains("private-assets --library"), "{err}");
+        // Both: an empty list writes nothing, and says so.
+        fs::create_dir_all(root.join("assets-private/game")).unwrap();
+        assert!(run(&root).unwrap().contains("wrote 0 pictures"));
         let _ = fs::remove_dir_all(&root);
     }
 }
