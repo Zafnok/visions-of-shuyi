@@ -1341,13 +1341,14 @@ fn a_crash_record_replays_to_the_crash() {
     use trpg_ui::harness::Harness;
 
     let mut h = Harness::with_layout(trpg_ui::input::RIGHT_HANDED);
-    // Quick Battle, `Fight!`, the banner closed; the lord moves one tile
-    // right and waits.
-    h.keys("Down f Left f f");
+    // Quick Battle, then Preparations: Left wraps to `Fight!`; Confirm
+    // closes the turn's banner. The lord moves one tile right and waits.
+    h.keys("Down f Left f f f");
     h.keys("f Right f").wait(1.0).keys("f").wait(1.0);
     let text = crash_record(h.game()).unwrap();
     let mut record: BattleRecord = ron::from_str(&text).unwrap();
     let applied = record.history.len();
+    assert!(applied > 0, "no command applied");
     let dir = std::env::temp_dir().join(format!("xtask-crash-{}", std::process::id()));
     fs::create_dir_all(&dir).unwrap();
     fs::write(dir.join("crash.ron"), &text).unwrap();
