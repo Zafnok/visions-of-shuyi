@@ -120,6 +120,14 @@ ticket was written because the whole was 2,700–3,200 changed lines):
   in tests here; 1276 and 1280 decide what more they need.
 - Walking around freely (0060): delves are grid floors whatever it says.
 
+**The rooms are generic** (the engine's redundancy sweep of 2026-11-28): carving rooms of floor, wall and
+door and repairing their connectivity is parked engine#2119's BSP rooms
+and connectivity repair. Its enemies, chests, the Way Down and the Way
+Out stay the game's rules. Ask through the `engine-change` skill for
+Nick to unpark 2119 with this ticket as the asker. If 2119 is still
+parked when this starts, write the room carver over `Pos` and the core's
+random source, under 300 lines, so the pin bump after 2119 replaces it.
+
 ## Implementation steps
 
 **Size (ADR-0092, ADR-0101):** about 900 production lines (comparable:

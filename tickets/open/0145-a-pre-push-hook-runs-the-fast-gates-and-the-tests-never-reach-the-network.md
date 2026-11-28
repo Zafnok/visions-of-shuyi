@@ -97,6 +97,12 @@ None.
   with Nick's OK).
 - The CI noise fixes (0150).
 
+**Either order with 1423** (the engine's redundancy sweep of 2026-11-28): if 1423 is done, the engine's
+`shuyi-process` already does this ticket's Rust part with the game's
+config. Do only its skill and doc edits, or move it to `done/` as 1423
+says. If not, port as planned, and 1423 deletes the port when the engine
+ships its crate (engine#3448 and #3449, if Nick says yes).
+
 ## Implementation steps
 
 1. Write `scripts/git-hooks/pre-push` (POSIX sh, run by Git Bash on

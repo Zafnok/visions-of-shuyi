@@ -65,6 +65,12 @@ None.
   (`write-ticket`).
 - Running mutation testing on Nick's PC (never).
 
+**Either order with 1425** (the engine's redundancy sweep of 2026-11-28): if 1425 is done, `mutants.yml` is
+a call to the engine's workflow, so make this change in the engine's
+workflow through an engine ticket (the `engine-change` skill), or as one
+of the inputs 1425 passes. If not, change the game's file as planned,
+and 1425 carries it into the inputs.
+
 ## Implementation steps
 
 1. Comment out the `schedule:` cron in `.github/workflows/mutants.yml`

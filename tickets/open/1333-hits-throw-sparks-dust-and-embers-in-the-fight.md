@@ -79,6 +79,15 @@ rules: ice, no-element and Absorb strikes) goes on 1064's checklist.
 the touches under feet, the map hit with animations off, the creatures);
 drifting effects (1316); new sounds; blood.
 
+**The flipbook is generic** (the engine's redundancy sweep of 2026-11-28): reading frame sizes, frame times
+and an anchor from the `.json` beside a sheet, and the frame at a time
+from the start, is parked engine#2231's `AnimationClip` and `frame_at`.
+The game already writes it twice (`content/src/tileset/frames.rs` and
+`trees.rs`, sweep 1397). The strike-kind-to-sheet table stays the
+game's. Ask through the `engine-change` skill for Nick to unpark 2231
+with this ticket as the asker. Until then, write the loader once, where
+1334 and the tileset can share it.
+
 ## Implementation steps
 
 1. Write the expected size (about 250 production lines: an effect table

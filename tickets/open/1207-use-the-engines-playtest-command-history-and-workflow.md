@@ -179,7 +179,8 @@ change that row here, and 1233 leaves it.
    `cargo xtask ticket-lint --check-engine`.
 
 **Expected size:** about 80–100 new production lines for the plan and
-about 1,480 deleted wrapper/test lines (1,305 when written), plus a small replacement workflow,
+about 2,050 deleted wrapper/test lines (measured on 2026-11-28: `playtest.rs` 1,063 and
+`playtest/tests.rs` 988; 1,305 when written, 1,480 later), plus a small replacement workflow,
 focused CLI tests, dispatch removal, docs and the ticket move. Plan about
 1,950–2,000 total changed lines, including deletions and tests, rather
 than counting added production lines alone. Re-estimate before coding;

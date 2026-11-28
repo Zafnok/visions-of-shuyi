@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
 status: todo
-blocked_by: ["1012", "engine#2207"]
+blocked_by: ["1012", "engine#2207", "engine#2147"]
 nick_input: none
 completed:
 ---
@@ -55,6 +55,15 @@ None.
 (1015); zips (the ADR may add them later; folders only here); the web
 build (`#[cfg(not(target_arch = "wasm32"))]`; the web build starts
 unmodded); Workshop (1024).
+
+**On the engine's mods** (the engine's redundancy sweep of 2026-11-28): engine#2147 builds the generic half
+first, under 1011's ADR: `shuyi_assets::mods` (the manifest,
+`requires`, `conflicts`, the load order and its problems) and
+`shuyi_app::mods` (finding the folders and reading them). This ticket
+then adopts it rather than writing a `ModManifest`, a parser and a
+`resolve_order` of its own. It keeps the storage key `mods`, the folder
+names, `game_version` as the engine's `game` with its `compatible()`
+hook, `install_mod_layers`, and the problem list it hands to ui.
 
 ## Implementation steps
 

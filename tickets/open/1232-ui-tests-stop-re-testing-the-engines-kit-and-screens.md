@@ -65,6 +65,11 @@ snapshot files, and the boundary note of step 5.
   read frames through the engine's readers; if not, delete as they are,
   and 1214 has fewer copies to change.
 
+**Either order with 1424:** 1424 applies the same rule to `game.rs`,
+`screen.rs` and `screens/options/tests.rs`, which this ticket does not
+name. The files differ, so either order works and neither changes the
+other.
+
 ## Implementation steps
 
 1. `crates/ui/src/map_view/sprite.rs` tests: delete

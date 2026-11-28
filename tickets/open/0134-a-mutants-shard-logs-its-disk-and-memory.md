@@ -54,6 +54,12 @@ None.
 - A fix for the losses before the sampler has shown their cause; when
   it has, write the fix as its own ticket.
 
+**Either order with 1425** (the engine's redundancy sweep of 2026-11-28): if 1425 is done, `mutants.yml` is
+a call to the engine's workflow, so make this change in the engine's
+workflow through an engine ticket (the `engine-change` skill), or as one
+of the inputs 1425 passes. If not, change the game's file as planned,
+and 1425 carries it into the inputs.
+
 ## Implementation steps
 
 1. In the step *Run cargo mutants on this shard of the diff*, start a
