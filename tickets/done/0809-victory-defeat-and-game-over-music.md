@@ -148,6 +148,15 @@ whether the stings and the Game Over music fit and are timed right.
   moment it was chosen. Now it starts once a rewind point is picked (see
   the rules below), and it is the same track, not a new pick.
 
+**For Nick's sign-off:** win and lose a Quick Battle. Listen for the jingle
+at `VICTORY` (a different instrument on different wins), the defeat piece
+starting at `DEFEAT` and carrying on unbroken into Game Over, and, if you
+wait 77 s, the pause before it starts again.
+
+No follow-up tickets.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (*tunable*, also in `audio.md`):
 
 - The pause between two rounds of the defeat music is 13.8 s (the piece's
@@ -161,10 +170,3 @@ whether the stings and the Game Over music fit and are timed right.
   its beginning: the same track, also in a skirmish.
 - `Retry Battle` starts the battle's music as a new battle does (a
   skirmish picks a track again).
-
-**For Nick's sign-off:** win and lose a Quick Battle. Listen for the jingle
-at `VICTORY` (a different instrument on different wins), the defeat piece
-starting at `DEFEAT` and carrying on unbroken into Game Over, and, if you
-wait 77 s, the pause before it starts again.
-
-No follow-up tickets.

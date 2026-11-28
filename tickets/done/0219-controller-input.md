@@ -248,6 +248,8 @@ Linux a pad is read even when the game window isn't focused.
 `InputState::device()`), 0226 (the prompt already accepts a button). No new
 tickets.
 
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (the design docs didn't say; Nick can veto; also
 in `controls.md`):
 

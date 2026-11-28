@@ -187,6 +187,10 @@ track on Nick's machine): 80 ms (48 s track) to 460 ms (4:19); most
 110–260 ms. That's a visible freeze whenever the music changes, so I
 wrote **0215** (decode off the main thread).
 
+**Follow-up tickets:** 0215.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (Nick can veto; all *tunable*):
 - `step_mounted` is one hoof-beat pair (0.14 s) played per tile, like the
   other footsteps, rather than the gallop looping while the unit moves.
@@ -195,5 +199,3 @@ wrote **0215** (decode off the main thread).
   each loop (the author's loop point needs seeking, which the player
   can't do).
 - Sounds are mixed a little louder than the music (targets above).
-
-**Follow-up tickets:** 0215.

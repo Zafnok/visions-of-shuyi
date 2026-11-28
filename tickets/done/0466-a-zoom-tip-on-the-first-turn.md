@@ -96,8 +96,6 @@ start tip.
 No picture in the PR: the Guides snapshot and the tip file's checks (3 lines,
 60 characters) cover the text, and the box is the one every tip uses.
 
-*The agent's starting rules:*
-
 - The tip waits for the map: if the last turn-1 lesson ends in a unit's action
   menu, the tip comes once the player is back on the map, not over the menu.
 - It isn't limited to turn 1. It shows the first time the moment comes, so a
@@ -105,6 +103,10 @@ No picture in the PR: the Guides snapshot and the tip file's checks (3 lines,
   If the player uses up every unit during the lessons, it comes on turn 2.
 - Wording: "Can't see it all? The view scrolls with your cursor. Press {ZoomMap}
   to zoom the map in or out; again to switch back."
+
+### For the Act 1 playtest (1064)
+
+*The agent's starting rules:*
 
 For the Act 1 playtest (1064): does the tip come on turn 1 at a good moment,
 and read in Vix's voice?

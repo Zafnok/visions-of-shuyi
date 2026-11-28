@@ -167,6 +167,8 @@ What the player sees changes in one place worth noting: backing out of
 the action menu to a unit still picked up is that unit's selection, so a
 *Moving a unit* tip that missed its moment under a lesson comes up there.
 
+### For the Act 1 playtest (1064)
+
 *Claude's starting rules* (for the Act 1 playtest, 1064):
 - A combat's playback doesn't end a tip's moment: the level-up tip shows
   once the map is back after the fight.

@@ -208,6 +208,17 @@ band behind `Press any key or button` and behind a notice.
   see-through by halves.
 - `Harness::wait` runs at most about 33 s, so the tests wait in pieces.
 
+**Follow-ups:** none new. 0820 (the real
+shots; its tests of what shows at which second replace the stand-in's
+line in `title_cinematic.rs`), 0041 (the skip sound: `TITLE_SKIP_SOUND`).
+
+**For Nick, when playing:** leave the title alone for 15 seconds; press
+any key during the cinematic; leave it again and watch it loop after the
+logo. The fade of the menu box (it darkens, it doesn't dissolve) is the
+part most worth a look.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (also in `docs/design/title-screen.md`; Nick
 can veto):
 
@@ -221,12 +232,3 @@ can veto):
   missing), the cinematic runs without it.
 - The stand-in cinematic until 0820: one slow pan over the Chapter 1
   battlefield, then the logo.
-
-**Follow-ups:** none new. 0820 (the real
-shots; its tests of what shows at which second replace the stand-in's
-line in `title_cinematic.rs`), 0041 (the skip sound: `TITLE_SKIP_SOUND`).
-
-**For Nick, when playing:** leave the title alone for 15 seconds; press
-any key during the cinematic; leave it again and watch it loop after the
-logo. The fade of the menu box (it darkens, it doesn't dissolve) is the
-part most worth a look.

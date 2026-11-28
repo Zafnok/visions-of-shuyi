@@ -156,21 +156,6 @@ None. Every rule and number is in `combat-arts.md`.
   - Unit EXP and class points (0601) don't exist yet: Line Pierce's strike
     is its own `CombatResolved` event, so 0601 can award it as a second
     combat.
-- **the agent's starting rules** (the design docs don't say; Nick may veto):
-  1. A debuff (Pinning Shot, Pressure Point) takes effect **after** the
-     combat that applies it, so it doesn't change that combat's own
-     strikes; it helps from the next attack on.
-  2. A debuff isn't applied if the target falls in that combat.
-  3. Line Pierce's strike numbers are worked out from the attacker as it
-     starts the attack (HP before the combat). This only matters for skills
-     that depend on the user's HP.
-  4. Any timed effect that changes Mov changes how far the unit can move
-     (none of the current skills change Mov, so nothing else changes).
-  5. A unit only "knows" arts for weapon kinds it has a rank in; after a
-     reclass it keeps knowing them but can't use them.
-  6. Line Pierce at an angle that is neither straight nor diagonal (only
-     possible with range 3, which no spear has) has no tile behind and
-     doesn't pierce.
 - **Nick's review (2026-09-27)**, recorded in `combat-arts.md`:
   - "diagonal should be Rng 2 like FE handles it … line pierce should work
     diagonally": Line Pierce now strikes the next tile past the target on
@@ -203,3 +188,21 @@ None. Every rule and number is in `combat-arts.md`.
 - **No follow-up tickets.** For 0414: use `BattleState::preview_attack`
   for the forecast panel, `Unit::arts_for` for the list (dim the ones
   `usable_arts` leaves out), and `ArtNote` for the text notes.
+
+### For the Act 1 playtest (1064)
+
+- **the agent's starting rules** (the design docs don't say; Nick may veto):
+  1. A debuff (Pinning Shot, Pressure Point) takes effect **after** the
+     combat that applies it, so it doesn't change that combat's own
+     strikes; it helps from the next attack on.
+  2. A debuff isn't applied if the target falls in that combat.
+  3. Line Pierce's strike numbers are worked out from the attacker as it
+     starts the attack (HP before the combat). This only matters for skills
+     that depend on the user's HP.
+  4. Any timed effect that changes Mov changes how far the unit can move
+     (none of the current skills change Mov, so nothing else changes).
+  5. A unit only "knows" arts for weapon kinds it has a rank in; after a
+     reclass it keeps knowing them but can't use them.
+  6. Line Pierce at an angle that is neither straight nor diagonal (only
+     possible with range 3, which no spear has) has no tile behind and
+     doesn't pierce.

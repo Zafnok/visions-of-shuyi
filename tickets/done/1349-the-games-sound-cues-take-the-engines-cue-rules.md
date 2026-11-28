@@ -110,8 +110,11 @@ Estimate: data in `assets/audio/audio.ron` and the content's manifest
 - **Session record**: not blessed; it did not move (its hashes hold the
   sounds asked for, which the rules don't change).
 - `assets/audio/README.md` names the new fields.
+- No follow-up tickets.
+
+### For the Act 1 playtest (1064)
+
 - *For the Act 1 playtest (1064), not a rule decided:* a walk hurried
   with Confirm held plays fewer footsteps (one per ~33 ms instead of
   nearly every frame). `audio.md` says each step picks one of three "at
   random"; NoRepeat still does, among the two the last step didn't play.
-- No follow-up tickets.

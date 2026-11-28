@@ -201,10 +201,13 @@ build), first frame at 219 ms.
   of the data after the dialogue, and the content put together. It is
   the next to split if the data grows (ADR-0111). Loading one chapter
   at a time (1068) would shrink every step.
-- The start takes about 16 seconds on the device behind the loading
-  card. That's a feel for the Act 1 playtest (1064), not a rule.
 - Friction: estimate 250, measured 585 (2.3×), accepted. See
   `docs/engine/friction.md`. The estimate was written after the first
   build, not before coding as the rule asks.
 
 No gameplay rules were decided.
+
+### For the Act 1 playtest (1064)
+
+- The start takes about 16 seconds on the device behind the loading
+  card. That's a feel for the Act 1 playtest (1064), not a rule.

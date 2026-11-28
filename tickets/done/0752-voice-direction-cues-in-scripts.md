@@ -148,6 +148,11 @@ Only 0721 turns them into a tool.
 0757 writes them into the later chapters first. 0721's steps now say how to pass a
 direction, retry bad takes and keep a whisper quiet. 1210 comes from the pin move.
 
+Engine friction: estimate 150 production lines (ticket, judged by 0238), measured
+155 (145 engine, 10 game), 1.0×.
+
+### For the Act 1 playtest (1064)
+
 *The agent's starting rules*, for the Act 1 playtest (1064):
 - A directed clip keeps its distance from its character's level, within limits,
   so a whisper stays quiet. The limits are 0721's to set.
@@ -156,6 +161,3 @@ direction, retry bad takes and keep a whisper quiet. 1210 comes from the pin mov
 - A character's undirected lines keep their chosen reader, and directed lines take
   ADR-0109's recipe. Whether the two sound like one person across a scene hasn't
   been heard. If not, a whole scene may need to go one way.
-
-Engine friction: estimate 150 production lines (ticket, judged by 0238), measured
-155 (145 engine, 10 game), 1.0×.

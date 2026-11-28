@@ -117,6 +117,8 @@ context help bar.
   (`cargo build -p trpg-app --target wasm32-unknown-unknown --release
   --features debug-tools`).
 
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (UI details the design docs don't settle; say if
 any feel wrong):
 
@@ -127,5 +129,3 @@ any feel wrong):
   "current unit".
 - The panel's HP bar is 10 cells of `█`/`░`; the faction is shown as a word
   (`Player`, `Enemy`, `Ally`, `Neutral`) under the HP.
-
-

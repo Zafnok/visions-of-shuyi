@@ -130,6 +130,8 @@ first); the Arts lesson doesn't open until a unit can use an art.
   by the time the lesson ahead closes, so checking them literally would
   drop every waiting lesson.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (for Nick to agree or veto):
 - A lesson that asks a unit to do something opens only if some unit still
   to act this turn could do it; otherwise it waits until it starts again

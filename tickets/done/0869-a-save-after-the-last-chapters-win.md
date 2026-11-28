@@ -150,6 +150,9 @@ checklist (1064).
   act's last story battle (no next chapter) it is a world-map save, as
   the ticket says.
 - `world-structure.md` has the rule beside Nick's "Straight to the map".
+
+### For the Act 1 playtest (1064)
+
 - *The agent's starting rule*: after a won story battle whose map
   doesn't come back, "Save your progress?" comes first, as at the end
   of a chapter off the map; the save loads on the map with that battle

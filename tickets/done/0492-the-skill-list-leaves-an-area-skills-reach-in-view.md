@@ -108,11 +108,13 @@ corner.
 - Pictures: `docs/img/0492-inspire-glyphs.png`,
   `docs/img/0492-inspire-pictures.png` (a game screenshot, as 0482's).
 
-**For the Act 1 playtest (1064):** the list hops two tiles sideways when
-the focus moves onto an area skill and back (Nick saw this downside in
-the question and picked A).
-
 **Engine friction:** estimate 30 production lines (a field on the menu
 view and a bounding rectangle fed to 0454's placement rule in two skins),
 measured 35 added (1.2×): under 2×.
 **PR size:** estimate 250, measured about 210 (`cargo xtask pr-size`).
+
+### For the Act 1 playtest (1064)
+
+**For the Act 1 playtest (1064):** the list hops two tiles sideways when
+the focus moves onto an area skill and back (Nick saw this downside in
+the question and picked A).

@@ -162,9 +162,6 @@ The agent never draws character art.
 - No sound of its own: the shots ask for none (a scene's `@music` line is
   not followed).
 
-**the agent's starting rules (Nick can veto; also in
-`docs/design/title-screen.md`)**
-
 - *How a snippet's text appears:* the boxes of a dialogue shot share its
   time equally. A box types out at the text speed from Options, then stays
   until the next. A long box types faster so that it is whole for the last
@@ -214,3 +211,8 @@ the title's player; 0820 picks the scenes and the counts.
 **For Nick when he plays:** F2 on the title, "Play test cinematic". The
 faces and the text timing above are the things to judge; the real six
 faces and the real lines come with 0820.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules (Nick can veto; also in
+`docs/design/title-screen.md`)**

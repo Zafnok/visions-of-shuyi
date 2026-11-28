@@ -224,7 +224,24 @@ to copy, the shared page, its `lang.ron` waits for 0719), 0719 (0934),
 0756 (the pack's code; the voice's stand-in for the lead's name in a
 pack needs the token check changed first).
 
-### The agent's starting rules
+### For Nick
+
+- **Please pass `assets-private/story/zh/for-review.md` to your wife.**
+  0726 doesn't start until she has read it; her changes are recorded on
+  the page.
+- The style sheets are made from today's voice cards. If the writer
+  (0766) rewrites a card, its sheet is redone before that character is
+  translated.
+
+Nothing for the Act 1 playtest: nothing a player sees changed.
+
+**Friction:** none: no code. **PR size:** no estimate was written
+before starting (a slip); `pr-size` measures 632 in the game's
+repository (the ticket's own file counted where it was and where it
+is), and the private documents, which it doesn't count, are about 2,430
+(780 of them the generated review page).
+
+### For the Act 1 playtest (1064)
 
 What a Chinese player will read, decided here where the design doc was
 silent. Nick, or his wife on the review page, can veto any of them.
@@ -255,20 +272,3 @@ silent. Nick, or his wife on the review page, can veto any of them.
   glossary's last table): none says whether the lead is a man or a
   woman, as the English doesn't.
 - **A royal "we" is 朕**, in public only.
-
-### For Nick
-
-- **Please pass `assets-private/story/zh/for-review.md` to your wife.**
-  0726 doesn't start until she has read it; her changes are recorded on
-  the page.
-- The style sheets are made from today's voice cards. If the writer
-  (0766) rewrites a card, its sheet is redone before that character is
-  translated.
-
-Nothing for the Act 1 playtest: nothing a player sees changed.
-
-**Friction:** none: no code. **PR size:** no estimate was written
-before starting (a slip); `pr-size` measures 632 in the game's
-repository (the ticket's own file counted where it was and where it
-is), and the private documents, which it doesn't count, are about 2,430
-(780 of them the generated review page).

@@ -188,8 +188,6 @@ staged battle, the stage only; the Swordsman class has no bought picture
 yet, 0878). Joss isn't on Chapter 2's map (he joins after it), so his map
 sprite was checked in a staged battle and first shows in Chapter 3.
 
-**For the Act 1 playtest (1064):**
-
 - The recolour also turned his olive trousers dark brown (same hues as
   the hair, so one tint takes both). Nick's "Hound black" was about the
   cloth; the brown trousers sit well with it, but say if they should be
@@ -205,3 +203,7 @@ held it; no other change.
 **Engine friction:** estimate 40 production lines (two table rows, one
 tint); measured about 75, with the demo list's `art` lines (1.9×, under
 2×).
+
+### For the Act 1 playtest (1064)
+
+**For the Act 1 playtest (1064):**

@@ -101,6 +101,8 @@ Combat Arts and terrain magic get lessons (0457), so they get no tip.
 - Rendered with `cargo xtask frame-png` and looked at.
 - Tests that walked the map menu by a count of Downs got one more Down.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (Nick can veto):
 
 - The Skills tip shows when a unit with a skill is selected. Every player

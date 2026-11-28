@@ -17,6 +17,7 @@ mod code_lines;
 mod engine;
 mod leaks;
 mod mentions;
+mod playtest_notes;
 mod pr_size;
 mod tickets;
 #[cfg(test)]
@@ -40,6 +41,7 @@ engine-pin [<commit> | --check [--offline]] move the engine's pinned commit, or 
 engine-pin --report                the engine PRs past the pin, sorted, and whether a move is due (ADR-0096)\n  \
 assets-pin --check [--base <ref>]  fail when assets-private.rev moves back or a pin file is wrong (0194, 0195)\n  \
 assets-pin --add | --resolve       write this change's pin file, or put assets-private/ at the effective pin (ADR-0135)\n  \
+playtest-notes                     every done ticket's notes for the Act 1 playtest (1064)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
 code-lines [--base <ref>]          production Rust lines added and removed per crate (ADR-0092)\n  \
 pr-size [--base <ref>] [--branch <name>] [--hook]\n                                     \
@@ -66,6 +68,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("engine") => engine(&args.collect::<Vec<_>>()),
         Some("engine-pin") => engine_pin(&args.collect::<Vec<_>>()),
         Some("assets-pin") => assets_pin(&args.collect::<Vec<_>>()),
+        Some("playtest-notes") => playtest_notes::command(&repo_root(), &args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
         Some("code-lines") => code_lines(&args.collect::<Vec<_>>()),
         Some("pr-size") => pr_size(&args.collect::<Vec<_>>(), || {
@@ -138,8 +141,12 @@ fn ticket_lint(args: &[String]) -> u8 {
     };
 
     let repo_root = repo_root();
-    let errors = tickets::run(&repo_root, pr_branch.as_deref(), check_engine);
+    let tickets::Findings { errors, warnings } =
+        tickets::lint(&repo_root, pr_branch.as_deref(), check_engine);
 
+    for warning in &warnings {
+        eprintln!("ticket-lint: warning: {warning}");
+    }
     if errors.is_empty() {
         println!("ticket-lint: OK");
         return 0;

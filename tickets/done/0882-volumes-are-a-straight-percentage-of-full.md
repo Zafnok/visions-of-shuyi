@@ -174,6 +174,9 @@ settings docs and tests, design docs); nothing in the engine.
 - Friction: estimate 20 production lines (the settings reader and the
   manifest line), measured 16 added: under 2×. Engine side about 210
   lines of code in #617.
+
+### For the Act 1 playtest (1064)
+
 - **For the Act 1 playtest (1064):** the beds now start about 1 dB under
   the music (90% against 100), where they were 6 dB under; 1064's
   checklist asks whether they sit well.

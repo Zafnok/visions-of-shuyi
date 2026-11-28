@@ -297,8 +297,10 @@ moved lines counted twice). It could split into the guide and the
 threat/effects structs, but it was finished and gated in one piece, so
 it ships as one.
 
-**For the Act 1 playtest (1064):** whether the Load Game and Profile
-tips are heard on the web build.
-
 **Follow-up tickets:** 1310 (tip triggers by name, with a predicate row
 each).
+
+### For the Act 1 playtest (1064)
+
+**For the Act 1 playtest (1064):** whether the Load Game and Profile
+tips are heard on the web build.

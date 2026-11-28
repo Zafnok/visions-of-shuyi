@@ -207,13 +207,6 @@ player-side search is 0533, so this report only reports. 0333 (bow and
 spear minimums) isn't done: a line in it says to update this ticket's
 Chapter 2 test when the bow's minimum lands.
 
-**The agent's starting rules** (bots tooling, not gameplay; tunable):
-`can hurt < 2/3`, `lv 3+ below the army` (the army's lower median),
-`exp < half a share` (under half of 1/n of the army's EXP over every
-try); a kill is the last unit to hurt the enemy in the same command;
-push and collision damage go to the unit acting; a Combat Art counts
-toward "can hurt".
-
 **What the first run says** (for 0080, 0333, 0610, 0870): Aske deals the
 least of the fighting units but Joss in every chapter and can't hurt
 Chapter 2's two hound guards; Rue takes a fifth to a third of the EXP;
@@ -223,3 +216,12 @@ design. The bands of Chapters 2–4 have moved since their last
 documented runs (ch02 Casual and Hardcore over the band, ch03 Hardcore
 under, ch04 Normal and Hardcore under, over 30 tries); not this
 ticket's to tune.
+
+### For the Act 1 playtest (1064)
+
+**The agent's starting rules** (bots tooling, not gameplay; tunable):
+`can hurt < 2/3`, `lv 3+ below the army` (the army's lower median),
+`exp < half a share` (under half of 1/n of the army's EXP over every
+try); a kill is the last unit to hurt the enemy in the same command;
+push and collision damage go to the unit acting; a Combat Art counts
+toward "can hurt".

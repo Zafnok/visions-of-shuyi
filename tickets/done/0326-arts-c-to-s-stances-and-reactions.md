@@ -139,6 +139,8 @@ forecast, the playback and on the map.
   text that starts with `(`, unrelated to this ticket; 0759 (filed from
   0474) already covers it.
 
+### For the Act 1 playtest (1064)
+
 The agent's starting rules (the design doc is silent; for the Act 1
 playtest, 1064):
 

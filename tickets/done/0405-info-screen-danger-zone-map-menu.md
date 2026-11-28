@@ -96,6 +96,8 @@ new modes in `mode.rs` (map menu, unit list, objective, end-turn prompt, info),
 - No PLAYER PHASE banner at the very start of a battle: the screen is built
   from a state, not its start events; the real battle flow (0801) can show it.
 
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (the design docs were silent; Nick may veto):
 
 1. Info screen cycles the unit's faction in reading order (top to bottom,
@@ -116,4 +118,3 @@ new modes in `mode.rs` (map menu, unit list, objective, end-turn prompt, info),
    VICTORY in the highlight colour, DEFEAT in the low-HP red.
 9. The map menu opens beside the cursor, like the action menu; the unit list,
    objective and end-turn question are centred on the map.
-

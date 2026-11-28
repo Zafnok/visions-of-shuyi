@@ -130,6 +130,8 @@ cast.", only when the game found clips (`Ctx::has_voices`).
 
 **Follow-up tickets:** 0761 (short lines the transcript check can't hear).
 
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064, by ear):
 
 - Names are said as spelled, Aske as "Ask", Dace to rhyme with "face",

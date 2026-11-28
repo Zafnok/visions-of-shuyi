@@ -97,6 +97,8 @@ single-provider ids and mismatches, including Opus/Astra. Mutation testing
 remains in CI. No runtime, template, pin, asset or public API changes need
 new visual or worked-example checks.
 
+### For the Act 1 playtest (1064)
+
 Engine friction: none, no gameplay production change (one generated issue
 recommendation string). PR size: estimate 1,700 changed lines; this is one
 atomic backlog/schema correction. No new gameplay starting rules and no

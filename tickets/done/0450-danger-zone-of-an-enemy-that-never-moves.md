@@ -142,6 +142,9 @@ it):
 - Pictures: `docs/screenshots/0450-danger-zone.png`,
   `docs/screenshots/0450-picked-elemental.png`.
 - No starting rules: the ticket and Fire Emblem's boss ranges settled it.
+
+### For the Act 1 playtest (1064)
+
 - For the Act 1 playtest (1064): in Chapter 1, switch the danger zone on
   and look at the keep; pick Harl to see his own range. Both should be the
   few tiles round him, not a wide area.

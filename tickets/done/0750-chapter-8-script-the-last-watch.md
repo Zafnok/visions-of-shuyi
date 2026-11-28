@@ -163,6 +163,9 @@ Done 2026-10-30.
 - **Deviations:** none from the outline. Hollis's last words to Dace and
   the king's "Your hands are warm tonight" are the outline's words
   (Nick approved the outline at gate 2); the rest is new.
+- **Follow-ups:** none filed.
+
+### For the Act 1 playtest (1064)
+
 - **For the Act 1 playtest (1064):** nothing to judge by playing beyond
   the words. No starting rules were decided (no Rust, no numbers).
-- **Follow-ups:** none filed.

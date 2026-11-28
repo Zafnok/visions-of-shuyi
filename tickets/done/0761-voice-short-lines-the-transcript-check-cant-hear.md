@@ -94,9 +94,11 @@ checklist (1064).
   (ron's default), turning the whole committed file over. One line in
   `files::sent_text` keeps it `\n`, with a test; needed to commit the
   clips cleanly, so done here rather than ticketed.
-- For the Act 1 playtest (1064): how the lead says "Dace's." in both
-  voices. The cost of the rule: a short line read as a sound-alike word
-  would pass, so listen for it there.
 - No gameplay rules decided.
 - Friction: estimate 35 production lines, measured 55 (1.6×), under 2×.
 
+### For the Act 1 playtest (1064)
+
+- For the Act 1 playtest (1064): how the lead says "Dace's." in both
+  voices. The cost of the rule: a short line read as a sound-alike word
+  would pass, so listen for it there.

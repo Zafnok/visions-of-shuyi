@@ -134,6 +134,8 @@ callers), plus tests.
 - Pictures: `docs/img/0472-downed-pc.png`, `docs/img/0472-downed-playdate.png`.
 - Friction: estimate 30, measured 23 (under 2×).
 
+### For the Act 1 playtest (1064)
+
 *The agent's starting rule* (for the Act 1 playtest, 1064): a unit that
 went down shows its panel (PC) or pop-up (Playdate) when the cursor is on
 it, as during playback; it can't be picked, targeted or moved.

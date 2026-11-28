@@ -202,10 +202,12 @@ For the next script pass (not changed here: dialogue writing is paused):
 `ch01_prebattle_43740f2e` is four one-word sentences under a grief
 direction, and no take reads it faster than 0.237 s a letter.
 
+Friction: estimate 210 production lines, measured 281 (1.3×), under 2×.
+PR size: estimate 650, measured about 850.
+
+### For the Act 1 playtest (1064)
+
 **For the Act 1 playtest (1064):** the agent's starting values to judge by
 ear are the pause limit 0.8 s, the pace limit 0.17 s/letter, and the
 punctuation table in `docs/voice.md` ("Punctuation the readers are
 sent"); the nine lines above are the ones to listen to first.
-
-Friction: estimate 210 production lines, measured 281 (1.3×), under 2×.
-PR size: estimate 650, measured about 850.

@@ -145,15 +145,6 @@ build shows and the PC doesn't, saved with the other options.
   needed. "Every face has a one-bit version" holds in the bundle, which
   is what the new test checks.
 
-**the agent's starting rules** (for the Act 1 playtest's checklist,
-1064):
-
-- The setting's names: **Portrait style**, with **Dots**, **Dots and
-  lines**, **Flat** and **Bold** (0062 left the wording *tunable*).
-- It sits after Cursor, with the other looks.
-- The combat picture's fighters stay in style A whatever the setting
-  (0062's starting rule; the setting changes only the portraits).
-
 **Left to judge by playing (1064's checklist):** Nick looks at every
 Chapter 1 face in one-bit at the device's size, in the Simulator or on
 his Playdate, in each portrait style, and names any face that needs
@@ -162,3 +153,14 @@ in Dots. The dialogue screen's Playdate layout is 1043's, so until it
 lands the faces show in the PC's layout, cut off.
 
 **Follow-up tickets:** none.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (for the Act 1 playtest's checklist,
+1064):
+
+- The setting's names: **Portrait style**, with **Dots**, **Dots and
+  lines**, **Flat** and **Bold** (0062 left the wording *tunable*).
+- It sits after Cursor, with the other looks.
+- The combat picture's fighters stay in style A whatever the setting
+  (0062's starting rule; the setting changes only the portraits).

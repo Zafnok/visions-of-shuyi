@@ -62,10 +62,12 @@ None. Verified by tests and the snapshots; nothing to judge by playing.
 
 ## Completion notes
 
+Engine friction: estimate 1 line, measured 1 (1×), under 2×.
+
+### For the Act 1 playtest (1064)
+
 `bonus_text` formats each bonus with `{:+}`, so a penalty reads `Res -3`
 and a bonus still reads `Def +8`. New unit test
 `a_negative_bonus_reads_minus_not_plus_minus`; the one snapshot that showed
 `+-` (the Preparations Shop tab's Iron Plate line) changed only on that
 line. No deviations, no follow-ups, no starting rules.
-
-Engine friction: estimate 1 line, measured 1 (1×), under 2×.

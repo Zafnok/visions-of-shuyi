@@ -108,6 +108,8 @@ Done as planned.
   and costs. The content check refuses `Line(0)` and an area art that
   also pierces or chains.
 
+### For the Act 1 playtest (1064)
+
 Starting rules (*the agent's starting rules*, for the Act 1 playtest, 1064):
 
 - The strikes at units other than the target use the numbers at the

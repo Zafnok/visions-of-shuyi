@@ -162,6 +162,10 @@ None.
 - `_typos.toml`: allowed `abd`, a run of colour keys in a snapshot grid (same
   as the existing `iy`).
 
+**Follow-ups:** none created.
+
+### For the Act 1 playtest (1064)
+
 **Starting rules and Nick's answers** (2026-09-30, recorded in
 `docs/design/setting-and-tone.md`):
 
@@ -181,5 +185,3 @@ None.
    the player (0801), the lead is Ellery, male (*the agent's starting rule*).
 6. Writers: `{They}` becomes He/She, so verbs agree with he/she. The agent
    writes all scripts (Nick: "I'm not writing anything, that's all you").
-
-**Follow-ups:** none created.

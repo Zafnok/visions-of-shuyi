@@ -181,6 +181,10 @@ dated line with the new numbers rather than a rewrite.
 **Follow-up tickets:** 0523 (Hardcore stalls in front of a guarded
 chokepoint).
 
+Engine friction: estimate 150, measured 219 (1.5×), under 2×.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rule** (for the Act 1 playtest, 1064):
 
 1. **How the bots fill the pack in Preparations:** the stock's
@@ -193,5 +197,3 @@ chokepoint).
 at Kell's Ford for a player who arrives at about the recording's levels;
 a player who spreads Chapter 1's EXP differently arrives with a
 different army.
-
-Engine friction: estimate 150, measured 219 (1.5×), under 2×.

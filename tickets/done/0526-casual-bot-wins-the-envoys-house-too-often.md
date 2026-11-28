@@ -156,6 +156,10 @@ start; the two other levers (Str, the turn count) are the agent's.
 **Follow-up tickets:** none new: Chapters 3 and 4's misses went into
 0870's Context, which already retunes them.
 
+Engine friction: estimate 45, measured 81 (1.8×), under 2×.
+
+### For the Act 1 playtest (1064)
+
 **The agent's starting values** (tunable, for the Act 1 playtest, 1064):
 
 1. **The hold is 8 turns**, not 6 ("until first light"; no line names
@@ -168,5 +172,3 @@ start; the two other levers (Str, the turn count) are the agent's.
 first hold; whether the officer at the door on turn 1 reads as "the boss
 comes with the docks" (0851 had him there on turn 2); whether a player
 sees that a unit in the door stops him.
-
-Engine friction: estimate 45, measured 81 (1.8×), under 2×.

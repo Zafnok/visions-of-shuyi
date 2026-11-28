@@ -170,12 +170,6 @@ reader accepted all 16 as playable. No agent listened to them.
 
 **Follow-up tickets:** 0760 (one form for `cast.ron`).
 
-**The agent's starting rules** (all tunable; the Act 1 playtest, 1064,
-judges them by ear): voices at −18 LUFS, a little over the music's −20,
-like the sounds; at most 0.1 s of silence before and after a line; a
-directed line stays between 12 dB quieter and 6 dB louder than its voice's
-level; Chatterbox's undirected lines at `exaggeration` 0.5 (its default).
-
 Engine friction: estimate 750 production lines (`voice_test.rs` plus
 `assets-src/audio/import.py`'s loudness part, and the planning), measured
 1,203 (1.6×), under 2×; signals: workaround no · third copy no · budget
@@ -183,3 +177,10 @@ no. PR size: estimate 1,900, measured 2,727, under 3,000; the tests and
 rustfmt's wrapping ran longer than planned. The work doesn't split cleanly
 (the plan, the files and `generate` are tested together).
 
+### For the Act 1 playtest (1064)
+
+**The agent's starting rules** (all tunable; the Act 1 playtest, 1064,
+judges them by ear): voices at −18 LUFS, a little over the music's −20,
+like the sounds; at most 0.1 s of silence before and after a line; a
+directed line stays between 12 dB quieter and 6 dB louder than its voice's
+level; Chatterbox's undirected lines at `exaggeration` 0.5 (its default).

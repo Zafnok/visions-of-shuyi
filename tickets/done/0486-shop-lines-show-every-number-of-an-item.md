@@ -150,6 +150,8 @@ Act 1 playtest's checklist (1064).
   box's corner in the sell confirmation.
 - 0478 (Loadouts) is still open: it can use `stat_line` as written.
 
+### For the Act 1 playtest (1064)
+
 **For the Act 1 playtest (1064), *the agent's starting rules*:** the
 order of a shop line is uses (Buy and Sell weapons), rank, numbers; for
 armour, weight class, bonuses, weight.

@@ -189,6 +189,12 @@ and Chapter 2's start in both looks:
   keep to their own data); the PR's pictures are `frame-png` of the real
   chapters, cropped to the panel.
 
+**Engine friction:** the estimate was written after the code, not before
+(about 150 production lines, judged by `banner.rs` plus one paint per
+skin); measured 199 added (1.3×), under 2×.
+
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064):
 - The losses are listed village first, then the turn limit, then the lead;
   the whole army falling isn't listed (the lead falls with it).
@@ -197,7 +203,3 @@ and Chapter 2's start in both looks:
 - No banner when a suspended battle is carried on, nor after a rewind.
 - The debug `--battle` start (`cargo shuyi frame-png`, the bench) still
   opens without it, as before (it builds the screen with `new`).
-
-**Engine friction:** the estimate was written after the code, not before
-(about 150 production lines, judged by `banner.rs` plus one paint per
-skin); measured 199 added (1.3×), under 2×.

@@ -82,12 +82,6 @@ Expected size: about 60 production lines, judged by the dialogue screen's skip.
   has ended; the pin move of 2026-11-07 (#572) passed it, and game
   ticket 0863, written there, waits for the real end and removes the
   workaround.
-- **The agent's starting rules** (for the Act 1 playtest, 1064): the 0.5 s
-  pause, the reading time of 1 s + 0.05 s a character (from the ticket);
-  reading time counted per page, not per line; a voiced line's earlier
-  pages turn on reading time while the clip plays on; the clip estimate of
-  0.08 s a character until 0863 (a fast clip waits a little longer than
-  it needs, a very slow one could be cut short).
 - **Engine layout fix:** the new row made the in-battle Options (with
   Game mode and Tutorial) reach the help line, so its message row (e.g.
   "The game mode can be changed at Preparations…") was painted over.
@@ -97,3 +91,12 @@ Expected size: about 60 production lines, judged by the dialogue screen's skip.
   3212 fixes that.
 - Friction: estimate 60, measured 84 (1.4×); signal: the workaround above,
   row in `docs/engine/friction.md`.
+
+### For the Act 1 playtest (1064)
+
+- **The agent's starting rules** (for the Act 1 playtest, 1064): the 0.5 s
+  pause, the reading time of 1 s + 0.05 s a character (from the ticket);
+  reading time counted per page, not per line; a voiced line's earlier
+  pages turn on reading time while the clip plays on; the clip estimate of
+  0.08 s a character until 0863 (a fast clip waits a little longer than
+  it needs, a very slow one could be cut short).

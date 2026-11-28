@@ -282,7 +282,11 @@ the PR.
 1. Fill in the ticket's `## Completion notes`: what was done, deviations from the
    plan, follow-up tickets created, anything Nick should know when playing.
    List every **gameplay-affecting rule you had to decide** where the design
-   docs were silent (mark them *the agent's starting rule*), in plain words.
+   docs were silent (mark them *the agent's starting rule*), in plain words,
+   under the heading `### For the Act 1 playtest (1064)` at the end of the
+   notes, with anything else left to judge by playing. A gameplay ticket
+   with nothing for it says `Nothing for the playtest: <why>` instead;
+   `cargo xtask ticket-lint` warns on one with neither (ticket 1256).
    Repeat that list in the PR body and in your final message to Nick, so he
    can agree or veto (Nick asked for this).
 2. Set `status: done` and `completed: YYYY-MM-DD` in frontmatter.
@@ -299,8 +303,9 @@ tickets anymore."
   tests, `cargo shuyi frame-png` pictures in the PR and, where it
   touches play, the bots (`cargo xtask playtest`, `autobalance`).
 - Whatever is still left to judge by playing (a starting rule, a feel,
-  a look) goes in the Completion notes; the Act 1 playtest (1064)
-  collects it. Don't send it to Nick.
+  a look) goes in the Completion notes under `### For the Act 1
+  playtest (1064)`; the Act 1 playtest (1064) collects it with `cargo
+  xtask playtest-notes`. Don't send it to Nick.
 - If an older ticket still says "Sign-off" after merge, treat it
   this way and say so in the PR.
 - Design questions are still asked, **before** building (§1b), with

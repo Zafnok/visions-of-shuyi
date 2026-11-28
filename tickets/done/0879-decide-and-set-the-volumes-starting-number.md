@@ -231,5 +231,8 @@ checklist (1064) through the Completion notes.
   a volume at the top still changes.
 - For Nick: if the Chapter 1 demo is already on itch.io, run Actions →
   Demo → Run workflow before sending the writer packets (0766).
+
+### For the Act 1 playtest (1064)
+
 - For the Act 1 playtest (1064): judge how loud the game starts (music,
   sounds and voices at 100, about 1.8 dB louder than before).

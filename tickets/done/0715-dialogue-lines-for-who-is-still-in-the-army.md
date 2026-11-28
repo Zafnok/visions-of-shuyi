@@ -201,6 +201,10 @@ None. What a scene says when someone is dead is story writing (0716).
   character" is in `content` (on `Scene::resolved`, with generated
   scenes) and in `ui` (on `DialoguePlayer`, over every embedded scene).
 
+**Follow-ups:** none created. 0716 and 0803 were edited as above.
+
+### For the Act 1 playtest (1064)
+
 **Rules a player would notice** (*the agent's starting rules*, for Nick to
 agree or veto):
 
@@ -215,5 +219,3 @@ agree or veto):
    shown at all**: no empty box, and the music change it would have made
    doesn't happen either. A writer who wants something said anyway
    writes an `@else`.
-
-**Follow-ups:** none created. 0716 and 0803 were edited as above.

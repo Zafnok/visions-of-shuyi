@@ -137,6 +137,9 @@ ticket's list but moved too: `save_import/glyph.rs`' box (same shape).
   from the last row keeps the first row shown. The Preparations stock
   list still scrolls by row heights and ignores `first` (out of scope).
 - **Snapshots:** none changed.
+
+### For the Act 1 playtest (1064)
+
 - **For the Act 1 playtest (1064):** a long shop, Guides or Preparations
   list now moves its window only when the focus leaves it, as every other
   list does.

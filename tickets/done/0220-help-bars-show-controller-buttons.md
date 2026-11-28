@@ -169,6 +169,8 @@ keys again. Press a button: buttons again.
 *key* stops the controller's Confirm picking on the map). Notes added to
 0226 and 0816.
 
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (the design docs didn't say; Nick can veto;
 also in `controls.md`, *Notes from building it (ticket 0220)*):
 

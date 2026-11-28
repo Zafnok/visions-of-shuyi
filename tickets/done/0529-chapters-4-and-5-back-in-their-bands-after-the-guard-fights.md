@@ -146,6 +146,16 @@ turn 10. Chapter 4's new playthrough leaves a different army at Chapter
 5 (Aske lv 7 instead of 10, Maud 6 instead of 8): the final numbers are
 with it.
 
+**Follow-ups:** none.
+
+**Sizes.** Engine friction: estimate 20 production lines (a hold for the
+survive beside 0526's covers in `order`; the estimate was written after
+the trace, not before the first line), measured 15 added, 6 removed:
+under 2×. PR size: estimate 900 (two recorded playthroughs, the ADR,
+the docs), measured about 920.
+
+### For the Act 1 playtest (1064)
+
 **The agent's starting values** (for 1064's checklist):
 
 - Chapter 5 is held for **10 turns** (was 8): the battle file's "until
@@ -156,11 +166,3 @@ with it.
 
 **To judge by playing (1064):** whether ten turns of the Envoy's House
 drag; whether the roof Hounds feel too soft next to the quay's.
-
-**Follow-ups:** none.
-
-**Sizes.** Engine friction: estimate 20 production lines (a hold for the
-survive beside 0526's covers in `order`; the estimate was written after
-the trace, not before the first line), measured 15 added, 6 removed:
-under 2×. PR size: estimate 900 (two recorded playthroughs, the ADR,
-the docs), measured about 920.

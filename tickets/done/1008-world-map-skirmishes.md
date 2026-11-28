@@ -155,21 +155,9 @@ so its training cap is 4. Demo random enemies are spaced, stationary
 brigands; the test fights have 20-turn bounds. No real Act 1 content was
 added, and no support threshold or ordinary battle/death/rewind rule changed.
 
-**Starting rules for 1064's checklist:**
 - The configured starting values are 0–2 groups per story win, at most 3,
   4–6 enemies, Easy tier and a level offset of 1. A group uses the cap itself
   (also bounded by the act's maximum), rather than rolling a lower level.
-- *The agent's starting rule:* rewards are 50% no clear loot, 25% 100 gold,
-  and 25% one potion, plus the ordinary combat and unused-rewind EXP.
-- *The agent's starting rule:* choose unused cleared battle places, excluding
-  the army; use the first N authored enemy entries, with template loadouts.
-  If no valid level remains, nothing spawns. If a later story level lowers
-  the cap, existing groups are lowered to it, or leave below the act minimum.
-- *The agent's starting rule:* the campaign RNG starts at seed 0 on first
-  use and continues across acts; each saved group keeps its rolled seed.
-- What remains for the Act 1 playtest: whether the marks make fight importance
-  obvious, and whether the real training content feels useful without grinding.
-  Real maps/enemies and balance remain 1070/1071; Visions and stars remain out.
 
 **Verification:** property tests cover changing story levels, count, size,
 cleared places and the army's exclusion; save/action determinism and guard
@@ -209,3 +197,22 @@ No engine change was needed. Follow-up 0138 records the existing missing
 target-profile settings and rules-package lint wiring in shuyi.ron; the
 supplemental target check reports SH3003 and lint reports that fence limit. The full UI fit within
 1008's split threshold, so no split was necessary.
+
+### For the Act 1 playtest (1064)
+
+**Starting rules for 1064's checklist:**
+
+- *The agent's starting rule:* rewards are 50% no clear loot, 25% 100 gold,
+  and 25% one potion, plus the ordinary combat and unused-rewind EXP.
+
+- *The agent's starting rule:* choose unused cleared battle places, excluding
+  the army; use the first N authored enemy entries, with template loadouts.
+  If no valid level remains, nothing spawns. If a later story level lowers
+  the cap, existing groups are lowered to it, or leave below the act minimum.
+
+- *The agent's starting rule:* the campaign RNG starts at seed 0 on first
+  use and continues across acts; each saved group keeps its rolled seed.
+
+- What remains for the Act 1 playtest: whether the marks make fight importance
+  obvious, and whether the real training content feels useful without grinding.
+  Real maps/enemies and balance remain 1070/1071; Visions and stars remain out.

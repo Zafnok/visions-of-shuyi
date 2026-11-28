@@ -113,10 +113,6 @@ and `Load Game`, post-chapter save prompt, map-menu `Suspend`.
   from the saved campaign and the battle file, so `Restart Battle` after a
   `Continue` still gives turn 1.
 
-**the agent's starting rules**, with Nick's answers on PR #141 (now in
-`death-and-difficulty.md`): 1, 3, 4, 8, 9, 10 agreed; 2 and 6 changed; 5
-fine for now, to be looked at in play; 7 explained below.
-
 1. **Title menu order.** `Continue` is at the top and highlighted, and only
    there while a battle is suspended. `Load Game` is under `New Game`, and
    greyed out until some slot has a save.
@@ -165,3 +161,9 @@ Battle → move a unit, rewind once → map menu → `Suspend` → yes →
 - **0821** Save format guard: a golden save that fails the build when a
   saved type changes without raising `SAVE_VERSION`. 0901 (itch.io) is now
   blocked by it.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules**, with Nick's answers on PR #141 (now in
+`death-and-difficulty.md`): 1, 3, 4, 8, 9, 10 agreed; 2 and 6 changed; 5
+fine for now, to be looked at in play; 7 explained below.

@@ -84,12 +84,14 @@ Not directed: lines whose punctuation and expression already carry them
 (Tamsin's `!` lines, Rue's questions, the `[happy]` reactions, most
 retreat lines) and all the narration except what a `@delivery` covers.
 
-`cargo xtask lines` against `main`: every id and every text identical
-(directions are not hashed). No line was reworded. Whether each direction
-suits its character when heard is left to the Act 1 playtest (1064), as
-ADR-0109 says; 0722 generates the clips.
-
 The gates that depend on the file passed (`check-script`, the test suite, clippy,
 `check-text`, `check --target all`, `lint`, `ticket-lint`, `pr-size`,
 `typos`, the skill sync check). No Rust, dependency or pin changed, so
 the cross-target builds and `cargo deny` were left to CI.
+
+### For the Act 1 playtest (1064)
+
+`cargo xtask lines` against `main`: every id and every text identical
+(directions are not hashed). No line was reworded. Whether each direction
+suits its character when heard is left to the Act 1 playtest (1064), as
+ADR-0109 says; 0722 generates the clips.

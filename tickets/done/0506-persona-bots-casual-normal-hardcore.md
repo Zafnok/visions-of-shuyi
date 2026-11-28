@@ -389,15 +389,6 @@ xtask's `Try`, `Stats`, `Report`, `render` and per-try speed code;
   (right, down, left, up), which shifted a few forecasts: the report
   below is from that final code.
 
-**the agent's starting rules** (tunable, for the Act 1 playtest, 1064):
-
-- Casual's bands are Nick's first bands minus 30 points.
-- Casual: a fall costs a tenth of a win; a unit left where it could fall
-  a third of that.
-- A lord left alone doesn't count its own danger (waiting can't win).
-- Hardcore guards its HP twice as hard as Normal (it won't spend items).
-- The persona weights and plan budgets in `crates/bots/personas.ron`.
-
 **Engine friction:** estimate 600 production lines, measured 1060
 (1.8×), under 2×.
 
@@ -413,7 +404,6 @@ normal   · 59/100 succeed                band 50–75%   ✓
 hardcore · 51/100 succeed                band 50–75%   ✓
 hardcore · turns median 8 (normal 10)    lower ✓
 
-
 casual   · Casual  · won 44/100 · retreats per try  0: 1  1: 7  2: 11  3+: 81 · most: Tamsin Rook 93×
                      items per try  median 3  max 3 · turns median 23 · 2.52 s per try
 normal   · Classic · won 90/100 · deaths per try  0: 59  1: 32  2: 7  3+: 2 · most: Hollis Marr 24×
@@ -427,6 +417,17 @@ items (Hardcore had nobody die in 68 wins, 51 of them with at most one
 potion). Casual runs out the turn limit in 22 tries, mostly with only its
 lord left. Nick's yardstick (2026-10-21): as an intermediate player he
 clears Chapter 1 with nobody dying, with rewinds; the bots never rewind.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (tunable, for the Act 1 playtest, 1064):
+
+- Casual's bands are Nick's first bands minus 30 points.
+- Casual: a fall costs a tenth of a win; a unit left where it could fall
+  a third of that.
+- A lord left alone doesn't count its own danger (waiting can't win).
+- Hardcore guards its HP twice as hard as Normal (it won't spend items).
+- The persona weights and plan budgets in `crates/bots/personas.ron`.
 
 **For the Act 1 playtest (1064):** Nick reads this report and says
 whether it matches how Chapter 1 felt.

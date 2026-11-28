@@ -125,19 +125,6 @@ bought backdrops, and recordings; his words are in `look-and-feel.md`,
   leaves `title/campfire.png` out, and a title with no campfire plays no
   crackle.
 
-**The agent's starting rules** (for the Act 1 playtest, 1064):
-
-- The fire's frame time (140 ms) and a gentle flicker (0.8 to 1.0
-  brightness).
-- With idle motion off (Options), the fire stands still on its first
-  frame and no embers rise.
-- The crackle starts with the title song (on the first press, as the
-  song) and comes back with the picture: on the cinematic's logo shot,
-  also in the silence after a skip, and when a press brings the menu back.
-- Opening the game (New Game, Load Game, Continue, Quick Battle) fades the
-  crackle out like the picture's fade; Options, Profile and Credits keep it
-  playing, as they keep the music.
-
 **Deviations:** the ticket's "3–4 crackle loops" became Nick's own two
 recordings at four compressor strengths (his request). Freesound needs a
 login, so Nick downloaded the originals; the importer uses the public HQ
@@ -153,3 +140,18 @@ line each: the fire). Tests that listed every sound now take only the
 sounds played once (`one_shots` in `tests/it/main.rs`), or music only.
 
 Engine friction: estimate 250, measured 218 (0.9×), under 2×.
+
+### For the Act 1 playtest (1064)
+
+**The agent's starting rules** (for the Act 1 playtest, 1064):
+
+- The fire's frame time (140 ms) and a gentle flicker (0.8 to 1.0
+  brightness).
+- With idle motion off (Options), the fire stands still on its first
+  frame and no embers rise.
+- The crackle starts with the title song (on the first press, as the
+  song) and comes back with the picture: on the cinematic's logo shot,
+  also in the silence after a skip, and when a press brings the menu back.
+- Opening the game (New Game, Load Game, Continue, Quick Battle) fades the
+  crackle out like the picture's fade; Options, Profile and Credits keep it
+  playing, as they keep the music.

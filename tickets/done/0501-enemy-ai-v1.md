@@ -117,6 +117,21 @@ panicked, and every command was accepted.
 - The ticket's tie-break is `(target id, dest.y, dest.x, weapon id)`; a
   loadout slot is added last, for two copies of the same weapon.
 
+**Nick's decision during review: no potions for enemies.** The ticket's
+step 1 had any unit carrying a consumable drink it below 40% HP. Nick
+decided enemies carry no potions and only dedicated healers heal
+("I think I would stick to no potions and only dedicated healers for the
+enemies in a battle"). That is now recorded in `weapons-and-items.md` →
+*Battle pack*. The AI never uses consumables, and `ai.ron` has no
+self-heal numbers.
+
+**Follow-ups:** 0315 removes units' own consumables (`Unit::consumables`
+and the non-player `UseItem` path), which nothing uses now. 0803 sets each enemy's behaviour in chapter data
+(it already plans the Aggressive/Guard/Stationary mix). 0502 drives
+`next_command` from the battle screen.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (gameplay the design docs don't settle; all
 *tunable*, judged in playtest 0804):
 
@@ -141,16 +156,3 @@ panicked, and every command was accepted.
    farther.
 8. **Order in a phase:** attackers first, best attack first; then everyone
    else, nearest to a target first.
-
-**Nick's decision during review: no potions for enemies.** The ticket's
-step 1 had any unit carrying a consumable drink it below 40% HP. Nick
-decided enemies carry no potions and only dedicated healers heal
-("I think I would stick to no potions and only dedicated healers for the
-enemies in a battle"). That is now recorded in `weapons-and-items.md` →
-*Battle pack*. The AI never uses consumables, and `ai.ron` has no
-self-heal numbers.
-
-**Follow-ups:** 0315 removes units' own consumables (`Unit::consumables`
-and the non-player `UseItem` path), which nothing uses now. 0803 sets each enemy's behaviour in chapter data
-(it already plans the Aggressive/Guard/Stationary mix). 0502 drives
-`next_command` from the battle screen.

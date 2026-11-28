@@ -98,13 +98,16 @@ holding a key down. Does the tick get tiring? Is the cursor volume right?
   the Harness test covers the nearest real case, Confirm on a unit that has
   already acted, which plays nothing.
 - Harness gained `sounds()` (the sound cues played, without music).
+- Follow-ups: 0031 (decide the warning tone and the message-close whoosh),
+  0427 (render and wire them).
+
+### For the Act 1 playtest (1064)
+
 - **Nick's review of the starting rules (2026-09-29):** rules 2 and 4-7
   kept. Rule 1 changed: a greyed-out item plays a warning, `menu_cancel`
   for now (`MenuSound::Denied`), later its own tone. Rule 3: silent for
   now; Nick may want a whoosh when a message closes and will judge after
   playing.
-- Follow-ups: 0031 (decide the warning tone and the message-close whoosh),
-  0427 (render and wire them).
 
 **the agent's starting rules** (the design docs don't cover these; Nick can
 veto any of them):

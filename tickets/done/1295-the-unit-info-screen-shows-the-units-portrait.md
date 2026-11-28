@@ -128,5 +128,8 @@ skin's draw).
   window, with no free cell block for a face without moving anything.
 - No starting rules: the expression rule (first, neutral) is the
   ticket's.
+
+### For the Act 1 playtest (1064)
+
 - For the Act 1 playtest (1064): whether the face in the info box reads
   well at its size, in both looks.

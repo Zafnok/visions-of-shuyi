@@ -165,8 +165,6 @@ behind the talk, how dark they are, the two openings and their length.
 Then the four scene music picks (`docs/design/audio.md`, *Chapter 1's
 cues*), which waited for this.
 
-*the agent's starting rules (Nick can veto):*
-
 - After an opening its characters stay on the place where they stopped,
   darkened with it behind the talk, until the scene changes place.
 - During an opening the place line (caption) stays at the top; the
@@ -178,3 +176,7 @@ cues*), which waited for this.
   stops half way back, facing the way he last walked.
 - Cancel during an opening ends it and asks "Skip scene?"; answering no
   shows the first line.
+
+### For the Act 1 playtest (1064)
+
+*the agent's starting rules (Nick can veto):*

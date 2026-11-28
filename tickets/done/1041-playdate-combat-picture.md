@@ -205,6 +205,8 @@ Row in `docs/engine/friction.md`.
 by engine#3056); engine#3056 (one-bit sprites drawn fast). 1057 got the
 day's battle numbers.
 
+### For the Act 1 playtest (1064)
+
 ***the agent's starting rules*** (in `docs/design/playdate.md`, *The combat
 picture*; for 1064's checklist, Nick can veto):
 - The backdrop lightened as in 0062's mockup (`0.6 b + 0.47`), showing

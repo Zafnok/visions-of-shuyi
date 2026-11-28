@@ -214,6 +214,8 @@ estimate, nothing to record.
   fix who deploys and Preparations has no deploy choice, so a character
   with a slot who is in the army is always deployed.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (Nick may veto):
 
 - A downed unit's passives and auras stop counting: it is out of the

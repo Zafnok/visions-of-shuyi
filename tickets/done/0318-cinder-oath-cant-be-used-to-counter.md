@@ -109,6 +109,8 @@ it):
   Nick's machine); CI and the Act 1 playtest cover it.
 - Engine friction: under 2x (about 10 production lines against 10 estimated).
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rule (for 1064's checklist):** if Cinder Oath is Rue's
 equipped attack and an enemy attacks her, she doesn't switch to another
 weapon or spell to counter; she just doesn't counter, as with a broken

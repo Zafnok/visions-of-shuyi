@@ -157,8 +157,6 @@ click (0224's page script resumes the sound on each of those until it
 runs). I had no controller and no Chrome or Firefox with sound blocked to
 confirm it: please listen for it at sign-off.
 
-**the agent's starting rules (Nick can veto; also in `title-screen.md` and
-`controls.md`):**
 - The pictures are dim like the line, don't blink, and keep a 5-cell gap
   from the words in every language.
 - First launch, a key at the prompt: the menu and the music start once
@@ -174,3 +172,8 @@ confirm it: please listen for it at sign-off.
 
 **Follow-ups.** None. Ticket 0811 (title art) now says to leave room for
 the three-row pictures.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules (Nick can veto; also in `title-screen.md` and
+`controls.md`):**

@@ -162,13 +162,15 @@ them) was taken off the point by League privateers three days before and
 is held somewhere the League won't say; Ragna will find out and send
 word. The quest unlocks after this battle with Aske alive.
 
+**Engine friction:** none, no Rust code.
+
+**Follow-ups:** none filed.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (story staging, not gameplay): the boss is a
 nameless Hound officer (no new named character, so nothing went to
 Nick); the magistrate is nameless too; Hollis sees the sea on the Salt
 Road ridge and says "It's a lot of water", which Dace quotes in the cut;
 Hedda knows Aske's name from Ragna's papers but doesn't say so in this
 chapter. Nothing gameplay-affecting was decided.
-
-**Engine friction:** none, no Rust code.
-
-**Follow-ups:** none filed.

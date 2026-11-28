@@ -120,7 +120,7 @@ Engine friction: estimate 550 production lines (the Guides screen's
 logic, view and skin, plus menu entries, messages and the panel line),
 measured 727 (1.32×) with the sale's confirmation, under 2×.
 
-### the agent's starting rules (for the Act 1 playtest, 1064)
+### For the Act 1 playtest (1064)
 
 - **Lines you can't afford stay selectable to read**, just dimmed;
   Confirm on one does nothing (the "can't" sound).

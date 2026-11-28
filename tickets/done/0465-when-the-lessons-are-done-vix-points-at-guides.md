@@ -137,9 +137,6 @@ only when the *number* of them changed. Taking one back as the answer went in
 left the number the same, so its saves would have kept the old list. It now
 compares the lists (`flow.rs`, with a test).
 
-**Starting rules (*the agent's starting rule*), for the Act 1 playtest
-(1064):**
-
 - The box waits until the map is back to browsing, not the instant the last
   lesson closes. If the last lesson is opening Arts, the player finishes that
   unit's action first.
@@ -168,3 +165,8 @@ the box's text snapshot instead, which is the same glyph frame. The public
 build has no face, and the box's fit beside the face is checked by test.
 At Full, the integration test leaves out the three lessons that need their own
 set-up (threat arrows, Arts, tile spells), which the Short test plays.
+
+### For the Act 1 playtest (1064)
+
+**Starting rules (*the agent's starting rule*), for the Act 1 playtest
+(1064):**

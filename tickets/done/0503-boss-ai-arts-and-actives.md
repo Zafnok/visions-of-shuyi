@@ -116,6 +116,23 @@ attack it considers.
 - The non-combat rule applies to every unit that may use arts (combat green
   units too), not only bosses, as the rest of the ticket does.
 
+**Nick's review (2026-10-01):** rules 1, 2, 3 and 5 "ok". Rule 4 is fine
+"if it is at least proximally close to some enemies (i.e. it thinks the
+player will reach it, or it the player, within next turn)", which is what it
+does. Looking at the non-attack actives he decided they should cost **uses
+per battle** instead of durability, for the player and bosses alike, and
+that Sanctuary 2 becomes a skill of its own so a promoted Cleric keeps
+Sanctuary. Recorded in `combat-arts.md` (*Non-attack actives: uses per
+battle*) and `progression.md` (*Superseding*); ticket 0316 puts it in the
+game and replaces rule 5 with "it needs a use left". Until then a boss with
+Brace spends 3 of its weapon's 20 durability each turn it braces.
+
+**Follow-ups:** 0316 (non-attack actives cost uses per battle; Benediction
+replaces Sanctuary 2) and 0511 (weigh debuffs, stances, moves after
+attacking and drain; only if the playtest asks for it).
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (gameplay the design docs don't settle; all
 *tunable*, judged in playtest 0804; also in `combat-arts.md` → *Enemies*):
 
@@ -139,18 +156,3 @@ attack it considers.
 5. **It keeps its weapon's last durability:** it doesn't use a non-attack
    active that would break its equipped weapon. It may still break a weapon
    with an art or combat active when that attack is worth it.
-
-**Nick's review (2026-10-01):** rules 1, 2, 3 and 5 "ok". Rule 4 is fine
-"if it is at least proximally close to some enemies (i.e. it thinks the
-player will reach it, or it the player, within next turn)", which is what it
-does. Looking at the non-attack actives he decided they should cost **uses
-per battle** instead of durability, for the player and bosses alike, and
-that Sanctuary 2 becomes a skill of its own so a promoted Cleric keeps
-Sanctuary. Recorded in `combat-arts.md` (*Non-attack actives: uses per
-battle*) and `progression.md` (*Superseding*); ticket 0316 puts it in the
-game and replaces rule 5 with "it needs a use left". Until then a boss with
-Brace spends 3 of its weapon's 20 durability each turn it braces.
-
-**Follow-ups:** 0316 (non-attack actives cost uses per battle; Benediction
-replaces Sanctuary 2) and 0511 (weigh debuffs, stances, moves after
-attacking and drain; only if the playtest asks for it).

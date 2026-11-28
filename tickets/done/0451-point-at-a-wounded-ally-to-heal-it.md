@@ -133,6 +133,12 @@ Built:
 - Tests: `screens/battle/heal_aim_tests.rs` (tile choice, targets, the
   heal list, harness runs, one snapshot of the preview opened by pointing).
 
+**Sign-off for Nick:** in Chapter 1, select Maud and move the cursor onto a
+hurt ally: she walks to the closest tile a heal reaches from and the list
+of her heals opens.
+
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (Nick can veto):
 
 - In the list, a heal that can't reach the ally pointed at from that tile
@@ -141,7 +147,3 @@ Built:
 - Cancel: preview → list → action menu (on `Magic`) → path.
 - The help bar says `heal` over a hurt ally the unit can heal.
 - A green-side (Other) ally counts as an ally, as for `Magic`.
-
-**Sign-off for Nick:** in Chapter 1, select Maud and move the cursor onto a
-hurt ally: she walks to the closest tile a heal reaches from and the list
-of her heals opens.

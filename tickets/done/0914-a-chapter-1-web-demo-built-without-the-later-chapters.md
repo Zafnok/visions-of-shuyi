@@ -320,12 +320,14 @@ Nick asks for it.
   line saying so (the title doesn't hear the platform's answer). The web,
   the demo's target, downloads it.
 
+Friction: estimate 580 production lines (the ticket's split, judged by
+`build.rs`'s Playdate table and `save_prompt`), measured 567 (1.0×).
+
+### For the Act 1 playtest (1064)
+
 *The agent's starting rules* (Nick can veto):
 
 - The demo's title has no Load Game.
 - The card's help line reads "{Confirm} continue".
 - The exported file is named like Load Game's export of slot 1
   (`visions-of-shuyi-<profile>-<n>-slot-01.ron`).
-
-Friction: estimate 580 production lines (the ticket's split, judged by
-`build.rs`'s Playdate table and `save_prompt`), measured 567 (1.0×).

@@ -188,8 +188,10 @@ and named in place of 1080's fade-out in 1064, `docs/ROADMAP.md` and
 1239. Engine 2398's Context, Scope and Out now name `game#1087` (branch
 `t2398-names-game-1087` on the engine, a ticket-text PR).
 
+No gameplay rules were decided here.
+
+### For the Act 1 playtest (1064)
+
 Left for the Act 1 playtest (1064): whether 3 s fade-ins feel right
 coming back from a conversation's music or a town (both now fade in
 too, as the ticket's "every track `CampMusic` starts" says).
-
-No gameplay rules were decided here.

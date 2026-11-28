@@ -9,6 +9,10 @@
 //! says `blocks: ["1064"]` is one of 1064's blockers (ticket 1352). A PR that
 //! files a blocker then edits only its own ticket's file, so two such PRs
 //! never touch the same line.
+//!
+//! A gameplay ticket done from [`PLAYTEST_RULE_START`] on leaves its notes
+//! for the Act 1 playtest under one heading (ticket 1256): without it, or a
+//! line `Nothing for the playtest: <why>`, the lint warns and still passes.
 
 use std::collections::HashSet;
 use std::fs;
@@ -19,6 +23,11 @@ use serde_norway::Value;
 
 use crate::engine;
 use crate::mentions;
+use crate::playtest_notes;
+
+/// The first `completed:` date the playtest heading is asked of (ticket
+/// 1256): the done tickets before it had their notes moved under it, or none.
+const PLAYTEST_RULE_START: &str = "2026-11-28";
 
 /// The prefix of an engine ticket's id in `blocked_by`: `engine#2007`.
 const ENGINE_PREFIX: &str = "engine#";
@@ -90,14 +99,30 @@ struct Ticket {
     folder: Folder,
     fields: TicketFields,
     errors: Vec<String>,
+    /// Problems that never fail the lint.
+    warnings: Vec<String>,
+}
+
+/// What the lint found: errors fail it, warnings never do.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Findings {
+    pub errors: Vec<String>,
+    pub warnings: Vec<String>,
 }
 
 /// Runs every ticket-lint rule against `repo_root` and returns every error
 /// found (empty means clean). `pr_branch` is the `--pr-branch` value, if any;
 /// `check_engine` is `--check-engine`.
+#[cfg(test)]
 pub fn run(repo_root: &Path, pr_branch: Option<&str>, check_engine: bool) -> Vec<String> {
+    lint(repo_root, pr_branch, check_engine).errors
+}
+
+/// [`run`], with the warnings beside the errors.
+pub fn lint(repo_root: &Path, pr_branch: Option<&str>, check_engine: bool) -> Findings {
     let mut tickets = Vec::new();
     let mut errors = Vec::new();
+    let mut warnings = Vec::new();
 
     for folder in [Folder::Open, Folder::Done] {
         let dir = repo_root.join("tickets").join(folder.dirname());
@@ -116,6 +141,9 @@ pub fn run(repo_root: &Path, pr_branch: Option<&str>, check_engine: bool) -> Vec
         for err in &ticket.errors {
             errors.push(format!("{}: {err}", ticket.display_path));
         }
+        for warning in &ticket.warnings {
+            warnings.push(format!("{}: {warning}", ticket.display_path));
+        }
     }
 
     errors.extend(check_unique_ids(&tickets));
@@ -133,7 +161,7 @@ pub fn run(repo_root: &Path, pr_branch: Option<&str>, check_engine: bool) -> Vec
         }
     }
 
-    errors
+    Findings { errors, warnings }
 }
 
 /// The ticket numbers in the engine's `tickets/open` and `tickets/done`, and
@@ -223,6 +251,7 @@ fn read_ticket_files(dir: &Path) -> std::io::Result<Vec<(String, String)>> {
 
 fn parse_ticket(display_path: String, folder: Folder, filename: &str, content: &str) -> Ticket {
     let mut errors = Vec::new();
+    let mut warnings = Vec::new();
 
     if !is_valid_ticket_filename(filename) {
         errors.push(format!(
@@ -244,6 +273,7 @@ fn parse_ticket(display_path: String, folder: Folder, filename: &str, content: &
                         folder,
                         fields,
                         errors,
+                        warnings,
                     };
                 };
 
@@ -294,17 +324,8 @@ fn parse_ticket(display_path: String, folder: Folder, filename: &str, content: &
 
                 match folder {
                     Folder::Done => {
-                        if fields.status.as_deref() != Some("done") {
-                            errors.push(
-                                "tickets in `tickets/done/` must have `status: done`".to_string(),
-                            );
-                        }
-                        if fields.completed.as_deref().is_none_or(str::is_empty) {
-                            errors.push(
-                                "tickets in `tickets/done/` must have a `completed:` date"
-                                    .to_string(),
-                            );
-                        }
+                        let kind = scalar_string(map, "type").unwrap_or_default();
+                        check_done(&fields, &kind, content, &mut errors, &mut warnings);
                     }
                     Folder::Open => {
                         if fields.status.as_deref() == Some("done") {
@@ -332,7 +353,39 @@ fn parse_ticket(display_path: String, folder: Folder, filename: &str, content: &
         folder,
         fields,
         errors,
+        warnings,
     }
+}
+
+/// The rules of a ticket in `tickets/done/`, of type `kind`.
+fn check_done(
+    fields: &TicketFields,
+    kind: &str,
+    content: &str,
+    errors: &mut Vec<String>,
+    warnings: &mut Vec<String>,
+) {
+    if fields.status.as_deref() != Some("done") {
+        errors.push("tickets in `tickets/done/` must have `status: done`".to_string());
+    }
+    if fields.completed.as_deref().is_none_or(str::is_empty) {
+        errors.push("tickets in `tickets/done/` must have a `completed:` date".to_string());
+    }
+    warnings.extend(playtest_warning(kind, fields.completed.as_deref(), content));
+}
+
+/// The warning for a gameplay ticket done from [`PLAYTEST_RULE_START`] on
+/// that leaves no notes for the Act 1 playtest and doesn't say why not.
+fn playtest_warning(kind: &str, completed: Option<&str>, content: &str) -> Option<String> {
+    let recent = completed.is_some_and(|date| date >= PLAYTEST_RULE_START);
+    (recent && playtest_notes::missing(kind, content)).then(|| {
+        format!(
+            "a done `{kind}` ticket leaves what is left to judge by playing under `{}` in its \
+             `## Completion notes`, or says `{} <why>` (ticket 1256)",
+            playtest_notes::HEADING,
+            playtest_notes::NOTHING
+        )
+    })
 }
 
 fn check_enum(map: &serde_norway::Mapping, key: &str, valid: &[&str], errors: &mut Vec<String>) {
@@ -530,6 +583,7 @@ mod tests {
                 blocks: None,
             },
             errors: Vec::new(),
+            warnings: Vec::new(),
         }
     }
 
@@ -1064,6 +1118,86 @@ completed:
             errors[0].contains("unknown ticket id `1064`"),
             "{errors:#?}"
         );
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    // -- the playtest heading (ticket 1256) --
+
+    fn done_frontmatter(kind: &str, completed: &str) -> String {
+        VALID_FRONTMATTER
+            .replace("status: todo", "status: done")
+            .replace("type: infra", &format!("type: {kind}"))
+            .replace("completed:", &format!("completed: {completed}"))
+    }
+
+    fn done_ticket(kind: &str, completed: &str, notes: &str) -> Ticket {
+        let fm = done_frontmatter(kind, completed);
+        let content = format!("{fm}\n## Completion notes\n\n{notes}\n");
+        parse_ticket("p".to_string(), Folder::Done, "0106-x.md", &content)
+    }
+
+    #[test]
+    fn a_done_gameplay_ticket_without_the_heading_warns() {
+        for kind in ["feature", "content", "tuning", "bug"] {
+            let t = done_ticket(kind, "2026-11-28", "- Did it.");
+            assert!(t.errors.is_empty(), "{:#?}", t.errors);
+            assert_eq!(t.warnings.len(), 1, "{kind}");
+            assert!(
+                t.warnings[0].contains(playtest_notes::HEADING),
+                "{:#?}",
+                t.warnings
+            );
+        }
+    }
+
+    #[test]
+    fn the_heading_or_a_nothing_line_is_enough() {
+        let section = "### For the Act 1 playtest (1064)\n\n- A feel to judge.";
+        let nothing = "- Nothing for the playtest: the bots' order only.";
+        assert_eq!(
+            done_ticket("feature", "2026-11-28", section).warnings,
+            Vec::<String>::new()
+        );
+        assert_eq!(
+            done_ticket("bug", "2026-12-01", nothing).warnings,
+            Vec::<String>::new()
+        );
+    }
+
+    #[test]
+    fn older_or_non_gameplay_tickets_do_not_warn() {
+        assert_eq!(
+            done_ticket("feature", "2026-11-27", "- Did it.").warnings,
+            Vec::<String>::new()
+        );
+        assert_eq!(
+            done_ticket("infra", "2026-11-28", "- Did it.").warnings,
+            Vec::<String>::new()
+        );
+    }
+
+    #[test]
+    fn a_warning_does_not_fail_the_lint() {
+        let root = make_temp_tickets_dir("playtest-warning");
+        let fm = done_frontmatter("feature", "2026-11-28");
+        fs::write(
+            root.join("tickets/done/0106-x.md"),
+            format!("{fm}\n## Completion notes\n\nDone.\n"),
+        )
+        .unwrap();
+        fs::write(
+            root.join("tickets/done/0102-y.md"),
+            done_frontmatter("infra", "2026-01-01")
+                .replace("\"0106\"", "\"0102\"")
+                .replace("blocked_by: [\"0102\"]", "blocked_by: []"),
+        )
+        .unwrap();
+
+        let found = lint(&root, None, false);
+
+        assert_eq!(found.errors, Vec::<String>::new());
+        assert_eq!(found.warnings.len(), 1, "{:#?}", found.warnings);
+        assert!(found.warnings[0].starts_with("tickets/done/0106-x.md: "));
         let _ = fs::remove_dir_all(&root);
     }
 

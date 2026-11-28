@@ -122,6 +122,9 @@ hasn't seen it spelled out for controllers):
   methods so help text and tips name the right action.
 - `an_action_with_no_button_shows_not_mapped_on_a_pad` now clears Rewind's
   button instead of using Select. New Harness tests in `controller.rs`.
+- No follow-up tickets.
+
+### For the Act 1 playtest (1064)
+
 - *the agent's starting rule* (Nick to veto): the split is per device, as
   worded in the ticket; written into `docs/design/controls.md`.
-- No follow-up tickets.

@@ -106,5 +106,7 @@ playthrough that hit the same gap, so the fixture stays as it is.
 eight, Hedda included, reach "To be continued"); one Hound left alive
 when the house is held. Turn count unchanged from 0851 (6).
 
+### For the Act 1 playtest (1064)
+
 No balance change. All `ch0*_winnable` tests pass, through the rules and
 through the game. Nothing for the Act 1 playtest.

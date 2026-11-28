@@ -99,6 +99,9 @@ skill quick?
   help line names the skill key (Vault); the palette sampler.
 - **Follow-up:** 0426 (actives that add range, such as Long Shot, don't yet
   offer their extra targets).
+
+### For the Act 1 playtest (1064)
+
 - **the agent's starting rules (please agree or veto):**
   - Up/Down cycle skills while targeting (only when the unit has an active to choose).
   - The `Skill` entry only appears for units that know a non-combat

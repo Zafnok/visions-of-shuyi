@@ -140,16 +140,6 @@ ticket allowed. Tests reach it from a save.
 **Those filling it in:** `act1_the_army_walks_chapter_4s_open_places` and its
 snapshot name what is open today. 1071 and 0850 update them as they open places.
 
-**The agent's starting values** (for 1064's checklist):
-
-- **The act's enemy levels: 1 to 30.** About 21 authored battles at about 2
-  levels each. It only bounds the random groups' cap.
-- **Random skirmishes:** `world-structure.md`'s values and 1008's rewards: 0-2
-  groups after a story win, at most 3, 4-6 enemies, Easy, the latest story
-  battle's level minus 1; half the time no clear loot, a quarter 100 gold, a
-  quarter a Potion.
-- **Stock** (Hi-Potion from Chapter 8 and Steel from Chapter 5 are Nick's, 0044):
-
 | Town | Opens | Armory | Vendor | Alchemist | Tailor | Blacksmith |
 | --- | --- | --- | --- | --- | --- | --- |
 | Millhaven | Ch 4 | five Iron weapons, Leather Vest, Chain Mail; from Ch 5 Steel Sword, Steel Spear | Potion | | | yes |
@@ -169,9 +159,6 @@ snapshot name what is open today. 1071 and 0850 update them as they open places.
   Saltmere, `graveyard_desert` in Ossary and the Ashfields, `dungeon_tense` in the
   Undercroft, `side_quest` on side quests.
 
-**To judge by playing (1064):** where places sit, whether the picture's river and
-coast read well, and how hard the random groups feel at their real levels.
-
 **Bots** (`cargo xtask playtest <battle> --bot all`). No softlock: every try on
 all three maps ended in a win or a defeat, 40 tries a bot and then 20 counted one
 by one (at most 14 turns against the cap of 60). Casual, 40 tries each: road
@@ -190,3 +177,18 @@ against 1008's content and core parts, and about 900 changed in all. Measured:
 123 added (1.76x), under 2x; 889 changed before this ticket's move.
 
 **Follow-ups:** none new. 0074 adds Steel armour to the stock lists when decided.
+
+### For the Act 1 playtest (1064)
+
+**The agent's starting values** (for 1064's checklist):
+
+- **The act's enemy levels: 1 to 30.** About 21 authored battles at about 2
+  levels each. It only bounds the random groups' cap.
+- **Random skirmishes:** `world-structure.md`'s values and 1008's rewards: 0-2
+  groups after a story win, at most 3, 4-6 enemies, Easy, the latest story
+  battle's level minus 1; half the time no clear loot, a quarter 100 gold, a
+  quarter a Potion.
+- **Stock** (Hi-Potion from Chapter 8 and Steel from Chapter 5 are Nick's, 0044):
+
+**To judge by playing (1064):** where places sit, whether the picture's river and
+coast read well, and how hard the random groups feel at their real levels.

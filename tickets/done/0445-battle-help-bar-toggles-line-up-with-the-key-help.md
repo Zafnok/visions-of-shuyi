@@ -239,6 +239,13 @@ in `look-and-feel.md` *Screen layout*, the open sub-question removed):
   new `help_bar_tests`.
 - `crates/ui/README.md` doesn't describe the bar: unchanged.
 
+Engine friction: estimate 150 production lines (judged by the map menu's
+info box, `MapInfoView`, and its paint), measured 170 (1.1×), under 2×;
+signals: workaround no · third copy no · budget no.
+PR size: estimate 900, measured 1,201.
+
+### For the Act 1 playtest (1064)
+
 **For the Act 1 playtest (1064)**, things to judge by playing:
 
 - The toggles disappear while a unit is selected, in menus and under the
@@ -255,8 +262,3 @@ in `look-and-feel.md` *Screen layout*, the open sub-question removed):
 - With a controller, the padded `Start end turn` reaches the debug
   hint's place, and the debug hint (debug builds only) hides itself as
   it always does when its place is taken.
-
-Engine friction: estimate 150 production lines (judged by the map menu's
-info box, `MapInfoView`, and its paint), measured 170 (1.1×), under 2×;
-signals: workaround no · third copy no · budget no.
-PR size: estimate 900, measured 1,201.

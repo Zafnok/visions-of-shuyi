@@ -151,9 +151,12 @@ unchanged.
   100 / 94 / 96 ⚠, ch05 51 / 15 ✗ / 11 ✗. None is blocked. Ticket
   **0876** brings them back (both follow-ups are in 1064's `blocked_by`
   and the roadmap).
+- Engine friction: none, no Rust code (data, recordings and one test's
+  count).
+
+### For the Act 1 playtest (1064)
+
 - **The agent's starting rules** (for the Act 1 playtest, 1064): the
   Chapter 2 placement and the two raiders removed are the agent's, to
   Nick's "positioning" ask; the ford house is no longer threatened on the
   first turn either.
-- Engine friction: none, no Rust code (data, recordings and one test's
-  count).

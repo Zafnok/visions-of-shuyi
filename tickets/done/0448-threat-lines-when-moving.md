@@ -128,25 +128,6 @@ first turns on Pages.
   paints them last on its own tiles. 29 existing snapshots gained the
   arrow the Quick Battle's lord has from its first frame.
 
-**Rules decided here** (*the agent's starting rules*, Nick can veto; also in
-the design docs):
-
-- **The glyph look starts each arrow at the edge of the enemy's tile**,
-  not its middle: from the middle the line ran through the enemy's two
-  letters (`Br` read as `B-`). With pictures it starts in the middle, as in
-  the mockup.
-- **Colours:** arrows in the palette's enemy red, the `!` in the highlight
-  yellow, both edged in black, so they change with the colour theme.
-- **The arrows also stay while the unit walks to the tile and in the
-  lists the action menu opens** (arts, spells, skills, items, equip). They
-  go whenever a target is picked.
-- **With a unit selected and the cursor on a tile it can't stop on** (out
-  of its range, or another unit's tile): nothing shows.
-- **An enemy that never moves** (Harl) gets an arrow only for tiles its
-  weapon reaches from where it stands, as `turn-structure.md` says. The
-  danger zone still tints his range as if he walked first, so the two
-  disagree round him: ticket 0450.
-
 **Deviations.**
 
 - A line at an angle is drawn as short solid rectangles, one per step
@@ -168,3 +149,24 @@ Tamsin (an arrow from the nearest Brigand), then select her and walk the
 cursor east along the road: arrows appear from each enemy as its reach is
 entered. Say if the arrows should be thicker, a different red, or start
 somewhere else on the enemy.
+
+### For the Act 1 playtest (1064)
+
+**Rules decided here** (*the agent's starting rules*, Nick can veto; also in
+the design docs):
+
+- **The glyph look starts each arrow at the edge of the enemy's tile**,
+  not its middle: from the middle the line ran through the enemy's two
+  letters (`Br` read as `B-`). With pictures it starts in the middle, as in
+  the mockup.
+- **Colours:** arrows in the palette's enemy red, the `!` in the highlight
+  yellow, both edged in black, so they change with the colour theme.
+- **The arrows also stay while the unit walks to the tile and in the
+  lists the action menu opens** (arts, spells, skills, items, equip). They
+  go whenever a target is picked.
+- **With a unit selected and the cursor on a tile it can't stop on** (out
+  of its range, or another unit's tile): nothing shows.
+- **An enemy that never moves** (Harl) gets an arrow only for tiles its
+  weapon reaches from where it stands, as `turn-structure.md` says. The
+  danger zone still tints his range as if he walked first, so the two
+  disagree round him: ticket 0450.

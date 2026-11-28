@@ -228,6 +228,8 @@ arrival has it for Chapter 6.
 downloads Hedda's picture first), 0526 (the Casual bot wins the hold too
 often; no bot holds its door).
 
+### For the Act 1 playtest (1064)
+
 **The agent's starting values and rules** (the docs left them open; all
 *tunable*, for the Act 1 playtest, 1064):
 

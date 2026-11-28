@@ -124,6 +124,8 @@ with the panic, a report naming game `0.3.0`, `windows x86_64 debug`,
 frame 20, `title`, record `None` (at the title). Reaching a battle by hand
 needs input, so a battle's record is checked by the tests instead.
 
+### For the Act 1 playtest (1064)
+
 **Starting rules** (*Claude's*, for the Act 1 playtest, 1064): the notice
 goes at the next key press like the title's other notices; a start
 straight onto a dialogue scene (`--scene`) shows no notice.

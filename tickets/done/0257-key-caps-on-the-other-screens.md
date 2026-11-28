@@ -197,5 +197,7 @@ about 80 for the hint list), 1.0×. PR size 1,234 changed lines.
 
 *Claude's starting rules:* none (no gameplay).
 
+### For the Act 1 playtest (1064)
+
 For the Act 1 playtest (1064): whether the caps read well on the menus'
 centred help lines.

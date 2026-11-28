@@ -156,6 +156,8 @@ lesson asks for Unit info, which has no Playdate button (`! not
 mapped`), so on a Playdate the lesson can't be finished and the turn
 can't end. Added to 1050's `blocked_by` and the roadmap.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (how the chords feel, where the design is
 silent; Nick can veto):
 - On the Playdate, B cancels when you **let go** of it, and A confirms a

@@ -213,6 +213,8 @@ now runs on into Chapter 4. The bots' arrival has it for Chapter 5.
 buys his picture first), 0525 (Hardcore no faster than Normal at Veyne
 Hall).
 
+### For the Act 1 playtest (1064)
+
 **The agent's starting values and rules** (the docs left them open; all
 *tunable*, for the Act 1 playtest, 1064):
 

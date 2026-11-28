@@ -103,6 +103,15 @@ dialogue pause allows short instructional tips; the writer may redo them,
 
 **Deviations:** none.
 
+**Engine friction:** estimate 170 production lines (the 0842 note and the
+battle's tip box as the reference), measured 127 (0.7×), under 2×.
+
+**Pictures:** `docs/img/0874-*.png`, from `cargo shuyi frame-png` with a
+save and a save folder put in by a local edit to frame-png's Harness (it
+starts with neither, so export is off there); the edit was not kept.
+
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064):
 - Vix's lines for the note and the two tips are the agent's, in plain
   words (allowed by the ticket; the writer may redo them).
@@ -110,10 +119,3 @@ dialogue pause allows short instructional tips; the writer may redo them,
   exists inside a campaign; turning tips off in Options stops them.
 - The tip box sits at the top of the screen, over the list, as in
   battle, until it is closed.
-
-**Engine friction:** estimate 170 production lines (the 0842 note and the
-battle's tip box as the reference), measured 127 (0.7×), under 2×.
-
-**Pictures:** `docs/img/0874-*.png`, from `cargo shuyi frame-png` with a
-save and a save folder put in by a local edit to frame-png's Harness (it
-starts with neither, so export is off there); the edit was not kept.

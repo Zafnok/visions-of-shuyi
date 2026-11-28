@@ -156,6 +156,22 @@ the engine, the view and skins stay the game's.
 - A face's name is in the bottom of its frame, not on a row under it:
   the 15 rows hold the 10-row frames and the 5-row box, nothing more.
 
+**Simulator** (`cargo xtask playdate --release --both`, public
+placeholder faces, driven by window messages to the Simulator's
+window): New Game into Chapter 1's opening scene: the faces, names,
+caption and the dotted place, pages of 47 letters with `A` in the box's
+frame; the choice answered; the system menu's Dialogue log opened (the
+reply in it) and closed with B; A played the scenes through to the
+first battle.
+
+**Engine friction:** estimate 380 production lines (one Playdate paint
+of an existing view and its log, judged by 1044's title paint, 238, and
+1045's lead screen), measured 312 (0.8×). No signals.
+
+**Follow-up tickets:** none.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (in `docs/design/playdate.md`, *The
 dialogue screen (1043)*; for 1064's checklist, Nick can veto):
 
@@ -175,17 +191,3 @@ scene in the Simulator or on his Playdate and comments on readability
 easy to find; whether the dotted place is too busy beside the faces;
 whether twice as many pages feels slow; whether the log without faces
 is easy to follow.
-
-**Simulator** (`cargo xtask playdate --release --both`, public
-placeholder faces, driven by window messages to the Simulator's
-window): New Game into Chapter 1's opening scene: the faces, names,
-caption and the dotted place, pages of 47 letters with `A` in the box's
-frame; the choice answered; the system menu's Dialogue log opened (the
-reply in it) and closed with B; A played the scenes through to the
-first battle.
-
-**Engine friction:** estimate 380 production lines (one Playdate paint
-of an existing view and its log, judged by 1044's title paint, 238, and
-1045's lead screen), measured 312 (0.8×). No signals.
-
-**Follow-up tickets:** none.

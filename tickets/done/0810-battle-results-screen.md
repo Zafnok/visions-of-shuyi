@@ -125,6 +125,14 @@ before, gained)>, level_ups }` became `deployed` + the existing `events` +
 `exp_gained`, because 0801 had already made the struct and the level-up
 pages are built from those events.
 
+**Not met:** *Nick signed off* waits for Nick to play it on Pages after the
+merge.
+
+**Follow-ups:** none. Recruits who joined and Classic deaths aren't on the
+screen (the ticket is about gold and the rewind bonus only).
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (presentation, where the docs were silent;
 Nick may veto any):
 
@@ -139,9 +147,3 @@ Nick may veto any):
   unused`, `Bonus EXP for each unit`, `LEVEL UP`.
 - Units get a blank row between them while they all fit (up to 7); a
   bigger army is listed without blank rows. The panel has room for 14.
-
-**Not met:** *Nick signed off* waits for Nick to play it on Pages after the
-merge.
-
-**Follow-ups:** none. Recruits who joined and Classic deaths aren't on the
-screen (the ticket is about gold and the rewind bonus only).

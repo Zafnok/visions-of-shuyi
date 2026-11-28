@@ -61,6 +61,7 @@ selection for items, a heal number popup, help-bar text.
 - Snapshot: pack menu, item target mode, equip menu with a broken weapon.
 
 ## Completion notes
+
 - **Action menu** is now `Attack`, `Seize` (when legal), `Item`, `Equip`,
   `Wait`. It opens on the first enabled of Attack/Seize, else `Wait`, so a
   quick `f f f` still waits.
@@ -81,10 +82,13 @@ selection for items, a heal number popup, help-bar text.
 Deviations / UI choices (no game rules decided; core still allows any
 legal `UseItem`):
 
-- *the agent's starting rule (UI only):* `Item` is enabled, and a target listed,
-  only for units that are **hurt**; the player is never offered a use that
-  heals nothing. Core would still accept it.
 - The `Equip` entry is disabled with fewer than two usable weapons; empty
   weapon slots aren't listed.
 - Tests use the screen directly (`item_tests.rs`) rather than the title-screen
   harness, because the Quick Battle has nobody hurt.
+
+### For the Act 1 playtest (1064)
+
+- *the agent's starting rule (UI only):* `Item` is enabled, and a target listed,
+  only for units that are **hurt**; the player is never offered a use that
+  heals nothing. Core would still accept it.

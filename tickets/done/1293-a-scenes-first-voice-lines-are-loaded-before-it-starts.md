@@ -212,12 +212,6 @@ logging each request, in the browser pane (hidden; frames driven by a
   answered): only `ch01_prebattle_7072f12a` (its line 4). Its first
   line, Maud's box on screen, was loaded at 71 s.
 
-A loaded save's first line wasn't checked on the web: Chapter 2, where
-a save after Chapter 1 goes on, has no clips yet, so there is nothing
-to fetch. The save path is checked by the harness test above; the last
-acceptance box for the web stays unticked for that half. Whether the
-opening sounds right goes on the Act 1 playtest's checklist (1064).
-
 **Engine friction:** estimate 90 (`guide_voice.rs`'s keep logic, a
 lookup and three call sites), measured 164 (1.8×), under 2×. Signals:
 workaround no · third copy no · budget no.
@@ -226,3 +220,11 @@ workaround no · third copy no · budget no.
 battle's intro).
 
 No gameplay rule was decided.
+
+### For the Act 1 playtest (1064)
+
+A loaded save's first line wasn't checked on the web: Chapter 2, where
+a save after Chapter 1 goes on, has no clips yet, so there is nothing
+to fetch. The save path is checked by the harness test above; the last
+acceptance box for the web stays unticked for that half. Whether the
+opening sounds right goes on the Act 1 playtest's checklist (1064).

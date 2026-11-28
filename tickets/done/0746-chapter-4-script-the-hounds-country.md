@@ -231,15 +231,6 @@ area anyone can enter.
 choices, not three: the fourth is in Gil's optional join scene, so a
 player who skips Millhaven Road sees three.
 
-**the agent's starting rules:** none that touch play. For the Act 1
-playtest (1064): whether the gate confrontation (13 boxes before the
-battle, after a 14-box night scene) drags; whether Hollis's "Aye" and
-the stable are enough of a crack before Chapter 5's confession, or too
-little; whether Gil is funny or a bit (two cold readers called him "a
-bit" and wouldn't miss him yet; his join is his only quiet scene until
-1073); whether Dace saying "You had a house. I had a sister" in the
-outline's words lands or reads as a slogan.
-
 **Follow-ups:** none filed. 0850 wires the story battle's scenes,
 places and `battle_rival`, and removes the `@if` guards; 1071 builds the
 two skirmishes and Gil's unit and wires their scenes; 1072 takes the
@@ -248,3 +239,14 @@ supports (Gil has first scenes with Tamsin, Maud, Aske and Joss; Hollis
 and the lead have their crack).
 
 **Engine friction:** none: no Rust code.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules:** none that touch play. For the Act 1
+playtest (1064): whether the gate confrontation (13 boxes before the
+battle, after a 14-box night scene) drags; whether Hollis's "Aye" and
+the stable are enough of a crack before Chapter 5's confession, or too
+little; whether Gil is funny or a bit (two cold readers called him "a
+bit" and wouldn't miss him yet; his join is his only quiet scene until
+1073); whether Dace saying "You had a house. I had a sister" in the
+outline's words lands or reads as a slogan.

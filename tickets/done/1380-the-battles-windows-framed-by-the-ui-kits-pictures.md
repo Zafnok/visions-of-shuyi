@@ -202,14 +202,6 @@ completion notes.
   turns a name into a `PanelLook` (`framed`, `bg`, `plate_behind`,
   `centred_title`, `title_at`) when *Window look* says pictures, the build
   has the picture and the skins are the PC's.
-- **Windows framed:** the side panel, the unit menu and its lists (Arts,
-  Skill, Item, Equip), the unit list, the map menu (royal blue), the
-  forecast, unit info, the EXP, level-up and class boxes, the guides, the
-  rewind list, the shop and its sale box, and the fight box; and, as the
-  battle's other windows (not named in *In*, *the agent's starting rule*),
-  the questions, the objective page, the notes box, the phase and
-  objective banners and the warning box. `BattleMenuView` gained
-  `map_menu` so the skin knows the map menu.
 - **Credits:** two *Shipped items* rows (one per kit, each with its own
   link) and two entries in `credits.ron` (`barely_pixel_quest`, its recolor
   said; `barely_post_baroque`, its plate cut down), author "Barely Apes".
@@ -226,6 +218,17 @@ completion notes.
   `assert_plated`), the Options rows, the saved setting, and the
   private-assets test that every frame resolves from the bought pictures.
   Every glyph-look snapshot is unchanged.
+
+### For the Act 1 playtest (1064)
+
+- **Windows framed:** the side panel, the unit menu and its lists (Arts,
+  Skill, Item, Equip), the unit list, the map menu (royal blue), the
+  forecast, unit info, the EXP, level-up and class boxes, the guides, the
+  rewind list, the shop and its sale box, and the fight box; and, as the
+  battle's other windows (not named in *In*, *the agent's starting rule*),
+  the questions, the objective page, the notes box, the phase and
+  objective banners and the warning box. `BattleMenuView` gained
+  `map_menu` so the skin knows the map menu.
 
 *The agent's starting rules* (for the Act 1 playtest, 1064):
 

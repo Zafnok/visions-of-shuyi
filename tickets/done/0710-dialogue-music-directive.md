@@ -107,6 +107,11 @@ Done as planned.
 Deviation: step 1 says "line kind"; the scene model's kinds are `Step`s, so
 it is `Step::Music(MusicLine)`.
 
+Follow-ups: none. Picking the moods for Chapter 1's scenes is already ticket
+0803 (it sets the chapter's music).
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (the ticket and `audio.md` were silent; Nick can
 veto):
 
@@ -124,6 +129,3 @@ veto):
    its track again.
 4. *`@music` can't name a music pool* (like `skirmish`): a scene names one
    track.
-
-Follow-ups: none. Picking the moods for Chapter 1's scenes is already ticket
-0803 (it sets the chapter's music).

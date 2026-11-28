@@ -103,12 +103,6 @@ None.
 
 ## Completion notes
 
-Done as planned: `RESERVED` in `crates/content/src/audio.rs` now holds the
-ten Chapter 2-8 cues from 0071, and 0848, 0850, 0851, 0852, 0853 and 0854
-each say to drop their cues from it on import (0849 imports none: Greywater
-uses `battle_church_2`, already in the manifest). The test itself is
-unchanged. No gameplay rules decided; nothing for the Act 1 playtest.
-
 Then, at Nick's request, the CI loophole that let #464 merge green:
 `changes.yml` maps eight Markdown files to the crates that read them (`THIRD_PARTY_ASSETS.md`,
 `assets/dialogue/README.md`, `assets/maps/README.md`, `docs/design/audio.md`,
@@ -129,3 +123,11 @@ writer's guide gave `doc_crates=trpg-content xtask`, `code=false`). The
 rest (workspace tests, the WASM and Playdate builds) is left to CI; the
 `doc-tests` job itself first runs on the next docs-only PR that changes one
 of the files.
+
+### For the Act 1 playtest (1064)
+
+Done as planned: `RESERVED` in `crates/content/src/audio.rs` now holds the
+ten Chapter 2-8 cues from 0071, and 0848, 0850, 0851, 0852, 0853 and 0854
+each say to drop their cues from it on import (0849 imports none: Greywater
+uses `battle_church_2`, already in the manifest). The test itself is
+unchanged. No gameplay rules decided; nothing for the Act 1 playtest.

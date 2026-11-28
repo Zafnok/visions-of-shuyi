@@ -111,6 +111,13 @@ there as a box already.
   the box goes and stays quiet when the same box returns. Without this
   every lesson that stays open across an attack would start over.
 
+**Measured.** Engine friction: estimate 90 production lines, measured 111
+(1.2×), under 2×. PR size: estimate 400, measured 479.
+
+**Follow-ups.** None.
+
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064):
 
 - She speaks a box once, as it first comes on screen; a box hidden by a
@@ -123,8 +130,3 @@ there as a box already.
 **Left to judge by playing (1064):** how her generated voice sounds in
 the lessons and tips; whether a tip's line overlapping the start of a
 lesson's (closing a tip stops her, then the lesson speaks) feels right.
-
-**Measured.** Engine friction: estimate 90 production lines, measured 111
-(1.2×), under 2×. PR size: estimate 400, measured 479.
-
-**Follow-ups.** None.

@@ -141,8 +141,6 @@ own for skirmishes and added "normal and HC can also be slightly easier for
 skirmishes". This applies to every fixed and random skirmish, not only generated
 ones.
 
-**The agent's starting rules:**
-
 - Skirmish bands: Casual wins 70–100%. Normal and Hardcore are 5 points easier
   than the same tier's usual band (Normal tier 55–80%, Easy tier 70–95%).
 - A generated map is 14 by 10 tiles, with a clear row across its middle. Six
@@ -189,6 +187,10 @@ lv 35 battle (median 3 turns each), because fights this short leave little to
 save. It is reported, not part of the bands. Generating two skirmishes in a row
 needs `cargo run` for each, so the build picks up the first one's files; a
 stale binary refuses the second.
+
+### For the Act 1 playtest (1064)
+
+**The agent's starting rules:**
 
 Follow-up: 0522. For the Act 1 playtest (1064): the starting rules above, and
 Nick's one request in his own words.

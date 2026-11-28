@@ -119,11 +119,14 @@ remembered per computer (`tips_seen`).
   play, with tips."; "Familiar with other strategy RPGs: learn only what
   this game does differently."; "Familiar with this game: no lessons and
   no tips."
-- Gameplay rules decided where the docs were silent: none new; the ticket's
-  starting rules (screen after the mode, cursor on "Not familiar", old saves
-  as `Full`) are as written. Lessons don't exist yet (0456, 0457), so today
-  `Short` and `None` play the same: no tips.
 - For Nick: start a New Game three times, once per answer. With "Not
   familiar" the "Your move" tip shows on the first turn; with either other
   answer no tip shows. Tips already seen on your computer stay seen
   (Options → Reset tips to see them again).
+
+### For the Act 1 playtest (1064)
+
+- Gameplay rules decided where the docs were silent: none new; the ticket's
+  starting rules (screen after the mode, cursor on "Not familiar", old saves
+  as `Full`) are as written. Lessons don't exist yet (0456, 0457), so today
+  `Short` and `None` play the same: no tips.

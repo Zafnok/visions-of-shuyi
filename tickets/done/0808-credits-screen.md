@@ -131,15 +131,6 @@ this):
   play even if the credits were one day opened from somewhere else. Coming
   from the title it simply carries on without restarting.
 
-*the agent's starting rules* for the parts Nick's note left open:
-
-- The list waits 2 seconds at the top, then moves up one line every half
-  second. The whole list takes about a minute.
-- At the bottom it waits 2 seconds and starts again from the top.
-- Pressing up or down also stops the rolling, so the player isn't fighting
-  it; Confirm starts it again from where they are.
-- Rolling makes no sound.
-
 **the agent's starting choices (Nick can veto at sign-off).** The ticket
 called its layout "a starting point", so these are how the screen looks
 and behaves today, not decisions:
@@ -178,3 +169,14 @@ more (`title.rs`, `layout_picker.rs`, `controller.rs`, `game.rs`).
   the license texts "until the credits screen exists". They still do;
   nothing was removed.
 - No follow-up tickets were created.
+
+### For the Act 1 playtest (1064)
+
+*the agent's starting rules* for the parts Nick's note left open:
+
+- The list waits 2 seconds at the top, then moves up one line every half
+  second. The whole list takes about a minute.
+- At the bottom it waits 2 seconds and starts again from the top.
+- Pressing up or down also stops the rolling, so the player isn't fighting
+  it; Confirm starts it again from where they are.
+- Rolling makes no sound.

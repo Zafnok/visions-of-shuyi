@@ -208,6 +208,8 @@ Nick's call during review (2026-09-30): only plain `Esc` and `Delete` are
 fixed; `Shift+Esc` and `Shift+Delete` are ordinary keys a player can bind
 (recorded in `controls.md`).
 
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (small; the design docs didn't say):
 
 - The first-launch layout picker draws each layout with the player's own

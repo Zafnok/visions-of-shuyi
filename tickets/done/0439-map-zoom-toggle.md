@@ -184,9 +184,6 @@ required/optional lists), `look-and-feel.md` (*Zoom*) and `options.md`
 - Screenshots: `docs/screenshots/0439-zoom-1x.png`, `0439-zoom-2x.png`
   (Chapter 1's first turn, the bought art, as shown to Nick).
 
-**the agent's starting rules (Nick can veto; `controls.md`, *Zoom map*, and
-`options.md`):**
-
 - The key works whenever the map is what you are looking at: browsing,
   with a unit selected or walking, while picking a target, and during the
   enemy's turn. It does nothing while a menu or a yes/no question is
@@ -219,3 +216,8 @@ required/optional lists), `look-and-feel.md` (*Zoom*) and `options.md`
 the map is glyphs and the key does nothing there. To try it: debug menu →
 `Map skin` until it says `test tileset`, start Quick Battle, press `Q`.
 The real look is `cargo run -p trpg-app --features private-assets`.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules (Nick can veto; `controls.md`, *Zoom map*, and
+`options.md`):**

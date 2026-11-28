@@ -93,8 +93,10 @@ Playdate: unchanged (one-bit patterns). GBA: no target.
 - Pictures: `docs/screenshots/1343-ranges.png` (a selected unit's
   ranges) and `1343-danger.png` (the danger zone), test Quick Battle,
   picture look, every theme, before and after.
+- No starting rules decided.
+
+### For the Act 1 playtest (1064)
+
 - For the Act 1 playtest (1064): at 150% the danger zone over the bought
   grass is much darker (a deep brown-red rather than a light green-brown
   wash); judge whether it still lets the terrain read.
-- No starting rules decided.
-

@@ -101,9 +101,12 @@ settled).
   are the threat overlays (and the Playdate's arrow pixels), the new
   Options row, and the question boxes over Options sitting one line lower.
   The options tests' row paths step past the new row.
-- *Claude's starting rules:* the row sits under Map zoom on both the PC
-  and the Playdate, and a save from before it loads as Arcs.
 - Left to judge by playing (Act 1 playtest, 1064): whether the arcs read
   well when three or more enemies threaten one tile.
 - Engine friction: estimate 120, measured 81 added production lines
   (under 2×). PR size: 465.
+
+### For the Act 1 playtest (1064)
+
+- *Claude's starting rules:* the row sits under Map zoom on both the PC
+  and the Playdate, and a save from before it loads as Arcs.

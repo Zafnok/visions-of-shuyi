@@ -67,17 +67,6 @@ recruitment, death quotes, boss-battle quotes.
 
 ## Completion notes
 
-- **Nick reviewed the starting rules on the PR (two rounds)** and decided
-  recruitment, talking and boss lines; recorded in
-  `docs/design/battle-scenes-and-recruitment.md` (new). In short: nobody
-  changes sides during a battle; recruits join the army after a won
-  battle; for now the only way in battle is "joins you if defeated"
-  (quests later, no recruiting by talking); talking is a written scene,
-  either character may start it, and it doesn't use the unit's turn; a
-  fight plays one written scene, never a line from each fighter; a boss
-  has once-per-battle lines for its first fight, the first time it drops to
-  half HP, and its defeat; a boss's special scene with a character replaces
-  its general line; an area scene plays only where a unit stops.
 - **Core** (`trpg_core::battle`, `battle/triggers.rs`): `Trigger { when,
   scene, once }` with `TriggerWhen::{TurnStart, UnitEntersArea,
   CombatStart, HalfHp, UnitFell, Talk}`, `Who`, `TileRect` and `GameMode`
@@ -149,3 +138,17 @@ Gameplay rules the agent decided where the design was silent (veto any):
 3. **Half-HP line timing:** it plays right after the fight that brings the
    boss to half HP or less, not in the middle of it, and not at all if that
    fight defeats it (the defeat line plays instead). (Nick: "sure".)
+
+### For the Act 1 playtest (1064)
+
+- **Nick reviewed the starting rules on the PR (two rounds)** and decided
+  recruitment, talking and boss lines; recorded in
+  `docs/design/battle-scenes-and-recruitment.md` (new). In short: nobody
+  changes sides during a battle; recruits join the army after a won
+  battle; for now the only way in battle is "joins you if defeated"
+  (quests later, no recruiting by talking); talking is a written scene,
+  either character may start it, and it doesn't use the unit's turn; a
+  fight plays one written scene, never a line from each fighter; a boss
+  has once-per-battle lines for its first fight, the first time it drops to
+  half HP, and its defeat; a boss's special scene with a character replaces
+  its general line; an area scene plays only where a unit stops.

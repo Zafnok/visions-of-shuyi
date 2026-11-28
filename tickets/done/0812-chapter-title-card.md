@@ -101,17 +101,6 @@ name and the `Chapter 1` line, over Jacquard 24 and IM Fell English SC.
 - Pictures: `docs/screenshots/0812-chapter-card.png` and
   `0812-chapter-card-playdate.png` (`cargo shuyi frame-png`).
 
-**The agent's starting rules** (Nick can veto; judged in the Act 1
-playtest, 1064):
-
-- The card stays up **3 seconds** unless Confirm or Cancel closes it.
-- A world-map chapter shows it before its opening scenes; arriving at a
-  battle on the world map, restarting and retrying don't show it.
-- The debug Quick Battle shows no card.
-- A title without `: ` shows whole as the name; a title with a character
-  Cinzel's sheet lacks (beyond ASCII) is drawn in the cell font.
-- On the Playdate the card is in the cell font.
-
 **Size:** 449 production lines against an estimate of 450 (1.0×); the
 bake is a stand-in for engine 2224 and 2334, logged in
 `docs/engine/friction.md`. `pr-size` 1,924 (the two generated sheet
@@ -125,3 +114,16 @@ the cursor's pulse colour, which the card's extra frames shift.
 **Deviation:** the Cinzel layout spaces glyphs by their ink and a fixed
 gap, not by the font's own advances and kerning, so the spacing is a
 little wider than in the mockup.
+
+### For the Act 1 playtest (1064)
+
+**The agent's starting rules** (Nick can veto; judged in the Act 1
+playtest, 1064):
+
+- The card stays up **3 seconds** unless Confirm or Cancel closes it.
+- A world-map chapter shows it before its opening scenes; arriving at a
+  battle on the world map, restarting and retrying don't show it.
+- The debug Quick Battle shows no card.
+- A title without `: ` shows whole as the name; a title with a character
+  Cinzel's sheet lacks (beyond ASCII) is drawn in the cell font.
+- On the Playdate the card is in the cell font.

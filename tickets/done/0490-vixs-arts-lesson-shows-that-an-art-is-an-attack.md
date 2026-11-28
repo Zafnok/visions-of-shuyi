@@ -169,6 +169,8 @@ and doable rule, data, a note key), plus tests.
   (`vix_fb8784ee`, audit clean: 7.1 s, no long pause), the old clip
   removed, both in the private PR.
 
+### For the Act 1 playtest (1064)
+
 *The agent's starting rules* (for the Act 1 playtest, 1064):
 - The lesson asks for two things: open Arts, then attack with an art (a
   weapon active from the Arts menu counts too). A plain attack ticks

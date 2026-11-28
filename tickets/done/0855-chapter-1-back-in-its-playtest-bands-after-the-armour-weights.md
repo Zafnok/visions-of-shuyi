@@ -134,6 +134,9 @@ the bots' heal order is what moved the numbers.
   cast are untouched.
 - `ch01_winnable` still wins with nobody lost (the recorded playthrough
   needed no re-record); no snapshot moved.
+- No gameplay rule decided. Engine friction: none, no Rust code.
+
+### For the Act 1 playtest (1064)
+
 - Left for the Act 1 playtest (1064): whether a Steel Bow on a fort
   archer feels right in Chapter 1.
-- No gameplay rule decided. Engine friction: none, no Rust code.

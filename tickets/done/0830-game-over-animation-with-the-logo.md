@@ -135,7 +135,6 @@ logo better", then "A2"); black behind; two seconds; any press skips.
 - Tests that pressed keys the moment Game Over opened now press once more
   first (the skip), or wait two seconds.
 
-**Gameplay rules the agent decided (starting rules, Nick may veto):**
 - Backing out of the rewind screen returns to Game Over as it was left:
   the animation doesn't play a second time.
 - The skip makes no sound.
@@ -150,3 +149,7 @@ words, or show its text).
 
 **For Nick:** lose a battle (or let the turn limit run out) and watch Game
 Over open; press a key half way through to see the skip.
+
+### For the Act 1 playtest (1064)
+
+**Gameplay rules the agent decided (starting rules, Nick may veto):**

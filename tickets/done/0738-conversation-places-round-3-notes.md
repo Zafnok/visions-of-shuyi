@@ -163,6 +163,16 @@ Done 2026-11-05.
 - The `--scene` preview (`start_on_scene`) plays no battle, so it shows
   `ch01_victory` on the empty field with no fade, as before.
 
+Measures: production lines 158 added, 45 removed (`cargo xtask
+code-lines`). The estimate wasn't written before coding (a miss); 0734's
+place-and-opening work is the comparable piece, and this is well under
+it, so no friction review. PR size 854 changed lines. Picture:
+`docs/img/0738-sparring.png` (the opening mid-step in the glyph look; the
+victory and the study are in the text snapshots, as `frame-png` can't win
+a battle from the title).
+
+### For the Act 1 playtest (1064)
+
 *The agent's starting rules* (for the Act 1 playtest, 1064):
 
 - Who is left standing is **the player's units still on the field**:
@@ -180,11 +190,3 @@ Done 2026-11-05.
 
 Left to judge by playing (1064): the lengths, the outline-free look,
 the study's lighting and the party standing at the toll-fort.
-
-Measures: production lines 158 added, 45 removed (`cargo xtask
-code-lines`). The estimate wasn't written before coding (a miss); 0734's
-place-and-opening work is the comparable piece, and this is well under
-it, so no friction review. PR size 854 changed lines. Picture:
-`docs/img/0738-sparring.png` (the opening mid-step in the glyph look; the
-victory and the study are in the text snapshots, as `frame-png` can't win
-a battle from the title).

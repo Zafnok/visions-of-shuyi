@@ -162,6 +162,20 @@ forecast*, `turn-structure.md` → *Pointing at an enemy* and `magic.md`):
   spell's uses and numbers (they are on the `Fire` line above): with them
   the list was too wide to fit beside the unit.
 
+**For Nick when playing** (sign-off, Quick Battle):
+
+- The lord: point at the near brigand, Confirm. The forecast opens with no
+  list; left / right swap Iron and Steel Sword. Cancel, then `Arts`, Guard
+  Break, Confirm twice.
+- The mage: `Magic`, then `Fire + Overcast`.
+- On the small test map the arts menu and the spell list open to the left
+  of the unit, as the old weapon list did, because they don't fit on its
+  right.
+
+**Follow-up tickets:** none.
+
+### For the Act 1 playtest (1064)
+
 **Rules I decided** (*the agent's starting rules*, Nick can veto):
 
 - `Arts` is listed when the unit has an art or a weapon active for a weapon
@@ -180,15 +194,3 @@ forecast*, `turn-structure.md` → *Pointing at an enemy* and `magic.md`):
   doesn't swap.
 - A spell cast with an active targets enemies only (no tiles).
 - A line with nobody in reach is dimmed with `out of range`.
-
-**For Nick when playing** (sign-off, Quick Battle):
-
-- The lord: point at the near brigand, Confirm. The forecast opens with no
-  list; left / right swap Iron and Steel Sword. Cancel, then `Arts`, Guard
-  Break, Confirm twice.
-- The mage: `Magic`, then `Fire + Overcast`.
-- On the small test map the arts menu and the spell list open to the left
-  of the unit, as the old weapon list did, because they don't fit on its
-  right.
-
-**Follow-up tickets:** none.

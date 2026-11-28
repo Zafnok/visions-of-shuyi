@@ -111,8 +111,11 @@ feel, difficulty, story, looks, controls, sounds, pauses that feel long.
     would have;
   - every ticket in `tickets/done/` whose *Nick input* quotes a waived
     sign-off (`grep -l "What the old sign-off asked" tickets/done`);
-  - the agent's starting rules from `cargo xtask playtest-notes
-    --by-area` (0183): `Seen in play:` items as questions grouped by
+  - the agent's starting rules and what else is left to judge by
+    playing, every done ticket's `### For the Act 1 playtest (1064)`
+    section, listed by `cargo xtask playtest-notes` (1256; no grep for
+    old markers, which missed some), sorted by `cargo xtask
+    playtest-notes --by-area` (0183): `Seen in play:` items as questions grouped by
     area, about 30 in all; `Not seen in play:` items under one heading,
     kept unless Nick picks one to discuss;
   - 1050's questions: whether the enemy's pauses on the Playdate feel

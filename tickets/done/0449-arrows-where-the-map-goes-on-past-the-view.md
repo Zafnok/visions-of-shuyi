@@ -233,8 +233,6 @@ render `docs/screenshots/0449-map-edge-arrows.png`.
 - **1178** Arrows at the map's edges on the Playdate (in 1064's
   `blocked_by` and the roadmap's lane D).
 
-**the agent's starting rules (Nick can veto):**
-
 - The arrow sits on the *middle* tile of its edge; with an even number of
   tiles, the first of the two middle ones.
 - "Browsing" is when the cursor moves freely: browsing, a unit selected,
@@ -245,3 +243,7 @@ render `docs/screenshots/0449-map-edge-arrows.png`.
   mark or one letter of a unit's label).
 
 Engine friction: estimate 165, measured 227 (1.4×), under 2×.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules (Nick can veto):**

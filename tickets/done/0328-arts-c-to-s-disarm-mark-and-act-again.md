@@ -122,6 +122,14 @@ None. Verified by tests; the feel goes on 1064's checklist.
   Disarm's weapon removal taken out. The forecast view test reads the
   three lines.
 
+**Follow-ups:** none. The AI valuing these effects is already 0511.
+
+**Size:** estimate about 180 production lines, judged by 0325's nine arts
+(149 lines; these three also touch validation and the turn flow); measured
+139 added (0.8×). PR about 850 changed lines (estimate 1,000).
+
+### For the Act 1 playtest (1064)
+
 **Starting rules decided by the agent** (the design doc is silent;
 Nick may veto):
 
@@ -142,9 +150,3 @@ Nick may veto):
 the `no counter` column read; whether +20/+10 from a mark feels right; and
 whether a second action from Unbroken Stride is clear on the map, with
 the unit simply not greyed out.
-
-**Follow-ups:** none. The AI valuing these effects is already 0511.
-
-**Size:** estimate about 180 production lines, judged by 0325's nine arts
-(149 lines; these three also touch validation and the turn flow); measured
-139 added (0.8×). PR about 850 changed lines (estimate 1,000).

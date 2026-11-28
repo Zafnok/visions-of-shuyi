@@ -159,6 +159,8 @@ GBA: no target.
   layer, 118 lines, plus a format change and packing), measured 310
   (1.2×). The estimate wasn't written down before coding.
 
+### For the Act 1 playtest (1064)
+
 **No gameplay rule decided.** Left to judge in play (1064): the face's
 height and the shadow's strength on the real map; a hill on the map's
 bottom row hangs no face (the engine counts the tile off the map as the

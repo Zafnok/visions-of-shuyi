@@ -213,10 +213,6 @@ shots 5 to 8 (its clock is the song's time less 68.5 s):
 - The Context paragraph about 0724 is out of date: 0724 landed first, and
   the snippets show its rewritten lines.
 
-**the agent's starting rules** (Nick can veto): which units march where, who
-fights whom, the HP each is left with, and the two box counts, all as
-above.
-
 **Follow-up tickets:** none.
 
 **For Nick when he plays** (Pages build and the Windows download, sound
@@ -231,3 +227,9 @@ on, one whole loop):
 4. Now that you have seen it: should Options get a setting to turn the
    cinematic off? (Your answer goes in `title-screen.md`, *Open
    sub-questions*; a yes becomes a ticket.)
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (Nick can veto): which units march where, who
+fights whom, the HP each is left with, and the two box counts, all as
+above.

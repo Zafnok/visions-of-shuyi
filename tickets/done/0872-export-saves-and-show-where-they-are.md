@@ -185,6 +185,14 @@ Vix should point at export (a tip per screen and a note on the title).
 acceptance line about "the browser text" became "no line on the web".
 Both screens instead of one (Nick).
 
+**Follow-ups:** 0874 (Vix's notes and tips about export), 0875 (desktop
+saves to Documents/My Games, moving the old ones); 0873 updated with
+Nick's import rules.
+
+**Engine friction:** estimate 400, measured 479 (1.2×), under 2×.
+
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064):
 - The export key is **Unit info** (`E` / `I`, pad top face); the
   open-folder key is the world map's **Find** key (`X` / `.`, pad West).
@@ -194,9 +202,3 @@ Both screens instead of one (Nick).
 - After an export the line under the panel says where it went
   ("Downloaded …" / "Exported … to the exports folder") until the cursor
   moves.
-
-**Follow-ups:** 0874 (Vix's notes and tips about export), 0875 (desktop
-saves to Documents/My Games, moving the old ones); 0873 updated with
-Nick's import rules.
-
-**Engine friction:** estimate 400, measured 479 (1.2×), under 2×.

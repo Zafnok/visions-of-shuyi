@@ -106,6 +106,8 @@ auto-advance row (0859); the New Game options menu (0860).
   2×. The engine side (3208) is what kept it small: without it the game
   would have copied its settings into `Ctx` every frame.
 
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064):
 
 - Cancel on the voices question goes back to the familiarity question
@@ -113,4 +115,3 @@ auto-advance row (0859); the New Game options menu (0860).
 - The voices question looks like "Save your progress?" (a question over
   `Yes` / `No`).
 - On the Playdate the three voice rows are hidden until it plays voices.
-

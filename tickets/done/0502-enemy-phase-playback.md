@@ -89,6 +89,11 @@ Done. New `crates/ui/src/screens/battle/ai_phase.rs` (`Pacing`/`PACING`,
   music test now rewinds its turn-1 fight: the hurt lord would otherwise
   die in the enemy phase.
 
+**For Nick:** Quick Battle → end the turn → watch each enemy walk and
+fight; hold `f` to fast-forward, `d` to skip a fight. Is the pacing right?
+
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (pacing is Nick's sign-off; these are defaults):
 
 1. Enemies walk as fast as the player's units (12 tiles/s).
@@ -98,6 +103,3 @@ Done. New `crates/ui/src/screens/battle/ai_phase.rs` (`Pacing`/`PACING`,
    says every other key is ignored); press it in your own phase.
 4. Confirm and Cancel don't skip an enemy's walk, only speed it up (hold
    Confirm); Cancel skips fights only.
-
-**For Nick:** Quick Battle → end the turn → watch each enemy walk and
-fight; hold `f` to fast-forward, `d` to skip a fight. Is the pacing right?

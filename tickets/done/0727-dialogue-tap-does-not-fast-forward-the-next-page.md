@@ -95,9 +95,11 @@ enough to start.
 - No deviations, no follow-up tickets. The fight playback's hold was not
   touched or tested here.
 
+**For Nick (sign-off):** tap through the Chapter 1 opening. A tap should no
+longer eat text. Then hold the key: does the speed-up start soon enough?
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rule** (Nick can veto): holding Confirm speeds the text
 up only after 0.3 s on that page. Keep it held through several pages and
 each page starts at the normal speed, then goes fast a moment later.
-
-**For Nick (sign-off):** tap through the Chapter 1 opening. A tap should no
-longer eat text. Then hold the key: does the speed-up start soon enough?

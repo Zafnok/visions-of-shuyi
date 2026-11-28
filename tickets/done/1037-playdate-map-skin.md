@@ -150,16 +150,6 @@ written.
 flipped twice it would vanish, so the Playdate's gives it to one arm only.
 The glyph skin's `Layout` gained `fitted` (no pixel of the PC changes).
 
-***the agent's starting rules*** (in `docs/design/playdate.md`; Nick can
-veto): the map centred with a cell each side; ranges don't show on units'
-tiles; the heal range is the attack range's lines; timed effects (buffs,
-debuffs) have no mark on the Playdate map; allies and neutral units are
-their letters alone (their HP line as yours); the danger edge is 2 px inside the zone and absent at
-the screen's edge; a battle note's unit, a struck unit and a changed tile
-are flipped for the first half of their flash; a falling unit vanishes at
-the middle of its fall; the cursor doesn't pulse, and the tile-glow cursor
-option flips the whole tile.
-
 **Follow-ups:** none.
 
 **Nick's sign-off (2026-10-17):** on the HP line: "lets look at the hp can
@@ -171,3 +161,15 @@ letters' colour with the HP lost dithered grey (`docs/design/playdate.md`,
 *The HP line*). The Harrowby Ford snapshot now plays the real game to the
 battle (the first one built the battle's start state, before its opening
 events bring most units in).
+
+### For the Act 1 playtest (1064)
+
+***the agent's starting rules*** (in `docs/design/playdate.md`; Nick can
+veto): the map centred with a cell each side; ranges don't show on units'
+tiles; the heal range is the attack range's lines; timed effects (buffs,
+debuffs) have no mark on the Playdate map; allies and neutral units are
+their letters alone (their HP line as yours); the danger edge is 2 px inside the zone and absent at
+the screen's edge; a battle note's unit, a struck unit and a changed tile
+are flipped for the first half of their flash; a falling unit vanishes at
+the middle of its fall; the cursor doesn't pulse, and the tile-glow cursor
+option flips the whole tile.

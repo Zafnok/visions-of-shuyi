@@ -171,6 +171,8 @@ ADR-0099); the Options row is the engine's volume row on that group.
 - **Deviation:** the ticket's step 1 named an engine ticket if the group
   or the dip needed the engine; neither did.
 
+### For the Act 1 playtest (1064)
+
 **Claude's starting rules** (recorded in `audio.md`, *Starting values*;
 for the Act 1 playtest, 1064):
 

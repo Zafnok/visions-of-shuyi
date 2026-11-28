@@ -195,6 +195,8 @@ with the new order).
 **the agent's starting rules:** none (no gameplay rule; the bots' order
 is dev tooling).
 
-**Left to judge by playing (1064):** nothing new (no battle changed).
-
 Engine friction: estimate 15, measured 11 (0.7×), under 2×.
+
+### For the Act 1 playtest (1064)
+
+**Left to judge by playing (1064):** nothing new (no battle changed).

@@ -166,6 +166,8 @@ world map can hand engine#2355 its road neighbours once it lands.
 - On Old Bridge in the test map, Up goes to Stone Mill: its road leans a
   little up, which is under 90° from Up.
 
+### For the Act 1 playtest (1064)
+
 *The agent's starting rule* (for the Act 1 playtest, 1064; in
 `world-structure.md` and `controls.md`): the cursor follows the roads,
 as written in this ticket's *Nick input*. One detail the ticket didn't

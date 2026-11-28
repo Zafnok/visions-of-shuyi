@@ -117,6 +117,9 @@ checklist (1064).
   fails.
 - The town's switch and every other screen's stop still use the
   manifest's 500 ms (the title cinematic's `StopMusic` is untouched).
-- Deviations: none. No starting rules: the timings come from audio.md.
 - To judge by playing (Act 1 playtest, 1064): whether the 3 s fade-out
   sounds right against each track's own ending.
+
+### For the Act 1 playtest (1064)
+
+- Deviations: none. No starting rules: the timings come from audio.md.

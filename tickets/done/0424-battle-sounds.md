@@ -111,9 +111,6 @@ each sound lands: timing, volume, and whether anything gets annoying.
 **Rules decided here** (Nick's answers after the first review: 1 vetoed,
 3, 5 and 6 agreed; he'll judge 2 and 4 in the Quick Battle once it has a
 caster, added to ticket 0410, the spell menu):
-1. An Absorb strike (the target heals from its element) plays `heal`.
-   Nick vetoed the starting rule (`hit_magic`): "it should sound like a
-   heal". Recorded in `audio.md`.
 2. Every spell strike plays its cast sound as the caster's name flashes,
    including a follow-up and a spell counter, not only the first cast.
 3. A critical that does 0 damage plays `block`, like any 0-damage hit.
@@ -124,3 +121,8 @@ caster, added to ticket 0410, the spell menu):
 6. Steps come at the walk's pace (12 tiles/s); skipping a walk with
    Confirm skips its remaining steps.
 
+### For the Act 1 playtest (1064)
+
+1. An Absorb strike (the target heals from its element) plays `heal`.
+   Nick vetoed the starting rule (`hit_magic`): "it should sound like a
+   heal". Recorded in `audio.md`.
