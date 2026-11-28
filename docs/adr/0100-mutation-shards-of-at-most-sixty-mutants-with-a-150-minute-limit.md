@@ -1,8 +1,8 @@
 # ADR-0100: Mutation shards of at most about 60 mutants, with a 150-minute limit
 
-- **Status:** Accepted
+- **Status:** Accepted; notes added 2026-11-27 (0150)
 - **Date:** 2026-10-30
-- **Related tickets:** 0133, 0134
+- **Related tickets:** 0133, 0134, 0150
 - **Related ADRs:** supersedes ADR-0073's shard rule (Decision §1) and the
   shards' `timeout-minutes: 90` (§3); ADR-0007 (layer 7), ADR-0014
 
@@ -97,3 +97,43 @@ aggregate jobs; the round-robin sharding; incremental builds; the
   diff up to ~2,200 mutants and the PR-size warnings keep diffs smaller.
 - **Testing fewer mutants on big diffs** (sampling, skipping crates, a
   shorter `--timeout`) — weakens the gate (CLAUDE.md rule 5).
+
+## Notes
+
+### 2026-11-27: the shards wait for the tests, and a later push tests only what is left (ticket 0150)
+
+Two retros counted pushes the mutants gate caused without a finding:
+the shards started beside a CI whose tests were already red, and each
+push cancelled the running shards and tested every mutant of the diff
+again (#648: 7 follow-up commits, one per red shard).
+
+- **The shards wait for fmt, clippy and the unmutated tests.** A new
+  job, `mutants (diff, gate)`, runs CI's `cargo fmt --check` and
+  `cargo clippy` commands, and `pr` needs it and `baseline`. That is the
+  cheapest way that keeps `mutants (diff)` the workflow's one required
+  check (ADR-0014): `baseline` already ran the tests, and only beside the
+  shards, so the gate costs one clippy build and makes the shards start
+  about 10–15 minutes later on a green PR (`baseline` took 10–15 minutes
+  on the PRs of 2026-11-27). Turned down: `workflow_run` on CI (its
+  check runs attach to the default branch, not the PR's commit, so
+  `mutants (diff)` would no longer gate the PR, and it runs with the
+  base's secrets), and a job that waits for CI's checks through the API
+  (it holds a runner for CI's slowest leg, macOS or Windows, about 25
+  minutes, and couples the two workflows by job names). The gate tests
+  only on Linux; CI's `test` still covers the other two.
+- **`--iterate` over the mutants earlier pushes caught.** Each shard
+  keeps its `caught.txt`, `unviable.txt` and `previously_caught.txt`
+  (mutant names only, never `mutants.out`'s logs: ADR-0117, ticket
+  0171), also when a newer push cancels it; `mutants (diff, save)` joins
+  them with the earlier list into one Actions cache per run,
+  `mutants-iterate-pr<N>-<base>-<run>`. The next run's plan restores the
+  latest one, counts only the mutants left (`--list --iterate`) and
+  picks the shards for them; every shard restores the same cache by its
+  exact key, so the round-robin split is the plan's. `<base>` is the
+  merge base of the PR's head with its base branch: a rebase or a merge
+  of main starts over with every mutant.
+- **What this gives up.** A mutant caught on one push is not tested
+  again on the next, even if the test that caught it was since changed;
+  a mutant is matched by its name, with its line and column, so code
+  that moves is tested again. The weekly full run (`mutants (full,
+  shard N)`) still tests every mutant of the tree.

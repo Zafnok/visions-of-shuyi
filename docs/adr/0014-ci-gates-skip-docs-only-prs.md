@@ -102,6 +102,19 @@ from the cache, and the push to `main` that merges it from the PR's last
 run. A reused blocked battle still fails. Playtest stays advisory: making
 it required is a ruleset setting, Nick's call.
 
+*Note, 2026-11-27 (ticket 0150):* the aggregates (`ci-result`,
+`codeql-result`, `mutants (diff)`) judge their legs with
+`scripts/ci-result.sh`. A `cancelled` leg fails one only while its commit
+is still the head of the PR (or of the branch it was pushed to): a run a
+newer push cancelled (`cancel-in-progress`) passes with a notice, since
+the newer run checks the newer commit, and was red on 11 PRs for no
+finding. A run cancelled by hand, or a leg past its time limit, on the
+head commit stays red, so cancelling never lets a commit merge
+unchecked. CI's and the mutants runs' proptests use one fixed seed
+(`PROPTEST_RNG_SEED`, the same in `ci.yml` and `mutants.yml`);
+`proptest-explore.yml` tries random seeds daily on `main` and files a
+`proptest-seed` issue for a failing case.
+
 Do not require checks that are not produced by a job in these workflows (for
 example the code-scanning `CodeQL` / `zizmor` result checks, or a SonarCloud app
 check): they are not posted when their job is skipped.
