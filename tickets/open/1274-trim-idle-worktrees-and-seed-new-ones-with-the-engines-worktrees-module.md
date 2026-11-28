@@ -53,8 +53,12 @@ None.
   names both commands beside `clean-merged-targets`.
 - Decide whether `clean-merged-targets` stays (it also deletes merged
   worktrees' whole `target/`; `trim-targets --merged` in the engine
-  does the same): keep one, and delete the other's code, about 200
-  lines of `crates/xtask/src/clean_targets.rs` if the engine's covers it.
+  does the same): keep one, and delete the other's code. The sweep
+  1397 found the engine's covers it (`crates/cli/src/worktrees/trim.rs`:
+  merged by git or by `gh pr list --state merged`), so the whole of
+  `crates/xtask/src/clean_targets.rs` goes (about 405 production and 613
+  test lines, not 200), with its `main.rs` wrapper, and `AGENTS.md` and
+  the `work-ticket` skill say `trim-targets --merged` instead.
 - Measure: a seeded worktree's first `cargo test --workspace` time
   against an unseeded one's, and the disk `trim-targets` frees on Nick's
   machine (`--dry-run` first). Both numbers in the PR.

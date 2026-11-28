@@ -17,6 +17,7 @@ use trpg_core::{Pos, Unit, UnitId};
 use super::mode::Mode;
 use super::walk::{self, Gait, HELD_WALK_TILES_PER_S, WALK_TILES_PER_S};
 
+// engine-friction: engine#3256, moves (game 1417 deletes it)
 /// How long each part of an AI action takes. *Tunable.*
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Pacing {
@@ -45,6 +46,7 @@ pub const PACING: Pacing = Pacing {
     fast: 4.0,
 };
 
+// engine-friction: engine#3256, moves (game 1417 deletes it)
 impl Pacing {
     /// This pacing at the player's `speed` for the AI's phases (0805),
     /// walking at `walk` tiles per second (and its held speed): the pan
@@ -86,6 +88,7 @@ pub struct AiAction {
     pacing: Pacing,
 }
 
+// engine-friction: engine#3256, moves (game 1417 deletes it)
 impl AiAction {
     /// `unit`'s action, from the units `before` it: the camera pans from
     /// origin `from` to `to`, then `unit` walks `path` (its start first;

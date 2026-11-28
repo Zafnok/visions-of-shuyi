@@ -736,6 +736,7 @@ impl WorldMapScreen {
         Some(Transition::None)
     }
 
+    // engine-friction: engine#3253, moves (game 1414 deletes it)
     /// Town `town`'s own music, if it has one, while it is open; the map's
     /// track starts again when it closes.
     fn town_music(&mut self, ctx: &mut Ctx, town: &str) {

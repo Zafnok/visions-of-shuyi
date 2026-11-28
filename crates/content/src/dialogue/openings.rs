@@ -46,6 +46,7 @@ impl<'a> Walk<'a> {
             .push(ContentError::new(self.file, message).at(line, None));
     }
 
+    // engine-friction: engine#2289, moves (game 1408 deletes it)
     /// Walks `steps`, written at `lines`, `depth` blocks deep (0 at the
     /// scene's top level).
     fn steps(&mut self, steps: &'a [Step], lines: &Lines, depth: usize) {

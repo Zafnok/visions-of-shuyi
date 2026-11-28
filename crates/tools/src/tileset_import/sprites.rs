@@ -50,6 +50,7 @@ impl Layout {
     }
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// The tile of frame `k` of `layout`: each sprite's frame then from the
 /// strip `sheet` (frames side by side, row by row from the top-left), over
 /// a see-through tile. RGBA8, row by row.

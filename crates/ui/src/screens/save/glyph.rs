@@ -49,6 +49,7 @@ fn cells(text: &str, widths: &CellWidths) -> i32 {
     i32::try_from(text_width(text, widths)).unwrap_or(0)
 }
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 /// Paints the save prompt over the whole of `buf`.
 pub fn paint_prompt(ctx: &Ctx, view: &SavePromptView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);

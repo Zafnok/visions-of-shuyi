@@ -108,6 +108,7 @@ fn is_voiced(kind: RowKind) -> bool {
     }
 }
 
+// engine-friction: engine#3252, moves (game 1413 deletes it)
 /// The lines that can come after the one on `player`'s screen, in order:
 /// up to [`VOICES_AHEAD`] text boxes, and at a choice the first line of
 /// each reply's reaction (then no further).
@@ -238,6 +239,7 @@ pub struct DialogueScreen {
     clip: Option<Clip>,
 }
 
+// engine-friction: engine#3252, moves (game 1413 deletes it)
 /// A text box's voice clip, as the platform reports it (ticket 0863).
 #[derive(Debug, Clone, Default)]
 struct Clip {
@@ -248,6 +250,7 @@ struct Clip {
     quiet_s: f32,
 }
 
+// engine-friction: engine#3252, moves (game 1413 deletes it)
 impl Clip {
     /// Seconds since it ended, given whether `sounding` this frame of
     /// `dt`: `None` while it sounds, or might still start.
@@ -762,6 +765,7 @@ impl DialogueScreen {
         Transition::None
     }
 
+    // engine-friction: engine#3252, moves (game 1413 deletes it)
     /// Auto-advance (ticket 0859): whether the page on screen moves on by
     /// itself this frame, as Confirm would. Only with the setting on, the
     /// page revealed, no key pressed and no choice or question open: a

@@ -14,6 +14,7 @@ use crate::audio::MusicSwitch;
 use crate::prelude::*;
 use crate::screen::Ctx;
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 /// What camp should ask for now.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MusicCue {
@@ -23,6 +24,7 @@ pub enum MusicCue {
     Stop,
 }
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 /// Where the rotation is.
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Phase {
@@ -33,6 +35,7 @@ enum Phase {
     Quiet { index: usize, until: f64 },
 }
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 /// The rotation of a pool's tracks (see the module docs).
 #[derive(Debug, Clone, PartialEq)]
 pub struct CampMusic {
@@ -57,6 +60,7 @@ pub const FADE_IN_MS: u32 = 3000;
 /// values*: 3 s, camp and the world map alike).
 pub const FADE_OUT_MS: u32 = 3000;
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 /// Asks `ctx`'s audio for `cue`. A track fades in over [`FADE_IN_MS`]; a
 /// track it interrupts (a conversation's, a town's) fades out over the
 /// manifest's fade first, the two never overlapping. A stop fades out over
@@ -72,6 +76,7 @@ pub fn ask(ctx: &mut Ctx, cue: &MusicCue) {
     }
 }
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 impl CampMusic {
     /// The rotation of `tracks` (cue, length in seconds), starting with
     /// track `first` (wrapped onto the pool) at clock time `now`, the

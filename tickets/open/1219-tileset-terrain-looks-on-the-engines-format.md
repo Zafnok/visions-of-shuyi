@@ -64,7 +64,11 @@ a name, the size's sides and the picture inside the image, as
 props reading with the rest of `look.rs`. `frames.rs` (the game's own,
 ADR-0131) now moves a prop at its size and swaps `Look::props` in
 `look_at`; it stays. `map::check_props` (a map's placed names against
-its tilesets' looks) is the game's and stays too.
+its tilesets' looks) stays in this ticket.
+**Either order with 1409:** if 1409 is done, `check_looks` already
+does that check: hand it the engine's looks this ticket keeps; if not,
+keep `check_props` working on the new type (1409 then moves it to the
+engine's `check_looks`).
 
 ## Nick input
 

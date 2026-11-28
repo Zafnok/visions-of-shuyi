@@ -165,6 +165,7 @@ impl fmt::Display for PathError {
 
 impl core::error::Error for PathError {}
 
+// engine-friction: engine#2151, moves (game 1419 deletes it)
 /// Where one unit can move this turn. See the module docs for the rules.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Reach {
@@ -176,6 +177,7 @@ pub struct Reach {
     stoppable: TileSet,
 }
 
+// engine-friction: engine#2151, moves (game 1419 deletes it)
 impl Reach {
     /// The mover's tile.
     pub fn origin(&self) -> Pos {
@@ -312,6 +314,7 @@ pub fn reachable(
     search(map, terrain, classes, units, mover, None)
 }
 
+// engine-friction: engine#2151, moves (game 1419 deletes it)
 /// [`reachable`] with unit `absent`, if any, off the map: what a copy of
 /// `units` without it would give, without the copy.
 fn search(
@@ -397,6 +400,7 @@ fn search(
     })
 }
 
+// engine-friction: engine#2151, moves (game 1419 deletes it)
 /// The cost of moving unit `mover` along `path` (its own tile first), or why
 /// the path is illegal: every step must be to a 4-way neighbour the mover can
 /// enter, not holding a hostile unit, never leaving a stopping tile it
@@ -665,6 +669,7 @@ pub fn threats_at(
     Ok(out)
 }
 
+// engine-friction: engine#2152, moves (game 1420 deletes it)
 /// [`threats_at`] for one unit on any tile, with each hostile unit's moves
 /// searched once (ticket 1251). Made for a battle as it stands; asked with
 /// that same battle, it gives `threats_at`'s answer for every tile.
@@ -683,6 +688,7 @@ pub struct ThreatPlanner {
     threats: Vec<Threat>,
 }
 
+// engine-friction: engine#2152, moves (game 1420 deletes it)
 /// A unit hostile to the planner's unit, and how it gets about.
 #[derive(Debug, Clone)]
 struct Threat {
@@ -691,6 +697,7 @@ struct Threat {
     kind: ThreatKind,
 }
 
+// engine-friction: engine#2152, moves (game 1420 deletes it)
 #[derive(Debug, Clone)]
 enum ThreatKind {
     /// It never moves ([`AiBehavior::Stationary`]): what it threatens
@@ -705,6 +712,7 @@ enum ThreatKind {
     },
 }
 
+// engine-friction: engine#2152, moves (game 1420 deletes it)
 impl ThreatPlanner {
     /// Searches the moves of every unit hostile to unit `unit` that may
     /// move, with `unit` off the map. `ranges` gives each unit's attack
@@ -825,6 +833,7 @@ impl ThreatPlanner {
     }
 }
 
+// engine-friction: engine#2152, moves (game 1420 deletes it)
 /// [`threats_at`] for every unit of one faction on its own tile, with each
 /// hostile unit's moves searched once for the battle (ticket 1259). A unit
 /// on its own tile is where the battle has it, so its threats are the
@@ -840,6 +849,7 @@ pub struct ThreatAreas {
     threats: Vec<Threat>,
 }
 
+// engine-friction: engine#2152, moves (game 1420 deletes it)
 impl ThreatAreas {
     /// Searches the moves of every unit hostile to `faction` that may
     /// move. `ranges` gives each unit's attack ranges, as for
@@ -915,6 +925,7 @@ impl ThreatAreas {
     }
 }
 
+// engine-friction: engine#2152, moves (game 1420 deletes it)
 impl Threat {
     /// Whether one of its ranges reaches `at` from `from`.
     fn in_range(&self, from: Pos, at: Pos) -> bool {

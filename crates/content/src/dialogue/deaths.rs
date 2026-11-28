@@ -102,6 +102,7 @@ pub(super) fn problems(
     errors
 }
 
+// engine-friction: engine#2289, moves (game 1408 deletes it)
 /// Calls `found` with each `@dies` or `@joins` of `steps` (written at
 /// `lines`): its line, its directive's name and character, and whether it
 /// is in a reply's reaction (`reply`).

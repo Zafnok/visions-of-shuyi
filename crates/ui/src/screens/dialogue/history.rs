@@ -1,3 +1,4 @@
+// engine-friction: engine#3252, moves (game 1413 deletes it)
 //! What the dialogue log remembers (ticket 0729, `docs/design/look-and-feel.md`,
 //! *Dialogue log*): every line of the scene the player has seen, as the
 //! scene was on it, and which one is on screen. Pure: the dialogue screen

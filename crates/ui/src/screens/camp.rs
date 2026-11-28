@@ -349,6 +349,7 @@ impl CampScreen {
         }
     }
 
+    // engine-friction: engine#3253, moves (game 1414 deletes it)
     /// Starts the music, the first time camp is updated.
     fn start_music(&mut self, ctx: &mut Ctx) {
         if self.music.is_some() {

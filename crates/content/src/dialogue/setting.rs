@@ -205,6 +205,7 @@ fn last_in(steps: &[Step]) -> Option<&PlaceLine> {
     steps.iter().rev().find_map(last_setting)
 }
 
+// engine-friction: engine#2289, moves (game 1408 deletes it)
 /// Adds every directive line of `steps` (written at `lines`) and of the
 /// blocks among them to `out`, with its line.
 fn directives<'s>(steps: &'s [Step], lines: &Lines, out: &mut Vec<(u32, &'s Stage)>) {

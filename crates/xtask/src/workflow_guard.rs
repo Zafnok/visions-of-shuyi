@@ -1,3 +1,4 @@
+// engine-friction: engine#3443, moves (game 1400 deletes it)
 //! The check that no workflow job with the private files keeps a build of
 //! them where a public repository hands it out: in the Actions cache or an
 //! artifact (ADR-0117 §4, ticket 0171). A build made where the content is

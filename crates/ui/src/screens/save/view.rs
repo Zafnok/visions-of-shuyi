@@ -11,6 +11,7 @@ use trpg_core::GameMode;
 use crate::screens::files::PlaceView;
 use crate::widgets::{AskView, MenuView};
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 /// "Save your progress?" with its answers, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SavePromptView {

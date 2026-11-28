@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1396 — The crash record replay test reaches a command again
@@ -53,9 +53,9 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `a_crash_record_replays_to_the_crash` fails if the record holds no
+- [x] `a_crash_record_replays_to_the_crash` fails if the record holds no
       command, and passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -63,5 +63,8 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `a_crash_record_replays_to_the_crash` plays the UI test's keys,
+  `Down f Left f f f` (Preparations, `Fight!`, the banner), with the
+  comment of 1393's test beside it, and asserts `applied > 0` after
+  reading the record. It passes, so the lord's move and wait now replay.
+- No deviations, no follow-up tickets, no gameplay rules decided.

@@ -293,6 +293,7 @@ pub fn list(sprites: &[MapSprite]) -> String {
     out
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// A `MattWalkden` unit sheet's PNG `bytes` cut into a walking sheet of the
 /// game's layout (3 walking frames × facing down, left, right, up) of
 /// [`RIDER_FRAME`] frames: the pack's first three move frames of each
