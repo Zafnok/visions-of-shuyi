@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
 status: todo
-blocked_by: ["0801"]
+blocked_by: ["0801", "engine#2339"]
 nick_input: decision
 completed:
 ---
@@ -58,6 +58,15 @@ if not, 1044 does it.
 **Out (do not do):**
 - Transitions inside the battle screen (phase banners, combat playback).
 - Chapter title card (0812).
+
+**On the engine's transitions** (the engine's redundancy sweep of 2026-11-28): engine#2339 builds the cut,
+fade, wipe and dissolve over cells, rectangles and sprite items, with
+input held while one plays and a one-bit paint. So this ticket is Nick's
+choice of look (and where it applies), plus one call to 2339's
+transition where the game's screens change. The game writes no blend,
+no clock, no input lock and no Playdate paint. The time comes from the
+game, so 0805's `anim_speed` Fast halves it. Mockups made for Nick's
+choice before 2339 lands go to it as its acceptance examples.
 
 ## Implementation steps
 

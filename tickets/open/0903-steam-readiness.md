@@ -54,6 +54,15 @@ URL in `shuyi.ron`'s `reveal` part.
 the `steamcmd` guard flow — the session will explain exact steps then).
 Until then this ticket can do everything with Valve's test App ID 480.
 
+**One Steam client** (the engine's redundancy sweep of 2026-11-28): engine#3037 (parked) plans the one
+Steam client in `shuyi-app`: start-up that fails gracefully,
+`RestartAppIfNecessary`, the callbacks each frame, the overlay check and
+the GNU link check. Its scope already says the game's pin bump drops
+step 1's start. While 3037 is parked, write step 1 as small as it can
+be, behind the `steam` feature only, and ask the engine to unpark 3037
+(engine#3527 asks Nick) rather than growing it. Step 2's upload flow is
+engine#3321's job in `release.yml`: point the docs at it.
+
 ## Implementation steps
 
 0. **The release toolchain is GNU** ([ADR-0108](../../docs/adr/0108-windows-release-builds-with-the-gnu-toolchain.md),
