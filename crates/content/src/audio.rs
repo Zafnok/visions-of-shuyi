@@ -276,15 +276,26 @@ mod tests {
         cues
     }
 
-    /// The sounds we make ourselves; ticket 0213 renders them and adds
-    /// their cues. Until then they may be missing from the manifest.
-    const IN_HOUSE: [&str; 6] = [
+    /// The sounds we make ourselves (`cargo xtask sfx`: ticket 0213, and
+    /// the EXP bar and level-up sounds of 0605).
+    const IN_HOUSE: [&str; 17] = [
         "menu_move",
         "cursor_move",
         "menu_select",
         "menu_cancel",
         "miss",
         "heal",
+        "exp_fill",
+        "exp_full",
+        "level_up",
+        "level_up_stat_1",
+        "level_up_stat_2",
+        "level_up_stat_3",
+        "level_up_stat_4",
+        "level_up_stat_5",
+        "level_up_stat_6",
+        "level_up_stat_7",
+        "class_mastered",
     ];
 
     /// Cues `audio.md` reserves for a moment the story doesn't have yet

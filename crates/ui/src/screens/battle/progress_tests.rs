@@ -401,3 +401,70 @@ fn the_level_up_tip_comes_up_after_its_combat() {
     assert!(s.progress().is_none());
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLevelUp));
 }
+
+// ---------- the pages' sounds (ticket 0605) ----------
+
+/// The EXP bar's and level-up page's cues of `requests` (sounds played or
+/// started), in order, and `"stop"` for each sound stopped.
+fn progress_cues(requests: &[crate::audio::AudioRequest]) -> Vec<String> {
+    use super::progress::sounds::{CLASS_MASTERED, EXP_FILL, EXP_FULL, LEVEL_UP, LEVEL_UP_STATS};
+    use crate::audio::AudioRequest;
+    let ours = |cue: &str| {
+        [EXP_FILL, EXP_FULL, LEVEL_UP, CLASS_MASTERED].contains(&cue)
+            || LEVEL_UP_STATS.contains(&cue)
+    };
+    requests
+        .iter()
+        .filter_map(|r| match r {
+            AudioRequest::StopSound { .. } => Some("stop".to_owned()),
+            r => r.cue().filter(|c| ours(c)).map(str::to_owned),
+        })
+        .collect()
+}
+
+#[test]
+fn a_level_up_from_99_exp_plays_each_sound_once_in_order() {
+    let c = ctx();
+    let state = skirmish(&c, 99, None);
+    let (_, events) = expected(&state);
+    let grown = events
+        .iter()
+        .find_map(|e| match e {
+            Event::LeveledUp { gains, .. } => Some(gains.0.iter().filter(|g| **g != 0).count()),
+            _ => None,
+        })
+        .expect("a level up");
+    assert!(grown > 0);
+    let mut h = attacked(state);
+    h.wait(EXP_S + PROGRESS_TIMINGS.fanfare + 1.0);
+    assert_eq!(level_up(&h).stats.len(), 7);
+    h.keys("f").wait(0.2);
+    // Nothing is stopped: each long sound played to its end.
+    let mut want = vec!["exp_fill", "exp_full", "level_up"];
+    want.extend(&super::progress::sounds::LEVEL_UP_STATS[..grown]);
+    assert_eq!(progress_cues(&h.audio_requests()), want);
+}
+
+#[test]
+fn an_exp_gain_without_a_level_up_plays_only_the_fill() {
+    let c = ctx();
+    let mut h = attacked(skirmish(&c, 0, None));
+    h.wait(EXP_S + 0.5);
+    assert!(page(&h).is_none(), "{:?}", page(&h));
+    assert_eq!(progress_cues(&h.audio_requests()), ["exp_fill"]);
+}
+
+/// Confirm during the fanfare: the stats all show, the fanfare stops (a
+/// 60 ms fade) and no stat tick plays.
+#[test]
+fn skipping_the_level_up_page_skips_its_sounds() {
+    let c = ctx();
+    let mut h = attacked(skirmish(&c, 99, None));
+    h.wait(EXP_S + 0.2);
+    assert_eq!(level_up(&h).stats.len(), 0);
+    let before = h.audio_requests().len();
+    h.keys("f");
+    assert_eq!(level_up(&h).stats.len(), 7);
+    h.wait(0.2);
+    assert_eq!(progress_cues(&h.audio_requests()[before..]), ["stop"]);
+}

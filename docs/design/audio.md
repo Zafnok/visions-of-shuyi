@@ -397,7 +397,23 @@ Nick heard them: a wood stove in a room (Yulathh,
 | `heal` | A unit is healed | "HE5": warm C–E–G chord blooming over a low G, about 1.5 s | in-house | audition page, `HEAL.HE5` | ours |
 | `step_foot` | Each tile a foot unit moves; **picks one of three at random each step** | Footstep_Dirt_00; dirt/gravel footstep 4; Footstep_Grass_5 | LittleRobotSoundFactory; Yoyodaman234; GiocoSound | [270415](https://freesound.org/s/270415/) (CC-BY 4.0), [223153](https://freesound.org/s/223153/) (CC0), [421135](https://freesound.org/s/421135/) (CC0) | as listed |
 | `step_armored` | Each tile an armoured unit moves | Knight Right Footstep on Gravel 5 (With Chainmail) | Ali_6868 | [freesound 384890](https://freesound.org/s/384890/) | CC0 |
+| `exp_fill` | The EXP bar fills (0.6 s); cut short when the player hurries the bar | "F6": a whistle rising C4 → C5 under twelve quiet chip ticks climbing a scale | in-house | level-up page, `F6` | ours |
+| `exp_full` | The EXP bar reaches 100 (a level up) | "H3": sparkle, four quick pips up a C chord | in-house | level-up page, `H3` | ours |
+| `level_up` | The level-up page opens (`LEVEL UP!`); its stat rows wait for it to play through (about 1.1 s), unless the player skips | "L6": longer chip fanfare, C–G–C–E then a held E5 over a chord | in-house | level-up page, `L6` | ours |
+| `level_up_stat_1`, `level_up_stat_2`, `level_up_stat_3`, `level_up_stat_4`, `level_up_stat_5`, `level_up_stat_6`, `level_up_stat_7` | Each stat that grew appears on the level-up page: the first that grew plays `_1`, the next `_2`, … | "S6": a soft round pluck, each a note higher (C5, D5, E5, G5, A5, C6, D6) | in-house | level-up page, `S6` | ours |
+| `class_mastered` | The class box shows `CLASS MASTERED!` or `Learned: <name>` | "M1": three bells, then a warm chord swelling, 1.5 s | in-house | level-up page, `M1` | ours |
 | `step_mounted` | A mounted unit moves | Maxheadroom's Galloping Horse (a 39 s gallop; cut into steps or loop while moving) | Podsburgh | [freesound 274898](https://freesound.org/s/274898/) | CC0 |
+
+The EXP and level-up sounds (ticket 0605, 2026-11-27) were picked on a
+listening page of their own
+(https://claude.ai/artifact/JiRNwJiDg81CfNWq9vqVHZ, source
+[`assets-src/audio/levelup-audition.html`](../../assets-src/audio/levelup-audition.html)).
+Nick first meant to make them himself, then asked for candidates: "no I
+want you to find some". Skipping skips the sounds too: Confirm pressed
+or held past the bar's fill or the fanfare stops it, and stat rows a
+press reveals at once play no tick (Nick: "unless player skips the
+animation and then it can skip the sound forward too"). A promotion's
+page plays none of them (not asked).
 
 Magic plays in two beats (0020 follow-up Q2 "A"): the element's cast sound
 as the spell goes off, then `hit_magic` as it lands, or the element's crit
@@ -487,7 +503,7 @@ sign-off: "it should sound like a heal").
   wanted "for now"; ticket 1344 asks again after more of the tickets that
   give the game life. Never in a battle.
 - **Places and moments without a cue yet:** shops. Nick hasn't been
-  asked about it (ticket 0028). Level up is Nick's own work.
+  asked about it (ticket 0028).
 - **Content ID** (decided 2026-10-01, ticket 0904): **no check before
   release.** The plan was to test the chosen tracks against YouTube's
   copyright system (cynicmusic and Alexandr Zhelanov sell or stream their
@@ -907,3 +923,15 @@ whole conversation or a dip under voiced lines like the music's, Nick
 picked "Dips under voiced lines". The world map's bed through the map
 track's 30 s quiet: "Yes, it keeps playing". The Playdate: "Yes, if it runs
 well" (the same beds, unless the bench says they cost too much).
+
+**The EXP bar and level up, round 1** (ticket 0605, 2026-11-27; listening
+page https://claude.ai/artifact/JiRNwJiDg81CfNWq9vqVHZ). Asked whether he
+had his own files ready: "no I want you to find some". Five to six
+in-house candidates for each of five moments, with a mock level up at the
+game's timings. His picks:
+
+> F6, H3, L6, S6, M1
+>
+> dont overlay S6 onto L6 though, let L6 play thru before continuing the
+> animation / sound unless player skips the animation and then it can skip
+> the sound forward too.

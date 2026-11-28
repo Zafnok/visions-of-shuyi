@@ -21,6 +21,10 @@
 //! pressing it finishes the page's animation (reveals every stat), and on a
 //! finished page that waits for the player, closes it. Cancel does the same
 //! (Nick, PR #87: "cancel can do the same as confirm on these screens").
+//!
+//! The pages' sounds (ticket 0605) are in [`sounds`]: the level-up page's
+//! fanfare plays through before its first stat row
+//! ([`ProgressTimings::fanfare`]).
 
 use crate::prelude::*;
 
@@ -49,8 +53,13 @@ pub struct ProgressTimings {
     pub exp_fill: f32,
     /// The filled EXP bar stays up before the next page.
     pub exp_hold: f32,
-    /// The level-up page before its first stat row.
+    /// The promotion page before its first stat row.
     pub level_intro: f32,
+    /// The level-up page before its first stat row: its fanfare plays
+    /// through first (Nick, ticket 0605: "let L6 play thru before
+    /// continuing the animation"). The `level_up` sound's held note ends
+    /// at about 1.1 s; its last 0.2 s is a tail 30 dB down.
+    pub fanfare: f32,
     /// Between two stat rows appearing.
     pub stat_reveal: f32,
     /// A class-level notice (no mastery, nothing learned) stays up.
@@ -65,6 +74,7 @@ pub const PROGRESS_TIMINGS: ProgressTimings = ProgressTimings {
     exp_fill: 0.6,
     exp_hold: 0.5,
     level_intro: 0.3,
+    fanfare: 1.1,
     stat_reveal: 0.12,
     class_hold: 1.2,
     fast: 4.0,
@@ -163,10 +173,20 @@ impl Page {
             // Seven stats: small, exact.
             #[allow(clippy::cast_precision_loss)]
             Page::LevelUp(_) | Page::Promotion(_) => {
-                t.level_intro + t.stat_reveal * StatKind::GROWABLE.len() as f32
+                self.intro(t) + t.stat_reveal * StatKind::GROWABLE.len() as f32
             }
             Page::Class(c) if c.waits() => 0.0,
             Page::Class(_) => t.class_hold,
+        }
+    }
+
+    /// How long a level-up or promotion page waits before its first stat
+    /// row (0 for the others).
+    pub fn intro(&self, t: &ProgressTimings) -> f32 {
+        match self {
+            Page::LevelUp(_) => t.fanfare,
+            Page::Promotion(_) => t.level_intro,
+            Page::Exp(_) | Page::Class(_) => 0.0,
         }
     }
 
@@ -375,6 +395,8 @@ pub struct Progress {
     page: usize,
     t: f32,
     timings: ProgressTimings,
+    /// What [`sounds`] last heard, and how the clock moved since.
+    heard: sounds::Heard,
 }
 
 impl Progress {
@@ -429,6 +451,7 @@ impl Progress {
             page: 0,
             t: 0.0,
             timings,
+            heard: sounds::Heard::default(),
         })
     }
 
@@ -486,6 +509,7 @@ impl Progress {
         let len = page.len(&self.timings);
         let waits = page.waits();
         let passing = HurryClock::new(0.0, self.timings.fast).tick(dt, confirm_held);
+        self.heard.hurried |= confirm_held && passing > 0.0;
         self.t = (self.t + passing).min(len);
         if !waits && self.t >= len {
             self.next();
@@ -501,6 +525,7 @@ impl Progress {
         let len = page.len(&self.timings);
         if self.t < len {
             self.t = len;
+            self.heard.skipped = true;
         } else {
             self.next();
         }
@@ -512,7 +537,12 @@ impl Progress {
         let Some(Page::Exp(p)) = self.page() else {
             return None;
         };
-        let frac = (self.t / self.timings.exp_fill.max(f32::EPSILON)).clamp(0.0, 1.0);
+        Some(self.exp_at(p, self.t))
+    }
+
+    /// The EXP page `p`'s shown EXP `t` seconds into it.
+    fn exp_at(&self, p: &ExpPage, t: f32) -> u32 {
+        let frac = (t / self.timings.exp_fill.max(f32::EPSILON)).clamp(0.0, 1.0);
         // EXP awards are small (at most a few levels): exact in f32.
         #[allow(
             clippy::cast_precision_loss,
@@ -520,15 +550,21 @@ impl Progress {
             clippy::cast_sign_loss
         )]
         let moved = ((p.gained as f32 * frac) + 1e-3).floor() as u32;
-        Some(p.from.saturating_add(moved.min(p.gained)))
+        p.from.saturating_add(moved.min(p.gained))
     }
 
     /// How many of the level-up (or promotion) page's stat rows are shown.
     pub fn stats_shown(&self) -> usize {
-        let Some(Page::LevelUp(_) | Page::Promotion(_)) = self.page() else {
+        self.page().map_or(0, |page| self.rows_at(page, self.t))
+    }
+
+    /// How many of `page`'s stat rows are shown `t` seconds into it (0 if
+    /// it has none).
+    fn rows_at(&self, page: &Page, t: f32) -> usize {
+        if !matches!(page, Page::LevelUp(_) | Page::Promotion(_)) {
             return 0;
-        };
-        let t = self.t - self.timings.level_intro;
+        }
+        let t = t - page.intro(&self.timings);
         if t < 0.0 {
             return 0;
         }
@@ -701,6 +737,8 @@ fn stat_gains(
         })
         .collect()
 }
+
+pub mod sounds;
 
 #[cfg(test)]
 mod tests;

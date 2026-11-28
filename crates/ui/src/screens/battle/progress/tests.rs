@@ -246,7 +246,10 @@ fn stats_are_revealed_one_at_a_time_then_confirm_closes() {
     pb.confirm();
     pb.tick(0.0, false);
     assert_eq!(pb.stats_shown(), 0);
-    pb.tick(T.level_intro, false);
+    // The fanfare plays through first (Nick, 0605).
+    pb.tick(T.fanfare - 0.05, false);
+    assert_eq!(pb.stats_shown(), 0);
+    pb.tick(0.05, false);
     assert_eq!(pb.stats_shown(), 1);
     pb.tick(T.stat_reveal, false);
     assert_eq!(pb.stats_shown(), 2);
@@ -335,7 +338,7 @@ fn each_page_says_what_it_shows_as_far_as_it_has_played() {
         g.stats,
         [] as [crate::screens::battle::view::StatGainView; 0]
     );
-    pb.tick(T.level_intro + T.stat_reveal, false);
+    pb.tick(T.fanfare + T.stat_reveal, false);
     let Some(ProgressView::Gains(g)) = shown(&pb) else {
         panic!()
     };
@@ -518,6 +521,7 @@ fn a_reclass_or_a_stowed_item_is_worth_stopping_for() {
         page: 0,
         t: 0.0,
         timings: T,
+        heard: super::sounds::Heard::default(),
     };
     let Some(ProgressView::Class(v)) = shown(&pb) else {
         panic!("{:?}", shown(&pb))
@@ -555,4 +559,214 @@ fn stat_rows_show_the_gain_or_just_the_value() {
         "HP   19 → 21  +2"
     );
     assert_eq!(stat_row(Words::ENGLISH, StatKind::Def, 5, 0), "Def   5");
+}
+
+// ---------- the pages' sounds (ticket 0605) ----------
+
+use super::sounds::{CLASS_MASTERED, EXP_FILL, EXP_FULL, LEVEL_UP, LEVEL_UP_STATS, ProgressSound};
+
+/// Plays `pb` to its end at `dt` a frame (Confirm held if `held`), pressing
+/// Confirm on each page that waits once it has played; each frame's sounds
+/// with the page and its time.
+fn listen(pb: &mut Progress, dt: f32, held: bool) -> Vec<(usize, f32, Vec<ProgressSound>)> {
+    let mut frames = Vec::new();
+    for _ in 0..10_000 {
+        let sounds = pb.take_sounds();
+        frames.push((pb.index(), pb.time(), sounds));
+        if pb.done() {
+            return frames;
+        }
+        if pb.page_played() && pb.page().is_some_and(Page::waits) {
+            pb.confirm();
+        } else {
+            pb.tick(dt, held);
+        }
+    }
+    panic!("never done")
+}
+
+fn heard(frames: &[(usize, f32, Vec<ProgressSound>)]) -> Vec<ProgressSound> {
+    frames
+        .iter()
+        .flat_map(|(_, _, s)| s.iter().copied())
+        .collect()
+}
+
+/// The lord's level up from 90 (HP, Str and Spd grew), then its mastery:
+/// each moment's sound once, in order, at its moment.
+#[test]
+fn a_level_up_plays_each_moments_sound_once_in_order() {
+    use ProgressSound::{Play, Start};
+    let mut pb = progress();
+    let frames = listen(&mut pb, 1.0 / 60.0, false);
+    assert_eq!(
+        heard(&frames),
+        [
+            Start(EXP_FILL),
+            Play(EXP_FULL),
+            Start(LEVEL_UP),
+            Play(LEVEL_UP_STATS[0]),
+            Play(LEVEL_UP_STATS[1]),
+            Play(LEVEL_UP_STATS[2]),
+            Play(CLASS_MASTERED),
+        ]
+    );
+    let when = |sound: ProgressSound| {
+        frames
+            .iter()
+            .find(|(_, _, s)| s.contains(&sound))
+            .map(|(page, t, _)| (*page, *t))
+            .unwrap()
+    };
+    // 90 + 30: the bar reaches 100 a third of the way through its fill.
+    let (page, t) = when(Play(EXP_FULL));
+    assert!(page == 0 && (0.2..0.22).contains(&t), "{t}");
+    // The first stat waits for the fanfare (Nick, 0605); Spd is the fifth
+    // row.
+    let (page, t) = when(Play(LEVEL_UP_STATS[0]));
+    assert!(
+        page == 1 && (T.fanfare..T.fanfare + 0.02).contains(&t),
+        "{t}"
+    );
+    let (_, t) = when(Play(LEVEL_UP_STATS[2]));
+    let spd = T.fanfare + 4.0 * T.stat_reveal;
+    assert!((spd..spd + 0.02).contains(&t), "{t}");
+    assert_eq!(when(Play(CLASS_MASTERED)), (2, 0.0));
+}
+
+#[test]
+fn an_exp_gain_without_a_level_up_plays_only_the_fill() {
+    let s = state();
+    let exp = [Event::ExpGained {
+        unit: UnitId(1),
+        amount: 30,
+    }];
+    let mut pb = Progress::new(&exp, s.units(), (&s, Words::ENGLISH), T).unwrap();
+    let frames = listen(&mut pb, 1.0 / 60.0, false);
+    assert_eq!(heard(&frames), [ProgressSound::Start(EXP_FILL)]);
+}
+
+/// Confirm finishes a page at once: its long sound stops, and the stat
+/// rows it revealed play nothing; the bar's level up still sounds.
+#[test]
+fn a_confirm_press_skips_the_sounds_forward() {
+    use ProgressSound::{Play, Start, Stop};
+    let mut pb = progress();
+    assert_eq!(pb.take_sounds(), [Start(EXP_FILL)]);
+    pb.tick(0.05, false);
+    assert_eq!(pb.take_sounds(), []);
+    pb.confirm();
+    assert_eq!(pb.take_sounds(), [Play(EXP_FULL), Stop]);
+    pb.tick(0.0, false);
+    assert_eq!(pb.take_sounds(), [Start(LEVEL_UP)]);
+    pb.tick(0.3, false);
+    pb.confirm();
+    assert_eq!(pb.stats_shown(), 7);
+    assert_eq!(pb.take_sounds(), [Stop]);
+    pb.confirm();
+    assert_eq!(pb.take_sounds(), [Play(CLASS_MASTERED)]);
+    // Skipped on its first frame: started and stopped at once.
+    let mut pb = progress();
+    pb.confirm();
+    assert_eq!(pb.take_sounds(), [Start(EXP_FILL), Play(EXP_FULL), Stop]);
+}
+
+/// Held Confirm: the fill and the fanfare stop where their part of the
+/// page ends, and a frame that shows several rows plays one tick.
+#[test]
+fn held_confirm_cuts_the_long_sounds_and_plays_a_tick_a_frame() {
+    use ProgressSound::{Play, Start, Stop};
+    let mut pb = progress();
+    // 0.1 s frames at ×4: 0.4 s of page each, three rows or more.
+    let frames = listen(&mut pb, 0.1, true);
+    for (_, _, sounds) in &frames {
+        let plays = sounds.iter().filter(|s| matches!(s, Play(_))).count();
+        assert!(plays <= 1, "{sounds:?}");
+    }
+    let all = heard(&frames);
+    assert_eq!(all.iter().filter(|s| **s == Stop).count(), 2, "{all:?}");
+    let stop_after = |cue| {
+        let start = all.iter().position(|s| *s == Start(cue)).unwrap();
+        all[start..].iter().position(|s| *s == Stop).unwrap() + start
+    };
+    assert!(stop_after(EXP_FILL) < stop_after(LEVEL_UP));
+    // The fanfare stops in the frame the fanfare's time passes.
+    let (_, t, _) = frames
+        .iter()
+        .find(|(page, _, s)| *page == 1 && s.contains(&Stop))
+        .unwrap();
+    assert!((T.fanfare..T.fanfare + 0.4).contains(t), "{t}");
+    // Played no faster than the frames: fewer ticks than stats grown.
+    let ticks = all
+        .iter()
+        .filter(|s| matches!(s, Play(c) if LEVEL_UP_STATS.contains(c)))
+        .count();
+    assert!((1..3).contains(&ticks), "{all:?}");
+}
+
+/// A promotion has none of the level up's sounds, and its stats come
+/// after the short intro.
+#[test]
+fn a_promotion_plays_nothing_and_doesnt_wait_for_the_fanfare() {
+    let p = Page::Promotion(PromotionPage {
+        unit: UnitId(1),
+        name: "Test Lord".into(),
+        character: None,
+        from: "Guard".into(),
+        to: "Iron Rider".into(),
+        before: [0; 7],
+        gains: gains([1; 7]),
+    });
+    assert!((p.intro(&T) - T.level_intro).abs() < f32::EPSILON);
+    let mut pb = Progress {
+        pages: vec![p],
+        page: 0,
+        t: 0.0,
+        timings: T,
+        heard: super::sounds::Heard::default(),
+    };
+    assert_eq!(heard(&listen(&mut pb, 1.0 / 60.0, false)), []);
+}
+
+/// The class box sounds for a mastery or something learned, either alone,
+/// and not for a class level alone.
+#[test]
+fn the_class_box_sounds_for_a_mastery_or_something_learned() {
+    let Page::Class(cl) = progress().pages()[2].clone() else {
+        panic!()
+    };
+    let box_sounds = |mastered: bool, learned: Vec<String>| {
+        let page = ClassPage {
+            mastered,
+            learned,
+            ..cl.clone()
+        };
+        let mut pb = Progress {
+            pages: vec![Page::Class(page)],
+            page: 0,
+            t: 0.0,
+            timings: T,
+            heard: super::sounds::Heard::default(),
+        };
+        pb.take_sounds()
+    };
+    let mastered = [ProgressSound::Play(CLASS_MASTERED)];
+    assert_eq!(box_sounds(true, vec![]), mastered);
+    assert_eq!(box_sounds(false, vec!["Leadership 1".into()]), mastered);
+    assert_eq!(box_sounds(false, vec![]), []);
+}
+
+/// Only Confirm held while the clock runs hurries a page: a held frame of
+/// no time doesn't, and a hurried frame after the fill's end has nothing
+/// left to stop.
+#[test]
+fn only_a_hurried_pass_over_the_fills_end_stops_it() {
+    use ProgressSound::{Play, Start};
+    let mut pb = progress();
+    assert_eq!(pb.take_sounds(), [Start(EXP_FILL)]);
+    pb.tick(0.0, true);
+    pb.tick(T.exp_fill, false);
+    assert_eq!(pb.take_sounds(), [Play(EXP_FULL)]);
+    pb.tick(0.1, true);
+    assert_eq!(pb.take_sounds(), []);
 }

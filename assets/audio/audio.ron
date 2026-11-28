@@ -42,6 +42,22 @@
         (id: "menu_cancel", files: ["sfx/menu_cancel.wav"], volume: 15, credit: Own),
         (id: "miss", files: ["sfx/miss.wav"], volume: 40, credit: Own),
         (id: "heal", files: ["sfx/heal.wav"], volume: 40, credit: Own),
+        // The EXP bar and level-up sounds (ticket 0605, audio.md), made
+        // in-house by `cargo xtask sfx` from assets-src/audio/
+        // levelup-audition.html. 50, not 40: that set is normalised on its
+        // own, 1.9 dB under the first five (TUNABLE). level_up_stat_N is the
+        // Nth stat that grew, each a note higher.
+        (id: "exp_fill", files: ["sfx/exp_fill.wav"], volume: 50, credit: Own),
+        (id: "exp_full", files: ["sfx/exp_full.wav"], volume: 50, credit: Own),
+        (id: "level_up", files: ["sfx/level_up.wav"], volume: 50, credit: Own),
+        (id: "level_up_stat_1", files: ["sfx/level_up_stat_1.wav"], volume: 50, credit: Own),
+        (id: "level_up_stat_2", files: ["sfx/level_up_stat_2.wav"], volume: 50, credit: Own),
+        (id: "level_up_stat_3", files: ["sfx/level_up_stat_3.wav"], volume: 50, credit: Own),
+        (id: "level_up_stat_4", files: ["sfx/level_up_stat_4.wav"], volume: 50, credit: Own),
+        (id: "level_up_stat_5", files: ["sfx/level_up_stat_5.wav"], volume: 50, credit: Own),
+        (id: "level_up_stat_6", files: ["sfx/level_up_stat_6.wav"], volume: 50, credit: Own),
+        (id: "level_up_stat_7", files: ["sfx/level_up_stat_7.wav"], volume: 50, credit: Own),
+        (id: "class_mastered", files: ["sfx/class_mastered.wav"], volume: 50, credit: Own),
         (id: "hit_sword", files: ["sfx/sword_sound_1.ogg"], volume: 40, credit: Credit("sword_sound_1")),
         (id: "hit_spear", files: ["sfx/knife_stab.ogg"], volume: 40, credit: Credit("knife_stab")),
         (id: "hit_axe", files: ["sfx/knife_stab.ogg"], volume: 40, credit: Credit("knife_stab")),

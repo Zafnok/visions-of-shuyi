@@ -3,6 +3,7 @@
 | Path | What |
 | ---- | ---- |
 | `sound-audition.html` | The listening page Nick chose the game's sounds on (0020). Recipes for the sounds we make ourselves (0213) |
+| `levelup-audition.html` | The listening page Nick chose the EXP bar and level-up sounds on (0605), with a mock level up at the game's timings. Recipes of `cargo xtask sfx`'s level-up set |
 | `voice-cast.html` | A listening page Nick chose the voices on (0043); the other, `voice-audition.html`, plays the story's lines, so it is in the private repository, `assets-private/story/audio/` (0159). Their clips and portraits aren't in the repository |
 | `voice-refs/` | The game's voices, one reference clip per cast entry (ADR-0107) |
 | `import.py` | Downloads the chosen third-party music and sounds and makes the game files (0214, ADR-0027) |

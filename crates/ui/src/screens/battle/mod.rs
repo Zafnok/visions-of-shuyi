@@ -95,6 +95,7 @@ use self::layout::{HELP_BAR, MAP_VIEW, map_area};
 use self::lessons::LessonState;
 use self::mode::{Effect, Line, MenuEntry, Mode, Selection, list_entry};
 use self::playback::{Playback, SceneCue, TIMINGS};
+use self::progress::sounds::ProgressSound;
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{MapFrame, RewindEffect, RewindScreen};
 use self::shop::{ShopScreen, ShopVisit};
@@ -106,7 +107,7 @@ use self::view::{
 };
 use self::walk::Gait;
 use super::dialogue::DialogueScreen;
-use crate::audio::MenuSound;
+use crate::audio::{MenuSound, SoundId};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{CursorView, MapScene, MapSkin, Place, UnitView, range};
@@ -319,6 +320,9 @@ pub struct BattleScreen {
     /// The EXP bar and level-up pages of the last command (0602), shown
     /// once its combat has played.
     progress: Option<Progress>,
+    /// The pages' long sound (the fill or the fanfare, ticket 0605), to
+    /// stop when the player hurries past it.
+    progress_sound: Option<SoundId>,
     /// The info screen's page, on a skin that shows it a page at a time
     /// (the Playdate's, ticket 1039): 0 when it opens.
     info_page: u8,
@@ -408,6 +412,7 @@ impl BattleScreen {
             ambience: None,
             effects: Effects::default(),
             progress: None,
+            progress_sound: None,
             info_page: 0,
             leaving: None,
             player_view: None,
@@ -548,6 +553,37 @@ impl BattleScreen {
             progress.tick(dt, confirm_held);
             if progress.done() {
                 self.progress = None;
+            }
+        }
+    }
+
+    /// Plays what the EXP bar and level-up pages ask for this frame
+    /// ([`progress::sounds`]), once a combat's playback is over (the pages
+    /// wait for it).
+    fn play_progress_sounds(&mut self, ctx: &mut Ctx) {
+        /// A hurried sound fades out this fast rather than clicking off.
+        const CUT_MS: u32 = 60;
+        if self.playing() {
+            return;
+        }
+        let Some(progress) = self.progress.as_mut() else {
+            // The pages closed: their long sound has ended (a page closes
+            // only once played), so its handle is just forgotten; the
+            // queue lets it go with the screen.
+            self.progress_sound = None;
+            return;
+        };
+        for sound in progress.take_sounds() {
+            match sound {
+                // The long sound before it has ended or been stopped: a new
+                // one starts only on a new page.
+                ProgressSound::Start(cue) => self.progress_sound = Some(ctx.audio.start_sound(cue)),
+                ProgressSound::Play(cue) => ctx.audio.play_sound(cue),
+                ProgressSound::Stop => {
+                    if let Some(id) = self.progress_sound.take() {
+                        ctx.audio.stop_sound(id, CUT_MS);
+                    }
+                }
             }
         }
     }
@@ -1464,6 +1500,7 @@ impl BattleScreen {
             self.follow(at);
         }
         self.tick_progress(scaled, held);
+        self.play_progress_sounds(ctx);
     }
 
     /// Moves the cursor one tile for a cursor key; the camera and a

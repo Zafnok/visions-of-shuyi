@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Level-up sound audition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* VOICE: a listening station, the same as the earlier rounds of the game's sound audition (0020).
+   IDEA: the game's own level-up panels, playing with the sounds you pick under them.
+   PICTURE: the mock level up at the top, glyph panels like the game's, with the picked sounds.
+   COLOUR and TYPE: the game's palette D on a dark ground; Alegreya Sans, JetBrains Mono for the panels.
+   LAYOUT: mock and its controls first, then one station per moment, five to six candidates each. */
+:root {
+  --bg: #0e0b08; --panel: #1c1712; --border: #6a5a40; --border-hi: #c89a50;
+  --text: #d0c4a8; --dim: #938770; --gold: #e6b860; --blue: #7ea8e0; --red: #d46a50; --green: #8ab050;
+  --font-body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; min-width: 0; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.5 var(--font-body); overflow-x: clip; }
+.wrap { max-width: 1000px; margin: 0 auto; padding: 28px 20px 60px; display: grid; gap: 28px; }
+h1 { font: 700 clamp(28px, 5vw, 40px)/1.1 var(--font-body); margin: 0; text-wrap: balance; }
+h2 { font: 700 23px/1.2 var(--font-body); margin: 0; }
+p { margin: 0; max-width: 70ch; }
+.muted { color: var(--dim); }
+section { display: grid; gap: 12px; }
+.panel { background: var(--panel); border: 1px solid var(--border); padding: 16px; display: grid; gap: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, select {
+  font: 600 14px/1 var(--font-mono); color: var(--text); background: #120e0a;
+  border: 1px solid var(--border); padding: 12px 14px; cursor: pointer; min-height: 44px;
+}
+button:hover { border-color: var(--border-hi); color: var(--gold); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+button.go { border-color: var(--gold); color: var(--gold); }
+.stage { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 760px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+pre#mock { margin: 0; font: 15px/1.25 var(--font-mono); color: var(--text); background: #060504; border: 1px solid var(--border); padding: 14px; min-height: 19.5em; overflow-x: auto; white-space: pre; }
+pre#mock b { color: var(--gold); font-weight: 600; }
+pre#mock i { color: var(--green); font-style: normal; }
+.picks { display: grid; gap: 10px; }
+.pick { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; }
+.pick label { font-size: 15px; }
+.pick input[type=range] { grid-column: 1 / -1; accent-color: var(--gold); width: 100%; }
+.pick small { color: var(--dim); font: 12px/1 var(--font-mono); }
+.opts { display: grid; gap: 8px; }
+.opt { display: grid; grid-template-columns: 2.6em minmax(0, 1fr) auto; gap: 10px; align-items: center; border-top: 1px solid #2e261c; padding-top: 8px; }
+.opt:first-child { border-top: 0; padding-top: 0; }
+.opt .id { font: 600 14px/1 var(--font-mono); color: var(--gold); }
+.opt .desc small { display: block; color: var(--dim); font-size: 14px; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.note { border-left: 3px solid var(--border-hi); padding-left: 12px; }
+.bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.bar label { font: 600 13px/1 var(--font-mono); color: var(--dim); display: flex; gap: 8px; align-items: center; }
+.bar input[type=range] { accent-color: var(--gold); width: 160px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <h1>Level-up sounds: picked</h1>
+    <p><b>Picked (2026-11-27): F6, H3, L6, S6, M1</b>, with the stat rows waiting for L6 to play through; the mock plays them so. Candidates for the five moments of the EXP bar and the level-up page (ticket 0605). They're all made in-house, in the same family as the menu and heal sounds you picked, so they play right here. Pick one per moment, or <b>None</b> to leave it silent. Then play the mock level up to hear them in order at the game's real timings.</p>
+  </header>
+
+  <section>
+    <h2>Hear it in the game's order</h2>
+    <div class="stage">
+      <pre id="mock" aria-live="off"></pre>
+      <div class="panel">
+        <div class="picks" id="picks"></div>
+        <div class="row">
+          <button class="go" data-scn="exp">▶ EXP only</button>
+          <button class="go" data-scn="level">▶ Level up</button>
+          <button class="go" data-scn="master">▶ Level up + mastery</button>
+          <button class="go" data-scn="five">▶ Five level ups in a row</button>
+          <button id="stop">■ Stop</button>
+        </div>
+        <div class="bar"><label for="vol">Volume <input id="vol" type="range" min="0" max="100" value="70"></label></div>
+        <p class="muted" style="font-size:15px">Each moment has its own volume slider. "Five in a row" is there to hear whether a sound gets tiring.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The candidates</h2>
+    <div class="grid" id="stations"></div>
+    <p class="note muted">The page plays the stat sound once for each stat that grew (here HP, Str, Spd and Def), 0.12 s apart, as the rows appear. On the "Rising" stat sounds, each grown stat plays one note higher than the one before. On the bar sounds, the sound lasts as long as the bar fills (0.6 s).</p>
+  </section>
+</div>
+
+<script>
+{
+  let ctx = null, master = null, reverb = null, bus = null;
+  const M = n => { const m = /^([A-G])(#|b)?(-?\d)$/.exec(n); return (parseInt(m[3], 10) + 1) * 12 + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0); };
+  const nf = n => 440 * Math.pow(2, (M(n) - 69) / 12);
+  const volEl = document.getElementById('vol');
+  const vol = () => Math.pow(volEl.value / 100, 1.6);
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = vol();
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+    master.connect(comp); comp.connect(ctx.destination);
+    reverb = ctx.createConvolver();
+    const len = ctx.sampleRate * 1.8, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+    reverb.buffer = ir;
+    const rg = ctx.createGain(); rg.gain.value = 0.32; reverb.connect(rg); rg.connect(master);
+  }
+  volEl.addEventListener('input', () => { if (master) master.gain.setTargetAtTime(vol(), ctx.currentTime, 0.03); });
+
+  // ---------- building blocks (the same as sound-audition.html) ----------
+  let noiseBuf = null;
+  function noise() {
+    if (!noiseBuf) { noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.loop = true; return s;
+  }
+  const waves = {};
+  function pulse(duty) {
+    if (waves[duty]) return waves[duty];
+    const n = 64, re = new Float32Array(n), im = new Float32Array(n);
+    for (let k = 1; k < n; k++) { re[k] = Math.sin(2 * k * Math.PI * duty) / (k * Math.PI); im[k] = (2 / (k * Math.PI)) * Math.pow(Math.sin(k * Math.PI * duty), 2); }
+    return (waves[duty] = ctx.createPeriodicWave(re, im));
+  }
+  function env(g, t, a, peak, d, hold = 0) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(peak, t + a);
+    if (hold > 0) g.gain.setValueAtTime(peak, t + a + hold);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + a + hold + d);
+  }
+  function tone({ type = 'sine', wave = null, f, f2 = null, t, a = 0.005, d = 0.2, peak = 0.3, hold = 0, out, detune = 0, glide = null, filter = null, q = 0.7 }) {
+    const o = ctx.createOscillator(); if (wave) o.setPeriodicWave(wave); else o.type = type;
+    o.frequency.setValueAtTime(f, t); o.detune.value = detune;
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + (glide ?? d));
+    const g = ctx.createGain(); env(g, t, a, peak, d, hold);
+    let node = o;
+    if (filter) { const fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = filter; fl.Q.value = q; o.connect(fl); node = fl; }
+    node.connect(g); g.connect(out);
+    o.start(t); o.stop(t + a + hold + d + 0.05);
+    return g;
+  }
+  function burst({ t, d = 0.1, peak = 0.3, type = 'bandpass', f = 2000, f2 = null, q = 1, a = 0.002, out }) {
+    const s = noise(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+    fl.type = type; fl.frequency.setValueAtTime(f, t); fl.Q.value = q;
+    if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t + a + d);
+    env(g, t, a, peak, d);
+    s.connect(fl); fl.connect(g); g.connect(out);
+    s.start(t, Math.random()); s.stop(t + a + d + 0.05);
+    return g;
+  }
+  const wet = (node, amt = 0.4) => { const g = ctx.createGain(); g.gain.value = amt; node.connect(g); g.connect(reverb); return node; };
+  const chip = (n, t, d, hold, peak, out, filt = 1500, duty = 0.25) => tone({ wave: pulse(duty), f: typeof n === 'number' ? n : nf(n), t, d, hold, peak, filter: filt, out });
+  const SCALE = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5'];
+  const PENTA = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5'];
+  const bloomChord = (notes, t, a, d, peak, out, filt = 1300) => notes.forEach(n => [-6, 6].forEach(dt => wet(tone({ type: 'triangle', f: nf(n), f2: nf(n) * 1.01, glide: a + d * 0.6, t, a, d, peak, detune: dt, filter: filt, out }), 0.5)));
+
+  // ---------- the candidates. Each play(t, out, i): i is the grown stat's place (0, 1, 2 …). ----------
+  const FILL = 0.6;
+  const MOMENTS = [
+    { key: 'fill', name: 'The EXP bar filling', hint: '0.6 s, while the bar grows', opts: [
+      { id: 'F1', name: 'Rising chip ticks', note: 'Twelve quick ticks climbing a scale', play: (t, o) => { for (let k = 0; k < 12; k++) chip(SCALE[k], t + k * FILL / 12, 0.03, 0.008, 0.05, o, 1600); } },
+      { id: 'F2', name: 'Rising whistle', note: 'One smooth tone sliding up an octave', play: (t, o) => tone({ type: 'triangle', f: nf('C4'), f2: nf('C5'), glide: FILL, t, a: 0.04, hold: FILL - 0.04, d: 0.08, peak: 0.07, filter: 2200, out: o }) },
+      { id: 'F3', name: 'Bell ticks', note: 'Ten soft bell pips climbing', play: (t, o) => { for (let k = 0; k < 10; k++) tone({ f: nf(SCALE[k]) * 2, t: t + k * FILL / 10, d: 0.07, peak: 0.05, out: o }); } },
+      { id: 'F4', name: 'Soft rush', note: 'A breath of noise rising: no notes at all', play: (t, o) => burst({ t, a: FILL * 0.8, d: 0.15, type: 'bandpass', f: 400, f2: 2600, q: 1.4, peak: 0.12, out: o }) },
+      { id: 'F5', name: 'Felt ticks, one pitch', note: 'Quiet even ticks, like a counter: the plainest', play: (t, o) => { for (let k = 0; k < 12; k++) tone({ type: 'triangle', f: nf('B3'), t: t + k * FILL / 12, d: 0.035, peak: 0.08, filter: 1200, out: o }); } },
+      { id: 'F6', name: 'Whistle with ticks', note: 'F2 under quieter F1 ticks', play: (t, o) => { tone({ type: 'triangle', f: nf('C4'), f2: nf('C5'), glide: FILL, t, a: 0.04, hold: FILL - 0.04, d: 0.08, peak: 0.045, filter: 2000, out: o }); for (let k = 0; k < 12; k++) chip(SCALE[k], t + k * FILL / 12, 0.025, 0.006, 0.03, o, 1500); } },
+    ]},
+    { key: 'hit', name: 'The bar reaching 100', hint: 'the moment it fills, before the level-up page', opts: [
+      { id: 'H1', name: 'Bell ding', note: 'One clear bell, G5, with room echo', play: (t, o) => { wet(tone({ f: nf('G5'), t, d: 0.6, peak: 0.12, out: o }), 0.4); tone({ f: nf('G5') * 2.01, t, d: 0.15, peak: 0.02, out: o }); } },
+      { id: 'H2', name: 'Chip, two notes up', note: 'G4 → C5, like Select L but higher', play: (t, o) => { chip('G4', t, 0.04, 0.02, 0.09, o, 1800); chip('C5', t + 0.06, 0.18, 0.05, 0.1, o, 2000); } },
+      { id: 'H3', name: 'Sparkle', note: 'Four quick pips up a chord', play: (t, o) => ['C5', 'E5', 'G5', 'C6'].forEach((n, k) => wet(tone({ f: nf(n), t: t + k * 0.035, d: 0.25 - k * 0.03, peak: 0.06, out: o }), 0.5)) },
+      { id: 'H4', name: 'Soft chime chord', note: 'C5 and G5 together, warm', play: (t, o) => ['C5', 'G5'].forEach(n => wet(tone({ type: 'triangle', f: nf(n), t, a: 0.01, d: 0.6, peak: 0.07, filter: 3000, out: o }), 0.45)) },
+      { id: 'H5', name: 'Low thump + ding', note: 'A soft knock with a bell on top: weightier', play: (t, o) => { tone({ f: nf('C3'), t, d: 0.18, peak: 0.25, out: o }); wet(tone({ f: nf('C5'), t: t + 0.01, d: 0.45, peak: 0.1, out: o }), 0.35); } },
+    ]},
+    { key: 'page', name: 'The level-up page opening', hint: 'with LEVEL UP!', opts: [
+      { id: 'L1', name: 'Chip fanfare', note: 'C–E–G up, then a held C5 over the chord', play: (t, o) => { ['C4', 'E4', 'G4'].forEach((n, k) => chip(n, t + k * 0.08, 0.05, 0.03, 0.09, o, 1800, 0.5)); chip('C5', t + 0.24, 0.45, 0.25, 0.1, o, 2000, 0.5); ['E4', 'G4'].forEach(n => tone({ type: 'triangle', f: nf(n), t: t + 0.24, a: 0.01, hold: 0.25, d: 0.45, peak: 0.05, filter: 1500, out: o })); } },
+      { id: 'L2', name: 'Harp run into a bloom', note: 'A quick run up, then the heal sound\'s warm chord, an octave up', play: (t, o) => { ['G3', 'B3', 'D4', 'G4', 'B4', 'D5'].forEach((n, k) => wet(tone({ f: nf(n), t: t + k * 0.045, d: 0.5, peak: 0.08, out: o }), 0.45)); bloomChord(['G4', 'B4', 'D5'], t + 0.25, 0.15, 1.1, 0.045, o, 1800); } },
+      { id: 'L3', name: 'Brass call', note: 'Da-da-daaa: G4, G4, C5, horn-like', play: (t, o) => { [[0, 'G4', 0.07], [0.14, 'G4', 0.07], [0.28, 'C5', 0.4]].forEach(([dt, n, h]) => [-5, 5].forEach(det => wet(tone({ type: 'sawtooth', f: nf(n), t: t + dt, a: 0.02, hold: h, d: 0.18, peak: 0.035, detune: det, filter: 1400, q: 1.2, out: o }), 0.3))); tone({ type: 'triangle', f: nf('C3'), t: t + 0.28, a: 0.02, hold: 0.4, d: 0.3, peak: 0.08, out: o }); } },
+      { id: 'L4', name: 'Swell and bell', note: 'A breath swelling into a bright chord and one bell', play: (t, o) => { burst({ t, a: 0.28, d: 0.15, type: 'lowpass', f: 300, f2: 2200, q: 0.8, peak: 0.12, out: o }); bloomChord(['C4', 'E4', 'G4', 'C5'], t + 0.2, 0.08, 0.9, 0.035, o, 2000); wet(tone({ f: nf('C6'), t: t + 0.28, d: 0.7, peak: 0.05, out: o }), 0.5); } },
+      { id: 'L5', name: 'Two soft chords', note: 'F major then C major, like an "amen": calm, not game-y', play: (t, o) => { bloomChord(['F3', 'A3', 'C4'], t, 0.04, 0.35, 0.05, o); bloomChord(['E3', 'G3', 'C4', 'E4'], t + 0.3, 0.05, 0.9, 0.05, o); } },
+      { id: 'L6', name: 'Chip fanfare, longer', note: 'C–G–C–E, then a held E5 chord: more of a jingle', play: (t, o) => { ['C4', 'G4', 'C5'].forEach((n, k) => chip(n, t + k * 0.07, 0.04, 0.03, 0.08, o, 1800, 0.5)); chip('E5', t + 0.21, 0.08, 0.05, 0.08, o, 2000, 0.5); chip('D5', t + 0.35, 0.08, 0.05, 0.08, o, 2000, 0.5); chip('E5', t + 0.49, 0.5, 0.3, 0.09, o, 2000, 0.5); ['C4', 'G4'].forEach(n => tone({ type: 'triangle', f: nf(n), t: t + 0.49, a: 0.01, hold: 0.3, d: 0.5, peak: 0.05, filter: 1500, out: o })); } },
+    ]},
+    { key: 'stat', name: 'Each stat that grew appearing', hint: 'once per grown stat, 0.12 s apart', opts: [
+      { id: 'S1', name: 'Chip blip, rising', note: 'Each grown stat one note higher', play: (t, o, i = 0) => chip(SCALE[4 + i], t, 0.05, 0.02, 0.07, o, 1800) },
+      { id: 'S2', name: 'Chip blip, one pitch', note: 'The same G4 for every stat', play: (t, o) => chip('G4', t, 0.05, 0.02, 0.07, o, 1800) },
+      { id: 'S3', name: 'Bell pip, rising', note: 'Soft bells climbing a five-note scale', play: (t, o, i = 0) => wet(tone({ f: nf(PENTA[2 + i]) * 2, t, d: 0.22, peak: 0.08, out: o }), 0.35) },
+      { id: 'S4', name: 'Wood knock', note: 'Like menu move C: dry, no pitch climb', play: (t, o) => { tone({ f: nf('D4'), t, d: 0.07, peak: 0.16, out: o }); tone({ f: nf('D4') * 3.9, t, d: 0.02, peak: 0.03, out: o }); } },
+      { id: 'S5', name: 'Two-note pip', note: 'A tiny up-flick on each stat', play: (t, o) => { chip('B4', t, 0.02, 0.012, 0.05, o, 2200); chip('E5', t + 0.035, 0.07, 0.02, 0.06, o, 2200); } },
+      { id: 'S6', name: 'Soft pluck, rising', note: 'Round plucks climbing: the gentlest', play: (t, o, i = 0) => tone({ type: 'triangle', f: nf(PENTA[i]) * 2, t, a: 0.003, d: 0.16, peak: 0.12, filter: 2400, out: o }) },
+    ]},
+    { key: 'master', name: 'CLASS MASTERED! / Learned', hint: 'when the class box shows a mastery or something learned', opts: [
+      { id: 'M1', name: 'Bell chord bloom', note: 'Three bells, then the warm chord swelling: 1.5 s', play: (t, o) => { ['G4', 'B4', 'D5'].forEach((n, k) => wet(tone({ f: nf(n), t: t + k * 0.06, d: 1.0, peak: 0.08, out: o }), 0.5)); bloomChord(['G3', 'B3', 'D4', 'G4'], t + 0.1, 0.3, 1.2, 0.04, o); } },
+      { id: 'M2', name: 'Chip jingle', note: 'G–C–E–G quick, then a held chord', play: (t, o) => { ['G4', 'C5', 'E5'].forEach((n, k) => chip(n, t + k * 0.08, 0.04, 0.03, 0.08, o, 2000, 0.5)); chip('G5', t + 0.24, 0.5, 0.3, 0.08, o, 2200, 0.5); ['C4', 'E4', 'G4'].forEach(n => tone({ type: 'triangle', f: nf(n), t: t + 0.24, a: 0.01, hold: 0.3, d: 0.5, peak: 0.045, filter: 1500, out: o })); } },
+      { id: 'M3', name: 'Low bell', note: 'One deep bell and its fifth, long tail: solemn', play: (t, o) => { wet(tone({ f: nf('C3'), t, a: 0.005, d: 1.8, peak: 0.2, out: o }), 0.6); wet(tone({ f: nf('G3'), t, a: 0.005, d: 1.4, peak: 0.1, out: o }), 0.6); tone({ f: nf('C3') * 2.76, t, d: 0.5, peak: 0.03, out: o }); } },
+      { id: 'M4', name: 'Harp run up and shimmer', note: 'Two octaves up, ending in a sparkle', play: (t, o) => { ['C4', 'E4', 'G4', 'C5', 'E5', 'G5', 'C6'].forEach((n, k) => wet(tone({ f: nf(n), t: t + k * 0.05, d: 0.6, peak: 0.065, out: o }), 0.5)); for (let k = 0; k < 6; k++) tone({ f: nf('C6') * (k % 2 ? 1.5 : 1), t: t + 0.4 + k * 0.06, d: 0.2, peak: 0.02, out: o }); } },
+      { id: 'M5', name: 'Brass call, bigger', note: 'L3\'s horn, longer and with a low chord under it', play: (t, o) => { [[0, 'C4', 0.06], [0.12, 'G4', 0.06], [0.24, 'C5', 0.06], [0.36, 'E5', 0.55]].forEach(([dt, n, h]) => [-5, 5].forEach(det => wet(tone({ type: 'sawtooth', f: nf(n), t: t + dt, a: 0.02, hold: h, d: 0.25, peak: 0.03, detune: det, filter: 1500, q: 1.2, out: o }), 0.3))); ['C3', 'G3'].forEach(n => tone({ type: 'triangle', f: nf(n), t: t + 0.36, a: 0.03, hold: 0.5, d: 0.4, peak: 0.07, out: o })); } },
+    ]},
+  ];
+
+  // ---------- each moment's own bus (its volume slider) and pick ----------
+  const pick = {}, level = {}, buses = {};
+  // Nick's picks (2026-11-27).
+  const PICKED = { fill: 'F6', hit: 'H3', page: 'L6', stat: 'S6', master: 'M1' };
+  MOMENTS.forEach(m => { pick[m.key] = PICKED[m.key]; level[m.key] = 1; });
+  const busOf = key => { if (!buses[key]) { buses[key] = ctx.createGain(); buses[key].gain.value = level[key]; buses[key].connect(master); } return buses[key]; };
+  const optOf = (key, id) => MOMENTS.find(m => m.key === key).opts.find(o => o.id === id);
+  const play = (key, id, t, i) => { const o = optOf(key, id); if (o) o.play(t, busOf(key), i); };
+
+  document.getElementById('picks').innerHTML = MOMENTS.map(m => `
+    <div class="pick">
+      <label for="p-${m.key}">${m.name}</label>
+      <select id="p-${m.key}" data-key="${m.key}">${m.opts.map(o => `<option value="${o.id}"${PICKED[m.key] === o.id ? ' selected' : ''}>${o.id} · ${o.name}</option>`).join('')}<option value="none">None</option></select>
+      <input type="range" min="0" max="150" value="100" data-lvl="${m.key}" aria-label="${m.name} volume">
+    </div>`).join('');
+  document.querySelectorAll('[data-key]').forEach(s => s.addEventListener('change', () => { pick[s.dataset.key] = s.value; }));
+  document.querySelectorAll('[data-lvl]').forEach(r => r.addEventListener('input', () => { const k = r.dataset.lvl; level[k] = r.value / 100; if (buses[k]) buses[k].gain.setTargetAtTime(level[k], ctx.currentTime, 0.03); }));
+
+  document.getElementById('stations').innerHTML = MOMENTS.map(m => `
+    <div class="panel"><h2 style="font-size:19px">${m.name}</h2><p class="muted" style="font-size:15px">${m.hint}</p>
+      <div class="opts">${m.opts.map(o => `<div class="opt"><span class="id">${o.id}</span><span class="desc">${o.name}<small>${o.note}</small></span><button data-play="${m.key}:${o.id}" aria-label="Play ${o.id}">▶</button></div>`).join('')}</div>
+    </div>`).join('');
+  document.querySelectorAll('[data-play]').forEach(b => b.addEventListener('click', () => {
+    init(); const [k, id] = b.dataset.play.split(':'); const t = ctx.currentTime + 0.02;
+    if (k === 'stat') [0, 1, 2, 3].forEach(i => play(k, id, t + i * 0.12, i)); else play(k, id, t);
+  }));
+
+  // ---------- the mock: the game's pages and timings (progress.rs, PROGRESS_TIMINGS) ----------
+  // intro: the stats wait for L6 to play through (Nick, 0605).
+  const T = { fill: 0.6, hold: 0.5, intro: 1.1, row: 0.12, read: 1.5, classHold: 2.0 };
+  const STATS = [['HP', 19, 1], ['Str', 6, 1], ['Mag', 1, 0], ['Dex', 7, 0], ['Spd', 7, 1], ['Def', 4, 1], ['Res', 3, 0]];
+  const W = 44;
+  const box = lines => ['╔' + '═'.repeat(W) + '╗', ...lines.map(l => '║ ' + l.text.padEnd(W - 2) + ' ║').map((s, k) => lines[k].mark ? lines[k].mark(s) : s), '╚' + '═'.repeat(W) + '╝'].join('\n');
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const bar = v => { const f = Math.round(Math.min(v, 100) / 5); return '█'.repeat(f) + '░'.repeat(20 - f); };
+  function expPage(from, gain, t) {
+    const v = from + gain * Math.min(t / T.fill, 1), shown = v >= 100 ? v - 100 : v;
+    return box([{ text: `Test Lord    EXP ${bar(shown)} ${String(Math.floor(shown)).padStart(2)}` }]);
+  }
+  function levelPage(t) {
+    const rows = Math.max(0, Math.min(7, Math.floor((t - T.intro) / T.row) + 1));
+    const lines = [{ text: 'LEVEL UP!', mark: s => s.replace('LEVEL UP!', '<b>LEVEL UP!</b>') }, { text: '' }, { text: 'Test Lord' }, { text: 'Lv 4 → 5' }, { text: '' }];
+    STATS.forEach(([n, b, g], k) => {
+      const text = k < rows ? (g ? `${n.padEnd(4)} ${String(b).padStart(2)} → ${String(b + g).padEnd(3)} +${g}` : `${n.padEnd(4)} ${String(b).padStart(2)}`) : '';
+      lines.push({ text, mark: g && k < rows ? s => s.replace(`+${g}`, `<i>+${g}</i>`) : null });
+    });
+    return box(lines);
+  }
+  const classPage = () => box([{ text: 'Test Lord    Exile  CL 9 → 10' }, { text: 'CLASS MASTERED!', mark: s => s.replace('CLASS MASTERED!', '<b>CLASS MASTERED!</b>') }, { text: 'Learned: Leadership 1' }]);
+
+  // One scenario: a list of [start, end, draw(t)] pages and of [time, moment, i] cues.
+  function scenario(kind) {
+    const pages = [], cues = [];
+    let at = 0;
+    const one = (from, gain, levels, mastery) => {
+      const s = at;
+      pages.push([s, s + T.fill + T.hold, t => expPage(from, gain, t)]);
+      cues.push([s, 'fill']);
+      if (levels) cues.push([s + T.fill * (100 - from) / gain, 'hit']);
+      at = s + T.fill + T.hold;
+      if (!levels) return;
+      const l = at, len = T.intro + T.row * 7 + T.read;
+      pages.push([l, l + len, t => levelPage(t)]);
+      cues.push([l, 'page']);
+      let g = 0;
+      STATS.forEach(([, , gain2], k) => { if (gain2) cues.push([l + T.intro + k * T.row, 'stat', g++]); });
+      at = l + len;
+      if (mastery) { pages.push([at, at + T.classHold, () => classPage()]); cues.push([at, 'master']); at += T.classHold; }
+    };
+    if (kind === 'exp') one(40, 30, false, false);
+    if (kind === 'level') one(85, 30, true, false);
+    if (kind === 'master') one(85, 30, true, true);
+    if (kind === 'five') for (let n = 0; n < 5; n++) { one(85, 30, true, false); at += 0.8; }
+    return { pages, cues, len: at + 0.3 };
+  }
+
+  const mock = document.getElementById('mock');
+  const idle = () => { mock.innerHTML = esc(expPage(40, 0, 0)) + '\n\n' + 'Pick the sounds, then press a ▶ button.'; };
+  idle();
+  let run = null;
+  function stop() {
+    if (!run) return;
+    cancelAnimationFrame(run.raf); clearTimeout(run.timer);
+    Object.values(buses).forEach(b => { b.disconnect(); });
+    for (const k in buses) delete buses[k];
+    run = null; idle();
+  }
+  document.getElementById('stop').addEventListener('click', stop);
+  document.querySelectorAll('[data-scn]').forEach(b => b.addEventListener('click', () => {
+    init(); stop();
+    const s = scenario(b.dataset.scn), t0 = ctx.currentTime + 0.1;
+    s.cues.forEach(([at, key, i]) => { if (pick[key] !== 'none') play(key, pick[key], t0 + at, i); });
+    run = {};
+    const frame = () => {
+      const t = ctx.currentTime - t0;
+      const p = s.pages.find(([a, e]) => t >= a && t < e) || (t < 0 ? s.pages[0] : null);
+      if (p) mock.innerHTML = p[2](Math.max(0, t - p[0]));
+      if (t >= s.len) { run = null; return; }
+      run.raf = requestAnimationFrame(frame);
+    };
+    run.raf = requestAnimationFrame(frame);
+  }));
+}
+</script>
+</body>
+</html>
