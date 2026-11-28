@@ -2,6 +2,9 @@ name: CI
 
 on:
   pull_request:
+    # ready_for_review: a draft skips the heavy jobs, so marking it ready
+    # starts the full run (ticket 0174).
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
@@ -9,8 +12,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # A push to main is never cancelled: each push diffs only its own commits
+  # (ticket 0174), so a cancelled run's change would go unchecked. Keyed by
+  # the commit on push, as playtest.yml is (ticket 0515). A PR's newer commit
+  # supersedes its older one.
+  group: ci-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -25,6 +32,10 @@ jobs:
   changes:
     name: changes
     uses: ./.github/workflows/changes.yml
+    # By name, not `secrets: inherit` (zizmor's secrets-inherit): only for
+    # comparing a pin move's trees (ticket 0174).
+    secrets:
+      PRIVATE_ASSETS_KEY: ${{ secrets.PRIVATE_ASSETS_KEY }}
 
   fmt:
     name: fmt
@@ -37,6 +48,10 @@ jobs:
           persist-credentials: false
       - run: rustup show
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: cargo fmt --all --check
 
   clippy:
@@ -62,10 +77,28 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
-      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      # The JSON report is the one SonarCloud imports (the `sonar` job, ticket
+      # 0174); the rendered messages are the log's. A warning still fails it.
+      - name: Clippy
+        run: |
+          set -euo pipefail
+          status=0
+          if ! cargo clippy --workspace --all-targets --locked --message-format=json -- -D warnings > clippy.json; then
+            status=1
+          fi
+          jq -r 'select(.reason == "compiler-message") | .message.rendered' clippy.json
+          exit "$status"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: clippy-report
+          path: clippy.json
+          retention-days: 1
 
   test:
     name: test
@@ -74,7 +107,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        # A draft runs Ubuntu only; "Ready for review" runs all three (ticket 0174).
+        os: ${{ github.event.pull_request.draft && fromJSON('["ubuntu-latest"]') || fromJSON('["windows-latest","ubuntu-latest","macos-latest"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -95,13 +129,47 @@ jobs:
       # Its cost: about +3 to +6 minutes a leg (0171's measure, macOS the most).
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - name: Install macroquad system libraries
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
+      - name: Add the coverage tools
+        if: matrix.os == 'ubuntu-latest'
+        run: rustup component add llvm-tools-preview
+      # nextest runs each test in a process of its own, all of them however
+      # many fail (`.config/nextest.toml`'s `ci` profile, ticket 0174), and
+      # the Ubuntu leg collects the coverage SonarCloud reads, so the suite
+      # runs once instead of again under llvm-cov.
+      - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
+        with:
+          tool: ${{ matrix.os == 'ubuntu-latest' && 'cargo-nextest,cargo-llvm-cov' || 'cargo-nextest' }}
       - name: Name the proptest seed
-        run: echo "proptest seed $PROPTEST_RNG_SEED (PROPTEST_RNG_SEED=$PROPTEST_RNG_SEED cargo test reproduces this run)"
-      - run: cargo test --workspace --locked
+        run: echo "proptest seed $PROPTEST_RNG_SEED (PROPTEST_RNG_SEED=$PROPTEST_RNG_SEED cargo nextest run reproduces this run)"
+      - name: Run the tests
+        if: matrix.os != 'ubuntu-latest'
+        run: cargo nextest run --workspace --locked --profile ci
+      # The profile by its variable: llvm-cov's own --profile is cargo's.
+      - name: Run the tests, collecting coverage
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          NEXTEST_PROFILE: ci
+        run: >-
+          cargo llvm-cov nextest --workspace --locked
+          --exclude-from-report trpg-app --exclude-from-report trpg-story-preview
+          --lcov --output-path lcov.info
+      - name: Run the doc tests (nextest runs none)
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo test --doc --workspace --locked
+      # Paths and line counts, no source text (ADR-0117 §4), for `sonar`.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: coverage-report
+          path: lcov.info
+          retention-days: 1
 
   # A docs-only PR that changes a Markdown file the code reads runs the
   # tests of the crates that read it, and nothing else (ADR-0098). A PR
@@ -131,6 +199,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
@@ -163,10 +234,15 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       # No artifact of it: it embeds the private content, and a public
       # repository's artifacts can be downloaded by anyone (ADR-0117).
-      - run: cargo shuyi web --release
+      # A debug package: `export` builds the release one (ticket 0174), so
+      # the release web build runs once.
+      - run: cargo shuyi web
 
   # the rules build without `std` for the Playdate (ADR-0070 §3); 1028
   # added `trpg-content`; 1029 adds `trpg-ui`. The engine's crates build
@@ -196,6 +272,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - run: cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf --locked
@@ -236,6 +315,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       # The ARM compiler's packages come from the Actions cache (ticket
       # 0192): the Ubuntu mirror a runner draws sometimes trickles, and
@@ -340,15 +422,21 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
       - run: cargo doc --workspace --no-deps --locked
 
-  coverage:
-    name: coverage
-    needs: changes
-    if: needs.changes.outputs.code == 'true'
+  # SonarCloud reads the reports `clippy` and `test`'s Ubuntu leg made
+  # (ticket 0174): nothing is built or run twice here, and no private file
+  # is checked out.
+  sonar:
+    name: sonar
+    needs: [clippy, test]
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -357,32 +445,12 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      # The game's content from the private repository (ADR-0117): this
-      # job reads the real one, laid over assets/ by the build.
-      - uses: ./.github/actions/private-assets
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          key: ${{ secrets.PRIVATE_ASSETS_KEY }}
-          art: "false"
-          content: "true"
-          required: "true"
-      - run: rustup show
-      - run: rustup component add llvm-tools-preview
-      # No target/ in the cache (ticket 0171): this job checks out the private
-      # content (ADR-0117), a build here embeds it, and a fork's pull request
-      # can restore main's cache.
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+          name: clippy-report
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          cache-targets: false
-      - name: Install macroquad system libraries
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
-      - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
-        with:
-          tool: cargo-llvm-cov
-      - name: Generate coverage report
-        run: cargo llvm-cov --workspace --exclude trpg-app --exclude trpg-story-preview --lcov --output-path lcov.info
-      - name: Generate Clippy report for SonarCloud
-        run: cargo clippy --workspace --all-targets --message-format=json > clippy.json
-        continue-on-error: true
+          name: coverage-report
       - name: SonarCloud scan
         if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
@@ -401,6 +469,7 @@ jobs:
       HEAD_REF: ${{ github.head_ref }}
       EVENT_NAME: ${{ github.event_name }}
       PR_TITLE: ${{ github.event.pull_request.title }}
+      DRAFT: ${{ github.event.pull_request.draft }}
     steps:
       # Depth 2 for pr-size below: HEAD is the PR's merge commit, HEAD^1 the
       # base's tip.
@@ -424,6 +493,9 @@ jobs:
       # rule is per job, and xtask builds in seconds without one.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       # A warning on a PR past about 3,000 changed lines; never a failure,
       # and only the number on an engine-pin/ or sonar/ PR (ADR-0101).
@@ -433,9 +505,16 @@ jobs:
       - name: Check shared agent skill loaders
         shell: pwsh
         run: ./scripts/sync-agent-skills.ps1 -Check
+      # A draft's branch may still hold its ticket in open/: its --pr-branch
+      # findings only warn until "Ready for review" (ticket 0174).
       - name: Run ticket lint
         run: |
-          if [ "$EVENT_NAME" = "pull_request" ]; then
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$DRAFT" = "true" ]; then
+            cargo xtask ticket-lint
+            if ! cargo xtask ticket-lint --pr-branch "$HEAD_REF"; then
+              echo "::warning::A draft: the ticket-lint --pr-branch findings above fail once the PR is ready for review."
+            fi
+          elif [ "$EVENT_NAME" = "pull_request" ]; then
             cargo xtask ticket-lint --pr-branch "$HEAD_REF"
           else
             cargo xtask ticket-lint
@@ -489,6 +568,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       # No key hard-coded in game code or player text (keyboard-input skill).
       - name: Check for hard-coded keys
@@ -532,6 +614,9 @@ jobs:
       - run: rustup show
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           key: export
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
@@ -591,6 +676,9 @@ jobs:
       # Its cost: about +3.5 minutes (0171's measure).
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
           key: bench
       - name: The web package the export job made
@@ -633,7 +721,7 @@ jobs:
     # Not `bench` yet: its first run found numbers over their budgets, which
     # tickets 1247, 1248 and 1249 bring under (1248 still open); 1250 adds it here. Until
     # then it runs, posts its table and shows red without blocking.
-    needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, coverage, tickets, shuyi-checks, export]
+    needs: [changes, fmt, clippy, test, doc-tests, wasm, no-std, playdate, docs, sonar, tickets, shuyi-checks, export]
     runs-on: ubuntu-latest
     permissions:
       contents: read

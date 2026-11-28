@@ -42,6 +42,9 @@ name: Playtest
 
 on:
   pull_request:
+    # ready_for_review: a draft skips the heavy jobs, so marking it ready
+    # starts the full run (ticket 0174).
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
@@ -62,6 +65,8 @@ env:
 jobs:
   detect:
     name: detect
+    # A draft waits for "Ready for review" (ticket 0174).
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     # actions: read finds the merged PR's run and downloads its reports.
     permissions:
@@ -258,6 +263,9 @@ jobs:
       # can restore main's cache.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          # Restore only, except on main: a pull request's caches evicted
+          # main's, past the 10 GB cap (ticket 0174).
+          save-if: ${{ github.ref == 'refs/heads/main' }}
           cache-targets: false
       - name: Install macroquad system libraries
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev

@@ -1,6 +1,12 @@
-# nextest runs only in the PR mutation gate (ADR-0073); `cargo test` runs
-# everywhere else. The `mutants` profile is chosen there by
-# `NEXTEST_PROFILE=mutants` (ticket 0127).
+# nextest runs CI's `test` legs (the `ci` profile, ticket 0174) and the PR
+# mutation gate (the `mutants` profile, ADR-0073, chosen there by
+# `NEXTEST_PROFILE=mutants`, ticket 0127); the local gates run `cargo test`.
+# nextest runs no doc tests: CI's Ubuntu leg runs `cargo test --doc`.
+
+# CI's `test` legs: every test runs, however many fail, so one run names
+# them all.
+[profile.ci]
+fail-fast = false
 
 # A caught mutant needs one failing test, so the run stops at the first
 # failure and also stops the tests still running, instead of waiting for

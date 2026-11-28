@@ -2,6 +2,9 @@ name: CodeQL
 
 on:
   pull_request:
+    # ready_for_review: a draft skips the heavy jobs, so marking it ready
+    # starts the full run (ticket 0174).
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   schedule:
@@ -11,18 +14,29 @@ permissions:
   contents: read
 
 concurrency:
-  group: codeql-${{ github.ref }}
-  cancel-in-progress: true
+  # A push to main is never cancelled: each push diffs only its own commits
+  # (ticket 0174), so a cancelled run's change would go unchecked. Keyed by
+  # the commit on push, as playtest.yml is (ticket 0515). A PR's newer commit
+  # supersedes its older one.
+  group: codeql-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
   changes:
     name: changes
     uses: ./.github/workflows/changes.yml
+    # By name, not `secrets: inherit` (zizmor's secrets-inherit): only for
+    # comparing a pin move's trees (ticket 0174).
+    secrets:
+      PRIVATE_ASSETS_KEY: ${{ secrets.PRIVATE_ASSETS_KEY }}
 
   analyze:
     name: analyze (${{ matrix.language }})
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    # The actions analysis reads the workflows; a draft waits (ticket 0174).
+    if: >-
+      (needs.changes.outputs.code == 'true' || needs.changes.outputs.workflows == 'true') &&
+      !github.event.pull_request.draft
     runs-on: ubuntu-latest
     permissions:
       security-events: write

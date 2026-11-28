@@ -67,6 +67,12 @@ Kept from ADR-0047: nextest is the test runner of the PR mutation gate only
 doc tests, so a mutant only a doc test catches counts as missed; `--jobs 2`,
 never more; `.cargo/mutants.toml` unchanged.
 
+*Note, 2026-11-28 (ticket 0174):* nextest runs CI's `test` legs too (its
+`ci` profile, `fail-fast = false`; the Ubuntu leg under `cargo llvm-cov
+nextest` for SonarCloud's coverage, then `cargo test --doc`, since nextest
+runs no doc tests). The local gates and the weekly run still use `cargo
+test`.
+
 The test timeout is fixed at **720 s**: the 705 s that
 `timeout_multiplier = 3.0` gave on the 232 s unmutated `ui` run, rounded up.
 It must be raised if the unmutated `ui` run grows past about 240 s (the
