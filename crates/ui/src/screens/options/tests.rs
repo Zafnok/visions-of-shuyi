@@ -363,6 +363,7 @@ fn rows_show_their_values() {
         s.game.anim_speed = AnimSpeed::Fast;
         s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast;
         s.game.map_look = MapLook::Glyphs;
+        s.game.window_look = crate::WindowLook::Glyphs;
         s.game.map_zoom = MapZoom::X1;
         s.game.threat_arrows = crate::ThreatArrows::Straight;
         s.game.range_style = crate::RangeStyle::Still;
@@ -382,6 +383,8 @@ fn rows_show_their_values() {
     let fast = EnemyPhaseSpeed::Fast.key();
     assert_eq!(value(&c, Row::EnemyPhaseSpeed), named(fast));
     assert_eq!(value(&c, Row::MapLook), named(MapLook::Glyphs.key()));
+    let glyphs = crate::WindowLook::Glyphs.key();
+    assert_eq!(value(&c, Row::WindowLook), named(glyphs));
     assert_eq!(value(&c, Row::MapZoom), "1×*");
     assert_eq!(value(&c, Row::ThreatArrows), "Straight*");
     assert_eq!(value(&c, Row::RangeStyle), "Still*");

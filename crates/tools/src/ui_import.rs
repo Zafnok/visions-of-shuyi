@@ -86,10 +86,14 @@ pub struct PlateCut {
     pub right: u32,
 }
 
-/// Whether `rgb` is the kit's gold: kept by a [`Recolour`].
+/// Whether `rgb` is the kit's gold, kept by a [`Recolour`]: a hue from
+/// 14.4 to 61.2 degrees, saturated over a quarter (its brightest channel
+/// more than four times as far from its darkest as from black).
 fn warm(rgb: [u8; 3]) -> bool {
-    let (hue, sat, _) = to_hsv(rgb);
-    (14.4..=61.2).contains(&hue) && sat > 0.25
+    let [red, green, blue] = rgb;
+    let (max, min) = (red.max(green).max(blue), red.min(green).min(blue));
+    let strong = 4 * u16::from(max - min) > u16::from(max);
+    strong && (14.4..=61.2).contains(&to_hsv(rgb).0)
 }
 
 /// Recolours the RGBA8 `pixels` by `r`.
@@ -212,6 +216,24 @@ mod tests {
         assert!((sat - 0.56).abs() < 0.03, "sat {sat}");
         assert!((val - 87.0 / 255.0).abs() < 0.01, "val {val}");
         assert_eq!(pixels[7], 255);
+        // A greyish yellow isn't gold (too little colour), and a strong
+        // blue isn't (another hue): both move.
+        let (grey, blue) = ([120, 115, 100, 255], [40, 60, 200, 255]);
+        let mut pixels = [grey, blue].concat();
+        recolour(
+            &mut pixels,
+            Recolour {
+                hue: 0.0,
+                sat: 1.0,
+                val: 1.0,
+            },
+        );
+        assert_ne!(&pixels[0..4], &grey);
+        assert_ne!(&pixels[4..8], &blue);
+        // Gold at exactly a quarter's saturation (50 of 200) isn't gold
+        // enough; a step more is.
+        assert!(!warm([200, 175, 150]));
+        assert!(warm([200, 175, 149]));
     }
 
     #[test]
@@ -242,6 +264,20 @@ mod tests {
             right: 1,
         };
         assert!(cut_plate(5, 2, &pixels, past).is_err());
+        // Caps of 2 and 3 fill 5 columns exactly: that fits.
+        let full = PlateCut {
+            left: 2,
+            column: 2,
+            right: 3,
+        };
+        assert_eq!(cut_plate(5, 2, &pixels, full).map(|(w, _)| w), Ok(6));
+        // Caps of 1 and 5 are 6 columns: too many for 5.
+        let lopsided = PlateCut {
+            left: 1,
+            column: 2,
+            right: 5,
+        };
+        assert!(cut_plate(5, 2, &pixels, lopsided).is_err());
     }
 
     #[test]
@@ -262,6 +298,10 @@ mod tests {
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(root.join("assets-src/ui")).unwrap();
         fs::write(root.join(SOURCES), "(pictures: [])").unwrap();
+        let err = run(&root).unwrap_err();
+        assert!(err.contains("private-assets --library"), "{err}");
+        // The bought art's folder alone isn't enough: the library too.
+        fs::create_dir_all(root.join("assets-private/game")).unwrap();
         let err = run(&root).unwrap_err();
         assert!(err.contains("private-assets --library"), "{err}");
         let _ = fs::remove_dir_all(&root);

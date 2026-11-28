@@ -552,7 +552,11 @@ impl Early {
             ai: ai::load(),
             credits: credits::load(audio.as_ref().ok()),
             audio,
-            frames: load_frames(images.as_ref().ok()),
+            // The windows' frames, checked against the images; none if the
+            // images failed to load.
+            frames: images
+                .as_ref()
+                .map_or_else(|_| Ok(frames::UiFrames::default()), frames::load),
             images,
             tilesets,
             battles,
@@ -1091,12 +1095,6 @@ fn load_battlers(
 
 /// The title screen's art (ADR-0059): none if the images failed to load
 /// (their errors are reported once, by the image table).
-/// The windows' frames, checked against `images`; none if the images
-/// failed to load.
-fn load_frames(images: Option<&ImageTable>) -> Result<frames::UiFrames, Vec<ContentError>> {
-    images.map_or_else(|| Ok(frames::UiFrames::default()), frames::load)
-}
-
 fn load_title(images: Option<&ImageTable>) -> Result<TitleArt, Vec<ContentError>> {
     match images {
         Some(images) => title::load(images),

@@ -108,6 +108,11 @@ fn borders_and_caps_must_leave_a_middle_and_a_fill_must_be_a_colour() {
         "left: 50, top: 22, right: 46",
     );
     assert!(errors(&wide).iter().any(|e| e.contains("leave no middle")));
+    let tall = GOOD.replace(
+        "left: 22, top: 22, right: 22, bottom: 22",
+        "left: 22, top: 50, right: 22, bottom: 46",
+    );
+    assert!(errors(&tall).iter().any(|e| e.contains("leave no middle")));
     let caps = GOOD.replace("left: 16, right: 16", "left: 16, right: 17");
     assert!(errors(&caps).iter().any(|e| e.contains("leave no body")));
     let fill = GOOD.replace("#382b33", "plum");
@@ -120,6 +125,8 @@ fn borders_and_caps_must_leave_a_middle_and_a_fill_must_be_a_colour() {
 
 #[test]
 fn the_embedded_file_loads() {
-    load(&images(true)).unwrap();
-    load(&images(false)).unwrap();
+    let bought = load(&images(true)).unwrap();
+    assert_eq!(bought.frames.len(), FRAME_NAMES.len());
+    assert_eq!(bought.plates.len(), PLATE_NAMES.len());
+    assert_eq!(load(&images(false)).unwrap(), UiFrames::default());
 }

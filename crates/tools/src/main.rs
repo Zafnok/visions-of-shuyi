@@ -1011,6 +1011,19 @@ mod tests {
     }
 
     #[test]
+    fn ui_import_help_list_and_bad_args() {
+        // Only the arguments: a real run writes into `assets-private/`.
+        let here = repo_root();
+        assert_eq!(ui_import_in(&here, &args(&["--help"])), 0);
+        assert_eq!(ui_import_in(&here, &args(&["--list"])), 0);
+        assert_eq!(ui_import_in(&here, &args(&["--bogus"])), 2);
+        // No arguments runs it: with no source list there, that fails.
+        let bare = std::env::temp_dir().join(format!("xtask-ui-none-{}", std::process::id()));
+        assert_eq!(ui_import_in(&bare, &[]), 1);
+        assert_eq!(ui_import_in(&bare, &args(&["--list"])), 1);
+    }
+
+    #[test]
     fn battler_import_help_list_and_bad_args() {
         // Only the argument check: a real run writes into `assets-private/`.
         let here = repo_root();

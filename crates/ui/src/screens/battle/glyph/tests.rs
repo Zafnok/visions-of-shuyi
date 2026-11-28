@@ -862,10 +862,14 @@ fn the_picture_look_frames_the_side_panel_and_the_menus() {
     // A list's header (the Arts list's weapon) sits on the plate.
     view.menu.as_mut().unwrap().header = Some(MenuHeader {
         name: "Iron Sword".into(),
-        uses: None,
+        uses: Some(UsesView {
+            text: "20/20".into(),
+            spent: false,
+        }),
     });
     paint(&c, &view, &mut buf);
-    assert_plated(&buf, Rect::new(cells.x + 3, cells.y, 10, 1));
+    // `Iron Sword 20/20`: the name and the uses on one plate.
+    assert_plated(&buf, Rect::new(cells.x + 3, cells.y, 16, 1));
     let mut s = quick();
     step(&mut s, &mut c, &[Action::Cancel]);
     let view = s.view(&c);
