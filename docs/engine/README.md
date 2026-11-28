@@ -80,6 +80,13 @@ code now: the game depends on the engine's crates by a git revision.
   `.mcp.json`: its tools are `cargo shuyi`'s operations and a session that
   keeps the game running between calls (`start`, `step`, `scene`,
   `frame_png`, `events`, `reset`, `stop`; the engine's `docs/contract.md`).
+  In a worktree session the first `start` builds that worktree's tool
+  program and holds the call until the build ends (1m 44s on Nick's
+  machine, 2026-11-27); Claude Code sends no other `shuyi` call until it
+  answers, so a `step` waits behind it. The server can answer a task at
+  once instead (engine ADR-0159, ADR-0162), but only on the 2026-07-28
+  protocol to a client that declares the tasks extension, and Claude Code
+  connects on 2025-11-25 without it (ticket 1394).
 - **The boundary** is the repository wall now: the engine can't name a
   game crate it can't see. `check-engine-boundary` (1102) retired with the
   move.
