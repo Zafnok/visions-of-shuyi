@@ -9,24 +9,44 @@ Each module is one of:
 - **G**: game. Visions of Shuyi's rules, data, screens or story.
 - **M**: mixed. The note says where to cut.
 
-Line counts are rough. For `ui`, `app` and `xtask` they are whole files
-including inline tests (`wc -l`). For `core` and `content` they are code
-lines without tests. Keep this file current as modules move: the ticket
-that moves a module changes its row.
+Keep this file current as modules move: the ticket that moves a module
+changes its row. A row still E, K or M on the game's side names the
+ticket that moves it ("moves with NNNN") or says why it stays. Brought
+up to date by 1233 (2026-11-28), from the boundary audit of 2026-11-03.
 
 ## Summary
 
-| Crate | Engine | Tactics kit | Game | Notes |
-| ----- | ------ | ----------- | ---- | ----- |
-| `core` (14.1k code lines) | ~0.5k (3%) | ~1.5k (11%) | ~12.1k (86%) | Has no simulation trait. The K code is typed over the game's types, so it is rewritten generically, not moved. |
-| `content` (15.6k code lines) | ~7.3k (47%) | ~0.7k (4%) | ~7.6k (49%) | Almost every loader is `load()` (reads the bundle) plus a pure `from_source(file, text)`. That is the seam. |
-| `ui` (78.5k lines) | ~21.8k (28%) | ~6.9k (9%) | ~49.8k (63%) | M files: 28.5k lines, cut by the notes below. |
-| `app` (3.6k lines) | ~3.3k | — | ~0.3k | Thin. The game's leaks are listed below. |
-| `xtask` (18.3k lines) | ~8.4k | ~1.2k | ~4.4k | Plus 4.3k M. Repository tools (`ticket-lint`, `clean-merged-targets`) stay with us. |
-| `bots` (0.7k lines) | — | ~0.2k shape | ~0.5k | Done (1116): the bot trait and play loop are `shuyi_core::bots`. |
+Production lines on 2026-11-28 (`cargo xtask code-lines --base
+4b825dc642cb6eb9a060e54bf8d69288fbee4904`, the whole working tree: no
+tests, blank or comment lines), the game at `7e860d28` and the engine at
+its pin `230080db`. The carve (1102–1118, 1154) is done: the engine's
+code is its own repository, so the game's crates below are what is left.
 
-**Total that goes to the engine:** roughly a third of the codebase. That
-is about 60k of about 180k lines, counting tests.
+| Game crate | Lines | Notes |
+| ---------- | ----- | ----- |
+| `ui` | 35,303 | The screens, the battle, the map skins' unit painters; the rest re-exports the engine's. |
+| `content` | 14,423 | The game's data and its checks over `shuyi_assets`' formats. |
+| `core` | 12,478 | The rules; `BattleState` implements `TurnRules`. |
+| `tools` | 10,545 | The game's tool program (`cargo shuyi`, ADR-0129). |
+| `xtask` | 2,912 | The repository's process tool. |
+| `bots` | 2,761 | The personas over `shuyi_core::bots`. |
+| `playdate` | 2,235 | The Playdate front end (ADR-0070). |
+| `engine-watch` | 1,373 | The watcher on the engine's `main` (ADR-0096). |
+| `writer`, `story-preview`, `app` | 156, 108, 147 | |
+| **Total** | **82,441** | |
+
+| Engine crate | Lines | | Engine crate | Lines |
+| ------------ | ----- | - | ------------ | ----- |
+| `cli` | 40,688 | | `playdate` | 3,080 |
+| `ui` | 26,965 | | `sound` | 2,230 |
+| `xtask` | 21,264 | | `sound-out` | 830 |
+| `assets` | 20,212 | | `alloc-count` | 528 |
+| `app` | 8,861 | | `net` | 498 |
+| `platform` | 6,672 | | `script` | 377 |
+| `core` | 5,613 | | `embed`, `embed-macros`, `shuyi` | 300, 101, 28 |
+
+The engine's crates total 138,247; its examples, tutorial, templates and
+evals add 14,101.
 
 ## The couplings that block a second game
 
@@ -126,7 +146,9 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    **Fix:** `Bundle::new(&[Layer])`. The game registers its layers once.
    Runtime layers are for mods (1011) and hot reload (engine ADR-0004).
    **Done in 1103** but for runtime layers: `shuyi_assets::Bundle::new(Vec<Layer>)`,
-   installed once from `trpg_content::layers()`.
+   installed once from `trpg_content::layers()`. Since 0123 every build
+   reads the tables `build.rs` writes; `include_dir` is gone (the
+   `bundle.rs` row).
 10. **The `Harness` is wired to the flow, the battle and the test chapter**
     (`ui/src/harness.rs:20-28,542`). Its driver core is generic: about 750
     lines of key, pad and wait scripts, the audio and music simulation, and
@@ -138,15 +160,15 @@ These are the things ADR-0063 §6 makes generic before moving anything.
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
-| `rng.rs` | E | Moved to `shuyi_core::rng` (1114): own PCG32 `SimRng`, `RandomSource`, `ScriptedRng`. `trpg_core::rng` names it. |
-| `geom.rs` | E | Moved to `shuyi_core::grid` (1114) with `TileSet`: `Pos`, `Dir` (4-way), `Grid<T>`. `trpg_core::geom` names it. |
-| `terrain.rs` | K | `TerrainId` is `shuyi_core::TerrainId` (1115), re-exported. Move costs per movement type are K. The `defense`/`avoid`/`heal_percent` fields are G. |
+| `rng.rs` | E → moved | Moved to `shuyi_core::rng` (1114): own PCG32 `SimRng`, `RandomSource`, `ScriptedRng`. `trpg_core::rng` names it; the file is gone. |
+| `geom.rs` | E → moved | Moved to `shuyi_core::grid` (1114) with `TileSet`: `Pos`, `Dir` (4-way), `Grid<T>`. `trpg_core::geom` names it; the file is gone. |
+| `terrain.rs` | K | `TerrainId` is `shuyi_core::TerrainId` (1115), re-exported. Move costs per movement type are K in shape but typed over the game's movement types and tables, so they stay: the kit's path takes them as a cost closure (1114), and no ticket moves more. The `defense`/`avoid`/`heal_percent` fields are G. |
 | `movement.rs` | G on K | Done (1114): `TileSet` moved to the kit's grid, and `reachable` is the kit's Dijkstra (`shuyi_core::path`) with this game's cost closure; its `Reach` adds where a unit may stop. `path_cost`, attack tiles, threat and the danger zone are this game's rules of units and weapons over it. |
-| `map.rs` | M | `BattleMap` grid is K. `TileFeature::{Shop,Chest}` is G. |
-| `history.rs` | M | Done (1114): replay, `state_at` and rewind are `shuyi_core::history::History` over `TurnRules`. `BattleHistory` adds the rewind charges (G) and keeps the save's format. |
-| `save.rs` | M | Done (1114): the version header and the refuse-don't-migrate rule are `shuyi_core::save` (`SaveHeader<F: SaveFormat>`). `SaveFile` payload is G. |
-| `battle.rs` | M | About 450 lines of turn skeleton (phases, turns, objectives, the validate→plan→execute pattern) are K in shape. The skeleton calls game rules inline, so it stays in the game and implements `TurnRules` (1114). The rest (2,800) is G. |
-| `battle/triggers.rs` | M | Areas, `Who`, `TurnStart`, enters-area, talk and fired-once are K (about 250 lines). The others are G. |
+| `map.rs` | M | `BattleMap` is a `shuyi_core::Grid` of the game's tiles (1114), so its K part is the kit's already; what stays is the game's tile (terrain, `TileFeature::{Shop,Chest}`). No ticket moves more. |
+| `history.rs` | M → cut | Done (1114): replay, `state_at` and rewind are `shuyi_core::history::History` over `TurnRules`. `BattleHistory` adds the rewind charges (G) and keeps the save's format. |
+| `save.rs` | M → cut | Done (1114): the version header and the refuse-don't-migrate rule are `shuyi_core::save` (`SaveHeader<F: SaveFormat>`). `SaveFile` payload is G. |
+| `battle.rs` | M, stays | About 450 lines of turn skeleton (phases, turns, objectives, the validate→plan→execute pattern) are K in shape. The skeleton calls game rules inline, so it stays in the game and implements `TurnRules` (1114). The rest (2,800) is G. |
+| `battle/triggers.rs` | M | Areas, `Who`, `TurnStart`, enters-area, talk and fired-once are K in shape (about 250 lines), written over the game's units and battle state, so they stay until a second game wants them; no ticket moves them. The others are G. |
 | `lead.rs` | M → cut | 1105: `split_tokens` and `Part` (`{token}` text) are `shuyi_core::text`, and `CharacterId` (`unit.rs`) is `shuyi_core::CharacterId`, the dialogue's speaker id too; both re-exported. The lead (`LEAD_ID`, pronouns, gendered portraits, its tokens) is G. |
 | `ai.rs`, `legal.rs`, `campaign.rs`, `prep.rs`, `unit.rs`, `class.rs`, `stats.rs`, `combat.rs`, `item.rs`, `weapon.rs`, `magic.rs`, `spell.rs`, `skill.rs`, `art.rs`, `progression*`, `shop.rs`, `support.rs`, `battle/{arts,skills,supports}.rs` | G | This game's rules. `legal.rs` is `BattleState`'s `TurnRules::legal_commands` (1114); the AI's flow field calls the kit's `flow_field`. |
 
@@ -162,87 +184,88 @@ Modules that do not import `trpg_core` at all are the first set to move:
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
-| `bundle.rs`, `build.rs` | E → moved | 1103: the layer logic is `shuyi_assets::bundle` (`Bundle`, `Layer`, `install`). `bundle.rs` keeps the game's folders (`include_dir!`, `layers()`) and the old free functions over the installed bundle; `build.rs` and the two features stay the game's. |
+| `bundle.rs`, `build.rs` | E → moved | 1103: the layer logic is `shuyi_assets::bundle` (`Bundle`, `Layer`, `install`). One code path on every target since 0123: `build.rs` writes each layer's table into `OUT_DIR` (with `shuyi_embed::table_source`, engine#2215, done 2026-11-22) and `bundle.rs` includes them (`layers()`, and the old free functions over the installed bundle); no `include_dir`. The folders, the two features and which files each target leaves out stay the game's. The one-bit pictures `build.rs` converts for the Playdate move with 1221 (the engine's bake). |
 | `error.rs`, `ron_loader.rs` | E → moved | 1103: `shuyi_assets::{error, ron}` (`ContentError`, `parse_ron<T>`, `load_ron` over a `Bundle`). Both files are re-exports now; `ron_loader.rs` only `parse_ron` (its unused `load_ron` went in 1230). |
 | `font.rs`, `image.rs`, `lighting.rs`, `audio.rs`, `credits.rs` | E → moved | 1104: `shuyi_assets::{font, image, lighting, audio, credits}`. The parsers take what names the game's files as arguments: the bundle (`ImageTable::load`), the required glyphs and atlas image's name, the default light, the audio `Files` (with the sound folder's shown names and the music folder), the credits' `Places` (audio manifest and private folder). Each content module keeps its paths, `load()` and a wrapper with its old arguments, and re-exports the rest. `credits.rs`' bought-art check (ADR-0051) moved with it. |
 | `lang.rs`, `names.rs` | E → moved | 1105: `shuyi_assets::{lang, names}`: text by key, packs, stale, missing and orphaned text, the English the packs translate (`SourceText`, which the game builds) and the lookups by key. A pack is checked by the game's `PackRules` (its data text's rules, tokens, `DialogueLimits`, line variants). Content keeps `LANG_DIR`, `TEST`, `english_ui()`, `load()`, the wrappers with the old arguments and a `Lang` that derefs to the engine's and adds the game's lookups. `names.rs` keeps `NAMES_PATH` and `load()`. |
-| `dialogue/parse.rs`, `dialogue/line_id.rs` | E → moved | 1105: `shuyi_assets::dialogue` (the parser, line ids, captions' keys). A game adds directives with the `Directive` trait (`Step::Directive`). |
-| `portrait.rs`, `title.rs`, `tileset/look.rs` | E | The five required expressions and the 256 px frame become parameters. |
-| `palette.rs`, `ink.rs` | M → cut | 1104: `PaletteDef`, hex, `theme_problems` (a theme has the default's names) and the Playdate's `Ink`s are `shuyi_assets::{palette, ink}`; `PaletteDef::from_source` takes the required names. `Theme`, `REQUIRED_COLORS`, `load_themes` and the palette files' paths stay. |
+| `dialogue/parse.rs`, `dialogue/line_id.rs` | E → moved | 1105: `shuyi_assets::dialogue` (the parser, line ids, captions' keys). A game adds directives with the `Directive` trait (`Step::Directive`). Both files are gone; `dialogue.rs` re-exports the names. |
+| `portrait.rs` | E | Moves with 1222 (the engine's picture set, engine#2246): the five required expressions and the 256 px frame become the game's settings. |
+| `tileset/look.rs` | E | 1115: a look (tiles, corner and tile layers, `mix`, props) is `shuyi_assets::tileset`, re-exported; the file's checks against this game's terrains move with 1219 (engine#2243). |
+| `title.rs` | G | The title screen's logo, backdrops and Game Over art: this game's files, read for their size. |
+| `palette.rs`, `ink.rs` | M → cut | 1104: `PaletteDef`, hex, `theme_problems` (a theme has the default's names) and the Playdate's `Ink`s are `shuyi_assets::{palette, ink}`; `PaletteDef::from_source` takes the required names. `Theme`, `REQUIRED_COLORS`, `load_themes` and the palette files' paths stay (G). `ink.rs` is gone. |
 | `keymap.rs` | M → cut | 1107: the file format (keys, chords, buttons, named layouts, repeat, sticks, validation; `KeymapDef<A>`) and `ActionSet`/`UiAction` are `shuyi_assets::keymap`, re-exported here (`keymap::format` is the engine's module). `Action`, `KeyGroup`, `RIGHT_HANDED`/`LEFT_HANDED`, `load_keymap` and the game's `keymap.ron` stay, with the tests of this game's keys. The format's tests run on the engine's sample actions (`keymap::sample`). |
-| `lang/lines.rs`, `lang/data.rs` | M → cut | 1105: per-line translation is `shuyi_assets::lang`, with `LineText::Variants` (by variant name) for the old `ByGender`; the game names its variants `m` and `f` (`lang::RULES`). `data.rs` keeps the keys of classes, items, tips, lessons, chapters and battle notes (`from_tables`, `Tables`), the tip and lesson limits, and the lookups (`class_name`…). |
-| `dialogue.rs`, `dialogue/check.rs`, `dialogue/presence.rs` | M → cut | 1105: scenes, steps, choices, music lines, `@if` (`Present`, `Scene::resolved`) and the on-screen checks are `shuyi_assets::dialogue`, checked against a game's `SceneRules` (limits as `DialogueLimits`, its `Tokens`, cast, expressions, music). Content keeps `@place` and `@opening` (`Stage`, `PlaceLine`, `check_places`, where an opening goes), the lead's rules and tokens (`LeadTokens`), the box sizes, `Cast`/`check_presence`, `load()` and aliases (`Step = Step<Stage>`…). |
+| `lang/lines.rs`, `lang/data.rs` | M → cut | 1105: per-line translation is `shuyi_assets::lang`, with `LineText::Variants` (by variant name) for the old `ByGender`; the game names its variants `m` and `f` (`lang::RULES`). `data.rs` keeps the keys of classes, items, tips, lessons, chapters and battle notes (`from_tables`, `Tables`), the tip and lesson limits, and the lookups (`class_name`…), all G. `lines.rs` is gone. |
+| `dialogue.rs`, `dialogue/check.rs`, `dialogue/presence.rs` | M → cut | 1105: scenes, steps, choices, music lines, `@if` (`Present`, `Scene::resolved`) and the on-screen checks are `shuyi_assets::dialogue`, checked against a game's `SceneRules` (limits as `DialogueLimits`, its `Tokens`, cast, expressions, music). Content keeps `@place` and `@opening` (`Stage`, `PlaceLine`, `check_places`, where an opening goes), the lead's rules and tokens (`LeadTokens`), the box sizes, `Cast`/`check_presence`, `load()` and aliases (`Step = Step<Stage>`…), all G. `check.rs` is gone; `load()` went in 1230 (callers use `load_scripts`), and `parse_dlg` stays, with the game's ASCII check (engine#2289, 1408). |
 | `voice.rs`, `tip.rs` | M → cut | 1105: the clip manifest, cast and staleness are `shuyi_assets::voice` over a game's `ClipVariant`; the tip schema and `{Action}` placeholders are `shuyi_assets::tip` over a game's trigger type. Content keeps `Variant` (M/F) and what a line says of the lead (`spoken_text`), the voice folders, `TipTrigger`, the tip box, the guide and `load()`. |
-| `map.rs` | M | Done (1116): the `.map` format (reader, printer, legend, look and light) is `shuyi_assets::grid_map`, with a `MapFeature` hook. Shop and Chest features, the tile looks, the size limit and the terrain lookup stay here. |
-| `tileset.rs` | M | 1115: what a sprite skin paints the ground from is `shuyi_assets::tileset` (`TerrainTiles`, `Look`, corner and tile layers, `mix`) and `ImageRect`/`Picture` are `shuyi_assets::image`, re-exported. The file format and its checks stay here (the terrain names are this game's), as do walk sheets and unit pictures keyed by class or character (G). |
-| `terrain.rs` | K | Its generic `line_of` helper moved to `shuyi_assets::error` (1103); `terrain.rs` re-exports it for the 11 modules that use it. |
+| `map.rs` | M → cut | Done (1116): the `.map` format (reader, printer, legend, look and light) is `shuyi_assets::grid_map`, with a `MapFeature` hook. Shop and Chest features, the tile looks, the size limit and the terrain lookup stay here. |
+| `tileset.rs` | M | 1115: what a sprite skin paints the ground from is `shuyi_assets::tileset` (`TerrainTiles`, `Look`, corner and tile layers, `mix`) and `ImageRect`/`Picture` are `shuyi_assets::image`, re-exported. The file format and its checks move with 1219 (the engine's tileset format, engine#2243); walk sheets and unit pictures keyed by class or character stay (G). |
+| `terrain.rs` | K → moved | Its generic `line_of` helper moved to `shuyi_assets::error` (1103); `terrain.rs` re-exports it for the 11 modules that use it. |
 | `cinematic.rs` | M → cut | 1113: the file's frame (id, length from a music cue or seconds, shots at ms, their order, unknown fields refused) is `shuyi_assets::cinematic`, generic over the game's shots and the `actions` lists they share, which the game checks with a `ShotCheck`. The shot kinds and their checks stay here: `MapPan` (its picture and pan are the engine's since 1154), `Logo`, `Talk`, `Characters` and `Combat` (G). |
-| `lib.rs` | G | The `Content` struct. Its "run every loader, collect every error" pattern is E. |
+| `lib.rs` | G | The `Content` struct. Its "run every loader, collect every error" pattern moves with 1223 (the engine's error helpers) and 1236 (one check-if-loaded helper in the load graph). |
 | `cinematic/{action,combat}.rs`, `battler.rs`, `chapter.rs`, `battle.rs`, `character.rs`, `class.rs`, `item.rs`, `spell.rs`, `skill*`, `art.rs`, `support.rs`, `ai.rs`, `trigger.rs` | G | The game's data. Their raw types use `trpg-core`'s enums, which derive serde (`enums.rs`'s mirrors went in 1230). |
 
 ## `ui` (trpg-ui)
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
-| `glyph_buffer*`, `snapshot.rs`, `console.rs`, `onebit*`, `float.rs` | E → moved | 1108: `shuyi_ui::frame::{glyph_buffer, snapshot, console, cinema, onebit}` and `shuyi_ui::float`, with their tests on the engine's own palette. The game's files re-export them under their old names (`cinema.rs` had no user and went in 1230: import `shuyi_ui::frame::cinema`); `console.rs` keeps the game's sizes (`ConsoleSizes`), `snapshot.rs` and `onebit.rs` the tests on this game's palette and font. |
+| `glyph_buffer*`, `snapshot.rs`, `console.rs`, `onebit*`, `float.rs` | E → moved | 1108: `shuyi_ui::frame::{glyph_buffer, snapshot, console, cinema, onebit}` and `shuyi_ui::float`, with their tests on the engine's own palette. The game's files re-export them under their old names (`float.rs` is gone: the crate's prelude names `Float` and `Round`); `console.rs` keeps the game's sizes (`ConsoleSizes`), `snapshot.rs` and `onebit.rs` the tests on this game's palette and font. `cinema.rs` had no user and went in 1230: import `shuyi_ui::frame::cinema`. |
 | `portrait.rs` | M → cut | 1108: fitting a picture to an area of cells at a whole scale (`fit_whole_scale`, `dim_opacity`, `draw_fitted`) is `shuyi_ui::frame::portrait`. The 32 × 16-cell frame and drawing a `Portrait`'s expression stay the game's. |
 | `storage.rs`, `audio.rs`, `profiles.rs` | E → moved | 1109: `shuyi_ui::{storage, audio, profiles}`; `AudioRequest` and `AudioQueue` take the game's voice variant, `profiles::load` the keys a game kept before profiles. 1112: the menu sounds by meaning (`MenuSound`) and which cues they are (`AudioConfig`, from `GameData::audio_config`, held by the queue) are the engine's; the game gives its cue ids (`audio::AUDIO`) and keeps its keys from before profiles. |
 | `widgets/` | E → moved | 1112: the menu (with its view and glyph skin) and word wrap are `shuyi_ui::widgets`, re-exported. `help.rs` is the game's alias of `HelpKeys` (1107). 1164: typing a name (`name_entry`) is `shuyi_ui::widgets::name_entry`, re-exported with the game's one-bit skin. |
-| `input/` (`keymap`, `state`, `frame`, `bindings`, `pad`, `fixed`, `help_keys`) | E → moved | 1107: `shuyi_ui::input`, with their tests on the sample actions. `trpg-ui::input` re-exports the submodules under their old names. |
-| `debug/sprite_test.rs`, `screens/mod.rs` | E | 1112: `centre_x`, `print_centred` and the Debug key's hint (`debug::hint`, `debug::glyph::paint_hint`) are the engine's. The sprite test stays: it draws this game's test card (the toy's gallery covers sprite items in the engine). |
+| `input/` (`keymap`, `state`, `frame`, `bindings`, `pad`, `fixed`, `help_keys`) | E → moved | 1107: `shuyi_ui::input`, with their tests on the sample actions. The folder is gone; `input.rs` (below) re-exports the submodules under their old names. |
+| `debug/sprite_test.rs`, `screens/mod.rs` | E | 1112: `centre_x`, `print_centred` and the Debug key's hint (`debug::hint`, `debug::glyph::paint_hint`) are the engine's. The sprite test draws the engine's test card (`shuyi_ui::frame::raster::test_card`, committed as `assets-test/images/test_card.png`): it moves with 1212 (the engine's sprite-test screen, engine#3202). |
 | `input.rs` | G | 1107: what's left is the game's: the aliases with `Action`, `KEY_ROWS`, the text keys and `text_keys_help`. The fixed Esc→Cancel is `Action`'s `fixed_keys` and the split keys are `screens/battle/split_keys.rs` (1106). |
 | `screen.rs` | M → cut | 1109: `Screen`, `Transition`, `FrameInput`, `ScreenStack` (`shuyi_ui::screen`) and `Ctx<G>` (`shuyi_ui::ctx`) are the engine's. The game's part (`Shuyi`), its aliases and `ShuyiCtx` stay. |
 | `game.rs` | M → cut | 1109: the frame loop is `shuyi_ui::Game<G>`. Start-up (`start`, `start_on_scene`) and the hooks (layout picker, debug menu) stay the game's. |
 | `color.rs` | M → cut | 1108: `Rgb`, `Palette`, `ColorSet` and `EngineColor` are `shuyi_ui::frame::color`. `UiColor` (this game's colors, tactics colors among them) and which of them the engine's colors are (`engine_color`) stay. |
-| `settings.rs`, `words.rs`, `tips.rs` | M | 1109: the engine's settings (text speed, fullscreen, theme, volumes, layout) are `shuyi_ui::settings`, text by key is `Ctx::text`, and `{name}` filling is `shuyi_ui::text`. 1112: the tips seen (`TipsSeen`, `reset_tips`) are `shuyi_ui::tips`, and `{Cursor}` and `{Action}` are filled by default (`text::key_text`). The tactics settings (`ShuyiSettings`) and their saved record, the data text (`Words`), `{Select}` and tip placement stay G or K. |
+| `settings.rs`, `words.rs`, `tips.rs` | M → cut | 1109: the engine's settings (text speed, fullscreen, theme, volumes, layout) are `shuyi_ui::settings`, text by key is `Ctx::text`, and `{name}` filling is `shuyi_ui::text`. 1112: the tips seen (`TipsSeen`, `reset_tips`) are `shuyi_ui::tips`, and `{Cursor}` and `{Action}` are filled by default (`text::key_text`). The tactics settings (`ShuyiSettings`) and their saved record, the data text (`Words`), `{Select}` and tip placement stay: they are this game's settings, words and tip box. |
 | `dialogue.rs`, `screens/dialogue` | M → cut | 1112: the player is `shuyi_ui::dialogue::DialoguePlayer<H>`, with the game's `DialogueHooks` (its `@place`/`@opening` lines and what they set, and the lead's and the story's tokens); the text box (pages, typing, fast-forward, the blinking marker), its view and glyph skin are `shuyi_ui::dialogue::text_box`. The game's `DialoguePlayer` wraps the engine's with its old API. The dialogue screen (portraits, the place behind the talk, openings, the log) stays the game's: its place behind the talk is a `Place` painted by the game's map skin over the kit's scene (1115). |
 | `cinematic*` | M → cut | 1113: the timeline, easing, a backdrop `Pan` and the player's skeleton (`CinematicPlayer<S>`: the blank screen, the brightness fade, a frame from the time alone) are `shuyi_ui::cinematic`; each shot kind implements its `ShotPainter`. The game's `CinematicPlayer` wraps the engine's with its old API. 1154: the map's picture (`shuyi_ui::grid::MapPicture`: a whole map painted once by a `GridSkin`, or by any painter through `MapPicture::painted`) and the pan's frame and paint (`PanFrame`, `paint_pan`) are the engine's; the game's `MapPicture` wraps it, painted by its `MapSkin`. The shots and their painting stay here: the map pan's shot kind and action, logo, talk, characters and combat (G). |
 | `harness.rs` | M → cut | 1111: the scripts, audio, music player stand-in and snapshots are `shuyi_ui::harness`. The start-up (embedded content, test chapter, title) and the lookups (`flow`, `battle`, `map_scene` and its shortcuts, map skin, tips, lessons) stay the game's. See coupling 10. |
 | `debug*` | M → cut | 1112: the debug menu (`shuyi_ui::debug::DebugMenuScreen`, with the game's `DebugEntry`s) and the glyph sampler (with the game's sample panels) are the engine's. The tools stay the game's: promote/reclass, the skin switch, the test scene and cinematic, the voice test, the scene preview; so does the portrait viewer (this game's portrait frame, `portrait.rs`). 1154: the scene camera is the engine's (`shuyi_ui::debug::SceneCameraScreen`, with its view and glyph paint); the game gives it the test map's `MapPicture`, its window and box, and what to say without the map. |
 | `screens/{key_bindings,layout_picker,options}` | M → moved | 1112: `shuyi_ui::screens::{key_bindings, layout_picker, options}` with their glyph skins. The game gives the Key bindings rows (`KEY_ROWS`), the picker's legend (`layout_picker::LEGEND`) and the options' rows (`options::rows`: each a label key and a `Toggle`, `Choice`, `Volume` or `Action` value; ADR-0087). |
-| `map_view.rs`, `map_view/scene.rs`, `map_view/glyph*`, `map_view/sprite*` | M → cut | 1115: the scene (`shuyi_ui::grid::scene`, `MapScene<U>`), the ground, ranges, path, cursor and threat painting of the glyph skin and of the sprite skin (`grid::{glyph, sprite}`, with the ground's layers and light) are the kit's. The game keeps `UnitView` and its text, its ranges' names (`range`), `TerrainLooks`, the `MapSkin` struct (a kit skin and its unit painter, 1167: `GLYPH` + `GlyphUnits`, the kit's sprite skin + `SpriteUnits`), the unit letters, HP bars, effect marks and pictures (`glyph/units.rs`, `sprite/units.rs`), `Place`, `GAME_TILESET` and the skin registry. |
-| `map_view/{skin,grid,corners,path,threat}.rs` | K → moved | 1115: `shuyi_ui::grid::{skin, layout, corners, path, threat}`; `layout`'s `Grid` lays tiles through a `Projection` (top-down only). `map_view::{grid, threat}` name them (the unused `corners` and `path` went in 1230); `skin.rs` keeps the game's `MapSkin` and `with_looks`. |
+| `map_view.rs`, `map_view/scene.rs`, `map_view/glyph*`, `map_view/sprite*` | M → cut | 1115: the scene (`shuyi_ui::grid::scene`, `MapScene<U>`), the ground, ranges, path, cursor and threat painting of the glyph skin and of the sprite skin (`grid::{glyph, sprite}`, with the ground's layers and light) are the kit's. The game keeps `UnitView` and its text, its ranges' names (`range`), `TerrainLooks`, the `MapSkin` struct (a kit skin and its unit painter, 1167: `GLYPH` + `GlyphUnits`, the kit's sprite skin + `SpriteUnits`), the unit letters, HP bars, effect marks and pictures (`glyph/units.rs`, `sprite/units.rs`), `Place`, `GAME_TILESET` and the skin registry (G). The map's edge arrows (`edges.rs`) and the range outlines move with 1213 (the kit's skins). |
+| `map_view/{skin,grid,corners,path,threat}.rs` | K → moved | 1115: `shuyi_ui::grid::{skin, layout, corners, path, threat}`; `layout`'s `Grid` lays tiles through a `Projection` (top-down only). Only `skin.rs` is still a file, with the game's `MapSkin` and `with_looks`; `map_view.rs` names the rest (`grid`, `threat`; the unused `corners` and `path` went in 1230). |
 | `map_view/playdate*` | G | The Playdate's map skin (1037): since 1167 the kit's glyph skin in a one-bit `GlyphStyle` (`ONE_BIT`), with the game's one-bit unit painter (`OneBitUnits`: units and the danger zone's edge). |
-| `screens/battle/{cursor,path,walk}.rs` | K → moved | 1115: `shuyi_ui::grid::{camera, cursor, steer, walk}`. The game imports `shuyi_ui::grid::Camera` itself (`camera.rs` went in 1230); its other files re-export them, with `cursor::dir` (its actions), `path::steer` over its `Reach`, and its walk speeds (`GLYPH_WALK`, `SPRITE_WALK`), which are its skins' settings. |
-| `screens/battle/*` (the other 42 files) | G | The Fire Emblem loop. |
-| `flow.rs`, `save.rs`, `screens/{title,save,preparations,class_change,results,lead_select,credits,game_over,mode_select}` | G | — |
+| `screens/battle/{cursor,path,walk}.rs` | K → moved | 1115: `shuyi_ui::grid::{camera, cursor, steer, walk}`. The game imports `shuyi_ui::grid::Camera` itself (`camera.rs` went in 1230). The others re-export the kit's with `cursor::dir` (its actions), `path::steer` over its `Reach`, and its walk speeds (`GLYPH_WALK`, `SPRITE_WALK`), its skins' settings; the cursor, camera and walks move with 1217 (the kit's viewport, engine#3206). |
+| `screens/battle/*` (the other files and folders, 74 on 2026-11-28) | G | The Fire Emblem loop. |
+| `flow.rs`, `save.rs`, `screens/{title,save,preparations,class_change,results,lead_select,game_over,mode_select}` | G | — |
+| `screens/credits` | E | Moves with 1211 (the engine's credits screen, engine#3201). |
 
-`tests/it` in `ui` totals 9,000 lines:
+`tests/it` in `ui` totals about 21,100 lines on 2026-11-28 (`wc -l`, its
+`.rs` files). Every one runs through the game's Harness, which wraps the
+engine's (`shuyi_ui::harness::Harness<G>`, 1111). The engine has its own
+tests of what the game's E and K tests check of the engine, on its toy
+game (`engine/crates/ui/tests/it`: key bindings and fixed keys,
+controllers and help text naming the device, the first-key layout picker,
+sprite items in snapshots, the scripts, audio and music clock, the grid
+kit's field in both skins, and since 1112 the options, the Key bindings
+screen and a scene in the engine's text box, `tests/it/screens.rs`).
 
-- E, 1,852 lines: controller, key bindings, rebind buttons, scene camera, sprite test, voice, layout picker.
-- K, 840 lines: map skin, map zoom, threat. 1115: these read the scene
-  and pass unchanged; the kit has its own (`engine/crates/ui/tests/it/grid.rs`:
-  the toy's field in both skins).
-- M, 1,105 lines.
-- G, 5,203 lines.
+The screens those tests were kept for moved in 1112 and 1164, so the
+game's copies of them go:
 
-Every one of these runs through the game's Harness. The E and K tests move
-only once the Harness can drive a toy game (1111).
-
-1111: the engine's Harness drives the toy game, and the engine has its own
-tests of what the E tests check of the engine (key bindings and fixed
-keys, controllers and help text naming the device, the first-key layout
-picker, sprite items in snapshots, the scripts, audio and music clock) in
-`engine/crates/ui/tests/it`. The game keeps its E tests unchanged: they
-test this game's screens (its title, its layout picker, its Key bindings
-screen, its debug tools), which are still the game's until those screens
-move.
-
-1112: the screens and widgets moved with their unit tests, ported to the
-toy game; the toy's lobby (an engine menu) opens the options, the Key
-bindings screen and a scene read in the engine's text box in the engine's
-Harness tests (`tests/it/screens.rs`). The game's integration tests of
-these screens (with their snapshots) are unchanged.
+- **The engine's screen, kit and camera tests** (`key_bindings`,
+  `key_bindings_screen`, `rebind_buttons`, `layout_picker`, `profiles`;
+  the scene camera's; the copies in `map_view/{sprite.rs,glyph/tests.rs,scene/tests.rs}`)
+  go with 1232, which keeps any case that reaches the game's code (its
+  unit painters, `UnitView`, Nick's default keys, its font, its settings
+  migration and per-profile storage).
+- **The dialogue player's** go with 1218 (the dialogue tests keep only the
+  game's hooks).
+- `controller`, `voice`, `sprite_test`, `map_skin`, `map_zoom` and
+  `threat` test the game's screens and skins and stay (G); the sprite
+  test's goes with its screen in 1212.
 
 ## `app` (trpg-app)
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
-| `render.rs`, `keys.rs`, `pads*` | E → moved | 1110: `shuyi-app`. The renderer reads images with the game's file reader; the JS plugin is `shuyi_gamepad` with `shuyi_pad_*` functions. |
-| `storage/` | E → moved | 1110: the storage's name is `AppConfig::storage_name` (the native folder, and the web prefix `<name>/`); the game's stays `tactical-rpg`. |
-| `audio*` | E → moved | 1110: sounds through the engine's audio `Files` (the music folder's name with them), voices through `AppConfig::voices` (folder, language, manifest); requests generic over the voice variant. |
+| `render.rs`, `keys.rs`, `pads*` | E → moved | 1110: `shuyi-app`; the files are gone. The renderer reads images with the game's file reader; the JS plugin is `shuyi_gamepad` with `shuyi_pad_*` functions. |
+| `storage/` | E → moved | 1110 (the folder is gone): the storage's name is `AppConfig::storage_name` (the native folder, and the web prefix `<name>/`); the game's stays `tactical-rpg`. |
+| `audio*` | E → moved | 1110 (the files are gone): sounds through the engine's audio `Files` (the music folder's name with them), voices through `AppConfig::voices` (folder, language, manifest); requests generic over the voice variant. |
 | `main.rs`, `build.rs` | M → split | 1110: the loop, the window settings, the icon decoding and the error screen are `shuyi_app::{run, window_conf}`. The game's binary keeps macroquad's entry point, the window's title, size and icon, `Ctx::embedded` and its settings, the start screen, the release check on test files (a compile-time check) and `build.rs` (exe strings, the web's `--allow-undefined`). |
-| `args.rs` | G | `--scene`, `--lead`. |
+| `args.rs`, `app_info.rs` | G | `--scene`, `--lead`; the window's title and the exe's strings. |
 
 macroquad APIs in use: window and loop (`Conf`, fullscreen, DPI,
 `next_frame`, frame time), textured quads (`draw_texture_ex`,
@@ -254,20 +277,26 @@ music uses quad-snd. Controllers use gilrs plus a web JS plugin.
 **What is missing for other kinds of games:** mouse and touch input, and
 analog sticks (today they are four digital directions).
 
-## `xtask`
+## `xtask` and `tools`
 
-| Subcommand | Side | Ship with the engine? |
-| ---------- | ---- | --------------------- |
-| `frame-png` | E | **Done (1117):** `shuyi-cli`, with the game's Harness from its tool program (`GameTools`). |
-| `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets` | E | **Done (1117):** `shuyi-cli`; paths and settings in the game's `shuyi.ron`. The old `cargo xtask` names forward to it. |
-| `lines`, `check-script` | E | Yes, with the dialogue format. |
-| `test-card` (deleted, 0191), `voice-test-clips` | E | Fixtures for the engine's own tests. |
-| `ticket-lint`, `clean-merged-targets` | E | No. These are our repository's workflow. |
-| `test-tileset` | K | Kit fixtures. |
-| `tileset-import` | M | The Tiled `.tsx` → corner-layers core is K. The bought-pack table is G. |
-| `sfx` | M | The synth (tone, burst, pulse, envelope) is E. The sounds are G. |
-| `icon` | M | Mostly E. |
-| `test-units`, `effect-marks` (deleted, 0191), `title-art`, `map-sprite-import`, `battler-import`, `portrait-import`, `playtest` | G | — |
+Since ADR-0129 the game's tool commands are `trpg-tools` (`cargo shuyi`,
+and the old `cargo xtask` names still run them); `xtask` keeps the
+repository's process checks.
+
+| Command | Side | Ship with the engine? |
+| ------- | ---- | --------------------- |
+| `frame-png` | E → moved | **Done (1117):** `shuyi-cli`, with the game's Harness from its tool program (`GameTools`). |
+| `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets` | E → moved | **Done (1117):** `shuyi-cli`; paths and settings in the game's `shuyi.ron`. The old `cargo xtask` names forward to it. |
+| `test-card` | E → moved | **Done (1117):** the card's pixels are the engine's (`shuyi_ui::frame::raster::test_card`, re-exported as `shuyi_cli::test_card`); 0191 deleted the game's command, and `assets-test/images/test_card.png` is the game's copy. |
+| `lines`, `check-script` | G | No: thin over `trpg_content`'s rules (the game's directives, cast and lead), and there is no engine command to move to. |
+| `voice-test-clips` | G | No: tone clips for the game's voice tests, with `sfx`. |
+| `ticket-lint`, `clean-merged-targets`, `code-lines`, `pr-size`, `engine-pin`, `check-leaks` | G | No. These are our repository's workflow (`xtask`). |
+| `test-tileset` | K | Moves with 1226 (the engine stamps the test tileset's glyphs). |
+| `tileset-import` | M | The Tiled `.tsx` → corner-layers core moves with 1405 (the engine's corner-sheet recipes) and its picture edits with 1406; the bought-pack table is G. |
+| `sfx` | G | No: the game's own sounds and their synth. engine#2225 (integer `.sfx.ron` sounds) is a different design and says this game doesn't need it. |
+| `icon` | M | Moves with 1229 (the exe's icon and version from the engine). |
+| `playtest` | G on K | Moves with 1207 (the engine's playtest command, history and workflow); the personas and battles stay. |
+| `test-units`, `effect-marks` (deleted, 0191), `title-art`, `map-sprite-import`, `battler-import`, `portrait-import`, `ui-import`, `lettering`, `bot-wins`, `skirmish`, `story-import`, `voice`, `playdate`, `readme-pictures`, `playdate-images`, `skill-pack` | G | — |
 
 ## `bots`
 

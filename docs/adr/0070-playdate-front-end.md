@@ -203,6 +203,10 @@ the three crates) keeps them building once the first build ticket lands.
 - `include_dir` stays for the `std` build only; the `no_std` bundle is a
   generated table. Two code paths for one bundle until the engine's
   bundle (1103, the bundle as layers) replaces both.
+  **2026-11-28 (1233):** one code path since 0123: every target reads
+  the tables `build.rs` writes, and `include_dir` is gone; the engine's
+  form of it is engine#2215 (`shuyi-embed`, done 2026-11-22), whose
+  `table_source` `build.rs` calls.
 - Device performance needs device runs; the Simulator is only for
   correctness. Every 1025 ticket with device-visible work says how it was
   measured on Nick's Playdate.
