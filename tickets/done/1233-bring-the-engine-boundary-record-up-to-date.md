@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-28
 ---
 
 # 1233 — Bring the engine boundary record up to date
@@ -88,16 +88,19 @@ engine#2215; the rows of the audit's other tickets beyond naming them.
 
 ## Acceptance criteria
 
-- [ ] `boundary.md` has no 1101 count left, and its summary names the
+- [x] `boundary.md` has no 1101 count left, and its summary names the
       date and the pin of its counts.
-- [ ] No row is E or M without a moved-by ticket, a "moves with NNNN" or
+- [x] No row is E or M without a moved-by ticket, a "moves with NNNN" or
       a reason it stays.
-- [ ] `grep -n "until those screens move" docs/engine/boundary.md` finds
+- [x] `grep -n "until those screens move" docs/engine/boundary.md` finds
       nothing, and the `bundle.rs` row no longer says `include_dir!`.
-- [ ] ADR-0070's bundle bullet names engine#2215.
-- [ ] Only `docs/engine/boundary.md`, `docs/adr/0070-playdate-front-end.md`
+- [x] ADR-0070's bundle bullet names engine#2215.
+- [x] Only `docs/engine/boundary.md`, `docs/adr/0070-playdate-front-end.md`
       and this ticket change.
-- [ ] All gates in the `run-gates` skill pass.
+- [ ] All gates in the `run-gates` skill pass. (The ones that read
+      docs and tickets pass but `ticket-lint`, which fails on `main` too:
+      see the notes. No Rust changed, so the build and test gates were
+      not run.)
 
 ## Tests required
 
@@ -106,5 +109,42 @@ engine#2215; the rows of the audit's other tickets beyond naming them.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Summary:** the 1101 table is gone. It now gives production lines per
+  crate on 2026-11-28 (`code-lines --base <empty tree>`): the game's
+  crates at `7e860d28` (82,441) and the engine's at its pin `230080db`
+  (138,247, plus 14,101 in examples, tutorial, templates and evals).
+  The game's `code-lines` reads only its own repository, so the
+  engine's numbers come from the same `code_lines::run` called on the
+  `cargo xtask engine` checkout (a scratch program, not committed).
+- **Every E, K or M row** is now moved, "moves with NNNN" (1207, 1211,
+  1212, 1213, 1217, 1219, 1221, 1222, 1223/1236, 1226, 1229, 1230,
+  1405/1406) or says why it stays. All of those tickets are still open,
+  so none is written as moved by them. Rows the carve finished are
+  marked `E → moved`, `K → moved` or `M → cut`.
+- **The tests note** no longer keeps the E tests "until those screens
+  move": the engine-copy tests go with 1232, the dialogue player's with
+  1218.
+- **xtask:** the table is now "`xtask` and `tools`" (ADR-0129), with
+  `lines`, `check-script`, `voice-test-clips` and `sfx` G,
+  `test-card` E → moved (1117, 0191), and the rest of the tool
+  program's commands listed.
+- **Deviation: engine#2215 is not parked.** The ticket says it is.
+  The engine's own ticket says Nick unparked it on 2026-11-22 and
+  that it is done (ADR-0138, `shuyi-embed`), and the game's `build.rs`
+  already calls `shuyi_embed::table_source`. The bundle row and
+  ADR-0070's dated line say that, not "parked until MVP".
+- **Step 4 (re-reading the rows):** fixed rows that named files that are
+  gone (`core`'s `rng.rs`, `geom.rs`; `content`'s `ink.rs`,
+  `lang/lines.rs`, `dialogue/{parse,line_id,check}.rs`; `ui`'s
+  `float.rs`, `input/`, `map_view/{grid,corners,path,threat}.rs`; `app`'s
+  `render.rs`, `keys.rs`, `pads*`, `storage/`, `audio*`), the battle
+  folder's file count (42 → 74), coupling 9's `include_dir!`, and added
+  `app_info.rs`. Not checked line by line: the couplings' old
+  `file:line` references (1101's, kept as the record of what was
+  fixed).
+- **Gates:** `check-mentions`, `typos`, `engine-pin --check` and
+  `pr-size` pass; `check-leaks` had no content checked out. `ticket-lint`
+  fails on a duplicate id `0196` that `main` already has (one in
+  `open/`, one in `done/`, from another change), not from this branch.
+  No Rust changed, so the build and test gates were not run.
+- No follow-up tickets.
