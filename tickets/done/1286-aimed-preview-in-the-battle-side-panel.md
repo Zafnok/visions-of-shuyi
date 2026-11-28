@@ -133,6 +133,15 @@ wrapped to the panel, a rule. Recorded in `look-and-feel.md` *Side panel*.
 - The HP bar moves after `HP 6 → 17/17` (the line is longer than
   `HP 19/19`'s room); Nick's picture had it there too.
 
+**Friction:** 2.0× (estimate 60, measured 121), accepted: the estimate was
+for one block; Nick's pick has two layouts, and the heal's gain became a
+helper per targeting shared with the preview lines. Row in
+`docs/engine/friction.md`.
+
+**Follow-ups:** none.
+
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064):
 - The block's title is in the highlight colour, the same as the terrain
   name; a rule in the border colour separates it from the tile.
@@ -140,10 +149,3 @@ wrapped to the panel, a rule. Recorded in `look-and-feel.md` *Side panel*.
   lines it would reach `Gold`. No preview today comes near that (the
   longest, a skill with both costs, takes two or three).
 - The Playdate's corner window is unchanged (out of scope).
-
-**Friction:** 2.0× (estimate 60, measured 121), accepted: the estimate was
-for one block; Nick's pick has two layouts, and the heal's gain became a
-helper per targeting shared with the preview lines. Row in
-`docs/engine/friction.md`.
-
-**Follow-ups:** none.

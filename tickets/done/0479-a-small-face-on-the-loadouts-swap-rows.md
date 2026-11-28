@@ -139,13 +139,15 @@ characters live off screen". Recorded in `weapons-and-items.md`
 - Scaling to 48×48 is not a whole scale; `draw_portrait_in` only does
   whole scales, so the skin adds the sprite itself (a few lines).
 
-**Starting rules** (the agent's, for the Act 1 playtest, 1064):
-- The face is the portrait's neutral expression.
-- The row keeps `from Test Lord` beside the face, as in the pictures
-  Nick picked from.
-
 Engine friction: estimate 90, measured 141 (1.6×), under 2×; signals:
 workaround no · third copy no · budget no.
 PR size: estimate 400, measured 387 before these notes.
 
 Follow-up tickets: none.
+
+### For the Act 1 playtest (1064)
+
+**Starting rules** (the agent's, for the Act 1 playtest, 1064):
+- The face is the portrait's neutral expression.
+- The row keeps `from Test Lord` beside the face, as in the pictures
+  Nick picked from.

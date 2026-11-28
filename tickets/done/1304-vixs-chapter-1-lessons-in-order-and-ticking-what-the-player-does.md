@@ -182,6 +182,8 @@ Battle session record was blessed (no start tip now).
 Deviation: point 2 is built as one item that either ticks (Nick: "credit
 same as attack"), not the draft's two items both needed.
 
+### For the Act 1 playtest (1064)
+
 *The agent's starting rules* (in `docs/design/tutorial.md`, for the Act 1
 playtest, 1064):
 

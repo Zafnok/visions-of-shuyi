@@ -154,8 +154,10 @@ slowest files, and the stack high-water mark.
   format follow-up. What was left out isn't parsed, so the load time
   barely changes: the device numbers decide the follow-up.
 
-**the agent's starting rule** (Nick can veto at 1050): the loading card is
-the game's name, centred, black on the white ground, in the game's font.
-
 **Notes for Nick:** the card shows for as long as the data loads (about
 3.7 s on your Playdate in 1026), then the title.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rule** (Nick can veto at 1050): the loading card is
+the game's name, centred, black on the white ground, in the game's font.

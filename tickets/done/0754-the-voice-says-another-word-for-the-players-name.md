@@ -99,6 +99,8 @@ making clips (0721, 0722).
   skill. 0718 and 0725 got a line: a voiced translated line takes the
   stand-in in its language, and the pack's token check must allow it.
 
+### For the Act 1 playtest (1064)
+
 The agent's starting rules (for the Act 1 playtest, 1064):
 
 - Narration says "the exile" for the name ("The exile" at the start of a

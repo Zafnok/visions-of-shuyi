@@ -54,6 +54,8 @@ right next to the menu move tick and the battle sounds.
 
 Set both cues to 15, as planned. No code changes.
 
+### For the Act 1 playtest (1064)
+
 *the agent's starting rule:* 15 % is my pick for "much too high". I read "too
 high" as too loud, not as pitch that's too high. If you meant pitch, say so
 and that becomes a separate ticket to re-make the sounds.

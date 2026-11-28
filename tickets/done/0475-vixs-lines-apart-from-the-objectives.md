@@ -132,6 +132,11 @@ map.
 
 Deviations: the engine change (above) and the stack on 1240's PR.
 
+Follow-up tickets: none new (0476 already plays the voice and makes the
+clips).
+
+### For the Act 1 playtest (1064)
+
 Left for the Act 1 playtest (1064), not decided by Nick: the agent's
 starting rules (*the agent's starting rule*, all look and wording):
 
@@ -140,6 +145,3 @@ starting rules (*the agent's starting rule*, all look and wording):
 - Her lines were reworded by the agent in her voice card; whether they
   read and sound right is judged by playing and hearing them (0476
   makes the clips).
-
-Follow-up tickets: none new (0476 already plays the voice and makes the
-clips).

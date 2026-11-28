@@ -169,7 +169,7 @@ Done (2026-10-26).
 Engine friction: estimate 380 production lines (judged against the chest
 and escape rules, 0308/0319), measured 404 (1.06×), under 2×.
 
-### the agent's starting rules (for the Act 1 playtest, 1064)
+### For the Act 1 playtest (1064)
 
 - **Raider AI:** while a house stands, a raider (whatever its AI setting)
   goes where it burns one if it can reach such a tile, and attacks from

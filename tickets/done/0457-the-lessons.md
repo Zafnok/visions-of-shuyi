@@ -153,6 +153,8 @@ it can happen).
 - Follow-up: **0459** (the guide's box covers the side panel on long
   lines).
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (gameplay-affecting, for Nick to veto):
 
 1. **The order on turn 1 at Full:** the cursor (move it up, down, left,

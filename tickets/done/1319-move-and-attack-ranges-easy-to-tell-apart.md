@@ -116,6 +116,9 @@ Playdate: unchanged (patterns). GBA: no target.
   `1319-ranges-pictures.png`, before and after in each theme, on the test
   Quick Battle (ADR-0118: no tracked picture of a real map). Chapter 1
   was rendered too, locally, and reads the same way.
+
+### For the Act 1 playtest (1064)
+
 - **Left for the Act 1 playtest (1064)**: whether enemy initials on an
   attack tile, and player initials on a move tile in Parchment, are
   still easy to read in the glyph look.

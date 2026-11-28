@@ -185,13 +185,15 @@ The workspace test gate is red on `main` itself since 0071 merged
 are in neither the manifest nor `RESERVED`); ticket 0252 fixes it. No
 other gate is affected by this ticket.
 
-**the agent's starting rules:** none that touch play. For the Act 1
-playtest (1064): whether Rue has enough presence in this chapter (she
-has four boxes outside the battle); whether the far-bank scene's
-lightness ("Your Grace!") sits right straight after the herald.
-
 **Follow-ups:** 0252 (the red audio test on `main`). 0848 wires the
 scenes and removes the `@if` guards; 1073 may pick Joss's supports from
 his sheet.
 
 **Engine friction:** none: no production Rust, one test narrowed.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules:** none that touch play. For the Act 1
+playtest (1064): whether Rue has enough presence in this chapter (she
+has four boxes outside the battle); whether the far-bank scene's
+lightness ("Your Grace!") sits right straight after the herald.

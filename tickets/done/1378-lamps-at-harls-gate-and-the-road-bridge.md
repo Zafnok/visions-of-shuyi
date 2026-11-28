@@ -179,6 +179,8 @@ the lamps' stills are their first frame. GBA: no target.
   decided there; the frames' size rule extends ADR-0131 and is written
   in `assets/tilesets/README.md`.
 
+### For the Act 1 playtest (1064)
+
 **No gameplay rule decided.** Left to judge in play (1064): the lamps'
 look on the river (standing in the water beside the bridge's planks, as
 0096's mockups placed them) and on the wall faces at the gate; no light

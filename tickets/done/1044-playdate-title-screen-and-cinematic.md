@@ -192,6 +192,8 @@ paint, 317 lines), measured 238 (1.0×). No signals.
 **Follow-up tickets:** none new; 1043's scope gained the cinematic's
 talk and faces shots.
 
+### For the Act 1 playtest (1064)
+
 ***the agent's starting rules*** (in `docs/design/playdate.md`, *The
 title cinematic*; for 1064's checklist, Nick can veto):
 - The logo 3 pixels a block (the card's 4 leaves no room for the menu),

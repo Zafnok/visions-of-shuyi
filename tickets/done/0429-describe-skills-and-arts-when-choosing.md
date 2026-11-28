@@ -196,7 +196,6 @@ that the cursor stops on greyed-out lines. Recorded in
 - 0410 was already done: follow-up **0453** (spell list descriptions)
   instead of editing it.
 
-**the agent's starting rules** (veto freely)
 - A greyed line under the cursor is a dimmer bar (the border colour)
   rather than the gold one.
 - The `Arts` / `Skill` entries of the action menu are still greyed when
@@ -205,3 +204,7 @@ that the cursor stops on greyed-out lines. Recorded in
 **Follow-ups:** 0453 (spell list descriptions), 0454 (a menu too wide for
 either side of its unit covers it: seen on the archer's Arts menu; it was
 already so before this ticket).
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (veto freely)

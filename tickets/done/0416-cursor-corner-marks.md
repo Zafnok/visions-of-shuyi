@@ -105,5 +105,8 @@ no initial should ever be hidden.
 - Open for Nick (recorded in `look-and-feel.md` and ticket 0403): the
   selected-unit arrows `►Al◄` would hide a neighbour's letter the same way,
   so 0403 must ask before drawing them.
+
+### For the Act 1 playtest (1064)
+
 - *the agent's starting rule:* tile glow strength up to 30% at full brightness
   (`GLOW_MAX`, tunable), matching the mockup Nick saw.

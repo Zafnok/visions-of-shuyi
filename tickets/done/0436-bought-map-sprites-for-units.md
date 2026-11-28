@@ -295,8 +295,6 @@ table. The corner mark was only ever in a throwaway build.
 - 0441 landed on `main` while this was in work: both looks share the
   bar's inset, height and fill (`hp_fill`).
 
-**the agent's starting rules (veto any):**
-
 - An effect that lowers any number of the unit shows the **down arrow**;
   any other shows the **up arrow**. (The rules don't label effects.)
 - On the **top row of the map view** the arrow also sits 4 pixels lower,
@@ -314,3 +312,7 @@ look at the outline and an acted unit on the Pages build.
 
 **Follow-up tickets:** none new (0437 terrain, 0440 walking, 0441 glyph
 bar, 0824 the Options entry already exist).
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules (veto any):**

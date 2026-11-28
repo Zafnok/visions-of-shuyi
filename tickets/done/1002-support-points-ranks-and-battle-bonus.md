@@ -140,9 +140,6 @@ None. Every rule and number comes from `supports.md`. The numbers there are
   units), with placeholder scenes in `assets/dialogue/test_supports.dlg`.
   Real pairs and conversations come from the story pipeline.
 
-**Rules decided where the design was silent** (*the agent's starting rules*;
-Nick can veto any of them)
-
 1. **Only your own units build supports and get the bonus.** A green
    (allied) unit or an enemy never does, even if its character is in a
    listed pair. Example: a character who fights as a green unit before
@@ -175,3 +172,8 @@ Nick can veto any of them)
 - Nothing shows yet (no screens until 1003). In the debug Quick Battle the
   test lord, knight and mage now build points, but with no rank viewed
   the Hit/Avoid numbers are unchanged.
+
+### For the Act 1 playtest (1064)
+
+**Rules decided where the design was silent** (*the agent's starting rules*;
+Nick can veto any of them)

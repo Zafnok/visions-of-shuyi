@@ -155,6 +155,19 @@ None (all rules are in `magic.md`).
   `Cast` (attack and heal) and spell `Equip`, and the replay/save-load test
   includes spell casts and a spell counter.
 
+**Deviations.** `TerrainEffectId` is just a string id for now (`burn_forest`,
+`freeze_water`). 0310 replaces it with the full `TerrainEffect` data its step
+3 describes. There is no `battle_setup` yet (0801), so only
+`BattleState::new` refills uses.
+
+**Follow-up:** 0314 counts attack spells in `Unit::attack_ranges`, so mages
+show up in threat areas and the danger zone.
+
+**Nick:** nothing to play yet. The spell menu is 0410. The Quick Battle looks
+the same (snapshots unchanged).
+
+### For the Act 1 playtest (1064)
+
 **Rules I had to pin down** (the agent's starting rules; Nick may veto):
 
 - **At battle start, a unit with nothing equipped gets a default,** chosen
@@ -170,14 +183,3 @@ None (all rules are in `magic.md`).
 - A spell at 0 uses can still be equipped. It just can't counter, as in M4.
 - Learned spells missing from the spell table get no uses, so they can't be
   cast.
-
-**Deviations.** `TerrainEffectId` is just a string id for now (`burn_forest`,
-`freeze_water`). 0310 replaces it with the full `TerrainEffect` data its step
-3 describes. There is no `battle_setup` yet (0801), so only
-`BattleState::new` refills uses.
-
-**Follow-up:** 0314 counts attack spells in `Unit::attack_ranges`, so mages
-show up in threat areas and the danger zone.
-
-**Nick:** nothing to play yet. The spell menu is 0410. The Quick Battle looks
-the same (snapshots unchanged).

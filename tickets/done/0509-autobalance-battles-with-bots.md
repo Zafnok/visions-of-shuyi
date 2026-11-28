@@ -271,6 +271,8 @@ property test that any setting loads, the plan and `--apply` into a temp
 folder with the same changes twice (`game_tools::balance::tests`), and
 `cargo shuyi autobalance` in `crates/xtask/tests/cli.rs`.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (the design docs don't say; for the Act 1
 playtest, 1064, to agree or veto):
 

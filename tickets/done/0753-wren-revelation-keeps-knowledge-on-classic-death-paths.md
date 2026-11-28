@@ -187,6 +187,8 @@ below.
 
 **No starting rules:** nothing gameplay-affecting was decided.
 
+### For the Act 1 playtest (1064)
+
 **Follow-ups:** none filed. **Notes for 1064** (wording the Act 1
 playtest reads, from the cold read): the lead's four one-line boxes on
 the Hollis-less gangway read as a recital (the 40-character limit stops

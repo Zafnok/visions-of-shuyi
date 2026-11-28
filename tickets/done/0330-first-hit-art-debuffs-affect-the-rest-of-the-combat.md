@@ -144,11 +144,13 @@ therefore play out differently. No test's record or snapshot changed.
 - The bots' expected damage (`expected_damage`) still uses the first strike's
   numbers; only their worst case (`at_risk`) uses the new total.
 
+**Size:** estimate about 100 production lines, judged by 0325's `fight` and
+`preview_attack` change; measured 104 added. PR 732 changed lines.
+
+### For the Act 1 playtest (1064)
+
 **For the Act 1 playtest (1064):** with Off Balance, the panel's `Hit` is the
 first strike's chance, and later strikes are better than it shows (its note
 says `avoid −20`). Does that read clearly enough in play?
 
 **Starting rules decided by the agent:** none.
-
-**Size:** estimate about 100 production lines, judged by 0325's `fight` and
-`preview_attack` change; measured 104 added. PR 732 changed lines.

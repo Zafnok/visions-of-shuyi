@@ -186,6 +186,9 @@ None. All numbers are in `progression.md`'s tier 1–2 skill table.
   stance. `trpg-content`'s `tests/skills.rs` has one test per real skill,
   in a battle built from the real data.
 - **No follow-up tickets.**
+
+### For the Act 1 playtest (1064)
+
 - **Nick's review (2026-09-27)** changed two starting rules, now recorded in
   `progression.md` (and `magic.md` for the push):
   - "I think the might + N / damage + N should be multiplied / halved": a
@@ -219,6 +222,7 @@ None. All numbers are in `progression.md`'s tier 1–2 skill table.
     Deadly Blow Sw, Rampage Ax, Trample Ax, Swoop Sp). Heavy Blow became Ax,
     not Gt, because the Raider wields only axes ("fine A is ok.. I'm just
     worried gauntlets won't have enough skills and axe too many").
+
 - **the agent's starting rules** (gameplay, where the design docs were silent):
   1. ~~Skill might added after effectiveness~~: **changed by Nick** (see
      below).

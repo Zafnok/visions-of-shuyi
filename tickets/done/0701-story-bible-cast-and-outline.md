@@ -184,8 +184,6 @@ Worked by Opus 5.5 instead of Fable 5.1, at Nick's request.
   differs: the son is aware, sad and sympathetic, and the father can't refuse
   him.
 
-**the agent's starting rules (gameplay-affecting; Nick may veto)**
-
 - **Talents** (`progression.md`):
   - the lead: Str
   - Hollis: HP
@@ -226,3 +224,7 @@ Worked by Opus 5.5 instead of Fable 5.1, at Nick's request.
 
 **Follow-up tickets:** **0709** Names table and name tokens. 0801 was edited (above).
 Beat sheets for Chapters 2+ belong to those chapters' future tickets.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules (gameplay-affecting; Nick may veto)**

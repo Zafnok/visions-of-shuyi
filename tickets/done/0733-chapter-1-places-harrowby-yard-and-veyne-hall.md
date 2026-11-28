@@ -142,11 +142,13 @@ darkening of every place, on top of dawn and night light. The study at
 night especially; if it is too dark to read, the light or the darkening
 can be raised.
 
-*the agent's starting rules (Nick can veto):*
-
 - Dawn light: a little lighter than dusk and rosy rather than golden
   (`lighting.ron`, tunable).
 - The yard has a weapon rack for the practice swords and a well; the
   study has bookshelves and a rug. None of these is in the beat sheet.
 - The rug can be walked on like the floor; the other decoration can't
   (it matters only if 0734 walks someone across a place).
+
+### For the Act 1 playtest (1064)
+
+*the agent's starting rules (Nick can veto):*

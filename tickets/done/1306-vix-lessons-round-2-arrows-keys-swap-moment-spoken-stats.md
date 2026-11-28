@@ -96,11 +96,13 @@ filling: they show wherever a tip or lesson names one direction's key
 key caps too; the whole cursor (`{Cursor}`) keeps its arrow-cluster
 picture. The engine's key table is untouched.
 
+Voice: 3 clips made from the full words, 3 removed; `voice audit` flags
+none.
+
+### For the Act 1 playtest (1064)
+
 Swapping weapons, *the agent's starting rule*: opened, it stays (holding
 the turn) while some unit still to act could swap, as before; only its
 opening waits for the forecast.
-
-Voice: 3 clips made from the full words, 3 removed; `voice audit` flags
-none.
 
 Left to judge by playing (1064): the arrows' look in the lesson box.

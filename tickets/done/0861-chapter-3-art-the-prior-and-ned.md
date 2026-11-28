@@ -163,8 +163,10 @@ no check after merge (the Act 1 playtest, 1064, covers the look).
 - The private change went through a pull request there, as 0858's did;
   the pin moved to its merge on `main` with `--pin`.
 
-**Starting looks for the Act 1 playtest (1064)**
-
 - The prior's combat picture has long hair (now white) under a flat hat;
   his face is bald with a white fringe.
 - Ned's collar trim stands in for the faded blue scarf of his sheet.
+
+### For the Act 1 playtest (1064)
+
+**Starting looks for the Act 1 playtest (1064)**

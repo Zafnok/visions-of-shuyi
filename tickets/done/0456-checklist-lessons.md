@@ -178,6 +178,8 @@ ticket 0457.
   unchanged and pass.
 - No follow-up tickets.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (gameplay-affecting, for Nick to veto):
 
 1. When a tip and a lesson start at the same moment (the first turn at

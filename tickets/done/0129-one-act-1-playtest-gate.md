@@ -113,18 +113,6 @@ conditional either: Act 1 has a boss per chapter. 0013, 0018, 0037 and
 Act 1 is balanced (0848–0854 and 1070–1072 wait for it). 0063–0065
 became ready (they waited for the carve and the Playdate port).
 
-**Sign-offs waived:** 40 tickets went from `sign-off` to `none`, their
-old question quoted in *Nick input* for 1064's checklist (1064 collects
-them with `grep -l "What the old sign-off asked" tickets/done`). Where
-the old sign-off was really a design question asked first, it became
-`decision`: 0445, 0735, 0736 (a story-direction question), 0907 (the
-store wording), 1001, 1007 (the glyph mockup stays; "Nick plays a test
-map" is dropped). Where it was a device measurement, `setup`: 1051,
-1057, 1059. 0449, 0605, 0606, 1010, 1054 and 1062 kept their
-decision, setup or answer-first and lost only the post-merge check.
-0906 (the title's trademark) keeps its sign-off: it is a business call,
-not gameplay.
-
 **Choices beyond the brief:**
 
 - 0069 also asks Nick to confirm the outline's table of what each
@@ -147,3 +135,17 @@ not gameplay.
 - The `title` of 0069 names its sixth question.
 
 **Follow-ups:** none beyond the tickets filed here.
+
+### For the Act 1 playtest (1064)
+
+**Sign-offs waived:** 40 tickets went from `sign-off` to `none`, their
+old question quoted in *Nick input* for 1064's checklist (1064 collects
+them with `grep -l "What the old sign-off asked" tickets/done`). Where
+the old sign-off was really a design question asked first, it became
+`decision`: 0445, 0735, 0736 (a story-direction question), 0907 (the
+store wording), 1001, 1007 (the glyph mockup stays; "Nick plays a test
+map" is dropped). Where it was a device measurement, `setup`: 1051,
+1057, 1059. 0449, 0605, 0606, 1010, 1054 and 1062 kept their
+decision, setup or answer-first and lost only the post-merge check.
+0906 (the title's trademark) keeps its sign-off: it is a business call,
+not gameplay.

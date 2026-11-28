@@ -221,30 +221,6 @@ game; all recorded in `look-and-feel.md`, *Combat screen*):
 - The Shironejiya pictures may be downloaded; the Paladin isn't needed
   for the Chapter 1 playtest.
 
-**the agent's starting rules** (Nick can veto):
-
-- The player's fighter stands on the left; if neither or both are the
-  player's, the attacker does.
-- A fighter striking from two tiles or more away (a bow, a spell) only
-  steps forward instead of running up.
-- A strike that heals its target (Absorb) moves nobody.
-- A hit flashes the target white and shakes it; a miss makes the target
-  step back; a critical leans back first, flashes the whole stage and
-  shakes twice as hard; a fall fades and sinks. (All were in the GIFs
-  Nick chose from; the amounts are tunable in `stage/motion.rs` and
-  `stage/glyph.rs`.)
-- A line spoken inside a fight (a boss's, last words) plays over the
-  stage, not over the map.
-- Backdrops: a fight on a mountain or a peak is in front of the
-  mountains, every other terrain in front of the fields; the terrain is
-  the defender's. Day pictures only until maps have a light (0438).
-- The generic Mage class is the Church Wizard; Rue keeps the Witch.
-- A class's picture is what the enemy's unnamed soldiers look like (the
-  Guard class is the red knight); a named character of the player's who
-  shares it has their own recolour.
-- The stage is the same whichever map look is on, so the side panel is
-  hidden in the glyph look too.
-
 **What was built.**
 
 - `trpg_content::battler` (ADR-0056): `assets/battlers/<id>.ron` sidecars
@@ -286,3 +262,29 @@ game; all recorded in `look-and-feel.md`, *Combat screen*):
 **For Nick, when playing:** start any fight. To compare, turn *Combat
 animations* off in Options. Riders are a plain grey-green figure until
 the Paladin is bought.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (Nick can veto):
+
+- The player's fighter stands on the left; if neither or both are the
+  player's, the attacker does.
+- A fighter striking from two tiles or more away (a bow, a spell) only
+  steps forward instead of running up.
+- A strike that heals its target (Absorb) moves nobody.
+- A hit flashes the target white and shakes it; a miss makes the target
+  step back; a critical leans back first, flashes the whole stage and
+  shakes twice as hard; a fall fades and sinks. (All were in the GIFs
+  Nick chose from; the amounts are tunable in `stage/motion.rs` and
+  `stage/glyph.rs`.)
+- A line spoken inside a fight (a boss's, last words) plays over the
+  stage, not over the map.
+- Backdrops: a fight on a mountain or a peak is in front of the
+  mountains, every other terrain in front of the fields; the terrain is
+  the defender's. Day pictures only until maps have a light (0438).
+- The generic Mage class is the Church Wizard; Rue keeps the Witch.
+- A class's picture is what the enemy's unnamed soldiers look like (the
+  Guard class is the red knight); a named character of the player's who
+  shares it has their own recolour.
+- The stage is the same whichever map look is on, so the side panel is
+  hidden in the glyph look too.

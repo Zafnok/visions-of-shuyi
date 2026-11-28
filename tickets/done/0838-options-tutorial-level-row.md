@@ -89,6 +89,8 @@ None, and see that tips stop.
   and the title has no row, and a level set in a battle is in the suspend
   save and still None after Continue in the next launch.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (Nick can veto):
 - The row sits right under `Game mode`.
 - Left/right stop at Full and None; Confirm goes round

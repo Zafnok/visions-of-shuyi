@@ -135,7 +135,6 @@ Measured (`cargo xtask code-lines`): 434 added, 1.2×: under 2×.
 **Follow-up tickets:** 1260 (the music Chapters 2 to 8 ask for still
 plays as silence on the Playdate; no ticket had it).
 
-**The agent's starting rules, for 1064's checklist (Nick can veto):**
 - The map fills the screen and scrolls with the cursor, kept in the
   middle; no side panel, no help line (as the battle screen).
 - A place's kind is its symbol and its plate's fill: black for a story
@@ -153,6 +152,10 @@ plays as silence on the Playdate; no ticket had it).
   Options).
 - The shop shows 8 lines at once and what the focused item is under them
   (the PC's line has no room for its numbers); the help on the bottom row.
+
+### For the Act 1 playtest (1064)
+
+**The agent's starting rules, for 1064's checklist (Nick can veto):**
 
 **Left to judge by playing (1064):** whether a level marker on the map's
 top row (cut off when the place is on the screen's first row) matters;

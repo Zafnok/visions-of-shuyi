@@ -99,6 +99,13 @@ map menu's `Objective` page; the units they are about blink meanwhile.
 4. The box isn't always centred: see rule 2 below. On the test map a
    centred box would have covered the brigand it is about.
 
+**For Nick's sign-off:** New Game on the Pages build → skip the intro scene
+→ the `BATTLE NOTES` box. The Brigand should blink. Press Confirm, then
+open the map menu → `Objective`. Comments wanted on the wording style, the
+box's place, and the blink.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (the design was silent; Nick may veto; also in
 `docs/design/magic.md`):
 
@@ -114,8 +121,3 @@ map menu's `Objective` page; the units they are about blink meanwhile.
    then the notes. Each note starts with `•`.
 5. At most 5 notes per battle, 120 characters each (so they always fit).
 6. The camera doesn't move to a noted unit that is off screen.
-
-**For Nick's sign-off:** New Game on the Pages build → skip the intro scene
-→ the `BATTLE NOTES` box. The Brigand should blink. Press Confirm, then
-open the map menu → `Objective`. Comments wanted on the wording style, the
-box's place, and the blink.

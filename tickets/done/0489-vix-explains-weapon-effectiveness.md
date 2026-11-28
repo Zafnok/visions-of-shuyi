@@ -177,6 +177,11 @@ a tip, a forecast note, the info rows in two skins), plus tests.
     `docs/design/playdate.md` updated.
 - Docs: `tutorial.md` (*Tips*), `weapons-and-items.md`, `playdate.md`.
 
+No follow-up tickets. Vix's voice clip: 0476 isn't done, so it voices
+this tip with the rest.
+
+### For the Act 1 playtest (1064)
+
 Starting rules for the Act 1 playtest (1064), all *the agent's*:
 - The tip shows the first time a forecast has an effective weapon-kind
   strike from either side, after the forecast tip if both are new.
@@ -185,6 +190,3 @@ Starting rules for the Act 1 playtest (1064), all *the agent's*:
 - The Playdate's unit info has a fourth page: weapon ranks with their
   traits, and the affinities.
 - The gauntlet's trait reads `+15 avo`.
-
-No follow-up tickets. Vix's voice clip: 0476 isn't done, so it voices
-this tip with the rest.

@@ -186,11 +186,6 @@ chapters with several battles (world map and skirmishes: 1007, 1008 per
   "Space" in UI text.
 - Playtime is counted (`Ctx::clock_s`), ready for 0802's slots.
 
-**the agent's starting rules** (Nick's answers on PR #127 are in
-`death-and-difficulty.md` and `setting-and-tone.md`: 1, 3, 4, 6 agreed, 2
-changed, 5 → type on keyboard / grid on controller, 7 → `Retry Battle`, 8
-fine with a credits screen later, 0808)
-
 1. After a won battle, every unit is back at full HP for the next one, not
    only Casual retreats (as in Fire Emblem).
 2. ~~The unused-rewind bonus is capped at one level.~~ Nick (PR #127): no
@@ -225,3 +220,9 @@ Follow-up tickets: none new. 0802 (save prompt hook is `FlowScreen::
 next_chapter`), 0408 (push Preparations from the flow, drop the validator's
 refusal), 0810 (show `BattleRewards`), 0807 (battle music) build on this.
 
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (Nick's answers on PR #127 are in
+`death-and-difficulty.md` and `setting-and-tone.md`: 1, 3, 4, 6 agreed, 2
+changed, 5 → type on keyboard / grid on controller, 7 → `Retry Battle`, 8
+fine with a credits screen later, 0808)

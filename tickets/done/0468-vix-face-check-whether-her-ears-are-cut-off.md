@@ -107,4 +107,7 @@ before `docs/img/0468-tip-before.png` (ears sliced flat), after
   ("other faces"), not checked.
 - No code: the `--shift-y` import option of the first try was taken out.
 - No gameplay rules decided. No follow-up tickets.
+
+### For the Act 1 playtest (1064)
+
 - For the Act 1 playtest (1064): the tip box before/after above.

@@ -133,6 +133,8 @@ None. (Nick signs off on the split behaviour when playing 0815.)
   `{Select}` and shipped-tip tests in `tips.rs`. No existing snapshot or
   test changed.
 
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules (reading of "on the map", already flagged in
 controls.md):* the skill, item and talk target pickers count as picking on
 the map (Select), but the attack target picker counts as the forecast

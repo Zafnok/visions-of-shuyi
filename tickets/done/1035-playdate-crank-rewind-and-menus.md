@@ -190,6 +190,8 @@ accumulator lives in the engine (above).
 the shortcut entries already count as pressing their action, and there
 is no Dialogue log entry.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (where the design is silent; Nick can veto):
 - The map menu's extra entries sit after Objective: Danger Zone,
   Auto-End, Unit Info.

@@ -138,9 +138,6 @@ wants the Playdate's forecast uncut, the short names would need a second,
 7-cell form (option C was that); 1075 decides the Playdate's lists and
 may revisit it.
 
-*The agent's starting rules (Nick can veto; for the Act 1 playtest,
-1064):*
-
 - Where even the short name doesn't fit (the Playdate), the short name is
   cut, not the full name (`Stl Sw… 25` rather than `Steel … 25`: more of
   the weapon shows). The pictures Nick saw cut the full name there.
@@ -155,3 +152,8 @@ hadn't merged. After both merge, the pin moves to the private `main`.
 Engine friction: estimate 70 production lines (a field, its check, a
 language key, a `Words` method and one picker for two skins, judged by
 0480's `paint_weapon`), measured 112 added (1.6×), under 2×.
+
+### For the Act 1 playtest (1064)
+
+*The agent's starting rules (Nick can veto; for the Act 1 playtest,
+1064):*

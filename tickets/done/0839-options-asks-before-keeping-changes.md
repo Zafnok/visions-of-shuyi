@@ -99,6 +99,8 @@ page, and see the new speed.
   unchanged. Existing tests that relaunched after a change now keep it
   first.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (the design docs were silent):
 - Cancel on the question is Back (stay).
 - The three answers sit on one line, Keep, Discard, Back; the cursor's
@@ -108,4 +110,3 @@ page, and see the new speed.
   (as Discard would).
 - Discard puts back everything as it was when Options opened, including
   a fullscreen change made with the window's shortcut while it was open.
-

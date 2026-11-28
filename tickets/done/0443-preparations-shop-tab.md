@@ -191,6 +191,11 @@ the full 100-try Normal and Hardcore runs weren't done here); read it
 as "no sign Chapter 1 got easier", not a measured drop. Worth a full
 `cargo xtask playtest ch01 --bot all` before the Act 1 playtest.
 
+**Follow-up:** 0474 (a negative bonus reads `Res +-3`, seen on the Iron
+Plate line; the on-map shop has it too).
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (also in `weapons-and-items.md`):
 - Each purchase, sale or repair happens at once; no basket to confirm.
 - Sell lists only the stock: to sell worn gear or a packed item, put it
@@ -199,9 +204,6 @@ as "no sign Chapter 1 got easier", not a measured drop. Worth a full
   units left out of the battle included.
 - A battle of a chapter with no number has no shop (the tab says "No
   shop before this battle.").
-
-**Follow-up:** 0474 (a negative bonus reads `Res +-3`, seen on the Iron
-Plate line; the on-map shop has it too).
 
 **For the Act 1 playtest (1064):** Nick buys Potions on the Quick
 Battle's Preparations, packs them, and comments.

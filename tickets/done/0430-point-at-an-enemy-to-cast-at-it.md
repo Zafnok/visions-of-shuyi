@@ -127,6 +127,14 @@ changes.
 **0442** (it asks him where the menu goes first). Until then up / down still
 move the arts list in the forecast.
 
+**For Nick's sign-off:** in Quick Battle the Test Mage has Fire equipped, so
+Fire's forecast opens on the Frost Elemental; press right for Frost (which it
+absorbs).
+
+Follow-up tickets: 0442. A note was added to 0429.
+
+### For the Act 1 playtest (1064)
+
 **Rules I decided** (*the agent's starting rules*, Nick can veto):
 
 - If what is equipped can't reach the enemy from that tile, the forecast
@@ -144,9 +152,3 @@ move the arts list in the forecast.
   if it showed a spell.
 - The forecast opened from the action menu (`Attack` / `Magic`) has no
   swapping yet; 0442 asks.
-
-**For Nick's sign-off:** in Quick Battle the Test Mage has Fire equipped, so
-Fire's forecast opens on the Frost Elemental; press right for Frost (which it
-absorbs).
-
-Follow-up tickets: 0442. A note was added to 0429.

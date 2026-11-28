@@ -165,13 +165,8 @@ pick of the names, so it is ticket 0498. Until then the name is cut with
 one) is where its mark can go. 1075 is open: its Context now says the
 Playdate's forecast cuts a weapon's name to fit its uses.
 
-*The agent's starting rules (Nick can veto; for the Act 1 playtest,
-1064):*
-
 - The blink is half a second shaded, then half a second full, starting
   shaded.
-- `(broken)` shows on the row under the weapon (0404's starting rule,
-  moved).
 - A weapon's or spell's uses after its name are in the text colour (the
   name stays dimmed); a spell's uses show the same way (`Fire 10`).
 - A long weapon name is cut with `…` to fit its uses, on the PC as on
@@ -187,3 +182,11 @@ content is committed (ADR-0118).
 Engine friction: estimate 120 production lines (two skins' side blocks,
 judged by 0404's `paint_side` and `paint_bar`), measured 206 added (1.7×),
 under 2×. PR size: 924 changed lines.
+
+### For the Act 1 playtest (1064)
+
+*The agent's starting rules (Nick can veto; for the Act 1 playtest,
+1064):*
+
+- `(broken)` shows on the row under the weapon (0404's starting rule,
+  moved).

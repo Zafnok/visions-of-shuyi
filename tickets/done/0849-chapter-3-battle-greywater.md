@@ -208,6 +208,8 @@ Chapter 2's test now runs on into Chapter 3. The bots' arrival
 **Follow-up tickets:** 0861 (Chapter 3's art: Nick builds the two faces
 first), 0331 (a Seize objective names its place).
 
+### For the Act 1 playtest (1064)
+
 **The agent's starting values and rules** (the docs left them open; all
 *tunable*, for the Act 1 playtest, 1064):
 

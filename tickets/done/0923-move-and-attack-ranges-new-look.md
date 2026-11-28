@@ -115,13 +115,6 @@ clock in each skin), judged by 0449's edge arrows.
   (Zafnok/shuyi-engine#507, under this ticket); with the bought
   pictures the list was already too long for its message (follow-up
   1301).
-- *Claude's starting rules:* the spread starts only when a unit is
-  selected (the danger zone, an area skill's reach and the move after an
-  attack show at once, in the same look); on the Playdate only the
-  spread shows (one bit has no see-through tints); the row sits under
-  Threat arrows on the PC and the Playdate; a save from before it loads
-  as Slab; the row's names are Slab, Shimmer, Glint, Raised tiles,
-  Still.
 - Left to judge by playing (Act 1 playtest, 1064): whether the glint and
   the slab's shadow read well over every terrain, and the spread's speed.
 - Snapshots: the range looks (lighter tints, outline, shadow), the new
@@ -130,3 +123,13 @@ clock in each skin), judged by 0449's edge arrows.
   (under 2×). PR size: about 520.
 - Follow-up: 1301 (the PC's Options list scrolls when it outgrows the
   screen).
+
+### For the Act 1 playtest (1064)
+
+- *Claude's starting rules:* the spread starts only when a unit is
+  selected (the danger zone, an area skill's reach and the move after an
+  attack show at once, in the same look); on the Playdate only the
+  spread shows (one bit has no see-through tints); the row sits under
+  Threat arrows on the PC and the Playdate; a save from before it loads
+  as Slab; the row's names are Slab, Shimmer, Glint, Raised tiles,
+  Still.

@@ -131,6 +131,8 @@ None. The numbers are *tunable* AI weights (`assets/data/ai.ron`).
   (their fixtures have no art or active with these effects).
 - Friction: estimate 80 production lines, measured 92 (1.15×).
 
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064):
 
 - A debuff counts its stats' amounts added up, plus the avoid it takes off

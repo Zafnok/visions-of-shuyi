@@ -112,8 +112,12 @@ production lines (a toggle row like Auto-end, plus one condition).
 - **Deviation:** the Playdate has no title cinematic yet (1044 is open),
   so the row is in `PC_ONLY` and the Playdate list is unchanged. Ticket
   1044 should take `Row::Intro` out of `PC_ONLY` when it lands.
+
+### For the Act 1 playtest (1064)
+
 - *the agent's starting rules* (from the ticket): the row sits after
   Map zoom, shows in battle's Options too, and Off keeps the song looping.
   Restore defaults puts it back On.
+
 - Left for the Act 1 playtest (1064): turn the intro off, wait on the
   title, and say whether what the title does instead feels right.

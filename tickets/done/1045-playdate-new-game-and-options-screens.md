@@ -170,6 +170,12 @@ no slot headings (`Button 2` would not fit its column). The engine's
 `two_buttons_down_together_make_a_chord` (a second button used to be
 ignored; it now makes a chord, on every pad).
 
+**Follow-ups:** none.
+
+**Nick's sign-off:** no comment yet.
+
+### For the Act 1 playtest (1064)
+
 ***the agent's starting rules*** (in `docs/design/playdate.md`, *New Game,
 Options, Key bindings and Profile*; Nick can veto): the focus is a bar and
 what can't be chosen is grey dots; on the mode and familiarity screens
@@ -180,7 +186,3 @@ zoom; long lists scroll with the focus in the middle; Key bindings lists
 the crank's two as Rewind back / Rewind forward and leaves out Zoom map;
 an action that just lost its button is marked `*`; a chord is captured by
 holding one button and pressing another.
-
-**Follow-ups:** none.
-
-**Nick's sign-off:** no comment yet.

@@ -102,14 +102,6 @@ Level ups and class level ups only *add* spells instead of calling
 minimum gains as a number; a tier missing from a tier table uses the highest
 tier listed (content validation already requires every tier in use).
 
-**the agent's starting rules** (the design docs were silent; Nick may veto):
-- A defender that **can't counter** (out of range or unarmed) took no part in
-  the combat and gets no EXP or CP (reading "attacked or countered"
-  literally).
-- A unit that **falls** in a combat gets nothing from it.
-- Only the actions in the EXP table give EXP: **items, shops, chests,
-  seizing and waiting give none**.
-
 **Nick's answers in the PR review** (recorded in `progression.md`):
 Sanctuary gives the higher of the active and heal awards (24); a Shove that
 fells an enemy gives the kill award (and kill CP) when it is higher than the
@@ -117,3 +109,13 @@ active's 20 (a collision that fells a friendly unit gives none); EXP past the
 level cap is lost only at the cap itself.
 
 No follow-up tickets.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (the design docs were silent; Nick may veto):
+- A defender that **can't counter** (out of range or unarmed) took no part in
+  the combat and gets no EXP or CP (reading "attacked or countered"
+  literally).
+- A unit that **falls** in a combat gets nothing from it.
+- Only the actions in the EXP table give EXP: **items, shops, chests,
+  seizing and waiting give none**.

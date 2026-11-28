@@ -201,10 +201,12 @@ meanwhile (0849): played again and re-recorded above.
 **the agent's starting rules:** none (no gameplay rule; battle numbers
 only).
 
+Engine friction: none: no code.
+
+### For the Act 1 playtest (1064)
+
 **Left to judge by playing (1064):** whether the second raider at Kell's
 Ford's west house feels fair on the first turn (a player has to evacuate
 that house with a unit that can take two hits, or kill one raider
 first), and whether the road bridge's raider at level 1 makes Chapter 1's
 north bank too soft.
-
-Engine friction: none: no code.

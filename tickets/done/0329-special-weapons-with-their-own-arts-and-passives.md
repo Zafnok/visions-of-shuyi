@@ -133,6 +133,8 @@ Done as planned:
 
 Engine friction: estimate 350, measured 354 (1.0×), under 2×.
 
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (where the design is silent), for the Act 1
 playtest (1064):
 
@@ -146,4 +148,3 @@ playtest (1064):
 4. **The `moonlit: hits Res` line also shows when the Moonblade's holder
    is the one countering.**
 5. The sell question shows the gold as the shop does (`1 500`).
-

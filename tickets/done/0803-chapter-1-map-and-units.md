@@ -157,6 +157,39 @@ rest hold their ground.
 turn 8 with nobody lost. Two tests play it: one against the rules alone,
 one through the real game from New Game to "To be continued".
 
+**Deviations from the plan:**
+
+- **The winning replay is recorded, not hand-written.** The ignored test
+  `ch01_winnable::record` searches for it (many tries at each turn, going
+  back a turn if someone would fall) and writes the fixture. It knows the
+  battle's luck, so it shows the chapter can be won, not how hard it is. A
+  balance change that breaks the replay re-records it on purpose (the
+  test file says how).
+- **The test characters, test chapter and Quick Battle are still in the
+  shipped data** (step 2 wanted them in `tests/fixtures/`). About 300
+  places in the tests and the debug Quick Battle use them. Follow-up:
+  ticket **0122**. For now the tests' New Game starts the test chapter
+  through `NewGameDef::test_chapter()` (the `Harness` sets it;
+  `Harness::with_shipped_story` starts the real story), so the flow and
+  save tests don't depend on Chapter 1's content.
+- **The sim test asserts the 30–70% range and prints nothing** (the lints
+  forbid printing in tests); `cargo xtask playtest ch01 --runs 200` prints
+  the numbers above.
+- `cargo xtask frame-png` now starts the real story at New Game (it showed
+  the test chapter).
+- `chapter_1_never_shows_a_companion_who_may_have_fallen` is deleted, as
+  step 4 says; `chapter_1s_cast_is_the_new_game_roster_and_its_triggers`
+  checks that the real files give each scene the cast the script expects.
+
+**For Nick when playing:** without the bought art the six companions' and
+Harl's faces are empty frames (their portraits are in the private
+repository, 0706). Numbers are deadly at this scale: a Brigand takes about
+half the lead's HP in one hit, and the lead kills a Brigand in one round.
+That is the placeholder number scale (ticket 0013), not something this
+ticket changed.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (the design docs were silent; all *tunable*,
 for Nick to judge in 0804):
 
@@ -193,34 +226,3 @@ for Nick to judge in 0804):
 9. **Scene music** (not approved, see above): the letter `village_home`,
    the Red Company `dungeon_tense`, after the fight `scene_sad`, Veyne Hall
    `talk_antagonist`. The battle's own scenes don't change the music.
-
-**Deviations from the plan:**
-
-- **The winning replay is recorded, not hand-written.** The ignored test
-  `ch01_winnable::record` searches for it (many tries at each turn, going
-  back a turn if someone would fall) and writes the fixture. It knows the
-  battle's luck, so it shows the chapter can be won, not how hard it is. A
-  balance change that breaks the replay re-records it on purpose (the
-  test file says how).
-- **The test characters, test chapter and Quick Battle are still in the
-  shipped data** (step 2 wanted them in `tests/fixtures/`). About 300
-  places in the tests and the debug Quick Battle use them. Follow-up:
-  ticket **0122**. For now the tests' New Game starts the test chapter
-  through `NewGameDef::test_chapter()` (the `Harness` sets it;
-  `Harness::with_shipped_story` starts the real story), so the flow and
-  save tests don't depend on Chapter 1's content.
-- **The sim test asserts the 30–70% range and prints nothing** (the lints
-  forbid printing in tests); `cargo xtask playtest ch01 --runs 200` prints
-  the numbers above.
-- `cargo xtask frame-png` now starts the real story at New Game (it showed
-  the test chapter).
-- `chapter_1_never_shows_a_companion_who_may_have_fallen` is deleted, as
-  step 4 says; `chapter_1s_cast_is_the_new_game_roster_and_its_triggers`
-  checks that the real files give each scene the cast the script expects.
-
-**For Nick when playing:** without the bought art the six companions' and
-Harl's faces are empty frames (their portraits are in the private
-repository, 0706). Numbers are deadly at this scale: a Brigand takes about
-half the lead's HP in one hit, and the lead kills a Brigand in one round.
-That is the placeholder number scale (ticket 0013), not something this
-ticket changed.

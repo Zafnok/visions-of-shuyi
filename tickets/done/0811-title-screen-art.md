@@ -138,8 +138,6 @@ the rules are in `docs/design/look-and-feel.md`, *Title screen*.
 - Downstream tickets 0817, 0819 and 0830 got a note on how to draw the
   logo.
 
-**Rules I had to decide (*the agent's starting rules*; Nick can veto):**
-
 - One backdrop per launch, random, never the same twice in a row, kept for
   the whole launch. (Nick: "yes sounds good".)
 - The sparks show from the first frame, before the first press too, and
@@ -150,3 +148,7 @@ the rules are in `docs/design/look-and-feel.md`, *Title screen*.
 **For Nick when playing:** each start shows another backdrop; say which
 ones don't work under the lettering (the bright day one is in the pool),
 and whether the sparks want to be fewer, slower or bigger.
+
+### For the Act 1 playtest (1064)
+
+**Rules I had to decide (*the agent's starting rules*; Nick can veto):**

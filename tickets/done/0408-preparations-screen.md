@@ -123,14 +123,6 @@ spare gear, six Potions and two Elixirs to try it with.
    `core::prep::Preparations` holds the setup and the bench;
    `Campaign::bench` / `set_members` carry the bench in and out.
 
-5. (PR #140, 2026-10-03) "we can have direct unit to unit swaps otherwise
-   I think I agree w your starting rules". So the list beside a slot also
-   shows what the other units hold in such a slot
-   (`Steel Bow 25/25 from Test Scout`), and taking one swaps the two
-   units' items in one step (`Preparations::gear_from_unit`).
-
-**the agent's starting rules** (Nick agreed, PR #140; 1 is new with the swap)
-
 1. **Direct swaps:** if the other unit can't use what comes back (the
    knight can't wear the lord's Leather Vest), it goes to the stock. The
    list only shows other units' items that this unit can use, and not an
@@ -176,3 +168,13 @@ in the stock, then give it to Test Archer.
 Then `Pack` → add Potions until it says the pack is full → `Fight!`. In the
 battle, the map menu's `Restart Battle` brings you back to Preparations
 with everything as you left it.
+
+### For the Act 1 playtest (1064)
+
+5. (PR #140, 2026-10-03) "we can have direct unit to unit swaps otherwise
+   I think I agree w your starting rules". So the list beside a slot also
+   shows what the other units hold in such a slot
+   (`Steel Bow 25/25 from Test Scout`), and taking one swaps the two
+   units' items in one step (`Preparations::gear_from_unit`).
+
+**the agent's starting rules** (Nick agreed, PR #140; 1 is new with the swap)

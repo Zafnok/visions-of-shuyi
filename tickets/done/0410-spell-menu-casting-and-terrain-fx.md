@@ -149,6 +149,26 @@ Deviations from the plan:
 - About 40 existing tests and 27 snapshots changed, all for the two new
   units; every new snapshot was read.
 
+The map skin (0432, ADR-0038) wasn't built yet, so the flash and the
+"what the tile would become" preview are drawn by the battle screen
+(`draw_flashes`, `draw_ranges` in `battle/mod.rs`), as the map is drawn
+today; 0432 moves them into the scene.
+
+Follow-up tickets:
+
+- **0430** — point at an enemy with a caster selected to cast at it (0428
+  only looks at weapons).
+- **0431** — show the 5 burn damage when a fire burns out under a unit
+  (today the HP just drops).
+
+For Nick's sign-off (after the merge, on Pages): Quick Battle → move the
+cursor down to the mage → `Magic`. Fire on the forest left of it burns at
+once and is burnt on turn 2. Frost needs a walk up to the water. The
+elemental is at the bottom, left of the fort's wall: Fire shows `!`, Frost
+shows `heals N`. Heal needs someone hurt beside the mage.
+
+### For the Act 1 playtest (1064)
+
 Rules and looks I had to choose (*the agent's starting rules*; Nick may veto,
 they are also in `magic.md`):
 
@@ -169,21 +189,3 @@ they are also in `magic.md`):
 7. **The info screen writes affinities as `Fire  Weak`, `Ice  Absorb`.**
 8. **The Frost Elemental never moves**; it only casts at units within two
    tiles, so it doesn't join the first turn's fight.
-
-The map skin (0432, ADR-0038) wasn't built yet, so the flash and the
-"what the tile would become" preview are drawn by the battle screen
-(`draw_flashes`, `draw_ranges` in `battle/mod.rs`), as the map is drawn
-today; 0432 moves them into the scene.
-
-Follow-up tickets:
-
-- **0430** — point at an enemy with a caster selected to cast at it (0428
-  only looks at weapons).
-- **0431** — show the 5 burn damage when a fire burns out under a unit
-  (today the HP just drops).
-
-For Nick's sign-off (after the merge, on Pages): Quick Battle → move the
-cursor down to the mage → `Magic`. Fire on the forest left of it burns at
-once and is burnt on turn 2. Frost needs a walk up to the water. The
-elemental is at the bottom, left of the fort's wall: Fire shows `!`, Frost
-shows `heals N`. Heal needs someone hurt beside the mage.

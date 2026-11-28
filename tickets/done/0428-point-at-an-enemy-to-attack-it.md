@@ -188,8 +188,9 @@ Deviation: `tick` still returns only a `Mode`; the screen snaps the cursor onto
 the target whenever it is in `Mode::Targeting` after a tick (ticket step 6's
 second option).
 
-Gameplay rule I decided (*the agent's starting rule*): ties between equally cheap
-attack tiles go to the shortest path, then the topmost, then the leftmost tile.
-
 No follow-up tickets.
 
+### For the Act 1 playtest (1064)
+
+Gameplay rule I decided (*the agent's starting rule*): ties between equally cheap
+attack tiles go to the shortest path, then the topmost, then the leftmost tile.

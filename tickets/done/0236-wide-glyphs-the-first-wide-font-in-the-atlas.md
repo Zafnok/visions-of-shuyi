@@ -202,5 +202,6 @@ widths argument (a row in `docs/engine/friction.md`).
 **Follow-up tickets:** 0263 (battle menus pad their name columns in
 cells); 0237 gained the narrow `word_wrap` calls.
 
-**For the Act 1 playtest (1064):** nothing; no player sees Chinese yet.
+### For the Act 1 playtest (1064)
 
+**For the Act 1 playtest (1064):** nothing; no player sees Chinese yet.

@@ -173,23 +173,6 @@ roster by Chapter 4 at level 10, by Chapter 6 at level 16, raised as
 | | Hardcore | 50-75% | 44 | **56** |
 | | Hardcore turns (vs Normal) | lower | 7 vs 8 | 7 vs 8 |
 
-The Ledger's search ran out of evaluations with Hardcore one point under
-its band (the four changes it kept: the gate's guard and two archers a
-level up, the archer behind the gate a level down); shipped as the best
-setting seen, for 1064 to judge. **Letters Home took three passes.** As
-first built (the army at level 16, Casker at the camp fire) it was a
-four-turn rush, too easy for every persona even with every privateer
-at level 26; the army went to level 12 (a tier-1 party, as the act's
-pace has it by Chapter 5) and Casker onto the boat's deck by the
-hatch, behind the gangplank and its bowmen. Then the Normal bot lost
-the lead on turn 2 to the three privateers rushing the path, so those
-three hold its foot instead and the lead starts last. The search then
-ran out of evaluations with Casual and Normal pulling opposite ways:
-Casual (rewinds) wins too often, Normal (nobody lost) not often
-enough, Hardcore in its band. Shipped as the best setting seen (the
-foot of the path at levels 9-11, the deck's bowmen and the sloop's
-boat at 14); a death-free win on this beach is what 1064 should judge.
-
 **Deviations.**
 
 - **Gil and Hedda have no slot in either battle**: they are speakers,
@@ -213,6 +196,41 @@ boat at 14); a death-free win on this beach is what 1064 should judge.
   recruited by then (Gil and Hedda included, once they are units).
 - **Tor's Bow is named after Tor** (`brother_tor`): a rename of him
   touches `items.ron` and the language packs too.
+
+**Pictures in the PR:** `docs/img/1072-ledger-gate.png`,
+`1072-ledger-map.png`, `1072-letters-cliff.png`, `1072-letters-map.png`
+(the glyph look, from a throwaway Quick Battle start, since reverted).
+
+**Follow-ups:** none new. 1071 and 0851 add Gil's and Hedda's slots and
+wire their lines; 1083 and 1084 build the other three quests the same
+way.
+
+**Sizes.** Estimated before the code: about 20 production lines (no new
+rule; a paralogue is data in an engine that has side quests, as this one
+does since 1007) and about 1,700 changed lines in all (the ticket's).
+Measured: 0 added production lines (`cargo xtask code-lines`; the whole
+ticket is data, scripts, docs and tests: under 2x) and 2,183 changed lines
+(`cargo xtask pr-size`): past the 2,000 a ticket is planned at, under
+the 3,000 limit; it would have split cleanly into one quest a PR.
+
+### For the Act 1 playtest (1064)
+
+The Ledger's search ran out of evaluations with Hardcore one point under
+its band (the four changes it kept: the gate's guard and two archers a
+level up, the archer behind the gate a level down); shipped as the best
+setting seen, for 1064 to judge. **Letters Home took three passes.** As
+first built (the army at level 16, Casker at the camp fire) it was a
+four-turn rush, too easy for every persona even with every privateer
+at level 26; the army went to level 12 (a tier-1 party, as the act's
+pace has it by Chapter 5) and Casker onto the boat's deck by the
+hatch, behind the gangplank and its bowmen. Then the Normal bot lost
+the lead on turn 2 to the three privateers rushing the path, so those
+three hold its foot instead and the lead starts last. The search then
+ran out of evaluations with Casual and Normal pulling opposite ways:
+Casual (rewinds) wins too often, Normal (nobody lost) not often
+enough, Hardcore in its band. Shipped as the best setting seen (the
+foot of the path at levels 9-11, the deck's bowmen and the sloop's
+boat at 14); a death-free win on this beach is what 1064 should judge.
 
 **The agent's starting values and rules** (for the Act 1 playtest, 1064;
 all *tunable*):
@@ -253,19 +271,3 @@ much purse too early (Millhaven's Steel arrives in Chapter 5); whether
 Longshot's range 3 makes Aske too safe; the two maps' look at dusk;
 whether a player fighting the Ledger after Saltmere, with Hedda in the
 party and no line for her at the barn, notices.
-
-**Pictures in the PR:** `docs/img/1072-ledger-gate.png`,
-`1072-ledger-map.png`, `1072-letters-cliff.png`, `1072-letters-map.png`
-(the glyph look, from a throwaway Quick Battle start, since reverted).
-
-**Follow-ups:** none new. 1071 and 0851 add Gil's and Hedda's slots and
-wire their lines; 1083 and 1084 build the other three quests the same
-way.
-
-**Sizes.** Estimated before the code: about 20 production lines (no new
-rule; a paralogue is data in an engine that has side quests, as this one
-does since 1007) and about 1,700 changed lines in all (the ticket's).
-Measured: 0 added production lines (`cargo xtask code-lines`; the whole
-ticket is data, scripts, docs and tests: under 2x) and 2,183 changed lines
-(`cargo xtask pr-size`): past the 2,000 a ticket is planned at, under
-the 3,000 limit; it would have split cleanly into one quest a PR.

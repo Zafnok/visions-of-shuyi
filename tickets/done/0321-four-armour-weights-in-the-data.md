@@ -170,7 +170,9 @@ as Nick decided them).
 
 **Follow-up tickets:** 0855 (Chapter 1 back in its playtest bands).
 
+**Gameplay rules decided where the docs were silent:** none.
+
+### For the Act 1 playtest (1064)
+
 **For the Act 1 playtest (1064):** whether Chapter 1 feels right after 0855's
 retune; that the robes' Res and the vest's weight feel right.
-
-**Gameplay rules decided where the docs were silent:** none.

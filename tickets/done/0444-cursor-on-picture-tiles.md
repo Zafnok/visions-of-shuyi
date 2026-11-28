@@ -138,11 +138,13 @@ forest, road, water and the fort, at both zooms:
 - The Options row is outside this ticket's first scope; Nick asked for
   it here.
 
+**Follow-up tickets:** none.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rule** (Nick to agree or veto):
 
 - A player who picked `Tile glow` on glyphs and then switches the map to
   pictures sees the normal corner marks, and the `Cursor` row says
   `Corners`. Their glow comes back if they return to glyphs without
   picking another cursor.
-
-**Follow-up tickets:** none.

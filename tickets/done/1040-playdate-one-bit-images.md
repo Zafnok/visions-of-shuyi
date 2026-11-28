@@ -153,6 +153,15 @@ the converter an engine tool; the method table stays the game's.
   the logo as solid white letters with a black shadow and rim, which is
   1044's to make. They stay PNGs (grey boxes on the Playdate until then).
 
+**Follow-up ticket:** 1061 (the bought art in the Playdate's bundle).
+
+**Notes for Nick:** nothing to play yet: the Playdate's screens still
+wear the PC's skins, so the pictures show cut off until 1041, 1043 and
+1044 lay them out. The placeholder backdrops are flat bands of colour,
+so they come out as flat patterns; the bought ones have gradients.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (Nick can veto; all *tunable*, the screens'
 tickets may change them):
 
@@ -162,10 +171,3 @@ tickets may change them):
 - A dark line is an art pixel 30% darker than the brightest pixel next to
   it, or under 15% bright; the edge of a figure counts as next to white,
   so its outline is kept.
-
-**Follow-up ticket:** 1061 (the bought art in the Playdate's bundle).
-
-**Notes for Nick:** nothing to play yet: the Playdate's screens still
-wear the PC's skins, so the pictures show cut off until 1041, 1043 and
-1044 lay them out. The placeholder backdrops are flat bands of colour,
-so they come out as flat patterns; the bought ones have gradients.

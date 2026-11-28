@@ -159,18 +159,6 @@ combat stage's backdrop follows the light too.
   invented: **Nick, say if Chapter 1's battle should be at dusk** (one
   word in `assets/maps/ch01.map`).
 
-**the agent's starting rules** (Nick can veto; all in `look-and-feel.md`):
-
-- **Night** is darker and bluer than dusk (grey 0.45, tint 0.40 / 0.44 /
-  0.58). Dusk is render C3's numbers exactly.
-- The range colours, the path, the cursor and the HP bars aren't shaded
-  (the ticket listed them; C3 left them alone).
-- In a fight on the combat stage, the backdrop is the bundle's own dusk
-  or night picture of the same place. A light the bundle has no picture
-  for (none today; any light Nick adds later) shows the day picture
-  shaded like the map's ground. The fighters aren't shaded.
-- The glyph map looks the same in every light.
-
 **What was built** (ADR-0058).
 
 - `assets/data/lighting.ron` and `trpg_content::lighting`: the lights as
@@ -223,3 +211,17 @@ file, and run with `--features private-assets`. Things to judge: how dark
 dusk and night are; whether Chapter 1's battle should be in low light; and
 that the bundle's dusk backdrop is a bright sunset, brighter than our dusk
 map (say if the shaded day picture would fit better).
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (Nick can veto; all in `look-and-feel.md`):
+
+- **Night** is darker and bluer than dusk (grey 0.45, tint 0.40 / 0.44 /
+  0.58). Dusk is render C3's numbers exactly.
+- The range colours, the path, the cursor and the HP bars aren't shaded
+  (the ticket listed them; C3 left them alone).
+- In a fight on the combat stage, the backdrop is the bundle's own dusk
+  or night picture of the same place. A light the bundle has no picture
+  for (none today; any light Nick adds later) shows the day picture
+  shaded like the map's ground. The fighters aren't shaded.
+- The glyph map looks the same in every light.

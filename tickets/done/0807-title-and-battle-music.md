@@ -131,8 +131,6 @@ intro scenes keep the title music; the battle's track starts with the
 battle and carries on through the victory scenes; "To be continued" is
 silent; back on the title, the title music.
 
-**the agent's starting rules** (Nick: agree or veto)
-
 1. The Preparations screen (0408, not built yet) will already play the
    battle's track. Nothing to hear yet: today the track starts when the
    battle appears.
@@ -164,3 +162,7 @@ silent, `Retry Battle` brings music back.
 Follow-ups: none new. 0803 picks Chapter 1's cue; 0710 gives scenes their
 own music; 0809 gives Game Over its music; 0408 pushes Preparations from
 the flow (rule 1).
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (Nick: agree or veto)

@@ -116,5 +116,8 @@ doesn't strike back.
   (one fewer counter roll changes every roll after it), so no balance
   change is read from it. The winning replay (`ch01_winnable`) passes
   unchanged.
+
+### For the Act 1 playtest (1064)
+
 - No new *the agent's starting rule*: the one this ticket implements (only
   the attacker's spell counts) was already written in `magic.md`.

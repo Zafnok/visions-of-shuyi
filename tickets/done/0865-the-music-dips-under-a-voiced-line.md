@@ -112,8 +112,11 @@ playtest (1064's checklist).
 - Docs: `docs/design/audio.md` rule 11, a starting-values bullet and the
   friend's words in the appendix; the `ducks` field in
   `assets/audio/README.md`.
+- Engine friction: none, no production code (data only).
+
+### For the Act 1 playtest (1064)
+
 - *Claude's starting rule* (for the Act 1 playtest, 1064): the dip is
   6 dB, down over 0.15 s and back over 0.6 s. Only the music dips, not
   sound effects. Judge by ear in the playtest; the three numbers are in
   `audio.ron`.
-- Engine friction: none, no production code (data only).

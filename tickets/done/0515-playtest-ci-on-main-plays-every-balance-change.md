@@ -107,4 +107,7 @@ Expected size: no Rust; about 6 YAML lines and the comments.
 - **To see it on `main`:** the next time two pushes land close together,
   `gh run list --workflow Playtest --branch main` shows a run for each
   push, neither `cancelled`.
+
+### For the Act 1 playtest (1064)
+
 - No deviations, no follow-up tickets, no starting rules.

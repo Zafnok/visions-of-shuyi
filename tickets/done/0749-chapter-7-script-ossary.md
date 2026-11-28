@@ -145,8 +145,11 @@ Done 2026-10-30.
   is three boxes (narration, Rue, Hollis): the cold read found a longer
   one a second roll call, and the budget before the first move is at
   its cap.
-- **For the Act 1 playtest (1064):** nothing to judge by playing beyond
-  the words. No starting rules were decided (no Rust, no numbers).
 - **Follow-ups:** none filed. Hollis hears Oriel say "Marr" in the
   barracks and nothing is made of it here; 1073's Hollis–Oriel support
   can spend it (Chapter 6's note stands).
+
+### For the Act 1 playtest (1064)
+
+- **For the Act 1 playtest (1064):** nothing to judge by playing beyond
+  the words. No starting rules were decided (no Rust, no numbers).

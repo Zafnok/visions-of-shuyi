@@ -161,8 +161,12 @@ So a `feature`, `bug`, `tuning` or `content` ticket never asks Nick to
 look at or play its result. It is verified by tests, `cargo shuyi
 frame-png` pictures in the PR and the playtest bots (0506, 0509, and
 for all of Act 1, 0512). Its *the agent's starting rules* and anything
-left to judge by playing go in its Completion notes, and the Act 1
-playtest (1064) collects them into its checklist.
+left to judge by playing go in its Completion notes under one heading,
+`### For the Act 1 playtest (1064)`, or the notes say `Nothing for the
+playtest: <why>` (ticket 1256). `cargo xtask ticket-lint` warns, and
+still passes, on such a ticket moved to `done/` with neither. The Act 1
+playtest (1064) collects every section with `cargo xtask
+playtest-notes` into its checklist.
 
 What Nick still answers: design questions, which are `decision`
 (a `00xx` ticket, or a question inside a ticket asked **before**

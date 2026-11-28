@@ -177,5 +177,8 @@ Act 1 playtest's checklist (1064).
 - `weapons-and-items.md`, *On the Preparations screen*: one sentence per
   rule.
 - Pictures: `docs/img/0478-loadout-{weapon,armour,empty-slot}.png`.
+
+### For the Act 1 playtest (1064)
+
 - For the Act 1 playtest (1064): whether the item line reads well,
   including the weapon line wrapping onto a second row.

@@ -108,4 +108,7 @@ added to the scope at Nick's request.
 - The acceptance item "release packages are named `visions-of-shuyi-*`" was
   checked by reading the workflow. It will be run for real at the next
   release.
+
+### For the Act 1 playtest (1064)
+
 - No the agent's starting rules: this ticket made no gameplay decisions.

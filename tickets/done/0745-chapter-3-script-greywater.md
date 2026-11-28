@@ -202,6 +202,15 @@ because an `xtask` unit test checks a `lang-status` report for the
 words "left out" and matched Rue's "He just left out the rest";
 ticket 1079 narrows that test. No test was changed.
 
+**Follow-ups:** 1079 (the brittle test). 0849 wires the scenes, picks
+the Seize tile and the chests, and removes the `@if` guards; 1073 may
+pick Chapter 3's supports (Hollis and Maud now have their first warm
+line; Aske and Rue their break).
+
+**Engine friction:** none: no Rust code.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules:** none that touch play. For the Act 1
 playtest (1064): whether the prior should die or live; whether Tamsin
 has enough in this chapter (her arc is Chapter 4's, and the cold reads
@@ -209,10 +218,3 @@ found her the companion they'd miss least here); whether Joss's sleeve
 bit in the boathouse reads, or is one bit too many after his Chapter 2
 cuff; whether "Hounds" being said aloud for the first time by Joss
 lands.
-
-**Follow-ups:** 1079 (the brittle test). 0849 wires the scenes, picks
-the Seize tile and the chests, and removes the `@if` guards; 1073 may
-pick Chapter 3's supports (Hollis and Maud now have their first warm
-line; Aske and Rue their break).
-
-**Engine friction:** none: no Rust code.

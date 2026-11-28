@@ -169,6 +169,8 @@ Expected size: about 200 production lines (a core function of ~60 like
   merge commit.
 - Friction: estimate 220 production lines, measured 297 (1.35×), under 2×.
 
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (where *Side panel* is silent; for the Act
 1 playtest, 1064):
 
@@ -187,4 +189,3 @@ Expected size: about 200 production lines (a core function of ~60 like
   draws them; a timed-effect stat shows in the effect colour, as on unit
   info; a weapon with no uses left shows them in the warning colour, as
   in the menus' top border.
-

@@ -174,6 +174,18 @@ picker (`screens/save.rs`).
 - The file's profile name isn't in the file, only in its name
   (`export_name`): the new profile is named from that.
 
+**Follow-ups:** none.
+
+**Engine friction:** estimate 700 (the slot picker, `screens/save.rs`),
+measured 978 (1.4×), under 2×.
+
+**PR size:** estimate 1,400, measured 2,368: the tests ran longer than
+planned (ten Harness tests). The only clean split is the checker vs the
+screen, and the screen can't be tested without the checker, so it ships
+as one PR.
+
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064; also in
 `options.md`):
 - The import key is the **End turn** key (`Space` on both keyboards,
@@ -186,13 +198,3 @@ picker (`screens/save.rs`).
   (the report says so).
 - The notice after an import counts the saves imported and refused, and
   stays until the cursor moves.
-
-**Follow-ups:** none.
-
-**Engine friction:** estimate 700 (the slot picker, `screens/save.rs`),
-measured 978 (1.4×), under 2×.
-
-**PR size:** estimate 1,400, measured 2,368: the tests ran longer than
-planned (ten Harness tests). The only clean split is the checker vs the
-screen, and the screen can't be tested without the checker, so it ships
-as one PR.

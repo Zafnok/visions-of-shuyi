@@ -89,6 +89,7 @@ on 1064's checklist: too loud, too long, tiring after many level ups?
 - Snapshot / integration: harness tests of the audio requests.
 
 ## Completion notes
+
 - **Nick's answer changed the setup.** He had no files and asked for
   candidates instead ("no I want you to find some"). A listening page of
   28 in-house candidates, five to six per moment, with a mock level up at
@@ -128,11 +129,15 @@ on 1064's checklist: too loud, too long, tiring after many level ups?
   asks; measured 281 (1.1×).
 - **Manifest:** both `assets/audio/audio.ron` and the private
   `content/audio/audio.ron` (the private pull request comes first).
+
+### For the Act 1 playtest (1064)
+
 - **The agent's starting rules** (the design docs were silent): a
   promotion page plays none of these sounds; `Learned:` alone plays the
   mastery sound (Nick's moment 5 joins them); a reclass or "To stock" box
   plays nothing; a skip still plays the bar's sparkle; held Confirm cuts
   the fill and fanfare too; the fade is 60 ms.
+
 - **For the Act 1 playtest (1064):** too loud (volume 50, starting
   value), too long (the 1.1 s wait before the stats), tiring after many
   level ups?

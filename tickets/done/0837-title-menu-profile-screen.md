@@ -111,6 +111,12 @@ done, give the Profile screen a Playdate paint too, chosen by `ctx`'s
 - Title tests and snapshots updated for the extra menu row.
 - Playdate paint: 1045 isn't done, so 1045 does it (as the ticket says).
 
+**For Nick when playing:** Title → `Profile`. Add a profile, pick its
+hands, change an option and keep it, then `Profile` → `Player 1` →
+`Use this profile`: your own options and saves are back.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (the design docs were silent):
 
 - **Use this profile** goes straight back to the title, which then shows
@@ -126,7 +132,3 @@ done, give the Profile screen a Playdate paint too, chosen by `ctx`'s
   has that name.`, and the box stays open.
 - In the `Keep this name?` question, Keep does what Enter would (and if
   the name is refused, you're back in the box with the message).
-
-**For Nick when playing:** Title → `Profile`. Add a profile, pick its
-hands, change an option and keep it, then `Profile` → `Player 1` →
-`Use this profile`: your own options and saves are back.

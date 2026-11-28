@@ -163,13 +163,15 @@ game code.
 - Enemies that don't matter to the shots don't move in their phase (the
   second brigand south of the river, the guards), as in 0820.
 
-**the agent's starting rules** (Nick can veto): who moves where each turn,
-the order they move in, who fights whom, and the seed that makes the
-brigand fall to the lead's counter; Tamsin alone at the footbridge.
-
 **Follow-up tickets:** none.
 
 **For Nick when he plays** (the title, left idle, sound on): is the talk
 short enough at 6 seconds? Do the units move like the game? Do the two
 combat scenes look right, and is holding the end of each fight for about
 2 seconds OK?
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules** (Nick can veto): who moves where each turn,
+the order they move in, who fights whom, and the seed that makes the
+brigand fall to the lead's counter; Tamsin alone at the footbridge.

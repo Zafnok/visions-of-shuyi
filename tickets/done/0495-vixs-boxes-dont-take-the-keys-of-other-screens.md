@@ -189,7 +189,6 @@ acceptance test for it is the Guides round trip above. The snapshot of the
 box at the end of the lessons (private repository) is unchanged: the test
 waits for the cursor's pulse to match it after the new press.
 
-**The agent's starting rules, for the Act 1 playtest (1064):**
 - A lesson done goes straight to the next lesson, never to a tip between
   them: on turn 1 at Full the tips that fired during the lessons
   (*Moving a unit*, *Terrain*, *Magic*…) come after the last lesson of
@@ -204,3 +203,7 @@ waits for the cursor's pulse to match it after the new press.
 Engine friction: estimate 120 (the ticket's, judged by 0467's change to
 `tips.rs` and `overlay_key`; written before coding only as the ticket's
 number), measured 45, under 2×. No follow-up tickets.
+
+### For the Act 1 playtest (1064)
+
+**The agent's starting rules, for the Act 1 playtest (1064):**

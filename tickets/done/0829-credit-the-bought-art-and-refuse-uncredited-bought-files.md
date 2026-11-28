@@ -134,8 +134,6 @@ starting rules* in the completion notes).
 bundle's files by `display_path`, which is already tested (a function
 that is always empty in a gate can't be mutation-tested).
 
-**the agent's starting rules (veto any):**
-
 - The heading is **Art**, after *Sound effects* and before *Fonts*.
 - The entry reads `"Tiny Tales" by Megatiles (artists: Rayane Félix,
   Lunatic Red, Kodots Games Studio)`, then `Custom (Megatiles) ·
@@ -152,3 +150,7 @@ font. With `"units/"` taken out of the entry, `--pin` and the private
 test both failed and named the twelve sprite files.
 
 **Follow-up tickets:** none.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules (veto any):**

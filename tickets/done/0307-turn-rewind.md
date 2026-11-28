@@ -94,6 +94,13 @@ a `Rewind` action + key binding (`r` in the right-handed layout, `u` in the left
   screen stack: it draws the battle map with another state and hands the
   chosen point back, which a stacked screen can't do.
 
+Not in this ticket: the unused-charge EXP bonus and refund on restart
+(0801), saving the history in the suspend save (0802), a hint for `r` in
+the map's help line (0406). To try it: Quick Battle, attack with the lord,
+press `r`.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (design docs silent; Nick can veto):
 
 - Rewind opens only while browsing the map in the player phase (not while a
@@ -103,8 +110,3 @@ a `Rewind` action + key binding (`r` in the right-handed layout, `u` in the left
   its attack, and phase ends. Picking the newest entry undoes just the last
   action.
 - A rewind always asks for confirmation (`Use 1 of N charges?`).
-
-Not in this ticket: the unused-charge EXP bonus and refund on restart
-(0801), saving the history in the suspend save (0802), a hint for `r` in
-the map's help line (0406). To try it: Quick Battle, attack with the lord,
-press `r`.

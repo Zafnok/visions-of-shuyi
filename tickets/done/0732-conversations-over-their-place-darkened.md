@@ -235,8 +235,6 @@ with *Pictures* (the bought tiles) the screen shows the part around the
 spot. Try `ch01_prebattle` and `ch01_victory`, and a battle line (Harl's)
 over the darkened battle.
 
-*the agent's starting rules (Nick can veto):*
-
 - When the spot is near the map's edge, the view stops at the edge
   rather than showing black past it (as the battle camera does); a map
   smaller than the screen sits in the middle with black around it.
@@ -245,3 +243,7 @@ over the darkened battle.
   fills the whole screen.
 - The battle's field behind a chapter's scenes before and after the
   battle has nobody on it.
+
+### For the Act 1 playtest (1064)
+
+*the agent's starting rules (Nick can veto):*

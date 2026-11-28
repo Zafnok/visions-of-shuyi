@@ -34,7 +34,8 @@ without asking questions.
      *No checks after merge on gameplay tickets*): say how it is
      verified instead (tests, `cargo shuyi frame-png` pictures, the
      bots) and that what is left to judge by playing goes on the Act 1
-     playtest's checklist (1064). `sign-off` is for playtests only.
+     playtest's checklist (1064), under `### For the Act 1 playtest
+     (1064)` in the Completion notes. `sign-off` is for playtests only.
    - **Scope — in / out:** be explicit about what NOT to do.
    - **Implementation steps:** numbered, concrete, naming files, types and
      functions. Assume the reader knows Rust but not this codebase.

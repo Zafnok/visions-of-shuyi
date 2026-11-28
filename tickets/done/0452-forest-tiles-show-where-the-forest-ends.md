@@ -135,14 +135,17 @@ which tiles are forest?
   (`a_tile_layers_picture_goes_by_the_neighbours_it_looks_for`). The
   importer's tests cover the joining and the layer on a made-up sheet.
 - Forest, thicket, burnt and burning all use it (same art layout).
-- *the agent's starting rules* (also in `look-and-feel.md`): thicket, burnt
-  and burning get the same treatment as forest; at an inward corner of a
-  wood (forest above and beside a tile but not on the diagonal) the trees
-  run on to the tile's corner, as the side mixes don't look at the
-  diagonal.
 - The burnt ground under the bare trees (`ash`, a corner layer) still
   spreads half a tile like before; out of the ticket's scope (not
   trees), and Chapter 1 has none.
 - Private repository commit `cec0924`, pinned in `assets-private.rev`.
 - No ADR: the mapping file is the importer's input and its header
   explains `Block`; the game's file format didn't change.
+
+### For the Act 1 playtest (1064)
+
+- *the agent's starting rules* (also in `look-and-feel.md`): thicket, burnt
+  and burning get the same treatment as forest; at an inward corner of a
+  wood (forest above and beside a tile but not on the diagonal) the trees
+  run on to the tile's corner, as the side mixes don't look at the
+  diagonal.

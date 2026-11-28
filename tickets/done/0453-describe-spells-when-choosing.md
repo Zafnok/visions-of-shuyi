@@ -137,8 +137,11 @@ it):
 - Two tests' key presses relied on Down skipping dimmed lines; they now
   step onto the dimmed line (and check Confirm does nothing there) or
   go Up round to the last line.
+- Friction: estimate 45, measured 65 (1.4×), under 2×.
+- No follow-up tickets.
+
+### For the Act 1 playtest (1064)
+
 - Starting choice for the playtest (1064), not a rule: the tile cast's
   note leaves out its duration (`(1 round)`), which the target preview
   shows, so Cinder Oath's note fits in 40 characters.
-- Friction: estimate 45, measured 65 (1.4×), under 2×.
-- No follow-up tickets.

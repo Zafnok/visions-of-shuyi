@@ -234,6 +234,10 @@ picture and builds his face first), 0520 (the bots play a chapter with
 the army the chapters before it leave; Chapter 2 re-tuned; 0849–0854
 now wait for it).
 
+Engine friction: estimate 140, measured 121 (0.9×), under 2×.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting values and rules** (the docs left them open; all
 *tunable*, for the Act 1 playtest, 1064):
 
@@ -271,5 +275,3 @@ Overcast Fire on turn 3, so his boss lines may barely play); whether the
 race feels fair on a first try; whether 1200 gold and a pack of 4 suit
 the first Preparations; the three new places' look and light; the map
 at dawn.
-
-Engine friction: estimate 140, measured 121 (0.9×), under 2×.

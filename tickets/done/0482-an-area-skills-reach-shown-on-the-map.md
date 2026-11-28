@@ -135,13 +135,6 @@ pictures in the PR.
 **Area spells and items:** none. `spells.ron` has no area spell, and
 consumables (`ConsumableEffect`) only heal one unit. Nothing else to show.
 
-**Starting rule** (*the agent's starting rule*, for the Act 1 playtest
-(1064)): while an area skill (Inspire, Rally, Sanctuary, Benediction, the
-Str buff) is focused in the Skill menu, the tiles it reaches around the
-unit's path end take the heal tint. It shows whether or not the skill can
-be used right now (a dimmed line too), so the player can see why no ally
-is in reach.
-
 **Follow-up:** the pictures show the Skill list window, placed beside
 the unit by 0454's rule, covering about half of the reach. Where the list
 goes is a look question, so it is ticket 0492 (asks Nick, with pictures),
@@ -151,3 +144,12 @@ added to 1064's `blocked_by` and the roadmap.
 `attack_tiles` plus a tint case like `ItemTarget`'s), measured 50 added
 (1.25×): under 2×.
 **PR size:** estimate 400, measured about 350 (`cargo xtask pr-size`).
+
+### For the Act 1 playtest (1064)
+
+**Starting rule** (*the agent's starting rule*, for the Act 1 playtest
+(1064)): while an area skill (Inspire, Rally, Sanctuary, Benediction, the
+Str buff) is focused in the Skill menu, the tiles it reaches around the
+unit's path end take the heal tint. It shows whether or not the skill can
+be used right now (a dimmed line too), so the player can see why no ally
+is in reach.

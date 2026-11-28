@@ -198,5 +198,7 @@ Size: the ticket's estimate was about 600 production lines (no separate
 estimate was written before coding); measured 323 added, 122 removed
 (`code-lines`), under it. PR size 1,323 changed lines.
 
+### For the Act 1 playtest (1064)
+
 For the Act 1 playtest (1064): whether the caps read well in each theme,
 and the arrow cluster's size beside text.

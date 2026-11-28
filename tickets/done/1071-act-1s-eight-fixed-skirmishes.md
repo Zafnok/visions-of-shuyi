@@ -173,22 +173,6 @@ Chapters 6 and 7's four are **1090** (blocked by this one; 1064, 0512,
 - **Chapters 4 and 5 moved out of their bands** once their armies win the
   guards first. Their tuning is **0529** (below).
 
-**The agent's starting values** (for 1064's checklist):
-
-- Tiers: the guards **Easy**, the optional ones **Normal**.
-- Rewards: Aldwater **400** gold (the toll-chest), Millhaven Road **300**,
-  the Salt Road **500**, Smugglers' Cove **800, an Elixir and two
-  Potions** (its loot).
-- Levels, after the autobalance:
-  - Aldwater: Hounds lv 9, the swordsman lv 11.
-  - Millhaven Road: the ring's Hounds lv 1, Gil lv 5, the Corporal lv 6.
-  - The Salt Road: Hounds lv 11–12, the guard at the stone removed.
-  - The cove: privateers lv 12–13.
-- The bots' army for the optional ones (`bots_army`): Chapter 4's at lv 6,
-  Chapter 5's at lv 8.
-
-**To judge by playing (1064):**
-
 - Whether *Millhaven Road*'s level marker misleads. It reads **Lv 2**,
   since the ring's Hounds are lv 1, but Gil and the Corporal are the
   fight.
@@ -242,3 +226,20 @@ estimate 1,500, measured 2,275: past the 2,000 a ticket is planned
 at, after the split; the recorded playthroughs (about 450 lines, four new
 and two recorded again) are most of the difference.
 
+### For the Act 1 playtest (1064)
+
+**The agent's starting values** (for 1064's checklist):
+
+- Tiers: the guards **Easy**, the optional ones **Normal**.
+- Rewards: Aldwater **400** gold (the toll-chest), Millhaven Road **300**,
+  the Salt Road **500**, Smugglers' Cove **800, an Elixir and two
+  Potions** (its loot).
+- Levels, after the autobalance:
+  - Aldwater: Hounds lv 9, the swordsman lv 11.
+  - Millhaven Road: the ring's Hounds lv 1, Gil lv 5, the Corporal lv 6.
+  - The Salt Road: Hounds lv 11–12, the guard at the stone removed.
+  - The cove: privateers lv 12–13.
+- The bots' army for the optional ones (`bots_army`): Chapter 4's at lv 6,
+  Chapter 5's at lv 8.
+
+**To judge by playing (1064):**

@@ -119,4 +119,7 @@ the title music. The Windows build is unchanged.
   blocked-then-unlocked path. Nick's first run on Pages is the real check.
 - The F2 debug hint still shows in the corner while waiting (debug and
   Pages builds only).
+
+### For the Act 1 playtest (1064)
+
 - The agent's starting rules are in `docs/design/title-screen.md`.

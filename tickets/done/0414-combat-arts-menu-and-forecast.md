@@ -148,6 +148,9 @@ pick an art, and can you tell what it will do and what it costs?
   info screen shows `broken` for a 0/20 weapon. 0412's ring tests were
   replaced by list tests (`art_tests.rs`). The archer's forecast snapshot
   tints the brigand beside it too (Close Shot reaches it).
+
+### For the Act 1 playtest (1064)
+
 - **the agent's starting rules (all presentation; please agree or veto):**
   - The list sits on the half of the map away from the attacker so it
     doesn't cover the fight.

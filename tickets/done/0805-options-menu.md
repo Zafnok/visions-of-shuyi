@@ -147,6 +147,20 @@ in `docs/design/options.md` and `death-and-difficulty.md`):
 and AI actions are no longer sped up by scaling time, so the held walk
 stays the skin's and nothing stacks.
 
+**Follow-up tickets.** 0240, 0241 and 0242 (Nick asked for them: the
+title, Key bindings and the layout picker; the other menus; the battle
+screen's panels and the dialogue screen get the same view + skin split).
+0120 (a test of the bought-art fetch fails now and
+then on macOS; seen on this PR, not caused by it). 0828 was filed and then
+withdrawn in this PR: with the switch only at Preparations, a battle always
+starts in the mode it will end in.
+
+**For Nick when playing.** Title → Options, and in a battle: map menu →
+Options. Try Fullscreen, the two volumes with music playing, Text speed in
+a conversation, and Combat animations off in a battle.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (Nick may veto any of them):
 
 1. **Text speed.** Normal is what it was. Slow is half as fast, Fast is
@@ -181,15 +195,3 @@ stays the skin's and nothing stacks.
 11. **The screen's look** is a plain panel in the style of the Key bindings
     screen, with the rows in the ticket's order. No mockups were shown;
     say so if you want to pick from some.
-
-**Follow-up tickets.** 0240, 0241 and 0242 (Nick asked for them: the
-title, Key bindings and the layout picker; the other menus; the battle
-screen's panels and the dialogue screen get the same view + skin split).
-0120 (a test of the bought-art fetch fails now and
-then on macOS; seen on this PR, not caused by it). 0828 was filed and then
-withdrawn in this PR: with the switch only at Preparations, a battle always
-starts in the mode it will end in.
-
-**For Nick when playing.** Title → Options, and in a battle: map menu →
-Options. Try Fullscreen, the two volumes with music playing, Text speed in
-a conversation, and Combat animations off in a battle.

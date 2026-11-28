@@ -173,11 +173,15 @@ branch in `info::face`), judged by 1295's lookup (`face`, 11 lines).
   Battle's (test content) brigand, built with the private art, cropped
   to the info screen. Without the private art the same screen keeps the
   placeholder box and label, as before.
+- No starting rules: which units get the face is the ticket's (enemies
+  only, from 0706).
+
+### For the Act 1 playtest (1064)
+
 - Monsters: the rule covers them as written; no elemental is an enemy
   in Act 1's content, so none shows it there (test content's
   `test_frost_elemental` would, with the private art). For 1064's
   checklist.
-- No starting rules: which units get the face is the ticket's (enemies
-  only, from 0706).
+
 - For the Act 1 playtest (1064): whether the soldier face reads well in
   the info box, and on every kind of Red Company enemy.

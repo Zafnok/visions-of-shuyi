@@ -209,12 +209,14 @@ unchanged (same moment of each fight).
 - Not watched with sound (the agent can't hear); the cuts and the logo
   were placed by measuring.
 
+**Follow-up tickets:** none.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (Nick can veto): 0.2 s to black; the hold
 of about half a second; the footbridge fight starting at 88.2 where the
 song has no onset; the brigand's and Tamsin's walks re-timed onto notes;
 a press during the fade-in from black only brings back the menu.
-
-**Follow-up tickets:** none.
 
 **For the Act 1 playtest (1064)**, sound on, one loop: is the news long
 enough at 7.5 s? Is half a second after each fight right? Do the hit

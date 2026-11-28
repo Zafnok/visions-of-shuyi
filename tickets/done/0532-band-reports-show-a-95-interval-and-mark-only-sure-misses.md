@@ -149,6 +149,9 @@ Expected size: about 40 game lines, mostly tests and docs (the engine's
   95% 51–69 against 30–55, `~ maybe too easy`; Normal 37/100, 95%
   29–46 against 50–75, `✗ too hard`; Hardcore 55/100, 95% 46–64,
   `✓`. (Read from `target/playtest-history/ch04-all.jsonl`.)
+
+### For the Act 1 playtest (1064)
+
 - No code, no starting rules, no follow-up tickets. Gates run locally: the
   skill sync check, ticket-lint, check-skills, check-leaks,
   check-mentions, typos, pr-size; the build and test gates were not

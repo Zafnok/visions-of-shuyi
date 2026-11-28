@@ -95,6 +95,16 @@ API reused between chapters.
   `UnitAction::Open`; events `Bought` (with where the item went), `Sold`,
   `Repaired`, `GoldChanged`, `ChestOpened`. All transactions are worked out on
   copies first, so one refused transaction applies none of them.
+- Map format: optional `features: { (x, y): Shop(kind: …, stock: [...]),
+  (x, y): Chest(Gold(n) | Item("id")) }` in the header, documented in
+  `assets/maps/README.md`. Validated: inside the map, passable for some
+  movement type, known item ids, shop lists match the kind, blacksmith list
+  empty, no `Gold(0)` chests. `test_small.map` now has one of each.
+- Nothing to play yet: the shop screen and the `Shop`/`Open` menu entries
+  are 0409, and Chapter 1 has no shops or chests.
+
+### For the Act 1 playtest (1064)
+
 - Rules I had to pick (the agent's starting rules, not in the design doc):
   - Armouries and vendors **buy anything**; blacksmiths only repair.
   - Shopping and chests are **player units only** (gold is the party's).
@@ -105,10 +115,3 @@ API reused between chapters.
     unit had nothing equipped.
   - Sell price is a flat half price, whatever durability is left (as the
     ticket says).
-- Map format: optional `features: { (x, y): Shop(kind: …, stock: [...]),
-  (x, y): Chest(Gold(n) | Item("id")) }` in the header, documented in
-  `assets/maps/README.md`. Validated: inside the map, passable for some
-  movement type, known item ids, shop lists match the kind, blacksmith list
-  empty, no `Gold(0)` chests. `test_small.map` now has one of each.
-- Nothing to play yet: the shop screen and the `Shop`/`Open` menu entries
-  are 0409, and Chapter 1 has no shops or chests.

@@ -132,7 +132,7 @@ language and reads no platform itself.
 - **Step 5** (hide a pack whose name can't be drawn) is not built: 0236
   landed, and its atlas test makes that case impossible.
 
-### The agent's starting rules (also in the design doc)
+### For the Act 1 playtest (1064)
 
 - The list is skipped while English is the only language the game ships
   (the `test` pack doesn't count), so today's players see nothing new
@@ -144,8 +144,6 @@ language and reads no platform itself.
 - The Options row sits just above Layout, starting that group.
 - On a computer with a keyboard, a controller player picks the language,
   then sees the layout picker, which any button closes (as before).
-
-### For the Act 1 playtest (1064)
 
 - Only visible once a Chinese or Japanese pack exists: the list's look
   with real wide names.

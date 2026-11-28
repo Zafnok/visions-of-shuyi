@@ -128,6 +128,8 @@ the prompt or the cinematic, mark kept on the first update), integration
 another profile), the skin's layout in both languages with the widest
 menu, and the title snapshots, which now show the note.
 
+### For the Act 1 playtest (1064)
+
 **The agent's starting rules** (for the Act 1 playtest, 1064):
 
 - The note sits right of the menu, top level with it, never over the

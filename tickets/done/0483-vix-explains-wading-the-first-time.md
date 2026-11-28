@@ -124,7 +124,6 @@ written in `tutorial.md`).
   repository, pinned, and on the release disclosure list in `shuyi.ron`
   (0911's two lines per clip). The pin also takes in the private repository's
   commit for 1089 (world map pictures) made before it.
-- `tutorial.md`: the tip in its list, and the starting rule below.
 - Tests: the condition for foot, flying, mounted and armored
   (`tip_tests.rs`), the screen showing it once for a foot unit and never
   for a mounted one, and a Harness test on the Quick Battle's test map,
@@ -135,7 +134,13 @@ written in `tutorial.md`).
   `FirstTerrain`'s firing in 0458), measured 19: under 2×. PR size:
   198 changed lines.
 
+- The tip's wording (Vix's voice; the writer may redo it).
+
+### For the Act 1 playtest (1064)
+
+- `tutorial.md`: the tip in its list, and the starting rule below.
+
 **Starting rules (for the Act 1 playtest, 1064):**
+
 - *the agent's starting rule:* one fact with nothing to tick off is a tip,
   not a lesson.
-- The tip's wording (Vix's voice; the writer may redo it).

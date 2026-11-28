@@ -126,6 +126,10 @@ None: decided in his message above. Verified by core tests.
   level ups and casts.
 - Replay and golden hashes: none changed (no recorded battle has a unit
   learning a spell mid-battle).
+
+### For the Act 1 playtest (1064)
+
 - Docs: `magic.md` and `combat-arts.md` state Nick's rule (2026-11-07);
   the old starting rule in `combat-arts.md` is gone.
+
 - Starting rules decided: none.

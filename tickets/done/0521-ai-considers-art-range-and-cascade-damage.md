@@ -139,4 +139,6 @@ rank A.
 zone read only weapon and spell ranges, so they don't show what an art or an
 active reaches.
 
+### For the Act 1 playtest (1064)
+
 **For 1064.** Nothing new from these battles.

@@ -136,6 +136,8 @@ the web/PC keycaps to block anything substantial, all other systems
 designs and implementations can wait for much later"). 0463's
 key hint now points at 0254.
 
+### For the Act 1 playtest (1064)
+
 *Claude's starting rules (in the design doc, Nick can veto):* an action
 with no key reads `! not mapped` in plain text, no cap; on the Key
 bindings screen the caps are the slot columns' key names, and a slot

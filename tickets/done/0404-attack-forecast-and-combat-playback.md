@@ -170,11 +170,16 @@ strikes, 0.5 s fade, 0.4 s at the end.
 
 **Rules decided where the design was silent** (all presentation, no
 gameplay rule):
-- *the agent's starting rule:* the kill mark assumes every strike hits **and no
-  crits** (Nick said "assuming all hit").
-- *the agent's starting rule:* the totals count every strike in the forecast,
-  including those after a kill (dimmed).
-- *the agent's starting rule:* the playback timings above.
 
 Follow-up tickets: 0417 (acted units keep their uppercase label, dimmed
 only; Nick's feedback after playing this build).
+
+### For the Act 1 playtest (1064)
+
+- *the agent's starting rule:* the kill mark assumes every strike hits **and no
+  crits** (Nick said "assuming all hit").
+
+- *the agent's starting rule:* the totals count every strike in the forecast,
+  including those after a kill (dimmed).
+
+- *the agent's starting rule:* the playback timings above.

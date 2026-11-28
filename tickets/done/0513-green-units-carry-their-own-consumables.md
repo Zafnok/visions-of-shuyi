@@ -102,7 +102,6 @@ Done.
   never touches the pack or stock. A new action rather than a source field
   on `UseItem`: every `UseItem` already written (menus, bots, play records,
   tests) stays as it is. The legal-action list and the rewind log know it.
-- **AI**: the starting rule below, written in `ai.rs`'s module docs.
 - **Test battle** `assets-test/battles/test_green.ron`: an unarmed
   villager with two Potions next to a raider; the bots' rule-battle test
   plays it and sees it drink (3 of 5 seeds).
@@ -118,6 +117,13 @@ Done.
   (`a_green_units_items_survive_a_save`) plus the bots' replay of
   `test_green` (same commands, same events, same end).
 
+Engine friction: estimate 150, measured 148 (1.0×), under 2×.
+Follow-up: 0856 (battle files mark a unit as non-combat).
+
+### For the Act 1 playtest (1064)
+
+- **AI**: the starting rule below, written in `ai.rs`'s module docs.
+
 **the agent's starting rules** (for the Act 1 playtest, 1064):
 - A green unit drinks one of its items, on itself, where it stands
   (no move first), when it is **below half its max HP** and **no attack it
@@ -126,6 +132,3 @@ Done.
 - It never uses items on others (the battle allows it; the AI doesn't).
 - Battle files can't yet mark a green unit as a non-combat unit (`Role`, ticket 0856);
   the test villager is simply unarmed.
-
-Engine friction: estimate 150, measured 148 (1.0×), under 2×.
-Follow-up: 0856 (battle files mark a unit as non-combat).

@@ -132,6 +132,12 @@ before are still there (now `Player 1`).
 - Text: `profile.numbered` (`Player {n}`) in `assets/lang/en/ui.ron`, for
   `Player 1` and for profiles rebuilt from an unreadable list.
 
+**For Nick when playing:** nothing looks different yet (the Profile
+screen is 0837). Your options, keys, tips seen and saves from before are
+moved into `Player 1` on the first launch of this build.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (the design docs were silent):
 
 - Two names that differ only in capitals count as the same name
@@ -141,7 +147,3 @@ before are still there (now `Player 1`).
 - If the list of profiles can't be read, the game makes one again with a
   profile for each one whose saves or options are still stored, called
   `Player 2`, `Player 5`, … by their number, so nothing is lost.
-
-**For Nick when playing:** nothing looks different yet (the Profile
-screen is 0837). Your options, keys, tips seen and saves from before are
-moved into `Player 1` on the first launch of this build.

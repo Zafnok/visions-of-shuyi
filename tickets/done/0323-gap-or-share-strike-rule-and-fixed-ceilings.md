@@ -112,5 +112,8 @@ Done as planned. `CombatRules::strike_thresholds` became `strike_steps`
   at Def "ceiling - 1" (49 of 50); they now read 99 of 100. The content
   test for ceilings reads 200 / 100.
 - Engine friction: under 2x (about 40 estimated, about 45 measured).
+
+### For the Act 1 playtest (1064)
+
 - No *the agent's starting rules*. Late-game strike counts go on the Act 1
   playtest checklist (1064).

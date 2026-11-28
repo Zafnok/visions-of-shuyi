@@ -156,6 +156,11 @@ Chapter 1 opening with the bought portraits; recorded in
 - The acceptance criteria said "with a key bound": Nick gave the action a
   default key, so the tests use `b` (and one rebinds it to Up).
 
+**Sign-off for Nick:** in the Chapter 1 opening, press `b`, scroll, jump
+back three lines, then *Back to latest*.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (also in `look-and-feel.md` and `controls.md`):
 
 - A text box too long for one page is one row of the log, in full; the
@@ -177,6 +182,3 @@ Chapter 1 opening with the bought portraits; recorded in
 - *Voice on hover in the log* starts On.
 - The Key bindings screen lost the blank row under the switch (to fit the
   new group).
-
-**Sign-off for Nick:** in the Chapter 1 opening, press `b`, scroll, jump
-back three lines, then *Back to latest*.

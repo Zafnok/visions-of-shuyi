@@ -231,14 +231,16 @@ repo (0110); theme recolouring of portraits.
 - `README.md`'s screenshots (`docs/img/*.svg`) still show the placeholder
   faces, which is still what a public build shows.
 
-**Gameplay-affecting rules decided:** none. *(the agent's starting rule,
-look only:)* the importer's sidecar maps `happy` → the pack's `smile`,
-`angry` → `stern`, `surprised` → `surprise`, and lists all 8 bought
-expressions under their own names too; 0706 corrects it per character.
-
 **Follow-up tickets:** none.
 
 **For Nick (sign-off):** two pictures of the test scene were sent with the
 PR: placeholders, and the bought busts at 4× (speaker bright, listener
 dimmed and mirrored). After merge, on the Pages build: F2 → Play test
 scene, and F2 → Portraits to flip through all 8 expressions of each.
+
+### For the Act 1 playtest (1064)
+
+**Gameplay-affecting rules decided:** none. *(the agent's starting rule,
+look only:)* the importer's sidecar maps `happy` → the pack's `smile`,
+`angry` → `stern`, `surprised` → `surprise`, and lists all 8 bought
+expressions under their own names too; 0706 corrects it per character.

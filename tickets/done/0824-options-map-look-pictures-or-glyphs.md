@@ -104,9 +104,11 @@ registered under the game tileset's id as the public fixture.
 Deviation: none. The debug-menu skin switch is untouched; it stays until the
 next look change.
 
+No follow-up tickets.
+
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (the ticket's list, for Nick to veto): the entry is
 "Map look" with Pictures and Glyphs; Pictures is the default; it switches
 terrain and units together; it changes the map at once and is remembered; a
 build without the bought files has only glyphs and doesn't show the entry.
-
-No follow-up tickets.

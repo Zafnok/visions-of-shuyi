@@ -110,6 +110,9 @@ playtest's checklist (1064).
 - Persona baseline, ch01, 200 tries each: unchanged (casual 98, normal 119,
   hardcore 145 succeed, the same as before the change). No Chapter 1 enemy
   can use an art that reaches farther than its weapon.
+
+### For the Act 1 playtest (1064)
+
 - For 1064: a selected player unit's red tiles still show weapon and spell
   reach only, not Long Thrust's or Long Shot's (the action menu still
   offers the art from a tile two away). Judge on the playtest whether that

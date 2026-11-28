@@ -133,9 +133,12 @@ sizes in the PR.
   2333/2376) the box now ends at about 86 % of the screen's height instead
   of 77 %. Pictures, before and after at 2560×1440:
   `docs/screenshots/0763-{narration,two-portraits,reply-choice}-{before,after}-2560x1440.png`.
+- Engine friction: estimate 10, measured 6 added (under 2×).
+- Follow-up tickets: none.
+
+### For the Act 1 playtest (1064)
+
 - *The agent's starting rule* (written in `look-and-feel.md`): the
   portraits move down with the box so they still stand on it, leaving four
   empty rows between the caption and the frames. For the Act 1 playtest
   (1064).
-- Engine friction: estimate 10, measured 6 added (under 2×).
-- Follow-up tickets: none.

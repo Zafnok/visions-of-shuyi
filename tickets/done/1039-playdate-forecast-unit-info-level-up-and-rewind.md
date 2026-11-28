@@ -185,6 +185,8 @@ and game ticket 1182 (deletes it, moves the pin). Row in
 
 **Follow-ups:** engine#2540 (a crank step in frame-png's script) and **1182** (the game's frame-png uses it and drops its own `--crank` and `--then-pad`; blocked by engine#2540). Neither is on the Act 1 critical path.
 
+### For the Act 1 playtest (1064)
+
 ***the agent's starting rules*** (in `docs/design/playdate.md`, *Layout*;
 for 1064's checklist, Nick can veto):
 - The forecast is a window half the screen wide down the half away from

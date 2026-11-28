@@ -113,9 +113,11 @@ table) rather than loading a town file. 1007 / 1070 should call
 Vendor's tile of the Quick Battle map, since that is the only shop screen
 until towns come.
 
+Engine friction: estimate 90, measured 96 (1.1×), under 2×.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (for the Act 1 playtest, 1064):
 - A refused item at a specialty store shows no price (rather than a price
   it would never pay).
 - A Tailor and an Alchemist repair nothing (the design lists only trading).
-
-Engine friction: estimate 90, measured 96 (1.1×), under 2×.

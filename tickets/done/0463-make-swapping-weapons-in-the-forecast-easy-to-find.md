@@ -125,9 +125,6 @@ without; a Playdate snapshot; the forecast snapshots of units with two
 weapons now show the hint and the mark's overlays (the archer's, with
 one bow, doesn't); the tip fires once with two swords and not with one.
 
-*The agent's starting rules (Nick can veto; for the Act 1 playtest,
-1064):*
-
 - The hint reads `weapon` also when left / right swap between a weapon
   and a spell (after pointing at an enemy).
 - The whole hint is in the highlight colour (the mockup had only the key
@@ -150,3 +147,8 @@ private repository.
 Engine friction: estimate 80 production lines (a view field, two skins'
 mark and hint, a tip trigger; judged by 0489's tip and 0480's skin
 blocks), measured 73 added (0.9×), under 2×. PR size: 565 changed lines.
+
+### For the Act 1 playtest (1064)
+
+*The agent's starting rules (Nick can veto; for the Act 1 playtest,
+1064):*

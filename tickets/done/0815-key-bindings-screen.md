@@ -184,6 +184,13 @@ of the plan restored at once.
   it (otherwise pressing it at `Press a key…` would open the debug menu
   instead of showing "That key can't be used").
 
+**For Nick's sign-off:** F2 → Key bindings (bottom of the debug menu).
+
+**Follow-ups:** none new. 0805 (Options opens the screen) and 0816
+(controller buttons on the same screen) were already ticketed.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (Nick to veto at sign-off; also in
 `controls.md`):
 - The screen is steered with the keys you had when you opened it; your
@@ -204,8 +211,3 @@ of the plan restored at once.
   End turn, Select, Confirm end turn, Previous ready unit, Next ready unit,
   Unit info, Danger zone, Auto-end on/off, Rewind, Map menu (from the
   table in `controls.md`).
-
-**For Nick's sign-off:** F2 → Key bindings (bottom of the debug menu).
-
-**Follow-ups:** none new. 0805 (Options opens the screen) and 0816
-(controller buttons on the same screen) were already ticketed.

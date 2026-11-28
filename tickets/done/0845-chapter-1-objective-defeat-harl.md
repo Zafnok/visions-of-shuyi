@@ -161,6 +161,8 @@ it has to be all of them." (`assets/dialogue/ch01.dlg`). Out of scope
 here; 0737 (the Chapter 1 script) writes any line about the company
 scattering and should change that one.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (for the Act 1 playtest, 1064):
 
 1. When Harl falls, the battle is won at once, with no extra turn.

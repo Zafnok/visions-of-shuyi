@@ -143,8 +143,6 @@ Done 2026-10-29.
   richer screen), about 600 production lines was a fair size; measured
   856 (1.4×), under 2×.
 
-**the agent's starting rules (for the Act 1 playtest, 1064)**
-
 1. Camp opens **once between two battles**: between two chapters
    (before the next chapter's scenes), or else before the Preparations
    of a battle that has them. Restart, Retry and Continue don't open it.
@@ -162,6 +160,10 @@ Done 2026-10-29.
    Confirm there leaves, with no question.
 7. The unit info screen lists **only partners with a rank gained**
    (nothing when there are none).
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rules (for the Act 1 playtest, 1064)**
 
 **For 1064's checklist** (Nick plays a few battles, opens Supports and
 Camp, reads a conversation of each kind): is it easy to see what's new;

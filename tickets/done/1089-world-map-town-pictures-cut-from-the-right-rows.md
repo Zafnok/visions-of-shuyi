@@ -120,10 +120,6 @@ Done 2026-11-09. Private repository commit `ef5116e` (pinned in
   row 11) and `check_places()`, run first by `main`. On today's table it
   stops with `cairnford: (4, 3, 2, 2) is not an icon of Set_C_Icons;
   nearest is (4, 2, 2, 2)` and exit 1; on the fixed one it passes.
-- Cairnford's crop is `(4, 4, 2, 2)` (*the agent's starting rule* from the
-  ticket: the green-and-blue town whose roof showed in its spot). The
-  regenerated `game/worldmaps/act1.png` differs from the old one only in
-  Cairnford's 32 × 32 px spot.
 
 **Deviation:** the pixel check (a crop whose bottom row of pixels is fully
 opaque) is in, but it does **not** fire on the old Cairnford crop: the
@@ -136,6 +132,13 @@ the pixel check stays as a second guard for a crop of the wrong size.
 `ch04` by a throwaway edit of `TEST_WORLD_CHAPTER` (reverted), as 1070
 did. Not committed (the ticket: attached, not committed); `gh` can't
 upload a picture, so it went to Nick with the PR link.
+
+### For the Act 1 playtest (1064)
+
+- Cairnford's crop is `(4, 4, 2, 2)` (*the agent's starting rule* from the
+  ticket: the green-and-blue town whose roof showed in its spot). The
+  regenerated `game/worldmaps/act1.png` differs from the old one only in
+  Cairnford's 32 × 32 px spot.
 
 For the Act 1 playtest (1064): which town picture Cairnford shows, and the
 16-px plates over the middle of every place's picture (1082).

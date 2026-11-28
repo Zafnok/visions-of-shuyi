@@ -154,6 +154,18 @@ screenshots of the built screen in `docs/screenshots/0816-*.png`.
   none down). Needed because a button binds when it is let go.
 - The ADR is 0053 (0050 and 0052 were taken by open PRs).
 
+**For Nick's sign-off:** F2 → Key bindings (bottom of the debug menu),
+then press a controller button (or go up one row and press right).
+
+**Not done here:** bug 0230 (a Select *key* stops the pad's Confirm picking
+on the map) is still open and wasn't worked around. A controller can't
+open the screen by itself until the Options menu (0805) lists it: the
+debug menu's key is keyboard only.
+
+**Follow-ups:** none new.
+
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (Nick can veto; also in `controls.md`):
 - The screen opens on the side you pressed last (buttons after a button,
   keys after a key).
@@ -172,13 +184,3 @@ screenshots of the built screen in `docs/screenshots/0816-*.png`.
   too; `Change` waits for a key and holding any button backs out.
 - Until a controller is used, the controller side shows Xbox names.
 - Rebound buttons count from the moment you leave the screen, like keys.
-
-**For Nick's sign-off:** F2 → Key bindings (bottom of the debug menu),
-then press a controller button (or go up one row and press right).
-
-**Not done here:** bug 0230 (a Select *key* stops the pad's Confirm picking
-on the map) is still open and wasn't worked around. A controller can't
-open the screen by itself until the Options menu (0805) lists it: the
-debug menu's key is keyboard only.
-
-**Follow-ups:** none new.

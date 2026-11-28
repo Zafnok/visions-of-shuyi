@@ -182,6 +182,8 @@ screens. Decisions are in ADR-0026.
   (`register_plugin`, quad_storage version) are the known ones from
   0206/0207.
 
+### For the Act 1 playtest (1064)
+
 **the agent's starting rules** (the design docs don't cover these; Nick can
 veto any of them):
 

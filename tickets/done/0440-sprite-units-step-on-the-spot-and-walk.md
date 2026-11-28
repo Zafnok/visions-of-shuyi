@@ -205,8 +205,6 @@ Done 2026-10-03.
 - On glyph ground, a unit between two tiles doesn't blank the ground's
   glyphs (Nick, 2026-10-04): the tile it leaves shows its ground at once.
 
-**the agent's starting rule** (for Nick to agree or veto)
-
 - A walking unit that passes over a tile an ally stands on is drawn in
   front of the ally, and isn't cut there (the ticket's rule).
 
@@ -220,3 +218,7 @@ too slow, or the map too busy: each is one number.
 
 No follow-up tickets; ticket 0805 (Options) gained the fast walking
 speed and now waits for this one.
+
+### For the Act 1 playtest (1064)
+
+**the agent's starting rule** (for Nick to agree or veto)

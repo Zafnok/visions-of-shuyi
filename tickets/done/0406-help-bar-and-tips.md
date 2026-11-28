@@ -82,6 +82,8 @@ Deviations and notes:
   over the phase banner, before the enemy moves, so it never runs during
   playback.
 
+### For the Act 1 playtest (1064)
+
 *the agent's starting rules* (gameplay-affecting, Nick can veto):
 
 - "Low HP" is a player unit at or below 50% of max HP (Nick: fine for a one-time tip).

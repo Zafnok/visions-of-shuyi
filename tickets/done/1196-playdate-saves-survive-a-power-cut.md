@@ -125,9 +125,11 @@ Limit: a value that is not itself a good copy (`""`) keeps no backup, so where
 rename is refused a cut in that one write can lose the old value. The engine's
 backend does the same; saves are never empty.
 
+No gameplay rule was decided. No follow-up tickets. When 1170 lands, this
+code goes with the rest of the backend.
+
+### For the Act 1 playtest (1064)
+
 For the Act 1 playtest (1064): each save now writes two flushed files instead
 of one unflushed file, so check that saving on the device has no noticeable
 hitch. This was not measured.
-
-No gameplay rule was decided. No follow-up tickets. When 1170 lands, this
-code goes with the rest of the backend.

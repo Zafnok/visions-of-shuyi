@@ -100,6 +100,8 @@ Deviations: the tests drive the screen's `update` with a test `Ctx`, as
 (`screen::tests::test_voices`) is crate-private. The debug menu's
 **Voice test** stays (it says clips one per press without a scene).
 
+### For the Act 1 playtest (1064)
+
 The agent's starting rules (where the design doc is silent):
 
 - Opening the log says nothing; only moving its cursor does. Closing the

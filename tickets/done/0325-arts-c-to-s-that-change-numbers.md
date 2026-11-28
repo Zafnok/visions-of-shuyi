@@ -114,6 +114,8 @@ costs and numbers; the forecast spells out the new notes.
 - Friction: estimate ~150 production lines (written after the code, not
   before), measured 149: 1×.
 
+### For the Act 1 playtest (1064)
+
 The agent's starting rules (none beyond the design doc): Long Thrust/Hurl keep
 min range 1; the avoid debuff stops at 0. Left to judge by playing: the
 numbers (1064). Not done, as scoped: stances, area strikes, Disarm/Marked

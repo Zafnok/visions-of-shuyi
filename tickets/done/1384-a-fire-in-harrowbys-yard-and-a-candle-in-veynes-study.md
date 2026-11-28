@@ -115,6 +115,8 @@ The Playdate shows the still frame (1314).
   data), by 1318's `moving` strip and the battle map's clock; measured
   16 (1.1×), under 2×.
 
+### For the Act 1 playtest (1064)
+
 **No gameplay rule decided.** Left to judge in play (1064): where the
 fire sits in the yard and the candle on the desk; the candle reads small
 and dim in the study's night light; light on the map (a glow) stays

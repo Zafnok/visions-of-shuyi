@@ -139,6 +139,9 @@ goes on the Act 1 playtest's checklist (1064).
   pin points at that branch's commit for CI. That pull request merges
   first; then `cargo shuyi private-assets --pin` moves the pin to its
   merge on `main` before this one merges (`content-change`).
+
+### For the Act 1 playtest (1064)
+
 - **Starting rules (the agent's), for the Act 1 playtest (1064):**
   - **Red for every rider, ours and theirs**, as bought: the Red
     Company's riders are red in the combat scene (0446) and Tamsin's

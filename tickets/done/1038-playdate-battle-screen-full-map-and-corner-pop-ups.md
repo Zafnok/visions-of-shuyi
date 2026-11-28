@@ -172,14 +172,17 @@ Options skin plus the battle's windows), measured 364 (1.2×), under 2×.
 - The forecast, unit info, fight box, EXP and level-up pages, combat
   picture and the guide's box keep the PC's paints until 1039, 1041 and
   1058 (as before this ticket, they are partly off the 50 × 15 screen).
-- The message line (aim preview, a combat's message, a toast) is not in
-  the ticket's list; it is shown in a window (a starting rule below) so
-  the Playdate doesn't lose what a heal or skill will do.
 
 **Follow-ups:** **1075** (the Equip and spell lines are wider than the
 Playdate's window, so the uses left are cut with `…`; what the line keeps
 is Nick's look-and-feel call, asked before building). Added to 1064's
 `blocked_by` and the roadmap.
+
+### For the Act 1 playtest (1064)
+
+- The message line (aim preview, a combat's message, a toast) is not in
+  the ticket's list; it is shown in a window (a starting rule below) so
+  the Playdate doesn't lose what a heal or skill will do.
 
 ***the agent's starting rules*** (in `docs/design/playdate.md`, *Layout*;
 for 1064's checklist, Nick can veto):
