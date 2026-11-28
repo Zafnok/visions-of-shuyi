@@ -110,14 +110,6 @@ fn the_lead_is_not_a_name_token() {
 }
 
 #[test]
-fn unterminated_name_token() {
-    assert_eq!(
-        errors(&scene("> Ride for {n:king.")),
-        ["t.dlg:4: \"{\" has no closing \"}\""]
-    );
-}
-
-#[test]
 fn names_written_out_are_errors() {
     let src = scene(
         "> Osric rides.

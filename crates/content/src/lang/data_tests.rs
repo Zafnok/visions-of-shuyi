@@ -1,12 +1,15 @@
-//! Tests of a pack's data and dialogue text (ticket 0235): what English
-//! offers to translate, what a pack's files may hold, the lookups, and
-//! what a pack lacks.
+//! Tests of a pack's data and dialogue text (ticket 0235) by this game's
+//! rules: what English offers to translate, what a pack's files may hold
+//! (tips, lessons, terrain and battle notes, `m`/`f` lines), the game's
+//! lookups and the test pack. The pack mechanics (status, orphans,
+//! lookups, loading) are the engine's tests (`shuyi_assets::lang`,
+//! ticket 1231).
 
 use trpg_core::lead::LeadGender;
 use trpg_core::{BattleNote, ClassId, ItemId};
 
 use super::*;
-use crate::dialogue::{self, Scene, Step, caption_key};
+use crate::dialogue::{self, Scene, Step};
 use crate::names::Names;
 
 /// A scene with every kind of text: a caption, narration, speech with a
@@ -124,25 +127,6 @@ fn entry(text: &str, translation: &str) -> String {
         "(key: {:?}, source: {text:?}, text: {translation:?})",
         id(text)
     )
-}
-
-#[test]
-fn english_lines_replies_and_captions_have_their_kind_and_scene() {
-    let data = data();
-    let kind = |text: &str| data.lines[&id(text)].kind;
-    assert_eq!(kind("The gate is shut."), LineKind::Speech);
-    assert_eq!(kind("Open it, {n:king}."), LineKind::Speech);
-    assert_eq!(kind("I will wait here."), LineKind::Reply);
-    assert_eq!(kind("Nobody answers."), LineKind::Speech);
-    assert_eq!(kind("The gate, dusk"), LineKind::Caption);
-    // Both parts of an `@if` block.
-    assert_eq!(kind("Still here."), LineKind::Speech);
-    assert_eq!(kind("Gone."), LineKind::Speech);
-    assert_eq!(id("The gate, dusk"), caption_key("gate", "The gate, dusk"));
-    assert!(id("The gate, dusk").starts_with("caption.gate_"));
-    assert!(data.lines.values().all(|line| line.scene == "gate"));
-    // 9 lines and replies, 1 caption.
-    assert_eq!(data.lines.len(), 10);
 }
 
 /// The game's own data offers its text: skills, arts, the story's names
@@ -414,31 +398,6 @@ const DATA_RON: &str = r#"[
     (key: "battles.gate.note_1", source: "Hold the gate.", text: "Haltet das Tor."),
     (key: "battles.wall.note_1", source: "Hold the road.", text: "Haltet den Weg."),
 ]"#;
-
-#[test]
-fn data_lookups_use_the_pack_while_its_source_is_todays_english() {
-    let lang = lang(pack(DATA_RON, &[]).unwrap());
-    let (xx, en, zz) = (code("xx"), LangCode::default(), code("zz"));
-    let potion = ItemId::new("potion");
-    assert_eq!(lang.item_name(&xx, &potion, "Potion"), "Trank");
-    // English, and a code with no pack, are English.
-    assert_eq!(lang.item_name(&en, &potion, "Potion"), "Potion");
-    assert_eq!(lang.item_name(&zz, &potion, "Potion"), "Potion");
-    // The data changed since the entry was made: it is stale.
-    assert_eq!(lang.item_name(&xx, &potion, "Elixir"), "Elixir");
-    // No entry.
-    assert_eq!(lang.item_name(&xx, &ItemId::new("ether"), "Ether"), "Ether");
-    let guard = ClassId("guard".to_owned());
-    assert_eq!(lang.class_name(&xx, &guard, "Guard"), "Wache");
-    assert_eq!(lang.class_name(&en, &guard, "Guard"), "Guard");
-    assert_eq!(lang.name(&xx, "king", "the King"), "der König");
-    assert_eq!(lang.name(&xx, "keep", "Heth Keep"), "Heth Keep");
-    assert_eq!(lang.name(&xx, "king", "the Queen"), "the Queen");
-    assert_eq!(
-        lang.pack(&xx).unwrap().entry("names.king").unwrap().text,
-        "der König"
-    );
-}
 
 #[test]
 fn terrain_and_battle_notes_are_found_by_their_english() {
@@ -780,31 +739,6 @@ fn a_packs_dialogue_text_keeps_to_its_lines_limit_in_cells() {
     assert_eq!(line_errors(&gendered).len(), 1);
 }
 
-#[test]
-fn a_name_token_counts_as_the_packs_longest_name() {
-    // English's longest name is "Heth Keep" (9); the pack's is 20.
-    let long = "k".repeat(20);
-    let data_ron =
-        |source: &str| format!("[(key: \"names.king\", source: {source:?}, text: {long:?})]");
-    let reply = |filler: usize| {
-        let text = format!("{{n:keep}}{}", "x".repeat(filler));
-        format!("[{}]", entry("Then I climb.", &text))
-    };
-    let errors = |data_ron: &str, filler: usize| {
-        pack(data_ron, &[("xx/dialogue/gate.ron", &reply(filler))])
-            .err()
-            .unwrap_or_default()
-            .len()
-    };
-    let fresh = data_ron("the King");
-    assert_eq!(errors(&fresh, 40), 0);
-    assert_eq!(errors(&fresh, 41), 1);
-    // A stale name shows in English, so it doesn't count.
-    let stale = data_ron("the Queen");
-    assert_eq!(errors(&stale, 51), 0);
-    assert_eq!(errors(&stale, 52), 1);
-}
-
 /// A pack translating the caption, the first line, a reply, the line
 /// inside the `@if` block and, by gender, the last line.
 fn dialogue_pack() -> LangPack {
@@ -918,8 +852,10 @@ fn a_scene_in_a_language_has_the_packs_text_and_the_same_ids() {
     assert_eq!(lang.scene(&code("zz"), &english, male), english);
 }
 
+/// The engine checks what a status holds; this checks its order: screen
+/// text, then data, then dialogue.
 #[test]
-fn status_lists_what_a_pack_lacks_of_each_kind() {
+fn status_lists_screen_text_then_data_then_dialogue() {
     let data_ron = r#"[
         (key: "items.potion.name", source: "Potion", text: "Trank"),
         (key: "classes.guard.name", source: "Warden", text: "Wache"),
@@ -936,22 +872,13 @@ fn status_lists_what_a_pack_lacks_of_each_kind() {
     // Screen text, then data, then dialogue.
     assert_eq!(status.missing[0], "a.one");
     assert_eq!(status.missing[1], "battles.gate.note_1");
-    assert!(status.missing.contains(&"names.king".to_owned()));
-    assert!(!status.missing.contains(&"items.potion.name".to_owned()));
-    assert!(status.missing.contains(&id("Nobody answers.")));
-    assert!(status.missing.contains(&id("The gate, dusk")));
-    assert!(!status.missing.contains(&id("Gone.")));
-    // 1 screen text, 13 data texts of 15, 8 lines of 10.
+    // 1 screen text, 13 data texts of 15, 8 lines of 10, dialogue last.
     assert_eq!(status.missing.len(), 1 + 13 + 8);
+    assert!(status.missing[14..].contains(&id("Nobody answers.")));
     assert_eq!(
         status.stale,
         ["classes.guard.name".to_owned(), id("The gate is shut.")]
     );
-    assert_eq!(status.orphans, []);
-    assert_eq!(lang.source_text(&id("Gone.")), Some("Gone."));
-    assert_eq!(lang.source_text("names.king"), Some("the King"));
-    assert_eq!(lang.source_text("a.one"), Some("One"));
-    assert_eq!(lang.source_text("gate_00000000"), None);
 }
 
 #[test]
@@ -963,17 +890,9 @@ fn an_orphan_is_paired_with_the_nearest_untranslated_line_of_its_scene() {
         let pack = pack("[]", &[("xx/dialogue/gate.ron", &file)]).unwrap();
         lang(pack).status(&code("xx")).unwrap()
     };
-    // "The gate was shut." was reworded to "The gate is shut.".
+    // The engine pairs an orphan with a line of its scene, and a caption
+    // with a caption. These are the cases it doesn't check.
     let found = status(&[orphan("gate_00000001", "The gate was shut.")]);
-    assert_eq!(
-        found.orphans,
-        [Orphan {
-            key: "gate_00000001".to_owned(),
-            source: "The gate was shut.".to_owned(),
-            text: LineText::One("ALT".to_owned()),
-            nearest: Some(id("The gate is shut.")),
-        }]
-    );
     // An orphan isn't missing or stale: it has no key of today's.
     assert!(!found.missing.contains(&"gate_00000001".to_owned()));
     assert_eq!(found.stale, Vec::<String>::new());
@@ -985,18 +904,13 @@ fn an_orphan_is_paired_with_the_nearest_untranslated_line_of_its_scene() {
     let nearest = found.orphans[0].nearest.clone();
     assert!(nearest.is_some());
     assert_ne!(nearest, Some(id("The gate is shut.")));
-    // A caption is only paired with a caption, and a line never with one.
-    let found = status(&[orphan("caption.gate_00000001", "The gate is shut")]);
-    assert_eq!(found.orphans[0].nearest, Some(id("The gate, dusk")));
+    // A line is never paired with a caption.
     let found = status(&[orphan("gate_00000001", "The gate, dusk.")]);
     assert_ne!(found.orphans[0].nearest, Some(id("The gate, dusk")));
     let found = status(&[
         orphan("caption.gate_00000001", "The gate, dawn"),
         entry("The gate, dusk", "ABENDS"),
     ]);
-    assert_eq!(found.orphans[0].nearest, None);
-    // A scene English no longer has: nothing to pair with.
-    let found = status(&[orphan("road_00000001", "The gate was shut.")]);
     assert_eq!(found.orphans[0].nearest, None);
     // A repeat's id (`_2`) belongs to its scene too; orphans come in key
     // order.
@@ -1014,66 +928,6 @@ fn an_orphan_is_paired_with_the_nearest_untranslated_line_of_its_scene() {
         [
             ("gate_00000000", Some(id("Gone."))),
             ("gate_00000001_2", Some(id("Nobody answers."))),
-        ]
-    );
-}
-
-/// The languages made of `files` (path, text) with [`data`], or the
-/// errors as text.
-fn files(files: &[(&str, Option<&str>)], data: Option<DataText>) -> Result<Lang, Vec<String>> {
-    let files: Vec<LangFile<'_>> = files
-        .iter()
-        .map(|&(path, source)| LangFile { path, source })
-        .collect();
-    from_files(&files, data, |path| format!("lang/{path}"))
-        .map_err(|errors| errors.iter().map(ToString::to_string).collect())
-}
-
-#[test]
-fn a_packs_data_and_dialogue_files_are_loaded_and_checked() {
-    let lines = format!("[{}]", entry("Gone.", "WEG."));
-    let good = [
-        ("en/ui.ron", Some("{}")),
-        ("xx/lang.ron", Some(INFO)),
-        ("xx/ui.ron", Some("[]")),
-        ("xx/data.ron", Some(DATA_RON)),
-        ("xx/dialogue/gate.ron", Some(lines.as_str())),
-        // A pack needs neither file.
-        ("yy/lang.ron", Some(INFO)),
-        ("yy/ui.ron", Some("[]")),
-    ];
-    let lang = files(&good, Some(data())).unwrap();
-    let (xx, yy) = (code("xx"), code("yy"));
-    assert_eq!(lang.name(&xx, "king", "the King"), "der König");
-    assert_eq!(
-        lang.line(&xx, &id("Gone."), "Gone.", LeadGender::Male),
-        "WEG."
-    );
-    assert_eq!(lang.name(&yy, "king", "the King"), "the King");
-    assert_eq!(lang.source(), &data());
-    // Without the data's English, the files are there but not read.
-    let lang = files(&good, None).unwrap();
-    assert_eq!(lang.name(&xx, "king", "the King"), "the King");
-    assert_eq!(lang.source(), &DataText::default());
-    // Errors carry the file's name.
-    let mut bad = good;
-    bad[3].1 = Some(r#"[(key: "items.nope.name", source: "x", text: "y")]"#);
-    bad[4].1 = Some(r#"[(key: "nope", source: "x", text: "y")]"#);
-    assert_eq!(
-        files(&bad, Some(data())).unwrap_err(),
-        [
-            "lang/xx/data.ron: \"items.nope.name\": no such key in the data",
-            "lang/xx/dialogue/gate.ron: \"nope\": not a line id or a caption key",
-        ]
-    );
-    // A file that isn't text.
-    bad[3].1 = None;
-    bad[4].1 = None;
-    assert_eq!(
-        files(&bad, Some(data())).unwrap_err(),
-        [
-            "lang/xx/data.ron: file not found in asset bundle",
-            "lang/xx/dialogue/gate.ron: file not found in asset bundle",
         ]
     );
 }
