@@ -8,8 +8,8 @@ use alloc::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use serde::Deserialize;
 use trpg_core::{
-    BattleDef, CharacterId, Faction, ItemId, ItemTable, NodeCondition, NodeKind, Pos, Shop,
-    ShopGrowth, ShopKind, SideQuest, WorldMap, WorldNode,
+    BattleDef, Faction, ItemId, ItemTable, NodeCondition, NodeKind, Pos, Shop, ShopGrowth,
+    ShopKind, SideQuest, WorldMap, WorldNode,
 };
 
 use crate::audio::AudioManifest;
@@ -93,34 +93,11 @@ impl WorldMapDef {
     }
 }
 
-/// A condition as written.
-#[derive(Debug, Clone, Deserialize)]
-enum RawCondition {
-    Cleared(String),
-    Flag(String),
-    Alive(String),
-    NotBuilt,
-    Chapter(Vec<String>),
-}
-
-impl RawCondition {
-    /// The condition it means.
-    fn build(self) -> NodeCondition {
-        match self {
-            Self::Cleared(id) => NodeCondition::Cleared(id),
-            Self::Flag(flag) => NodeCondition::Flag(flag),
-            Self::Alive(who) => NodeCondition::Alive(CharacterId(who)),
-            Self::NotBuilt => NodeCondition::NotBuilt,
-            Self::Chapter(chapters) => NodeCondition::Chapter(chapters),
-        }
-    }
-}
-
 /// What a shop adds later, as written.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RawLater {
-    when: Vec<RawCondition>,
+    when: Vec<NodeCondition>,
     stock: Vec<String>,
 }
 
@@ -165,7 +142,7 @@ struct RawNode {
     #[serde(default)]
     ambience: Option<String>,
     #[serde(default)]
-    opens_when: Vec<RawCondition>,
+    opens_when: Vec<NodeCondition>,
     #[serde(default)]
     hidden: bool,
 }
@@ -283,7 +260,7 @@ fn build(
                     .map(|(shop, s)| {
                         later.extend(s.later.into_iter().map(|l| ShopGrowth {
                             shop,
-                            when: l.when.into_iter().map(RawCondition::build).collect(),
+                            when: l.when,
                             stock: l.stock.into_iter().map(ItemId).collect(),
                         }));
                         Shop {
@@ -300,11 +277,7 @@ fn build(
             }
             RawKind::Empty => NodeKind::Empty,
         };
-        let opens_when = node
-            .opens_when
-            .into_iter()
-            .map(RawCondition::build)
-            .collect();
+        let opens_when = node.opens_when;
         if def
             .places
             .insert(node.id.clone(), Pos::new(node.pos.0, node.pos.1))
