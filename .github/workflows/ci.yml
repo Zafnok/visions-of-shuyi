@@ -440,9 +440,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cargo xtask engine-pin --check
       # assets-private.rev only moves forward from the base's (HEAD^1: the
-      # base's tip on a PR, the previous main on a push), so two PRs that
-      # both move it can't merge main back onto older content (0194).
-      - name: Check the assets pin only moves forward
+      # base's tip on a PR, the previous main on a push), and only to the
+      # private main, so main never goes back onto older content (0194);
+      # each pin file of assets-private.d/ names its branch's head and isn't
+      # already in the base (0195, ADR-0135).
+      - name: Check the assets pin and the pin files
         run: cargo xtask assets-pin --check --base HEAD^1
 
   # The checks that run the game's tool program, trpg-tools (ADR-0129):

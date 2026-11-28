@@ -124,7 +124,7 @@ function's name, and before reading the engine's source.
 | `tools/story-mirror/` | The writer's private mirror, [`Zafnok/visions-of-shuyi-story`](https://github.com/Zafnok/visions-of-shuyi-story) (ADR-0122): `files.txt` lists what it holds (the scripts and story documents at the pin, the format, a few design notes), `check.yml` its own check, `README.md` its start page. Synced by `story-mirror.yml`, its `story-check` built by `story-kit.yml` from `crates/writer` (`trpg-writer`); never edit the mirror. A pull request there that Nick approved comes in with `cargo xtask story-import` |
 | `tools/sonar-triage/` | Files SonarCloud's backlog as batched `sonar` GitHub issues, weekly (ADR-0071); `policy.jsonc` is where a finding is accepted |
 | `assets-src/` | Inputs to asset tools (e.g. the font BDF for `cargo shuyi font-atlas`); not embedded |
-| `assets-private/` | **Git-ignored**: the checkout of the private repository (ADR-0040). `content/` is the game's own content kept private, embedded over `assets/` whenever it is checked out, with nothing to turn on (but `content/tests/`, the tests' own data, ADR-0118), and `story/` the story's documents (ADR-0117): beats, bible, characters, outline, ledger (ADR-0011), and in `story/design/` the story parts of `docs/design/` (ticket 0159). Change both with the `content-change` skill; `game/` is the bought art, embedded over both by the `private-assets` feature; `library/tiny-tales/` is the bought bundle, sorted. `assets-private.rev` (tracked) names the commit to build with |
+| `assets-private/` | **Git-ignored**: the checkout of the private repository (ADR-0040). `content/` is the game's own content kept private, embedded over `assets/` whenever it is checked out, with nothing to turn on (but `content/tests/`, the tests' own data, ADR-0118), and `story/` the story's documents (ADR-0117): beats, bible, characters, outline, ledger (ADR-0011), and in `story/design/` the story parts of `docs/design/` (ticket 0159). Change both with the `content-change` skill; `game/` is the bought art, embedded over both by the `private-assets` feature; `library/tiny-tales/` is the bought bundle, sorted. `assets-private.rev` (tracked) names the base commit to build with, and `assets-private.d/<branch>.rev` each open change's own (ADR-0135) |
 | `shuyi-engine.rev` | The commit of Shuyi Engine the game builds with ([`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine), public, MIT OR Apache-2.0: the engine's code, carved out of the game by tickets 1102–1118 and 1154 and moved there by 1131, with its ADRs, tickets and plans). The game's crates depend on it by git URL and this revision; `cargo xtask engine-pin` moves it (ADR-0063 §8) |
 | `shuyi-engine/` | **Git-ignored**: a checkout of the engine, made by `cargo xtask engine`, which also points the build at it (`.cargo/engine-patch.toml`) so one working copy edits both; `cargo xtask engine --off` before committing the game (`docs/engine/README.md`) |
 | `voice/` | **Git-ignored**: voice clips by dialogue line id, shipped beside the game, never embedded (ADR-0046, `docs/voice.md`). Copied from the private repository's `voice/` by `cargo shuyi private-assets`. Test clips: `crates/app/tests/voice/` |
@@ -155,11 +155,11 @@ function's name, and before reading the engine's source.
   `assets-private/` (`game/`, `test/`, `voice/`, `content/`, `story/`; add
   `--library` for the bought packs in `assets-private/library/`). Gates
   never read the art. To see it in a build:
-  `cargo run -p trpg-app --features private-assets`. After pushing a change
-  to it, run `cargo shuyi private-assets --pin` and commit
-  `assets-private.rev` in the same PR (the art only: a change to
-  `content/` or `story/` goes through a pull request there, the
-  `content-change` skill). On Nick's machine the full copy
+  `cargo run -p trpg-app --features private-assets`. A change to it, like
+  one to `content/` or `story/`, is a branch and a pull request there and
+  its pin file in the game's PR (`cargo xtask assets-pin --add`, never an
+  edit of `assets-private.rev`); the game's merge lands it (the
+  `content-change` skill, ADR-0135). On Nick's machine the full copy
   (with the character generators and the original zips) is
   `D:\tactical-rpg\assets-private\`.
 - **The game's content** (ADR-0117): the private repository's `content/`

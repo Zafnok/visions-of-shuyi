@@ -1,0 +1,217 @@
+name: Private land
+
+# Lands the private side of each game pull request that merged with its own
+# pin file (ADR-0135, ticket 0195). For each assets-private.d/<branch>.rev on
+# main, it merges the assets repository's pull request from <branch> with a
+# merge commit, at exactly the pinned commit, so that commit stays in the
+# private main's history. Then it folds: assets-private.rev becomes the
+# private main, and the landed pin files go, in one commit pushed to main.
+# Nick merges only the game's pull requests, in any order; nothing waits on
+# another change (the content-change skill).
+#
+# PRIVATE_LAND_TOKEN is a fine-grained token of Nick's: contents read and
+# write on both repositories, pull requests read and write on the assets
+# repository. It is a secret of the environment private-land, which only
+# main may use, so no pull request's run can read it. It acts as Nick, the
+# bypass of main's ruleset, so the fold is pushed without waiting for
+# checks; CI runs on that push as on any other. Without it the run warns and
+# stops, and the pin files stay: every build still reads them (the
+# private-assets action merges them).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - assets-private.d/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # The issue that says what failed.
+  issues: write
+
+concurrency:
+  group: private-land
+  cancel-in-progress: false
+
+env:
+  ASSETS: Zafnok/visions-of-shuyi-assets
+
+jobs:
+  land:
+    name: land
+    runs-on: ubuntu-latest
+    environment: private-land
+    steps:
+      - name: Is there a token?
+        id: token
+        env:
+          HAS_TOKEN: ${{ secrets.PRIVATE_LAND_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::warning::PRIVATE_LAND_TOKEN is not available to this run: the pin files stay on main, unlanded (ticket 0195's setup)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.token.outputs.ok == 'true'
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Fetch the assets repository's history
+        if: steps.token.outputs.ok == 'true'
+        env:
+          TOKEN: ${{ secrets.PRIVATE_LAND_TOKEN }}
+        run: |
+          set -euo pipefail
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          # Commits only: landing reads ancestry, never a file.
+          git init -q --bare private.git
+          git -C private.git config http.https://github.com/.extraheader "AUTHORIZATION: basic $auth"
+          git -C private.git remote add origin "https://github.com/$ASSETS.git"
+          if ! git -C private.git fetch -q --filter=blob:none origin '+refs/heads/*:refs/remotes/origin/*'; then
+            echo "::error::Can't read $ASSETS with PRIVATE_LAND_TOKEN. If it expired, make a new one as ticket 0195's setup says and replace the secret in the environment private-land."
+            exit 1
+          fi
+      - name: Land the pull requests
+        id: land
+        if: steps.token.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PRIVATE_LAND_TOKEN }}
+        run: |
+          set -euo pipefail
+          p() { git -C private.git "$@"; }
+          refresh() { p fetch -q --filter=blob:none origin '+refs/heads/*:refs/remotes/origin/*'; }
+          landed=""
+          failed=""
+          fail() {
+            echo "::error::$1"
+            failed="$failed- $1"$'\n'
+          }
+          shopt -s nullglob
+          for file in assets-private.d/*.rev; do
+            name=$(basename "$file" .rev)
+            pin=$(tr -d '[:space:]' < "$file")
+            refresh
+            if p merge-base --is-ancestor "$pin" origin/main 2> /dev/null; then
+              echo "$name: $pin is on the private main already."
+              landed="$landed $name"
+              continue
+            fi
+            prs=$(gh pr list -R "$ASSETS" --head "$name" --state all --json number,state,headRefOid \
+              --jq 'sort_by(.state != "OPEN") | .[0] // empty | "\(.number) \(.state) \(.headRefOid)"')
+            if [ -z "$prs" ]; then
+              fail "$file: no pull request in $ASSETS from the branch $name. Open one (base main), and private-land.yml lands it on its next run (Actions → Private land → Run workflow)."
+              continue
+            fi
+            read -r number state head <<< "$prs"
+            if [ "$state" = "MERGED" ]; then
+              # Merged by hand: its content is on the private main, under
+              # another commit if it was squashed.
+              echo "::warning::$name: $ASSETS#$number was merged by hand; folding the private main, which holds it."
+              landed="$landed $name"
+              continue
+            fi
+            if [ "$state" != "OPEN" ]; then
+              fail "$file: $ASSETS#$number, from $name, is $state. Reopen it, or delete the pin file in a game pull request."
+              continue
+            fi
+            if [ "$head" != "$pin" ]; then
+              fail "$file pins $pin, but $ASSETS#$number's branch $name is at $head: the game merged with the pinned commit. Push the branch back to it, or pin the new head in a game pull request (cargo xtask assets-pin --add)."
+              continue
+            fi
+            title=$(gh pr view "$number" -R "$ASSETS" --json title -q .title)
+            merge() {
+              gh api -X PUT "repos/$ASSETS/pulls/$number/merge" \
+                -f merge_method=merge -f sha="$pin" \
+                -f commit_title="$title (#$number)" \
+                -f commit_message="Landed by the game's merge (private-land.yml, ADR-0135)." 2>&1
+            }
+            # Right after another landing, GitHub may still be working out
+            # whether this one merges: try again a little later.
+            out=$(merge) || { sleep 10; out=$(merge); } || { sleep 30; out=$(merge); } || out="FAILED: $out"
+            if [[ "$out" != FAILED:* ]]; then
+              echo "$name: merged $ASSETS#$number."
+              landed="$landed $name"
+            else
+              fail "$file: $ASSETS#$number won't merge ($out). If its branch conflicts with the private main, merge origin/main into it, push, and pin the new head in a game pull request (cargo xtask assets-pin --add)."
+            fi
+          done
+          {
+            echo "landed=${landed# }"
+            echo "failed<<EOF"
+            printf '%s' "$failed"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      - name: Fold the landed pins into assets-private.rev
+        if: steps.token.outputs.ok == 'true' && steps.land.outputs.landed != ''
+        env:
+          LANDED: ${{ steps.land.outputs.landed }}
+          TOKEN: ${{ secrets.PRIVATE_LAND_TOKEN }}
+        run: |
+          set -euo pipefail
+          p() { git -C private.git "$@"; }
+          # The token, for this step's fetches and push alone: it acts as
+          # Nick, the bypass of main's ruleset.
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          git config http.https://github.com/.extraheader "AUTHORIZATION: basic $auth"
+          trap 'git config --unset-all http.https://github.com/.extraheader || true' EXIT
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          fold() {
+            p fetch -q --filter=blob:none origin '+refs/heads/*:refs/remotes/origin/*'
+            main=$(p rev-parse origin/main)
+            echo "$main" > assets-private.rev
+            gone=""
+            shopt -s nullglob
+            for file in assets-private.d/*.rev; do
+              pin=$(tr -d '[:space:]' < "$file")
+              name=$(basename "$file" .rev)
+              if p merge-base --is-ancestor "$pin" "$main" 2> /dev/null \
+                || [[ " $LANDED " == *" $name "* ]]; then
+                git rm -q "$file"
+                gone="$gone, $name"
+              fi
+            done
+            git add assets-private.rev
+            if git diff --cached --quiet; then
+              echo "Nothing to fold."
+              return 0
+            fi
+            git commit -q -m "[pin] Land ${gone#, }" -m "assets-private.rev moves to the private main, $main, which holds them (private-land.yml, ADR-0135)."
+          }
+          fold
+          for attempt in 1 2 3; do
+            if git push -q origin HEAD:refs/heads/main; then
+              git log -1 --stat --format='%H%n%B'
+              exit 0
+            fi
+            echo "main moved: folding again on top of it ($attempt)."
+            git fetch -q origin main
+            git reset -q --hard origin/main
+            fold
+          done
+          echo "::error::Couldn't push the fold to main after three tries."
+          exit 1
+      - name: Say what failed
+        if: steps.token.outputs.ok == 'true' && steps.land.outputs.failed != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FAILED: ${{ steps.land.outputs.failed }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          body=$(printf 'private-land.yml could not land these pin files (ADR-0135). Every build still reads them, merged by the private-assets action, so main builds with their content; fix each one as it says, and the next push to main, or a run by hand, lands it.\n\n%s\nRun: %s\n' "$FAILED" "$RUN")
+          gh label create private-land -R "$GITHUB_REPOSITORY" --color B60205 \
+            --description "private-land.yml could not land a pin file" 2> /dev/null || true
+          issue=$(gh issue list -R "$GITHUB_REPOSITORY" --label private-land --state open --json number -q '.[0].number // empty')
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" -R "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create -R "$GITHUB_REPOSITORY" --label private-land \
+              --title "A pin file didn't land in the private repository" --body "$body"
+          fi
+          exit 1

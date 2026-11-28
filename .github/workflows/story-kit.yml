@@ -85,7 +85,7 @@ jobs:
           built=$(printf '%s\n' "$notes" | sed -nE 's/^Game-Commit: *([0-9a-f]{40}).*$/\1/p' | head -1)
           if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ -z "$built" ] \
             || ! git cat-file -e "$built^{commit}" 2> /dev/null \
-            || ! git diff --quiet "$built" HEAD -- assets-private.rev assets assets-src/package crates/core crates/content crates/ui crates/app crates/story-preview crates/writer music Cargo.lock shuyi.ron shuyi-engine.rev; then
+            || ! git diff --quiet "$built" HEAD -- assets-private.rev assets-private.d assets assets-src/package crates/core crates/content crates/ui crates/app crates/story-preview crates/writer music Cargo.lock shuyi.ron shuyi-engine.rev; then
             echo "build=true" >> "$GITHUB_OUTPUT"
           else
             echo "The kit was built from $built and nothing it is built from changed since."
@@ -308,7 +308,11 @@ jobs:
           set -euo pipefail
           gh release upload kit THIRD_PARTY_LICENSES.html -R "$MIRROR" --clobber
           sha=$(git rev-parse HEAD)
+          # The base and each pin file (ADR-0135).
           pin=$(tr -d '[:space:]' < assets-private.rev)
+          for file in assets-private.d/*.rev; do
+            if [ -f "$file" ]; then pin="$pin + $(tr -d '[:space:]' < "$file")"; fi
+          done
           gh release edit kit -R "$MIRROR" --notes "$(cat <<EOF
           The writer's programs: story-check checks the scripts (put it in the
           repository's folder and run it there; story-check --help says how),

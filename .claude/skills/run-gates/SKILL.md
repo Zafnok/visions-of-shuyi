@@ -54,7 +54,7 @@ cargo shuyi check --target all            # the frame, text, controls and one-bi
 cargo shuyi app-info --check              # crates/app/src/app_info.rs is what shuyi.ron's `app` says (1199)
 cargo shuyi lint                          # the rules crate's fence on trpg-core: its clippy.toml's bans, floats among them, and its dependencies (0138, 0139)
 cargo xtask engine-pin --check           # the engine's pin agrees in shuyi-engine.rev, Cargo.toml, Cargo.lock (ADR-0063 §8)
-cargo xtask assets-pin --check           # assets-private.rev only moves forward from origin/main's (0194)
+cargo xtask assets-pin --check           # assets-private.rev only moves forward, on the private main; each pin file is its branch's head (0194, 0195)
 cargo xtask skill-pack --check           # .claude/skills/shuyi-* is the pinned engine's skill pack (ADR-0097)
 cargo shuyi check-skills .claude/skills   # every skill here keeps the engine's skill rules (ADR-0097)
 cargo xtask ticket-lint                   # tickets/ follows tickets/README.md

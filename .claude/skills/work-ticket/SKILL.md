@@ -185,12 +185,14 @@ Set `status: in-progress` in the ticket frontmatter.
   `assets/data/credits.ron`, with the row's source link. **Bought art**
   (ADR-0051): add the new files' path in `assets-private/game/` to its
   credit's `private` list, the pack to its row and the artist to the
-  credit's `author`. `cargo shuyi private-assets --pin` refuses files
-  without a credit; don't widen an old path just to get past it.
+  credit's `author`. The run-gates test `every_bought_file_has_a_credit`
+  refuses files without a credit; don't widen an old path just to get
+  past it.
 - **A change to the game's private content or story documents**
   (`assets-private/content/`, `assets-private/story/`, ADR-0117): follow
-  the `content-change` skill, a pull request in the private repository
-  first, then this PR moves `assets-private.rev`.
+  the `content-change` skill: a pull request in the private repository,
+  and this PR adds its pin file (`cargo xtask assets-pin --add`); the
+  game's merge lands the private one (ADR-0135).
 - A new architectural choice (new dependency with wide impact, new pattern,
   new file format) needs an ADR in the same PR (`write-adr` skill). Adding a
   small, well-known crate for a local need does not.

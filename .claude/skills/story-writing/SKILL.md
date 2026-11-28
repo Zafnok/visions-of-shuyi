@@ -28,8 +28,8 @@ notes and writer's guide are in the private assets repository's `story/`,
 and the story parts of `docs/design/` in its `story/design/`. `cargo shuyi
 private-assets` checks them out into `assets-private/story/`; without
 access there is no story to write from, so stop and say so. A change to
-them is a pull request there, then the game's that moves
-`assets-private.rev`: the `content-change` skill. `docs/story/README.md`
+them is a pull request there and the game's with its pin file (`cargo
+xtask assets-pin --add`): the `content-change` skill. `docs/story/README.md`
 is only a stub saying this.
 
 ## Canon order (higher wins on conflict)
