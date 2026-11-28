@@ -1,7 +1,7 @@
 //! Hints in key spans (ticket 0254): key caps on the keyboard, plain text
 //! on a controller and for a key not mapped; the theme's style; wrapping.
 
-use shuyi_ui::GameData;
+use shuyi_platform::prelude::GameData;
 use trpg_content::{Chord, RepeatDef};
 
 use super::*;

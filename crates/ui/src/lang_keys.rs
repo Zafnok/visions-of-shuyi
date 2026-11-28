@@ -55,8 +55,8 @@ pub fn check_ui_text_keys(bundle: &Bundle) -> Result<(), Vec<ContentError>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use shuyi_assets::bundle::Layer;
     use shuyi_assets::error::codes;
+    use shuyi_platform::prelude::Layer;
 
     /// A bundle of `files` in a layer named `assets`.
     fn bundle(files: &'static [(&'static str, &'static [u8])]) -> Bundle {

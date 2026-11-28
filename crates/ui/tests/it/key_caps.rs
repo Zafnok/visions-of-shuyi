@@ -6,7 +6,7 @@
 
 use crate::support::battle;
 use insta::assert_snapshot;
-use shuyi_ui::text::{StyledText, TextRole};
+use shuyi_platform::prelude::text::{StyledText, TextRole};
 use trpg_content::image::KEY_ARROWS_PATH;
 use trpg_core::{CharacterId, LEAD_ID};
 use trpg_ui::ShuyiCtx;

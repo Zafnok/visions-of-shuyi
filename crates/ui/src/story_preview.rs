@@ -21,11 +21,10 @@
 
 use crate::prelude::*;
 use core::cell::Cell as Count;
-use shuyi_ui::text::StyledText;
+use shuyi_platform::prelude::text::StyledText;
 
-use shuyi_assets::bundle::Layer;
 use shuyi_assets::dialogue::{DialogueFile, scripts_from_parsed};
-use shuyi_platform::{Card, Look, Setup, Start};
+use shuyi_platform::prelude::{Card, Layer, Look, Setup, Start};
 use shuyi_ui::dialogue::preview::{
     DialogueFiles, DialogueFolder, DialoguePreview, Play, PreviewGame, PreviewScreen, Showing,
 };

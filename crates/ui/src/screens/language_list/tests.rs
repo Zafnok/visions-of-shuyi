@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use insta::assert_snapshot;
-use shuyi_assets::lang::LangCode;
+use shuyi_platform::prelude::text::LangCode;
 use trpg_content::Lang;
 
 use super::*;
