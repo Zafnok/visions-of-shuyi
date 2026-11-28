@@ -44,7 +44,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [rust, actions]
+        # A change to the workflows alone analyzes only them (ticket 0174):
+        # the Rust analysis took 7 of a workflow PR's 17 job-minutes.
+        language: ${{ needs.changes.outputs.code == 'true' && fromJSON('["rust","actions"]') || fromJSON('["actions"]') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
