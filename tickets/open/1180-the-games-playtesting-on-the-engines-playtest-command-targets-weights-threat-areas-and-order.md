@@ -143,6 +143,9 @@ not a prerequisite for this mechanical adoption.
   `trpg_bots::unit_measure`) and `BattleMeasures::units`; `can_hurt`,
   `enemies_hurt` and `flags` (`crates/bots/src/units.rs`) stay the
   game's.
+- `crates/bots/src/record.rs` `seize_field` (about lines 214-229): one
+  more hand-written distance field with free entry onto the goal tile,
+  which is `GoalDistance`'s rule (found by the sweep 1397).
 - Update the friction log, bots boundary row and ADR-0095 ownership notes.
 
 **Out (do not do):**

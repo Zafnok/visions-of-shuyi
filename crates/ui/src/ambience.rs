@@ -31,6 +31,7 @@ pub const FADE_S: f32 = 0.5;
 /// [`FADE_S`] in milliseconds, for a stop.
 const FADE_MS: u32 = 500;
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 /// The bed playing, if any.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct AmbiencePlayer {
@@ -40,6 +41,7 @@ pub struct AmbiencePlayer {
     off: bool,
 }
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 /// A bed playing.
 #[derive(Debug, Clone, PartialEq)]
 struct Bed {
@@ -54,6 +56,7 @@ struct Bed {
     owner: &'static str,
 }
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 impl AmbiencePlayer {
     /// A player that never plays a bed.
     pub fn off() -> Self {
@@ -76,6 +79,7 @@ pub fn bed(ctx: &Ctx, ambience: Option<&str>, light: &str) -> Option<String> {
     table.bed(ambience?, light).map(str::to_owned)
 }
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 /// Plays bed `cue` for screen `owner` this frame, `dt` seconds after the
 /// last: hushed to silence while `hushed`; `None` (or the Ambience volume
 /// at 0) fades the bed playing out.
@@ -117,6 +121,7 @@ pub fn play(ctx: &mut Ctx, owner: &'static str, cue: Option<&str>, hushed: bool,
     }
 }
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 /// Fades out the bed screen `owner` started, as it leaves the stack; a
 /// bed another screen started goes on.
 pub fn leave(ctx: &mut Ctx, owner: &'static str) {

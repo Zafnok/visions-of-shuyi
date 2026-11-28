@@ -1,3 +1,4 @@
+// engine-friction: engine#3445, moves (game 1402 deletes it)
 //! `assets-pin` (tickets 0194 and 0195, ADR-0135): the pin of the private
 //! repository.
 //!

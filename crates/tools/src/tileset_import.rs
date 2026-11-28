@@ -417,6 +417,7 @@ fn by_tile(
     })
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// The cells of a [`LayerMap::Quarters`]: which cell each kind of quarter
 /// is taken from, counted as a sheet's tiles are.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
@@ -433,6 +434,7 @@ pub struct Kit {
     pub inside: [u32; 4],
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 impl Kit {
     /// The four quarters of the picture of a point whose tiles (up-left,
     /// up-right, down-left, down-right) are `places` in the layer, in
@@ -460,12 +462,14 @@ impl Kit {
     }
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// A mix of corners (up-left, up-right, down-left, down-right in the
 /// layer), whether its picture is in the inside corners' nine of a
 /// [`LayerMap::Patch`], and its tiles' (column, row) there, the second
 /// drawn over the first.
 type PatchPlace = ([bool; 4], bool, &'static [(u32, u32)]);
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// Where each mix of corners is in a [`LayerMap::Patch`].
 const PATCH: [PatchPlace; 15] = {
     const fn m(ul: u8, ur: u8, dl: u8, dr: u8) -> [bool; 4] {
@@ -533,6 +537,7 @@ pub struct TreesMap {
     pub foot: (u32, u32),
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// Every tag of `xml` that opens an element, with its attributes. Enough
 /// XML for a Tiled file: attribute values are in double quotes and hold no
 /// `>`.
@@ -559,6 +564,7 @@ pub fn tags(xml: &str) -> Vec<(String, BTreeMap<String, String>)> {
     out
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// `value` with XML's five named characters written out.
 fn unescape(value: &str) -> String {
     let named = [
@@ -575,6 +581,7 @@ fn unescape(value: &str) -> String {
     out.replace("&amp;", "&")
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// What the importer reads of a Tiled tileset file.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tsx {
@@ -597,6 +604,7 @@ pub struct Tsx {
     pub animations: BTreeMap<u32, Vec<(u32, u32)>>,
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// A colour written as six hex digits.
 fn hex(text: &str) -> Option<[u8; 3]> {
     let digits = text.trim_start_matches('#');
@@ -607,6 +615,7 @@ fn hex(text: &str) -> Option<[u8; 3]> {
     Some([channel(0)?, channel(2)?, channel(4)?])
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// The corner terrains of a tile, as its `terrain` attribute writes them:
 /// four places split by commas, each a terrain's number or empty.
 fn corner_terrains(text: &str) -> Option<[Option<usize>; 4]> {
@@ -621,6 +630,7 @@ fn corner_terrains(text: &str) -> Option<[Option<usize>; 4]> {
     parts.next().is_none().then_some(corners)
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// Parses a Tiled tileset file.
 pub fn parse_tsx(xml: &str) -> Result<Tsx, String> {
     let tags = tags(xml);
@@ -749,6 +759,7 @@ impl Sheet {
         })
     }
 
+    // engine-friction: engine#2287, moves (game 1406 deletes it)
     /// The RGBA8 pixels of tile `id`, row by row, the Tiled file's clear
     /// colour as nothing.
     pub fn tile(&self, id: u32) -> Result<Vec<u8>, String> {
@@ -773,6 +784,7 @@ impl Sheet {
         Ok(out)
     }
 
+    // engine-friction: engine#2286, moves (game 1405 deletes it)
     /// The tile of each mix of corners of the Tiled terrain `terrain`:
     /// of the tiles whose corners are that terrain or none, the `pick`th
     /// listed for the mix (the last, if there are fewer).
@@ -806,12 +818,14 @@ fn is_plain(name: &str) -> bool {
         .is_some_and(|e| e.eq_ignore_ascii_case("png"))
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// How bright a colour is, 0 to 255 000: the usual weights of red, green
 /// and blue.
 fn brightness(rgb: [u8; 3]) -> u32 {
     299 * u32::from(rgb[0]) + 587 * u32::from(rgb[1]) + 114 * u32::from(rgb[2])
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// Recolours the RGBA8 `pixels` in `color`: each pixel that isn't clear
 /// takes the colour, as bright as the pixel was (so shading stays).
 pub fn tint(pixels: &mut [u8], color: [u8; 3]) {
@@ -941,6 +955,7 @@ impl Cut {
     }
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// [`Cut::Mirrored`]: tile `tile` of `sheet`, its right half its left
 /// half mirrored. RGBA8, row by row.
 fn mirrored(sheet: &Sheet, tile: u32) -> Result<Vec<u8>, String> {
@@ -969,6 +984,7 @@ fn stacked(sheet: &Sheet, [top, bottom]: [u32; 2]) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// Tile `over` of `sheet` drawn over tile `under`: RGBA8, row by row.
 fn paired(sheet: &Sheet, under: u32, over: u32) -> Result<Vec<u8>, String> {
     let mut out = sheet.tile(under)?;
@@ -992,6 +1008,7 @@ fn paired(sheet: &Sheet, under: u32, over: u32) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// A picture joined from quarters of `sheet`'s cells: for each of its
 /// quarters (up-left, up-right, down-left, down-right), the opposite
 /// quarter of the cell `cells` names there, or nothing. RGBA8, row by row.
@@ -1049,6 +1066,7 @@ fn faced(
     Ok(out)
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// Changes each pixel of RGBA8 `pixels` whose colour is the first of one
 /// of `pairs` to the second, its alpha kept.
 pub fn recolour(pixels: &mut [u8], pairs: &[(Rgb, Rgb)]) {
@@ -1061,6 +1079,7 @@ pub fn recolour(pixels: &mut [u8], pairs: &[(Rgb, Rgb)]) {
     }
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// A tile joined from the quarters of the block of `sheet` whose top-left
 /// tile is `block`, for a tile whose terrain ends on the mix of sides
 /// `ends` (up, right, down, left): RGBA8, row by row.
@@ -1522,6 +1541,7 @@ fn from_points(packer: &mut Packer, layer: &LayerMap) -> Result<LayerText, Strin
     }
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// A [`LayerMap::Quarters`], borrowed.
 struct Quarters<'a> {
     of: &'a [String],
@@ -1531,6 +1551,7 @@ struct Quarters<'a> {
     skip: &'a [String],
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 impl<'a> Quarters<'a> {
     /// `layer`, if it is a [`LayerMap::Quarters`].
     fn of(layer: &'a LayerMap) -> Option<Self> {
@@ -1574,6 +1595,7 @@ fn shadow_problem(of: &str) -> String {
     format!("a shadow is of a `Quarters` layer with a face, and \"{of}\" isn't one")
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// A [`LayerMap::Quarters`] as the tileset file has it, its pictures
 /// packed: one for each mix of corners that draws anything, with the face
 /// below if it has one, as silhouettes in `shadow` if one is given.
@@ -1613,6 +1635,7 @@ fn quarters_layer(
     })
 }
 
+// engine-friction: engine#2286, moves (game 1405 deletes it)
 /// A [`LayerMap::Patch`] as the tileset file has it, its pictures packed:
 /// the patch and the inside corners from their top-left tiles.
 fn patch_layer(
@@ -1957,6 +1980,7 @@ fn tree_frames(sheet: &Sheet, map: &TreesMap) -> Result<Vec<Vec<u8>>, String> {
     Ok((0..map.frames).map(frame).collect())
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// `pixels` (RGBA8, `w` × `h` px, both even) at half the size, each two by
 /// two block one pixel (ticket 1356: ELV's trees, halved). A block of two
 /// or more solid pixels is solid, their colours averaged, so the

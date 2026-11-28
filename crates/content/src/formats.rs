@@ -111,12 +111,14 @@ impl<T> Default for TableRon<T> {
     }
 }
 
+// engine-friction: engine#2289, moves (game 1408 deletes it)
 /// The `.dlg` format of the game's directives, read by
 /// [`dialogue::parse_dlg`]: the engine's `Dlg` with the game's
 /// plain-ASCII text (ADR-0045), which the engine's parser no longer
 /// checks (engine #256).
 struct AsciiDlg;
 
+// engine-friction: engine#2289, moves (game 1408 deletes it)
 impl Format for AsciiDlg {
     type Asset = DialogueFile<dialogue::Stage>;
 

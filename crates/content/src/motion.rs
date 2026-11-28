@@ -1,3 +1,4 @@
+// engine-friction: engine#2288, moves (game 1407 deletes it)
 //! Moving looks and their stills (ADR-0131): every look the game ships
 //! that moves by itself (a tile that loops through frames, an effect of
 //! drifting particles) says the lowest graphics tier it plays at, and

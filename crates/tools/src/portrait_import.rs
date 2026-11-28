@@ -119,6 +119,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
     })
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// An RGBA8 image, row-major.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Picture {
@@ -130,6 +131,7 @@ pub struct Picture {
     pub rgba: Vec<u8>,
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 impl Picture {
     /// The `w × h` part whose top-left pixel is `(x, y)`. It must lie
     /// inside the picture.
@@ -165,6 +167,7 @@ pub fn portrait_image(name: &str, picture: &Picture, shift_x: i32) -> Result<Pic
     }
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// The eight pictures of sheet `picture` (named `name` in errors) with
 /// their expressions, `expressions` row by row, or an error if it isn't a
 /// bust or a face sheet.

@@ -19,6 +19,7 @@ use crate::widgets::{Menu, MenuItem};
 /// The key of the question in the language files ([`Ctx::text`]).
 pub const QUESTION: &str = "voices_question.question";
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 /// The voices question, with `Yes` focused. Pops with the answer (a
 /// `bool`, `true` for `Yes`); Cancel pops with nothing (back to the
 /// familiarity question).
@@ -27,6 +28,7 @@ pub struct VoicesQuestionScreen {
     menu: Menu<bool>,
 }
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 impl VoicesQuestionScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "voices_question";
@@ -52,6 +54,7 @@ impl VoicesQuestionScreen {
     }
 }
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 impl Screen<Shuyi> for VoicesQuestionScreen {
     fn name(&self) -> &'static str {
         Self::NAME

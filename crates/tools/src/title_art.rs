@@ -98,6 +98,7 @@ pub const BACKDROPS: [Backdrop; 7] = [
 /// The first row of a placeholder's far band and of its ground band.
 pub const BANDS: [u32; 2] = [84, 120];
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// A picture: width, height and RGBA8 pixels, row-major.
 pub type Picture = (u32, u32, Vec<u8>);
 

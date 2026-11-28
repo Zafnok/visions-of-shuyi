@@ -1,3 +1,4 @@
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 //! The glyph look of the place line: dim text two rows over the help line,
 //! centred, the path shortened from the left (`…\tactical-rpg`) so the
 //! line fits the buffer.

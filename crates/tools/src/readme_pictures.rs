@@ -142,6 +142,7 @@ fn draw(
     Ok(format!("{OUT}: {frames} frames, {} bytes", bytes.len()))
 }
 
+// engine-friction: engine#3446, moves (game 1403 deletes it)
 /// Joins GIFs of one size into one that loops forever: `cut_rows` cut off
 /// the bottom, each frame stored as the part it changes, a repeated frame
 /// shown as one longer frame, the last held `hold` hundredths of a second.
@@ -174,6 +175,7 @@ fn join(clips: &[Vec<u8>], cut_rows: u16, hold: u16) -> Result<(Vec<u8>, usize),
     joiner.ok_or_else(|| "no clips".to_owned())?.finish(hold)
 }
 
+// engine-friction: engine#3446, moves (game 1403 deletes it)
 /// Paints a decoded frame (RGBA, its own rectangle) over `canvas`, but its
 /// transparent pixels.
 fn paint(canvas: &mut [u8], width: u16, frame: &gif::Frame<'_>) {
@@ -197,6 +199,7 @@ fn paint(canvas: &mut [u8], width: u16, frame: &gif::Frame<'_>) {
     }
 }
 
+// engine-friction: engine#3446, moves (game 1403 deletes it)
 /// The joined GIF as it is written: the last picture, and the frame that
 /// waits for its delay to be known.
 struct Joiner {
@@ -208,6 +211,7 @@ struct Joiner {
     frames: usize,
 }
 
+// engine-friction: engine#3446, moves (game 1403 deletes it)
 impl Joiner {
     fn new(width: u16, height: u16) -> Result<Self, String> {
         let mut encoder =

@@ -81,6 +81,7 @@ pub fn export_keys(what: Export) -> impl Fn(&str) -> bool {
     }
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The file's name for `what`, of the profile `id` named `name`:
 /// `visions-of-shuyi-<name>-<n>.ron`, or `…-<n>-slot-<NN>.ron` for one
 /// save. The name is lower case with a `-` for each run of spaces, and
@@ -102,6 +103,7 @@ pub fn export_name(name: &str, id: ProfileId, what: Export) -> String {
     format!("{NAME_START}{name}-{}{slot}.ron", id.get())
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// `name` in lower case with a `-` for each run of spaces, and only
 /// `a`–`z`, digits and those `-`.
 fn safe_name(name: &str) -> String {
@@ -146,12 +148,14 @@ pub fn place(facts: &PlatformFacts) -> Option<&str> {
     }
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The keys of profile `id` in `computer`, read without its prefix.
 struct ProfileKeys<'a> {
     computer: &'a dyn Storage,
     prefix: String,
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 impl ProfileKeys<'_> {
     /// Each of the profile's entries `keep` keeps, by key.
     fn entries(
@@ -239,6 +243,7 @@ impl Exported {
     }
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The last part of `path`, after its last `/` or `\`: the name the file
 /// was written as (`a (2).ron`).
 #[cfg(feature = "std")]
@@ -246,6 +251,7 @@ fn file_name(path: &str) -> &str {
     path.rsplit(['/', '\\']).next().unwrap_or(path)
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// Where the platform says an offered file went, as a screen's notice
 /// takes it: `None` for a download (the screen names the file it offered).
 #[cfg(feature = "std")]
@@ -297,6 +303,7 @@ pub fn hear(game: &mut crate::game::Game, event: shuyi_platform::SystemEvent) {
     }
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// What a screen keeps of its exports: the file offered last, until the
 /// platform says where it went, and the notice then.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -307,6 +314,7 @@ pub struct ExportNotice {
     shown: Option<Exported>,
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 impl ExportNotice {
     /// The file `file` was offered.
     pub fn offered(&mut self, file: String) {

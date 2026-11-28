@@ -39,6 +39,7 @@ pub const MACHINE_NOTE: &str = "language.machine_note";
 /// The key of the list's title ([`Ctx::text`]): the Options row's label.
 pub const TITLE: &str = shuyi_ui::screens::options::LANGUAGE_ROW;
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 /// Every language the game offers ([`Ctx::languages_offered`]: the source,
 /// then the packs, the test pack only with debug tools), each by its own
 /// name, a machine-made one with its pack's [`MACHINE_NOTE`] after it.
@@ -54,6 +55,7 @@ pub fn names(ctx: &Ctx) -> Vec<String> {
     ctx.languages_offered().into_iter().map(named).collect()
 }
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 /// Which of [`names`] is in use: the first tag of its chain the game
 /// offers, as the engine's Language row reads it.
 pub fn in_use(ctx: &Ctx) -> usize {
@@ -93,6 +95,7 @@ pub fn asks(ctx: &Ctx) -> bool {
     choice && ctx.settings().language.is_none() && ctx.layout().is_none()
 }
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 /// The language list: one line per language, the one in use focused. It
 /// can't be backed out of; it pops once one is picked.
 #[derive(Debug, Clone)]
@@ -101,6 +104,7 @@ pub struct LanguageListScreen {
     menu: Menu<usize>,
 }
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 impl LanguageListScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "language_list";
@@ -129,6 +133,7 @@ impl LanguageListScreen {
     }
 }
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 impl Screen<Shuyi> for LanguageListScreen {
     fn name(&self) -> &'static str {
         Self::NAME

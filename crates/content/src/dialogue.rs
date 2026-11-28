@@ -400,6 +400,7 @@ impl Directive for Stage {
     }
 }
 
+// engine-friction: engine#2289, moves (game 1408 deletes it)
 /// Parses dialogue `source` (errors attributed to `file`) into its scenes,
 /// in file order, and every syntax error found. A scene with errors in it
 /// is still returned (without the broken lines), so later checks can run.
@@ -415,6 +416,7 @@ pub fn parse_dlg(file: &str, source: &str) -> (Vec<ParsedScene>, Vec<ContentErro
     (scenes, errors)
 }
 
+// engine-friction: engine#2289, moves (game 1408 deletes it)
 /// One error per character outside printable ASCII on each line of
 /// `source` but a comment, with its column; common typographic
 /// punctuation gets its ASCII spelling suggested.
@@ -608,6 +610,7 @@ pub fn from_sources<F: AsRef<str>, S: AsRef<str>>(
     scripts_from_sources(files, characters, portraits, names, audio).map(|s| s.table)
 }
 
+// engine-friction: engine#2289, moves (game 1408 deletes it)
 /// [`from_sources`], keeping where each scene was written.
 pub fn scripts_from_sources<F: AsRef<str>, S: AsRef<str>>(
     files: &[(F, S)],

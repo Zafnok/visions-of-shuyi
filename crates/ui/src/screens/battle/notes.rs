@@ -36,6 +36,7 @@ pub fn note_lines(notes: &[BattleNote], words: Words<'_>, widths: &CellWidths) -
     wrap_notes(texts, NOTE_WIDTH, widths)
 }
 
+// engine-friction: engine#2291, moves (game 1410 deletes it)
 /// The lines of the notes `texts`: each starts with [`MARKER`] and wraps
 /// to `width` cells as `widths` measure them, its further lines indented
 /// under its text.

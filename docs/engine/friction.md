@@ -78,6 +78,22 @@ read this table.
 | 2026-11-25 | 0263 | pad the battle menus' name columns in cells (`pad_cells`, five builders, the objective's labels) | 40 | 80 | 2.0× | accept: the battle builds its menus from a kept `Language` with no `Ctx`, so the language's cell widths ride on `Words` and `Language` (about 35 lines) instead of a widths argument through fifteen mode functions | — |
 | 2026-11-26 | 1356 | trees by footprint: the look's `trees` format and its checks, their placement on the whole map with a kind and phase per tree (`content/src/tileset/trees.rs`), the importer's packing of whole and halved frames, and the sprite skin painting them over the ground (`ui/src/map_view/sprite/trees.rs`), with the whole map handed to the skin by the battle, rewind and dialogue views | 600 | 638 | 1.1× | 3: game-side structure, accepted. Signal: a workaround for an engine assumption, about 40 lines: the kit's sprite skin paints its tint wash right after the ground's pictures, with no step for pictures between, so each tree takes the wash of the tiles it covers over its own pixels, read back from the buffer, and the ranges' outlines are painted again (ADR-0134; marked `engine-friction: 1356`). An engine step for pictures between the ground and its tints (or props in the kit, near parked engine#2232) would delete it; not filed without Nick's OK | — |
 | 2026-11-27 | 1392 | read nine definitions straight from data in place of their `Raw*` mirrors (`trpg-content`), with `trpg_core::bare_id` reading bare-string ids | 40 | 109 (227 removed) | 2.7× | accept: the estimate left out the bare-id helper, which the game's ids need because RON reads a newtype id only as `("x")`, the saves' form; net −118 lines | — |
+| 2026-11-27 | 1397 (sweep) | the battle screen's motion, camera and drawing: walks, flights, effects, banners, playback, both skins (`screens/battle/{camera,cursor,walk,path,flight,effects,banner,playback,layout,panel,view,glyph,playdate}*`) | 9,700 | 9,800 | 1.0× | 2: seven `cells` copies of `text_cells`, never deleted after 0236; 2: the eases (1228, now unblocked); 4: centring a box in an area (20 copies, readability only), a timeline with stops (parked engine#2364 holds the cues), popup placement (1234 keeps it game-side as look) | 1421, 1228 |
+| 2026-11-27 | 1397 (sweep) | the battle's modes, menus and overlays: the move loop, map menu, info, forecast, objective, notes, guides, tips, lessons, rewind, the fight stage (`screens/battle/{mode,map_menu,info,forecast,objective,notes,guide*,tips,triggers,lessons,doable,split_keys,stage*,progress*,rewind*}`) | 6,650 | 6,900 | 1.0× | 2: five yes/no and choice questions written by hand beside the engine's `Ask`; 1: text padded and cut to a cell width, and a wrap with a hanging indent (5–6 copies of "widest, then pad"); 4: a queue of one-time tips (its rules are Nick's, 1292); reading-order cycling is engine#3206's | 1421, engine#2291, 1410 |
+| 2026-11-27 | 1397 (sweep) | the battle's actions and their sounds: attack, items, magic, arts, loot, the enemy phase, the threat display, the shop (`screens/battle/{attack,items,magic,skills,art_list,loot,ai_phase,units,threat,shop,sounds,event_sounds,scene_voices}.rs`) | 3,900 | 4,300 | 1.1× | 1: incremental threat queries (tactics kit); 1: the enemy phase's move playback (tactics kit); 1: a sound cue after a delay; 4: the HP bar on `meter_fill` (a look change); bug: the arts menu pads in characters | engine#2152, engine#3256, engine#3253, 1420, 1417, 1414, 1422 |
+| 2026-11-27 | 1397 (sweep) | paint the units on the kit's grid scene in three looks (`map_view*`) | 2,050 | 2,280 | 1.1× | 1: a sprite piece painter (tall pictures on a tile's foot, y-order, never covering the piece above, gliding; tactics kit); 3, accept: the foot meter written 3 times and the `0..=1` share 5 times (about 35 lines, not filed); 2359, 3203 and 1356's rows still hold | engine#3250, 1411 |
+| 2026-11-27 | 1397 (sweep) | the menu-style screens: title, options, key bindings, languages, files, save and import, profiles, credits, mode select, questions, game over, results, chapter card (`screens/{title,options,key_bindings,language_list,files,save,save_import,profile,credits,mode_select,voices_question,layout_picker,game_over,results,chapter_card,playdate}*`) | 7,300 | 8,000 | 1.1× | 2: `as_any`/`as_any_mut` written by hand on 38 screens; 2: export and import on the engine's profiles screen; 1: a full-screen question that pops with its answer (5 screens), and a first-launch language picker with the machine-translation note; 4: the title's song clock (no seek; 1153 accepted it), the save-slot picker (one user) | engine#3255, engine#3254, engine#3257, 1416, 1415, 1418 |
+| 2026-11-27 | 1397 (sweep) | the campaign screens: camp, town, world map, preparations, class change, familiarity, lead select, the dialogue screen and its log (`screens/{camp,town,world_map,preparations,class_change,familiarity,lead_select,dialogue}*`, `ui/dialogue*`, `ui/portrait*`) | 9,100 | 9,500 | 1.0× | 1: a music pool's rotation (play, fade, quiet, next); 1: the dialogue backlog, jump-back, auto-advance and the lines that can come next (re-scoped from parked engine#2723/#2725); 2: a stock window copying `window_by_heights`; 4: a list step with its sound (7 copies, about 25 lines; engine#3230 is near) | engine#3253, engine#3252, 1414, 1413, 1421 |
+| 2026-11-27 | 1397 (sweep) | cinematics, ambience, the flow, the debug tools, the harness, the story preview (`ui/{cinematic*,ambience*,audio,flow*,debug*,console,crash,hot,harness,snapshot,story_preview*}`) | 5,100 | 5,400 | 1.1× | 1: one looping ambience bed for every screen (4 callers); 4, each under 30 lines: a harness snapshot of one area, the preview's music stop and resume, `keep_voices` without repeats, text typed out from a shot's progress, scripted walks and strikes (one caller) | engine#3253, 1414 |
+| 2026-11-27 | 1397 (sweep) | the UI's infrastructure: saves, settings, profiles' files, input, the screen, tips, widgets, words (`ui/{save*,save_files*,storage,settings*,profiles,platform,input,start,screen,game*,tips*,widgets/*,words,lang_keys,glyph_buffer,onebit,color}`) | 4,200 | 5,000 | 1.2× | 1: a styled-text help bar (wrap that keeps key caps whole, joined hints); 2: a view of another profile's files, the bundle checks of the engine's own keys, export file names and the notice; 4: text outside a context, `Game::new`'s font and layout, the engine's settings fields, small helpers (each under 60 lines; the next sweep's candidates) | engine#3251, engine#3254, 1412, 1415 |
+| 2026-11-27 | 1397 (sweep) | read and check the game's scripts, cinematics, languages, formats, bundle and keymap (`content/src/{lib,dialogue*,cinematic*,lang*,formats,layer_files,bundle,error,keymap,credits,edition,enums,names*}`) | 6,000 | 6,300 | 1.1× | 2: a walker over a scene's steps with their lines (5 copies), and a text policy in place of filtering the engine's errors by their wording; 4: an `ActionSet` macro, `ScriptsCheck::with_errors` private, two folder loads missing engine#2233's marker | engine#2289, 1408 |
+| 2026-11-27 | 1397 (sweep) | the game's look and data files: tilesets, images, fonts, palettes, maps, motion, the demo edition, voice, art (`content/src/` but the files above) | 10,000 | 11,000 | 1.1× | 1: an edition's cut list; 1: stills for moving looks by graphics tier; 1: a map's look checked against its tileset; 1: moving tiles and a timed frame clip are parked engine#2359/#2231, whose "no game asks" is now wrong (note added); 2: finding an image by path (5 copies); 1219 and 1222 are unblocked | engine#3444, engine#2288, engine#2290, 1401, 1407, 1409 |
+| 2026-11-27 | 1397 (sweep) | the rules' grid, movement, AI, history and save (`core/src/{ai*,movement*,map,terrain,history*,save*,battle*,legal,bare_id,testing}`) | 9,450 | 9,600 | 1.0× | 1: reach with tiles that stop movement on entry, and a drawn path's cost (tactics kit); 2: `area_tiles` copies `strike_area_from`; 4: `Pos` arithmetic and a tile rectangle (about 30 lines); 1180's markers still hold, now unblocked | engine#2151, 1419, 1421 |
+| 2026-11-27 | 1397 (sweep) | the rules' systems: combat, progression, items, skills, spells, shops, campaign, world map, camp, supports, arts (`core/src/{combat,progression,item,skill,spell,shop,campaign,worldmap,camp,prep,support,lead,art}*`) | 8,100 | 8,200 | 1.0× | 2: dice picks written by hand beside `RandomSource::pick`/`weighted_index`; 4: the `{token}` fill (engine#2390 is near), a route over the world map's roads (one user), uses-left counters and modifier stacks (engine#2142 holds them) | 1421 |
+| 2026-11-27 | 1397 (sweep) | the importers and generators (`tools/src/{tileset_import*,tileset_ron,map_sprite_import,portrait_import*,battler_import,icon,lettering,title_art,readme_pictures,test_tileset,playdate*,sfx,content_layer}`) | 5,750 | 6,950 | 1.2× | 1: GIF options for `frame-png` (deltas, crop, spans, hold); 1: corner-sheet recipes from Tiled, patch and quarter kits; 1: pixel edits on `Image`; 2: `wav_bytes` copies `pcm16_wav`; 4: the offline Web Audio blocks (float fidelity of picked sounds) | engine#3446, engine#2286, engine#2287, 1403, 1405, 1406, 1421 |
+| 2026-11-27 | 1397 (sweep) | the tool program's commands, voice, playtest, bot wins and skirmish (`tools/src/{main,game_tools*,voice*,voice_test,playtest*,bot_wins*,skirmish*,check_script,lines,story_import,skill_pack,test_auto,test_units}`) | 6,900 | 8,200 | 1.2× | 2: the stale playtest copies (1180, 1207, 1182 are unblocked); 1: `playtest --merge` (1207 needs it); 2: `bot_wins` threads on `pool::run`; 4: autobalance of a held plan, the voice manifest's writer, date helpers, `frame-png --playdate` (each under 70 lines) | engine#3447, 1404, 1421 |
+| 2026-11-27 | 1397 (sweep) | the bots and the process tool (`bots/src/*`, `xtask/src/*`) | 5,500 | 7,800 | 1.4× | 2: 1180's copies (unblocked) and `clean_targets.rs` copying `trim-targets --merged` (1274, rewritten); 1: per-change private pin files; 1: private-content leak checks; 4: the process tools kept in both repositories (ADR-0129 keeps xtask light) | engine#3445, engine#3443, 1402, 1400, 1180, 1274 |
+| 2026-11-27 | 1397 (sweep) | the Playdate front end, the app, the engine watcher, the writer's check, the story preview (`crates/{playdate,app,engine-watch,writer,story-preview}`) | 2,700 | 7,600 | 2.8× | 2: the Playdate crate is the engine's backend again (1170, unblocked since engine#2388/3096/3097); 4: the watcher's patch scan (the label can't say "breaking and adds"), N watched layers (about 30 lines), the two programs' start-up (game-side, about 20) | 1170 |
 
 ## Sweeps
 
@@ -161,3 +177,69 @@ lines for its playtest, measures and entrants included) and
 The game moves onto all seven in one ticket, 1180 (blocked by them).
 After it, the game's playtesting should be about 450 production lines
 (the counting, the hooks, the measures, the entrants and the plan).
+
+### 1397, 2026-11-27: the third sweep, the whole game
+
+**Why now:** Nick asked (2026-11-27) whether any engine-shaped code was
+left in the game, or had been added since the carve. No trigger in the
+skill started this sweep. It covers every game crate, not just the 15
+largest screens: 16 readers, one slice each, read about 120k
+production lines against the pinned engine (230080d) and its tickets.
+Every claim filed below was checked against the engine's code and
+tickets: the blockers by script, the engine functions by grep. The
+measured numbers are the lines each reader read (tests left out). The
+estimate is what the slice would keep with the findings applied. The
+whole report is `docs/research/2026-11-27-engine-shaped-code-audit.md`.
+
+**What it found.** The game's screens are about as big as their jobs:
+every slice but the Playdate's is under 1.5×. What's left falls in
+three piles:
+
+1. **Filed work that is now ready, about 6,000 lines.** The engine has
+   shipped every blocker of these game tickets, and none has run yet:
+   1170 (the Playdate front end, about 4,800), 1180 then 1207 (the
+   bots' and playtest's copies, about 1,450), 1274 (`clean_targets.rs`,
+   about 405; the ticket now says the whole file goes), 1219, 1222,
+   1228 and 1182.
+2. **Copies of engine functions, about 250 lines,** with no engine work
+   needed: game 1421.
+3. **New engine pieces, about 5,000 lines,** ranked by game lines saved
+   × how many places shrink:
+
+| Rank | Finding | Outcome | Saves | Tickets |
+| ---- | ------- | ------- | ----- | ------- |
+| 1 | Private-content leak checks | 1: engine (cli) | ~400 | engine#3443, 1400 |
+| 2 | An edition's cut list | 1: engine (cli) | ~400 | engine#3444, 1401 |
+| 3 | Per-change private pin files | 1: engine (cli) | ~350 | engine#3445, 1402 |
+| 4 | Corner-sheet recipes from bought kits | 1: engine (assets) | ~300 | engine#2286, 1405 |
+| 5 | Moving tiles and a timed frame clip | 1: tactics kit (parked) | ~300 | notes on engine#2359, #2231; 1357 |
+| 6 | Profile export and import, file names, bundle checks of the engine's keys | 2: engine (ui) | ~260 | engine#3254, 1415 |
+| 7 | Incremental threat queries | 1: tactics kit | ~240 | engine#2152, 1420 |
+| 8 | Text padded and cut in cells, a hanging-indent wrap (3 slices) | 1: engine (assets) | ~120 | engine#2291, 1410 |
+| 9 | GIF options for `frame-png` | 1: engine (cli) | ~220 | engine#3446, 1403 |
+| 10 | Sound scheduling: an ambience bed, a music rotation, a delayed cue | 1: engine (ui audio) | ~280 | engine#3253, 1414 |
+| 11 | A sprite piece painter | 1: tactics kit | ~200 | engine#3250, 1411 |
+| 12 | A styled-text help bar | 1: engine (ui) | ~200 | engine#3251, 1412 |
+| 13 | The dialogue backlog and auto-advance | 1: engine (ui dialogue) | ~200 | engine#3252, 1413 |
+| 14 | Pixel edits on `Image` (5 importers) | 1: engine (assets) | ~200 | engine#2287, 1406 |
+| 15 | A default `as_any` on `Screen` (38 screens) | 2: engine (ui) | ~150 | engine#3255, 1416 |
+| 16 | Enemy-phase move playback | 1: tactics kit | ~140 | engine#3256, 1417 |
+| 17 | A full-screen question screen and a first-launch language picker | 1: engine (ui) | ~220 | engine#3257, 1418 |
+| 18 | A `.dlg` scene walker and a text policy | 2: engine (assets) | ~130 | engine#2289, 1408 |
+| 19 | Stills for moving looks by graphics tier | 1: engine (assets) | ~100 | engine#2288, 1407 |
+| 20 | Reach that stops on entry, and a path's cost | 1: tactics kit | ~90 | engine#2151, 1419 |
+| 21 | A map's look checked against its tileset | 1: tactics kit | ~90 | engine#2290, 1409 |
+| 22 | `playtest --merge` | 1: engine (cli) | ~85 | engine#3447, 1404 |
+
+**Accepted (outcome 4), not filed:** the reasons are in the rows above.
+Each of these saves under about 60 lines or has one user: the next
+sweep should look at them again if a second copy appears.
+
+**Found on the way:** the Combat Arts menu pads its columns by
+characters, not cells (1422).
+
+**How this sweep ran.** One reader per slice, rather than one per
+screen. The friction log's per-candidate estimate was replaced by
+"what the slice keeps". That suits a whole-game question ("what is
+left?"). It finds fewer per-screen ratios than 1153 did, but it covers
+the tools, the process crates and the rules, which 1153 left out.

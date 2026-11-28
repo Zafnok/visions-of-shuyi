@@ -1,3 +1,4 @@
+// engine-friction: engine#3443, moves (game 1400 deletes it)
 //! `cargo xtask check-leaks` (ticket 0157, ADR-0118): no tracked file
 //! quotes a line of the game's scripts or draws a row of its maps.
 //!

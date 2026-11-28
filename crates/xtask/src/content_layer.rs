@@ -1,3 +1,4 @@
+// engine-friction: engine#3443, moves (game 1400 deletes it)
 //! The game's files on disk as the build embeds them (ADR-0117): the
 //! content from the private repository, in `assets-private/content/`, laid
 //! over `assets/` when it is there. `check-leaks` reads this view, and so do

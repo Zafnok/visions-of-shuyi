@@ -36,6 +36,7 @@ use trpg_content::TipTrigger;
 /// The engine's profiles screen on this game.
 pub type ProfileList = ProfilesScreen<Shuyi>;
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The Profile screen: the engine's list ([`ProfileList`], which it
 /// derefs to) with the export key and the place line.
 #[derive(Debug)]
@@ -49,6 +50,7 @@ pub struct ProfileScreen {
     tip_asked: bool,
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 impl Deref for ProfileScreen {
     type Target = ProfileList;
 
@@ -57,6 +59,7 @@ impl Deref for ProfileScreen {
     }
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// What the Profile screen shows, for a skin: the engine's list, its help
 /// and message lines as this game words them, and where the saves are.
 #[derive(Debug, Clone, PartialEq)]
@@ -84,6 +87,7 @@ fn layout_picker_for_new(ctx: &mut Ctx) -> Box<dyn Screen<Shuyi>> {
     Box::new(layout_picker::first(ctx))
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 impl ProfileScreen {
     /// Name reported by [`Screen::name`]: the engine list's.
     pub const NAME: &'static str = ProfileList::NAME;
@@ -165,6 +169,7 @@ impl ProfileScreen {
     }
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 impl Screen<Shuyi> for ProfileScreen {
     fn name(&self) -> &'static str {
         self.list.name()

@@ -22,6 +22,7 @@ use shuyi_assets::font::CellWidths;
 use shuyi_assets::lang::text_width;
 use shuyi_assets::text::NO_BREAK_SPACE;
 
+// engine-friction: engine#2291, moves (game 1410 deletes it)
 /// `text` wrapped by [`word_wrap`] into lines of at most `width` cells as
 /// `widths` measure them, every line after the first starting with
 /// `indent` (and wrapped in the room left after it). No text, no lines.
@@ -44,6 +45,7 @@ pub(crate) fn breaks_at(c: char) -> bool {
     c.is_whitespace() && c != NO_BREAK_SPACE
 }
 
+// engine-friction: engine#2291, moves (game 1410 deletes it)
 /// What is left of `text` after `line`, the first line [`word_wrap`] made
 /// of it: past as many of its characters that aren't a break. (A line
 /// holds `text`'s characters in order, with one space where it broke.)
