@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-28
 ---
 
 # 1230 — Delete the carve's dead leftovers
@@ -120,10 +120,10 @@ test lines removed.
 ## Acceptance criteria
 
 - [ ] `grep -rn "pack_from_sources\|fn load_ron\|longest_len\|BLINK_PERIOD\|mod enums\|mod cinema\|mod camera" crates/`
-      finds no game definition or use.
-- [ ] `grep -rn "Action::name(self)" crates/content/src/keymap.rs` finds nothing.
-- [ ] Every content test passes unchanged except the removed ones.
-- [ ] All gates in the `run-gates` skill pass.
+      finds no game definition or use. *(Not met for `pack_from_sources`, kept for its new user: see the Completion notes; the rest finds nothing.)*
+- [x] `grep -rn "Action::name(self)" crates/content/src/keymap.rs` finds nothing.
+- [x] Every content test passes unchanged except the removed ones.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -132,5 +132,40 @@ test lines removed.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+Deleted as scoped: `dialogue::load` (its two callers, and two more in
+`dialogue/tests.rs`, call `load_scripts(..).map(|s| s.table)`),
+`ron_loader::load_ron` and its tests, `lead::longest_len` (the proptest,
+renamed `longest_bounds_substitution`, sums `longest()` inline and still
+checks no token is left), `enums.rs` and its tests (the raw types of
+`class.rs`, `character.rs` and `item.rs` use the core enums;
+`ArmourWeight` derives `Serialize, Deserialize`; RON names unchanged),
+`ui::cinema`, `screens/battle/camera.rs` (its three users import
+`shuyi_ui::grid::Camera`), the `map_view::{corners, path}` re-exports
+(the Playdate test imports `shuyi_ui::grid::path`), the unused names
+`tile_sprite`, `MAX_FRAMES`, `ease_in_out`, `ShotAt`, `BLINK_PERIOD`, and
+`ModeSelectScreen::menu()`. `Action`'s bodies moved into
+`impl ActionSet for Action` (`from_name` is the trait's default); seven
+files import the trait (two only in their tests). Docs: the four
+`boundary.md` rows and both READMEs. 1217, 1223, 1231, 1233 and 1234 were
+still open; 1044 is done and doesn't import `crate::cinema`.
+
+Deviations (step 1's re-grep):
+- **Kept `lang::pack_from_sources` and `Lang::new`**: both gained a user
+  since 2026-11-03, the language list's tests
+  (`screens/language_list/tests.rs`), so the first acceptance grep still
+  finds `pack_from_sources`'s definition and that one test use.
+- **Kept `dialogue::parse_dlg`**: it is no longer a forward; it adds the
+  game's plain-ASCII check (engine#2289, game 1408 deletes it).
+- **Kept `voice::from_source` as a wrapper**: the engine's is generic
+  over the clip variant, so a `pub use` left callers unable to infer it;
+  the wrapper fixes it to the game's `Variant`. `clip_file` became a
+  `pub use`.
+- **`fit_whole_scale`** had a test user (`glyph/info/tests.rs`); it now
+  calls `shuyi_ui::frame::portrait::fit_whole_scale` and the re-export
+  went.
+
+Engine friction: estimate 15 added, measured 52 added / 139 removed
+(3.5×), accepted: the added lines are the moved `Action` bodies, the
+trait's imports and rewrapped `use` lists; row in
+`docs/engine/friction.md`. No follow-up tickets. Nothing a player sees
+changes.

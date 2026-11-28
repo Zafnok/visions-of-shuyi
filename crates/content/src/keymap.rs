@@ -181,9 +181,21 @@ impl Action {
         Self::WorldArmy,
         Self::WorldFind,
     ];
+}
+
+impl fmt::Display for Action {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl ActionSet for Action {
+    type Group = KeyGroup;
+
+    const ALL: &'static [Self] = &Action::ALL;
 
     /// The name used in keymap files (the variant name).
-    pub fn name(self) -> &'static str {
+    fn name(self) -> &'static str {
         const NAMES: [&str; 26] = [
             "CursorLeft",
             "CursorDown",
@@ -215,13 +227,8 @@ impl Action {
         NAMES[self as usize]
     }
 
-    /// Looks an action up by its [`name`](Self::name) (exact match).
-    pub fn from_name(name: &str) -> Option<Self> {
-        Self::ALL.into_iter().find(|a| a.name() == name)
-    }
-
     /// Whether holding the key re-emits the action (the four cursor moves).
-    pub fn is_repeatable(self) -> bool {
+    fn is_repeatable(self) -> bool {
         matches!(
             self,
             Self::CursorLeft | Self::CursorDown | Self::CursorUp | Self::CursorRight
@@ -232,7 +239,7 @@ impl Action {
     /// the *Required* column of `docs/design/controls.md`'s *Rebinding keys*
     /// table (the four cursor moves, Confirm, Cancel and End turn). The rest
     /// may be left with no key.
-    pub fn is_required(self) -> bool {
+    fn is_required(self) -> bool {
         matches!(
             self,
             Self::CursorLeft
@@ -247,7 +254,7 @@ impl Action {
 
     /// The [`KeyGroup`] whose actions this one's keys may not be shared
     /// with.
-    pub fn group(self) -> KeyGroup {
+    fn group(self) -> KeyGroup {
         match self {
             Self::DialogueLog => KeyGroup::DialogueLog,
             Self::WorldArmy | Self::WorldFind => KeyGroup::WorldMap,
@@ -258,43 +265,11 @@ impl Action {
     /// Whether the player can rebind this action. The developer's Debug,
     /// pause and step keys can't (`docs/design/controls.md`: they are not
     /// on the Key bindings screen), nor can Options, which has no key.
-    pub fn is_rebindable(self) -> bool {
+    fn is_rebindable(self) -> bool {
         !matches!(
             self,
             Self::Debug | Self::DebugPause | Self::DebugStep | Self::Options
         )
-    }
-}
-
-impl fmt::Display for Action {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl ActionSet for Action {
-    type Group = KeyGroup;
-
-    const ALL: &'static [Self] = &Action::ALL;
-
-    fn name(self) -> &'static str {
-        Action::name(self)
-    }
-
-    fn is_repeatable(self) -> bool {
-        Action::is_repeatable(self)
-    }
-
-    fn is_required(self) -> bool {
-        Action::is_required(self)
-    }
-
-    fn is_rebindable(self) -> bool {
-        Action::is_rebindable(self)
-    }
-
-    fn group(self) -> KeyGroup {
-        Action::group(self)
     }
 
     fn ui(self) -> Option<UiAction> {

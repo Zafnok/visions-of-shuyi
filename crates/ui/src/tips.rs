@@ -16,6 +16,7 @@ pub mod voice;
 
 use crate::prelude::*;
 pub use screen::TipScreen;
+use trpg_content::keymap::ActionSet;
 pub use view::{EndAnswer, FaceView, LessonItemView, LessonView, LessonsEndView, TipView};
 
 use crate::words::SOURCE_LANG;

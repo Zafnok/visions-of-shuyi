@@ -67,11 +67,6 @@ impl ModeSelectScreen {
         }
     }
 
-    /// The menu.
-    pub fn menu(&self) -> &Menu<GameMode> {
-        &self.menu
-    }
-
     /// The bottom help line.
     pub fn help(ctx: &Ctx) -> StyledText {
         ctx.text_styled("mode_select.help", &[])

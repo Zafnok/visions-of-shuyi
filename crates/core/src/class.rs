@@ -72,7 +72,7 @@ impl UnitTags {
 
 /// An armour weight, lightest first (`weapons-and-items.md`, *Armour*,
 /// ticket 0073). A class wears its max weight and every lighter one.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum ArmourWeight {
     /// Cloth armour (robes).
     Cloth,

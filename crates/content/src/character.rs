@@ -8,13 +8,12 @@ use alloc::collections::{BTreeMap, BTreeSet};
 use serde::Deserialize;
 use trpg_core::{
     CharacterDef, CharacterId, ClassDef, ClassId, ClassTable, Faction, ItemTable, Level,
-    LoadoutDef, Pos, SpellId, StatKind, StatValue, Stats, Unit, UnitError, UnitId,
-    is_valid_map_label,
+    LoadoutDef, Pos, SpellId, StatKind, StatValue, Stats, Unit, UnitError, UnitId, WeaponKind,
+    WeaponRank, is_valid_map_label,
 };
 
 use crate::bundle;
 use crate::dialogue::is_id;
-use crate::enums::{RawStatKind, RawWeaponKind, RawWeaponRank};
 use crate::error::ContentError;
 use crate::names::{NAMES_PATH, Names};
 use crate::ron_loader::parse_ron;
@@ -133,9 +132,9 @@ struct RawCharacter {
     level: Level,
     #[serde(default)]
     is_lord: bool,
-    talent: RawStatKind,
+    talent: StatKind,
     base: [StatValue; 7],
-    weapon_ranks: Vec<(RawWeaponKind, RawWeaponRank)>,
+    weapon_ranks: Vec<(WeaponKind, WeaponRank)>,
     #[serde(default)]
     personal_spells: Vec<(Level, String)>,
     #[serde(default)]
@@ -391,7 +390,7 @@ impl<'a> Validator<'a> {
 
     fn character(&mut self, c: &RawCharacter) -> CharacterDef {
         let what = format!("character \"{}\"", c.id);
-        let talent = StatKind::from(c.talent);
+        let talent = c.talent;
         if talent == StatKind::Mov {
             self.err(&c.id, format!("{what}: talent can't be Mov"));
         }
@@ -412,11 +411,7 @@ impl<'a> Validator<'a> {
         let class = self.class(&c.id, &what, &c.class);
         let mov = class.map_or(0, |k| k.move_points);
         let base = Stats::from_growable(c.base, mov);
-        let weapon_ranks = c
-            .weapon_ranks
-            .iter()
-            .map(|&(k, r)| (k.into(), r.into()))
-            .collect();
+        let weapon_ranks = c.weapon_ranks.iter().copied().collect();
         let def = CharacterDef {
             id: CharacterId(c.id.clone()),
             name: self.name(&c.id, &what),

@@ -234,7 +234,9 @@ mod tests {
     }
 
     fn scenes() -> DialogueTable {
-        dialogue::load(None, None, None, None).unwrap()
+        dialogue::load_scripts(None, None, None, None)
+            .map(|s| s.table)
+            .unwrap()
     }
 
     /// Loads `source` checked against the embedded characters and scenes.

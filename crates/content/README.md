@@ -10,7 +10,7 @@ embedded in the binary (ADR-0005). No filesystem I/O, no macroquad.
   (ADR-0057); `story_only(|| ...)` hides them, for tests of what a build
   that ships holds.
 - `error` — `ContentError` (`file:line:col: message`) and `ContentErrors`.
-- `ron_loader` — `load_ron` / `parse_ron` with RON positions mapped to line/col.
+- `ron_loader` — `parse_ron` (the engine's) with RON positions mapped to line/col.
 - `palette` — `PaletteDef` from `assets/data/palette.ron`; the other colour themes are in `assets/data/palettes/` (`Theme`).
 - `terrain` — `TerrainDef` from `assets/data/terrain.ron`: the rules half
   (`trpg_core::TerrainTable`) and the look half (`TerrainDisplayTable`).
@@ -32,7 +32,6 @@ embedded in the binary (ADR-0005). No filesystem I/O, no macroquad.
   `assets/lang/en/ui.ron`, and each pack `assets/lang/<code>/{lang.ron,
   ui.ron}` laid over it → `Lang` (`text(code, key)`, `status(code)`: the
   pack's missing and stale keys).
-- `enums` (private) — serde mirrors of `trpg-core` enums (`core` has no serde).
 - `lib.rs` — `Content` (everything) and `load_embedded()`.
 
 ## Adding a new content type
@@ -40,7 +39,7 @@ embedded in the binary (ADR-0005). No filesystem I/O, no macroquad.
 1. **Asset**: add the file(s) under `assets/` (RON data goes in `assets/data/`).
 2. **Schema**: a `serde::Deserialize` struct for the raw file shape, in its own
    module (`src/<type>.rs`). Keep balance numbers in the data, not in code.
-3. **Loader**: `load_ron` / `parse_ron` for RON files (or a small hand-written
+3. **Loader**: `parse_ron` for RON files (or a small hand-written
    parser for text formats), producing `ContentError`s with file + line/column.
    Split it into `load()` (reads from `bundle`) and `from_source(file, text)`
    so tests can use inline strings.

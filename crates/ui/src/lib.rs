@@ -21,7 +21,6 @@ mod prelude {
 
 pub mod ambience;
 pub mod audio;
-pub mod cinema;
 pub mod cinematic;
 pub mod color;
 pub mod console;

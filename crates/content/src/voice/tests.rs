@@ -3,7 +3,7 @@
 use trpg_core::lead::LeadGender::{Female, Male};
 
 use super::*;
-use crate::dialogue::from_sources;
+use crate::dialogue::{LineId, from_sources};
 
 /// A scene `s` with a plain line, a line with a name, a line that changes
 /// with the lead's gender, a line with the lead's name, and narration.

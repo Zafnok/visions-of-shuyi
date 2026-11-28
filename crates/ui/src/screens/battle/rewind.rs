@@ -16,7 +16,6 @@ use trpg_core::{
     BattleHistory, BattleState, Command, Event, Phase, Pos, Replayed, Side, UnitAction, UnitId,
 };
 
-use super::camera::Camera;
 use super::layout::map_area;
 use super::view::{RewindScreenView, RewindView};
 use super::{glyph, playdate};
@@ -29,6 +28,7 @@ use crate::screens::Skins;
 use crate::tips::LessonView;
 use crate::widgets::ListCursor;
 use crate::words::Words;
+use shuyi_ui::grid::Camera;
 
 /// The rewind screen's skins (ADR-0083): the PC's list over the side
 /// panel, the Playdate's window over the map (ticket 1039).

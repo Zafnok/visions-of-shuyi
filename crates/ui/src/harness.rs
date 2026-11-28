@@ -40,7 +40,6 @@ use crate::settings::{SETTINGS_KEY, Settings};
 use crate::storage::{MemoryStorage, Storage};
 use trpg_core::Pos;
 
-pub use shuyi_platform::harness::MAX_FRAMES;
 pub use shuyi_platform::prelude::test::FRAME_DT;
 
 /// The engine's Harness on this game.

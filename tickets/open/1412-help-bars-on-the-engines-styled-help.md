@@ -28,6 +28,8 @@ Engine ticket 3251 (`Zafnok/shuyi-engine`) adds all of it to
 `shuyi_ui`. The marked items carry
 `// engine-friction: engine#3251, moves (game 1412 deletes it)`.
 
+2026-11-28 (1230): `widgets/help.rs`'s `spans_of` imports `ActionSet` inside its body, since `Action::from_name` is now the trait's default only; no behaviour changed, so engine#3251 still covers it.
+
 ## Nick input
 
 None. No hint's text or look changes.

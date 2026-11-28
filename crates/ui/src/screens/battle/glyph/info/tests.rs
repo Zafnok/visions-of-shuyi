@@ -111,7 +111,10 @@ fn the_portrait_fills_its_frame() {
     assert_eq!(sprite.dest, inside);
     for side in [32, 64] {
         let size = trpg_content::ImageInfo::new(side, side);
-        assert_eq!(crate::portrait::fit_whole_scale(size, inside), Some(inside));
+        assert_eq!(
+            shuyi_ui::frame::portrait::fit_whole_scale(size, inside),
+            Some(inside)
+        );
     }
 }
 

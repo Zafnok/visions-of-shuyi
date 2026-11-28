@@ -26,13 +26,9 @@ pub mod scene;
 pub mod skin;
 pub mod sprite;
 
-/// The kit's corner rule (ticket 1115: `shuyi_ui::grid::corners`).
-pub use shuyi_ui::grid::corners;
 /// Where a scene's tiles go in pixels (ticket 1115:
 /// `shuyi_ui::grid::layout`).
 pub use shuyi_ui::grid::layout as grid;
-/// The path's arrow (ticket 1115: `shuyi_ui::grid::path`).
-pub use shuyi_ui::grid::path;
 /// The threat arrows (ticket 1115: `shuyi_ui::grid::threat`).
 pub use shuyi_ui::grid::threat;
 

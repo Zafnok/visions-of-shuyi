@@ -30,7 +30,6 @@ pub mod ai_phase;
 pub mod art_list;
 pub mod attack;
 pub mod banner;
-pub mod camera;
 pub mod cursor;
 pub mod doable;
 pub mod effects;
@@ -85,7 +84,6 @@ use self::ai_phase::{AiAction, PACING};
 use self::banner::{Banner, BannerKind};
 
 use self::attack::{Targeting, aimed_first, aimed_options};
-use self::camera::Camera;
 use self::cursor::Cursor;
 use self::effects::Effects;
 use self::flight::Flight;
@@ -122,6 +120,7 @@ use crate::widgets::help::{
     action_key, frame_widths, hint_column, join_hints, key_pair, pad_last_hint, text_with_keys,
 };
 use crate::words::{Language, Words};
+use shuyi_ui::grid::Camera;
 use shuyi_ui::grid::MapEdges;
 use shuyi_ui::grid::scene::RangesShown;
 use shuyi_ui::text::StyledText;

@@ -33,7 +33,6 @@ pub mod credits;
 pub mod demo_bundle;
 pub mod dialogue;
 pub mod edition;
-mod enums;
 pub mod error;
 pub mod font;
 pub mod formats;
@@ -1474,12 +1473,13 @@ mod tests {
     }
 
     fn ok_dialogue() -> Result<DialogueTable, Vec<ContentError>> {
-        dialogue::load(
+        dialogue::load_scripts(
             ok_characters().ok().as_ref(),
             ok_portraits().ok().as_ref(),
             names::load().ok().as_ref(),
             audio::load().ok().as_ref(),
         )
+        .map(|s| s.table)
     }
 
     fn ok_story() -> Story {

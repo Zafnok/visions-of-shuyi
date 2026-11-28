@@ -63,6 +63,8 @@ fn paint(ctx: &Ctx, view: &KeyBindingsView, buf: &mut GlyphBuffer) {
 
 #[cfg(test)]
 mod tests {
+    use trpg_content::keymap::ActionSet;
+
     use super::*;
     use crate::input::{CRANK_ACTIONS, NOT_ON_THE_PLAYDATE};
     use crate::screen::tests::ctx;

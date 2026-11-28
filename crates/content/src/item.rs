@@ -6,13 +6,13 @@ use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 use trpg_core::{
-    AccessoryDef, ArmourDef, ArtId, CharacterId, ClassTable, ConsumableDef, ConsumableEffect,
-    DamageType, ItemDef, ItemId, ItemTable, SealDef, SealKind, SpecialWeapon, StatValue, Stats,
-    Tier, UnitTag, WeaponDef, WeaponKind, WeaponPassive, WeaponRank, WeaponRules, WeaponTrait,
+    AccessoryDef, ArmourDef, ArmourWeight, ArtId, CharacterId, ClassTable, ConsumableDef,
+    ConsumableEffect, DamageType, ItemDef, ItemId, ItemTable, SealDef, SealKind, SpecialWeapon,
+    StatValue, Stats, Tier, UnitTag, WeaponDef, WeaponKind, WeaponPassive, WeaponRank, WeaponRules,
+    WeaponTrait,
 };
 
 use crate::bundle;
-use crate::enums::RawArmourWeight;
 use crate::error::ContentError;
 use crate::font::text_width;
 use crate::formats::{self, DataTable};
@@ -129,7 +129,7 @@ impl From<RawBonus> for Stats {
 struct RawArmour {
     id: String,
     name: String,
-    weight_class: RawArmourWeight,
+    weight_class: ArmourWeight,
     bonus: RawBonus,
     weight: StatValue,
     price: u32,
@@ -370,7 +370,7 @@ impl Validator<'_> {
         }
         let def = ArmourDef {
             name: a.name,
-            weight_class: a.weight_class.into(),
+            weight_class: a.weight_class,
             bonus: a.bonus.into(),
             weight: a.weight,
             price: a.price,

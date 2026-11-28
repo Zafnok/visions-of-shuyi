@@ -10,7 +10,7 @@ use trpg_core::Dir;
 use crate::input::Action;
 
 pub use crate::map_view::CursorStyle;
-pub use shuyi_ui::grid::cursor::{BLINK_MIN, BLINK_PERIOD, Cursor};
+pub use shuyi_ui::grid::cursor::{BLINK_MIN, Cursor};
 
 // engine-friction: engine#3206, moves (game 1217 deletes it)
 /// The way a `Cursor…` action moves the cursor; `None` for any other
