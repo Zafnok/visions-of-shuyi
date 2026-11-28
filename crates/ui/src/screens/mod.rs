@@ -86,6 +86,7 @@ impl<V> Skins<V> {
 
 pub(crate) use shuyi_ui::screens::{centre_x, print_centred};
 
+// engine-friction: engine#2291, moves (game 1410 deletes it)
 /// The start of `text` that fits in `w` cells as `widths` measure them,
 /// cut with no mark (the engine's `cut` ends with `…`): a wide character
 /// that would end past `w` is left out whole (ticket 0236).
@@ -99,6 +100,7 @@ pub(crate) fn clip(text: &str, w: usize, widths: &shuyi_assets::font::CellWidths
         .collect()
 }
 
+// engine-friction: engine#2291, moves (game 1410 deletes it)
 /// `text` and as many spaces after it as make it `w` cells as `widths`
 /// measure them, none if it is wider: a column padded in cells, where
 /// `format!`'s width counts characters (ticket 0263).
@@ -123,6 +125,7 @@ pub(crate) fn cells_before(
     shuyi_assets::lang::text_width(&line[..at], widths)
 }
 
+// engine-friction: engine#3257, moves (game 1418 deletes it)
 /// A pick-one screen's frame: `input` goes to `menu`, and the item chosen
 /// pops the screen with its value for the screen below; Cancel pops it
 /// with nothing.

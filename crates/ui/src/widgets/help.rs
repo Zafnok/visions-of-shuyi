@@ -31,6 +31,7 @@ pub use crate::input::help_keys::{
 /// ([`help_keys::HelpKeys`](crate::input::help_keys::HelpKeys)).
 pub type HelpKeys<'a> = crate::input::help_keys::HelpKeys<'a, Action>;
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// `text` as this game shows it to the player of `keys`: its key spans as
 /// they are on the keyboard; on a controller, and where a key span says
 /// [`HelpKeys::not_mapped`], plain text, as hints read before key caps.
@@ -47,6 +48,7 @@ pub fn for_player(keys: HelpKeys<'_>, text: &StyledText) -> StyledText {
     out
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// A key's name (as [`key_name`] and its siblings give it) as one key
 /// span, or plain text where [`for_player`] says.
 pub fn key_styled(keys: HelpKeys<'_>, name: &str) -> StyledText {
@@ -73,6 +75,7 @@ pub fn help_line_styled(keys: HelpKeys<'_>, hints: &[(Option<String>, &str)]) ->
     for_player(keys, &crate::input::help_keys::help_line_styled(hints))
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// `parts` joined with [`SEPARATOR`], as a help line's hints are.
 pub fn join_hints(parts: impl IntoIterator<Item = StyledText>) -> StyledText {
     let mut line = StyledText::new();
@@ -85,6 +88,7 @@ pub fn join_hints(parts: impl IntoIterator<Item = StyledText>) -> StyledText {
     line
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// The text `key` filled as [`Ctx::text_styled`] fills it, with each
 /// value of `keys_args` (keys built by the caller, such as
 /// [`key_pair`]'s) put in as its spans.
@@ -109,6 +113,7 @@ pub fn text_with_keys(ctx: &Ctx, key: &str, keys_args: &[(&str, &StyledText)]) -
     shuyi_ui::text::fill_styled_with(text, code, args, &[], lookup)
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// A help bar as an ordered list of hints (the friction sweep of
 /// 2026-11-17, ticket 0257): each hint the text key of one `{Action} verb`
 /// (`hint.back`: `{Cancel} back`), and whether the screen's state shows
@@ -118,6 +123,7 @@ pub fn text_with_keys(ctx: &Ctx, key: &str, keys_args: &[(&str, &StyledText)]) -
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct HelpBar(Vec<(&'static str, bool)>);
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 impl HelpBar {
     /// A bar with no hints.
     pub fn new() -> Self {
@@ -150,6 +156,7 @@ impl HelpBar {
     }
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// The keys of `text`, in order, a no-break space read as a space: what a
 /// test of a view's key spans compares with [`spans_of`] (ticket 0257).
 #[cfg(any(test, feature = "harness"))]
@@ -159,6 +166,7 @@ pub fn key_spans(text: &StyledText) -> Vec<String> {
     text.spans().iter().filter(key).map(name).collect()
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// What [`key_spans`] reads from a hint naming the keys of `actions` in
 /// order, each as [`key_name`] gives it: an action by its name in the
 /// keymap (`"Confirm"`), and `"Cursor"` for the cursor keys (one span for
@@ -174,6 +182,7 @@ pub fn spans_of(keys: HelpKeys<'_>, actions: &[&str]) -> Vec<String> {
     actions.iter().flat_map(of).collect()
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// The frame's cell widths: `ctx`'s, with what its key caps take (a
 /// cap's extra cells, the arrow cluster's picture's), as the frame
 /// measures styled text.
@@ -187,6 +196,7 @@ pub fn frame_widths(ctx: &Ctx) -> CellWidths {
         .with_arrows_cells(arrows)
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// `text` split at its line breaks, each line keeping its spans' roles.
 pub fn styled_lines(text: &StyledText) -> Vec<StyledText> {
     let mut lines = vec![StyledText::new()];
@@ -208,6 +218,7 @@ pub fn styled_lines(text: &StyledText) -> Vec<StyledText> {
 /// inside (nor from a letter or a `,` next to it).
 const WHOLE: char = 'x';
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// `text` wrapped by the engine's [`word_wrap`] into rows of at most
 /// `room` cells as `widths` measure them, its plain spans broken as
 /// `word_wrap` breaks text (at spaces; Chinese and Japanese between
@@ -266,6 +277,7 @@ pub fn wrap_styled(text: &StyledText, room: usize, widths: &CellWidths) -> Vec<S
     rows
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// The cell, counted from the line's start as `widths` measure it, where
 /// hint `index` of `hints` starts once they are [joined](join_hints)
 /// (0445): the cells of the hints before it and of their separators, a
@@ -278,6 +290,7 @@ pub fn hint_column(hints: &[StyledText], index: usize, widths: &CellWidths) -> u
     cells + index * StyledText::from(SEPARATOR).width(widths)
 }
 
+// engine-friction: engine#3251, moves (game 1412 deletes it)
 /// `hints` [joined](join_hints), the last one moved right to start in
 /// cell `column`, with spaces in place of its separator; where it would
 /// start there anyway or later, just joined. Empty `hints` give an empty

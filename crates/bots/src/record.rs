@@ -208,6 +208,7 @@ fn worth(state: &BattleState, wanted: Wanted<'_>) -> i64 {
     worth - 5_000 * i64::try_from(lost(state).len()).unwrap_or(0)
 }
 
+// engine-friction: engine#2131, moves (game 1180 deletes it)
 /// How far the lord walks from each tile to the tile to seize, in a Seize
 /// battle: as the crow flies, a lead on a shore would walk away from the
 /// only way across (0849).

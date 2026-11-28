@@ -290,6 +290,7 @@ impl<'a> Walk<'a> {
             .push(ContentError::new(self.file, message).at(line, None));
     }
 
+    // engine-friction: engine#2289, moves (game 1408 deletes it)
     fn steps(&mut self, steps: &'a [Step], lines: &Lines) {
         let mut blocks = lines.blocks.iter();
         for (step, &line) in steps.iter().zip(&lines.steps) {

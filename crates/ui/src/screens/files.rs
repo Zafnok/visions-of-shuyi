@@ -29,6 +29,7 @@ pub const IMPORT: Action = Action::EndTurn;
 /// The keys that move the cursor, which put away the last export's notice.
 pub const MOVES: &[Action] = &[Action::CursorUp, Action::CursorDown];
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// Where the saves are, as the line under a screen's panel shows it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlaceView {
@@ -38,6 +39,7 @@ pub struct PlaceView {
     pub path: String,
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The place line on this platform: on a desktop only (Nick: the web's
 /// export is a download, and its storage nothing a player reaches).
 pub fn place_view(ctx: &Ctx) -> Option<PlaceView> {

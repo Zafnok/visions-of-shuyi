@@ -122,24 +122,29 @@ fn save_check(key: &str, text: &str, fits: impl Fn(&SaveFile) -> bool) -> Verdic
     }
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The settings' saved form, by its version.
 struct SettingsFormat;
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 impl SaveFormat for SettingsFormat {
     // check-text: not player text (the struct name in the saved form)
     const NAME: &'static str = "Settings";
     const VERSION: u32 = SETTINGS_VERSION;
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The key bindings' saved form (the engine's), by its version.
 struct KeysFormat;
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 impl SaveFormat for KeysFormat {
     // check-text: not player text (the struct name in the saved form)
     const NAME: &'static str = "PlayerKeys";
     const VERSION: u32 = PLAYER_KEYS_VERSION;
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The verdict on a text of format `F`: `Incompatible` for a version
 /// `reads_version` refuses, `Ready` if `reads` reads it, else
 /// `Unreadable`.
@@ -164,6 +169,7 @@ fn versioned<F: SaveFormat>(
     }
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// Whether key bindings read: the engine repairs what it can, so they
 /// don't only when nothing was left but the defaults, with a warning.
 fn keys_read(text: &str, keymap: &KeymapDef) -> bool {
@@ -441,6 +447,7 @@ fn into_slot(ctx: &Ctx, plan: &mut ImportPlan, cursor: usize) -> Destination {
     Destination::Slot { slot, replaces }
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The name of the profile a file becomes: the one in the file's name if
 /// it is free, else with a number after it, else the engine's numbered
 /// name; `None` with [`MAX_PROFILES`] already.
@@ -465,6 +472,7 @@ fn new_name(ctx: &Ctx, file: &str) -> Option<String> {
         .find(free)
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// `base` with ` <n>` after it, `base` cut short to stay a name.
 fn with_number(base: &str, n: usize) -> String {
     // check-text: not player text (a number after the player's own name)
@@ -474,6 +482,7 @@ fn with_number(base: &str, n: usize) -> String {
     format!("{}{number}", cut.trim_end())
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The profile's name in an exported file's name, as `export_name` wrote
 /// it: `visions-of-shuyi-odo-kai-2.ron` (or `…-2-slot-04 (3).ron`) gives
 /// `Odo Kai`. Each word capitalized, at most a name's length; empty if the
@@ -503,6 +512,7 @@ pub fn name_in(file: &str) -> String {
     name.trim_end().to_owned()
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// `word` with its first letter in capitals.
 fn capitalized(word: &str) -> String {
     let mut chars = word.chars();
@@ -511,6 +521,7 @@ fn capitalized(word: &str) -> String {
     })
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 /// The storage of the profile `id`, which isn't the one in use: its keys
 /// read and written with its prefix in the computer's storage.
 #[derive(Debug)]
@@ -519,6 +530,7 @@ struct OtherProfile<'a> {
     id: ProfileId,
 }
 
+// engine-friction: engine#3254, moves (game 1415 deletes it)
 impl Storage for OtherProfile<'_> {
     fn read(&self, key: &str) -> Result<Option<String>, StorageError> {
         self.computer.read(&self.id.key(key))

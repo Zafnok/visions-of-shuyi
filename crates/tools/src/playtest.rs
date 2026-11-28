@@ -451,6 +451,7 @@ pub fn run(repo_root: &Path, options: &Options) -> Result<Ran, String> {
     })
 }
 
+// engine-friction: engine#3447, moves (game 1404 deletes it)
 /// `--merge` (ticket 0173): reads the `--json` reports at `paths`, the
 /// parts of one battle's run, and joins them into one report.
 pub fn merge_files(paths: &[PathBuf]) -> Result<Ran, String> {
@@ -469,6 +470,7 @@ pub fn merge_files(paths: &[PathBuf]) -> Result<Ran, String> {
     })
 }
 
+// engine-friction: engine#3447, moves (game 1404 deletes it)
 /// The parts of one battle's run (CI plays its slowest battles in two
 /// seed ranges, ticket 0173) as one record: every part's tries judged
 /// together by the first part's checks, so the checks and `blocked` are

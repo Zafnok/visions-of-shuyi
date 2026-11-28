@@ -180,12 +180,14 @@ pub fn event_cues(
     cues
 }
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 /// Cues waiting to be played, each with the seconds it has left.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct CueQueue {
     cues: Vec<(f32, &'static str)>,
 }
 
+// engine-friction: engine#3253, moves (game 1414 deletes it)
 impl CueQueue {
     /// Queues `cues` (delay, cue).
     pub fn extend(&mut self, cues: impl IntoIterator<Item = (f32, &'static str)>) {

@@ -111,6 +111,7 @@ pub fn effect_mark(bonus: bool, penalty: bool, clock_ms: u64) -> Option<(Mark, b
     Some((mark, clock_ms % TURN_MS >= BOUNCE_MS))
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// Where a unit's `picture` goes on the pixels `tile`, at its own size:
 /// centred across, its feet on top of the HP bar (a taller picture reaches
 /// into the tile above).
@@ -120,6 +121,7 @@ pub fn unit_dest(picture: Picture, tile: PxRect) -> PxRect {
     Rect::new(tile.x + (tile.w - w) / 2, bottom - h, w, h)
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// The four places a picture at `dest` is drawn in one colour to make its
 /// outline: one pixel up, down, left and right.
 pub fn outline_dests(dest: PxRect) -> [PxRect; 4] {
@@ -161,6 +163,7 @@ pub fn mark_dest(mark: Mark, tile: PxRect, lowered: bool, bounced: bool) -> PxRe
     Rect::new(x, y, MARK_BOX, MARK_BOX)
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// How far `unit` has fallen, in `0..=1` (`0` if not a number).
 pub fn fade(unit: &UnitView) -> f32 {
     if unit.fade.is_finite() {
@@ -170,12 +173,14 @@ pub fn fade(unit: &UnitView) -> f32 {
     }
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// The opacity of `unit`'s picture: solid when standing, fading out as it
 /// falls.
 pub fn unit_opacity(unit: &UnitView) -> u8 {
     to_channel(255.0 * (1.0 - fade(unit)))
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// The opacity of the flash over `unit`'s picture: none unless a blow
 /// just landed on it, solid at the flash's full strength, and fading out
 /// with the picture as the unit falls.
@@ -183,6 +188,7 @@ pub fn flash_opacity(unit: &UnitView) -> u8 {
     to_channel(255.0 * flash(unit) * (1.0 - fade(unit)))
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// The opacity of `unit`'s outline: gone by half way through its fall, as
 /// its bar and marks are.
 pub fn outline_opacity(unit: &UnitView) -> u8 {
@@ -218,6 +224,7 @@ pub fn unit_frame(tileset: &Tileset, picture: Picture, unit: &UnitView) -> Pictu
         .unwrap_or(picture)
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// How far a unit `offset` tiles from its tile is drawn from it on tiles
 /// of `tile` pixels: whole pixels, a tile at most each way; none for an
 /// offset that isn't a number.
@@ -235,6 +242,7 @@ pub fn offset_px(offset: (f32, f32), tile: (i32, i32)) -> (i32, i32) {
     (px(offset.0, tile.0), px(offset.1, tile.1))
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// Where a unit stands on screen.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Place {
@@ -250,6 +258,7 @@ pub struct Place {
     pub under: bool,
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// The tile `unit` walks to: the next one of its path while it is between
 /// two tiles, else its own.
 pub fn toward(unit: &UnitView) -> Pos {
@@ -258,6 +267,7 @@ pub fn toward(unit: &UnitView) -> Pos {
     Pos::new(unit.pos.x + step(dx), unit.pos.y + step(dy))
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// Where `unit` of `scene` stands on `grid`, or `None` if its tile isn't
 /// drawn.
 ///
@@ -327,6 +337,7 @@ pub fn place(scene: &MapScene, grid: &Grid, unit: &UnitView) -> Option<Place> {
     })
 }
 
+// engine-friction: engine#3250, moves (game 1411 deletes it)
 /// Paints the outline and the picture of every unit of `scene` on a tile
 /// of `grid`, the top row first (by the row its feet are in; in a row, a
 /// unit between two tiles after those standing): each in its side's colour

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# engine-friction: engine#3445, moves (game 1402 deletes it)
 # The effective pin of the private repository (ADR-0135): the base,
 # assets-private.rev, merged with each change's own pin file,
 # assets-private.d/<branch>.rev, in the order given (the callers sort them

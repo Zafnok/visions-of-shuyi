@@ -67,6 +67,7 @@ fn says_bare_name(text: &str) -> bool {
     lead::split_tokens(text).any(|part| matches!(part, Part::Token(lead::NAME_TOKEN)))
 }
 
+// engine-friction: engine#2289, moves (game 1408 deletes it)
 /// Calls `f` on the text of every line of `steps` (speech, narration,
 /// replies and their reactions), in the order of
 /// [`Scene::lines`](super::Scene::lines).
@@ -152,6 +153,7 @@ pub fn missing(parsed: &ParsedScene, stand_ins: &StandIns) -> Vec<ContentError> 
     errors
 }
 
+// engine-friction: engine#2289, moves (game 1408 deletes it)
 /// Calls `f(text, id, line)` for every speech and narration line of
 /// `steps`, written at `lines`.
 fn walk(steps: &[Step], lines: &Lines, f: &mut impl FnMut(&str, &LineId, u32)) {

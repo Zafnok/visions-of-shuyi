@@ -63,6 +63,8 @@ None.
   `string_at` go.
 
 **Out (do not do):**
+- Moving the parser to the engine: 1401 does that (blocked by this
+  ticket and engine#3444), once this one leaves a single parser.
 - The comment strip (see Context), the list file format, and what any
   list leaves out.
 - The one-bit conversion and building only the tables a build uses

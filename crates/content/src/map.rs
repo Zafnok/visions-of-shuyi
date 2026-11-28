@@ -159,6 +159,7 @@ pub fn load_all() -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {
     }
 }
 
+// engine-friction: engine#2290, moves (game 1409 deletes it)
 /// Every map of `maps` whose light isn't one of `lighting`'s, each
 /// reported where its file names it.
 pub fn check_lights(maps: &BTreeMap<String, MapDef>, lighting: &Lighting) -> Vec<ContentError> {
@@ -179,6 +180,7 @@ pub fn check_lights(maps: &BTreeMap<String, MapDef>, lighting: &Lighting) -> Vec
         .collect()
 }
 
+// engine-friction: engine#2290, moves (game 1409 deletes it)
 /// Every name a map of `maps` places on a tile (its look's `props`, ticket
 /// 1378) that a tileset of `tilesets` with the map's look has no picture
 /// for, each reported where the file places it. A tileset without that
@@ -214,6 +216,7 @@ pub fn check_props(
     errors
 }
 
+// engine-friction: engine#2290, moves (game 1409 deletes it)
 /// The error for map file `file` (its text is `source`) placing `name` on
 /// tile `at`, which tileset `tileset`'s look `look` (whose props are
 /// `props`) has no picture for: at the tile in the header's `props`, or
@@ -246,6 +249,7 @@ pub fn prop_error<T>(
     ContentError::new(file, message).at(line, Some(col))
 }
 
+// engine-friction: engine#2290, moves (game 1409 deletes it)
 /// The error for map file `file` (its text is `source`) naming `light`,
 /// which isn't one of `lighting`'s: at the name in the header, or at the
 /// file's start if it isn't found.

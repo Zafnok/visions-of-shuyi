@@ -370,6 +370,7 @@ pub fn sidecar(picture: &Picture) -> String {
     )
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// Makes every pixel of RGBA8 `pixels` that has the first pixel's colour
 /// clear.
 pub fn key_out(pixels: &mut [u8]) {
@@ -383,6 +384,7 @@ pub fn key_out(pixels: &mut [u8]) {
     }
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// The hue (degrees, 0 to 360), saturation and brightness (0 to 1) of
 /// the colour `rgb`.
 pub fn to_hsv([r, g, b]: [u8; 3]) -> (f32, f32, f32) {
@@ -402,6 +404,7 @@ pub fn to_hsv([r, g, b]: [u8; 3]) -> (f32, f32, f32) {
     (60.0 * sixth, spread / max, max)
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// The colour of hue `h` (degrees), saturation `s` and brightness `v`
 /// (0 to 1).
 pub fn to_rgb(hue: f32, sat: f32, val: f32) -> [u8; 3] {
@@ -424,6 +427,7 @@ pub fn to_rgb(hue: f32, sat: f32, val: f32) -> [u8; 3] {
     [r, g, b].map(|c| ((c + low) * 255.0).round().clamp(0.0, 255.0) as u8)
 }
 
+// engine-friction: engine#2287, moves (game 1406 deletes it)
 /// Recolours the RGBA8 `pixels` of a picture `width` pixels wide with
 /// `tints`: each pixel that isn't clear takes the first tint that fits it;
 /// the others stay as they are.
