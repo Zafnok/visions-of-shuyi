@@ -59,6 +59,13 @@ game shows when the browser keeps nothing) apply to the public page
 too, in either order: if they are done, check the page against them;
 if not, they cover it when they land.
 
+**Added 2026-11-27 (ticket 0460).** Minifantasy's licence (Krishna
+Palacio, *Raided Village*: the burning wood's flames, `THIRD_PARTY_ASSETS.md`)
+requires the credits to name Krishna Palacio (done in `credits.ron`) and
+asks that he be **sent a link to the game on completion**. When the game's
+page goes public, tell Nick to send it (his itch.io profile,
+<https://krishna-palacio.itch.io/>); the agent sends nothing.
+
 ## Nick input
 
 **Setup (≈10 minutes):**

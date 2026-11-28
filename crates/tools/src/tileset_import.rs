@@ -31,6 +31,11 @@
 //! layer is their silhouettes, moved: the packed image then holds pictures
 //! taller than a tile, each over the cell below its own.
 //!
+//! A `Sprites` layer (ticket 0460) lays small moving pictures on a tile at
+//! their own size, each starting on its own frame (Minifantasy's flames on
+//! a burning wood): every frame is packed as a tile and the first moves
+//! through them, as a Tiled loop does ([`sprites`]).
+//!
 //! It is the only reader of Tiled files: the game reads our RON and PNG.
 //! The XML it needs is three kinds of tag and their attributes, read by
 //! [`tags`]; no XML crate.
@@ -231,6 +236,30 @@ pub enum LayerMap {
         /// Our terrains whose tiles get no part of it.
         #[serde(default)]
         skip: Vec<String>,
+        /// Tiles it is moved across, to the right if more than 0 (ticket
+        /// 0460: the throne's sides, on the tiles beside it).
+        #[serde(default)]
+        shift: i32,
+    },
+    /// Small moving pictures on each tile at their own pixel size (ticket
+    /// 0460: Minifantasy's flames on a burning wood): a plain sheet of
+    /// `frames` frames of `frame` pixels side by side, each shown `ms`;
+    /// each sprite of `at` wholly inside the tile, starting on its own
+    /// frame. See [`sprites`].
+    Sprites {
+        /// Our terrains that get them.
+        of: Vec<String>,
+        /// The strip, by its path under [`LIBRARIES_DIR`].
+        sheet: String,
+        /// A frame's size in pixels.
+        frame: (u32, u32),
+        /// How many frames.
+        frames: u32,
+        /// How long each shows, in ms.
+        ms: u32,
+        /// Each sprite: its top-left pixel in the tile, and its first
+        /// frame.
+        at: Vec<(u32, u32, u32)>,
     },
     /// A picture on each tile, joined from a block of a sheet: nine tiles,
     /// three by three, of a patch of the terrain with its edge on every
@@ -733,15 +762,23 @@ impl Sheet {
     /// Reads the plain sheet at `path`: an image of 16×16 tiles and
     /// nothing else (no clear colour, no terrains, nothing moving).
     fn plain(path: &Path) -> Result<Self, String> {
-        let bytes = fs::read(path).map_err(|e| format!("reading {}: {e}", path.display()))?;
-        let (width, height, rgba) =
-            decode_png(&bytes).map_err(|e| format!("{}: {e}", path.display()))?;
+        let sheet = Self::strip(path)?;
+        let (width, height) = sheet.size;
         if width < TILE || height < TILE {
             return Err(format!(
                 "{}: a {width}×{height} px image holds no {TILE}×{TILE} tile",
                 path.display()
             ));
         }
+        Ok(sheet)
+    }
+
+    /// Reads the plain image at `path`, of any size: a strip of sprites
+    /// smaller than a tile ([`LayerMap::Sprites`]) or a plain sheet.
+    fn strip(path: &Path) -> Result<Self, String> {
+        let bytes = fs::read(path).map_err(|e| format!("reading {}: {e}", path.display()))?;
+        let (width, height, rgba) =
+            decode_png(&bytes).map_err(|e| format!("{}: {e}", path.display()))?;
         let image = path.file_name().unwrap_or_default().to_string_lossy();
         let tsx = Tsx {
             image: image.into_owned(),
@@ -874,6 +911,9 @@ enum Cut {
     /// Nothing: a tile all see-through, of no sheet ([`LayerMap::Tiles`]
     /// without a `tile`).
     Blank,
+    /// Frame `frame` of the sprites laid out by the packer's `layout`th
+    /// [`sprites::Layout`] ([`LayerMap::Sprites`]).
+    Sprites { layout: usize, frame: u32 },
 }
 
 /// `cells` each moved `places` along.
@@ -911,7 +951,7 @@ impl Cut {
                 .max()
                 .unwrap_or(0),
             Self::Stacked([top, bottom]) => (top % columns).max(bottom % columns),
-            Self::Blank => 0,
+            Self::Blank | Self::Sprites { .. } => 0,
         }
     }
 
@@ -951,6 +991,10 @@ impl Cut {
             Self::Mirrored(tile) => Self::Mirrored(tile + places),
             Self::Stacked([top, bottom]) => Self::Stacked([top + places, bottom + places]),
             Self::Blank => Self::Blank,
+            Self::Sprites { layout, frame } => Self::Sprites {
+                layout,
+                frame: frame + places,
+            },
         }
     }
 }
@@ -992,20 +1036,26 @@ fn paired(sheet: &Sheet, under: u32, over: u32) -> Result<Vec<u8>, String> {
     let (out_pixels, _) = out.as_chunks_mut::<4>();
     let (top_pixels, _) = top.as_chunks::<4>();
     for (pixel, drawn) in out_pixels.iter_mut().zip(top_pixels) {
-        if drawn[3] == u8::MAX || pixel[3] == 0 {
-            *pixel = *drawn;
-        } else if drawn[3] != 0 {
-            // A part see-through pixel over a solid one: mixed by its
-            // alpha (the bought art has none, but a sheet might).
-            let a = u32::from(drawn[3]);
-            for (channel, top) in pixel.iter_mut().zip(drawn).take(3) {
-                let mixed = (u32::from(*top) * a + u32::from(*channel) * (255 - a)) / 255;
-                *channel = u8::try_from(mixed).unwrap_or(u8::MAX);
-            }
-            pixel[3] = pixel[3].max(drawn[3]);
-        }
+        draw_over(pixel, *drawn);
     }
     Ok(out)
+}
+
+// engine-friction: engine#2287, moves (game 1406 deletes it)
+/// RGBA pixel `drawn` drawn over `pixel`.
+fn draw_over(pixel: &mut [u8; 4], drawn: [u8; 4]) {
+    if drawn[3] == u8::MAX || pixel[3] == 0 {
+        *pixel = drawn;
+    } else if drawn[3] != 0 {
+        // A part see-through pixel over a solid one: mixed by its alpha
+        // (the bought art has none, but a sheet might).
+        let a = u32::from(drawn[3]);
+        for (channel, top) in pixel.iter_mut().zip(drawn).take(3) {
+            let mixed = (u32::from(top) * a + u32::from(*channel) * (255 - a)) / 255;
+            *channel = u8::try_from(mixed).unwrap_or(u8::MAX);
+        }
+        pixel[3] = pixel[3].max(drawn[3]);
+    }
 }
 
 // engine-friction: engine#2286, moves (game 1405 deletes it)
@@ -1128,13 +1178,34 @@ struct Packer<'a> {
     slots: Vec<u32>,
     /// Every cell of the image a picture takes.
     taken: BTreeSet<u32>,
+    /// The sprites' layouts ([`Cut::Sprites`]), each once.
+    layouts: Vec<sprites::Layout>,
 }
 
 impl Packer<'_> {
+    /// The number of `layout` among the packer's layouts, added if new.
+    fn layout(&mut self, layout: sprites::Layout) -> usize {
+        if let Some(i) = self.layouts.iter().position(|l| *l == layout) {
+            return i;
+        }
+        self.layouts.push(layout);
+        self.layouts.len() - 1
+    }
+
     /// Sheet `name`, read once.
     fn sheet(&mut self, name: &str) -> Result<&Sheet, String> {
+        self.read(name, false)
+    }
+
+    /// Sheet `name` read once; a plain sheet of any size if `strip` (a
+    /// strip of sprites smaller than a tile, [`Cut::Sprites`]).
+    fn read(&mut self, name: &str, strip: bool) -> Result<&Sheet, String> {
         if !self.sheets.contains_key(name) {
-            let mut sheet = Sheet::read(self.dir, name)?;
+            let mut sheet = if strip {
+                Sheet::strip(&self.dir.join(name))?
+            } else {
+                Sheet::read(self.dir, name)?
+            };
             if let Some(pairs) = self.recolours.get(name) {
                 recolour(&mut sheet.rgba, pairs);
             }
@@ -1162,6 +1233,10 @@ impl Packer<'_> {
             // A blank is of no sheet: none is read for it.
             let pixels = if cut == Cut::Blank {
                 Ok(blank())
+            } else if let Cut::Sprites { layout, frame } = cut {
+                let layout = self.layouts.get(layout).cloned();
+                let layout = layout.ok_or_else(|| format!("{sheet}: no sprites {cut:?}"))?;
+                sprites::compose(self.read(sheet, true)?, &layout, frame)
             } else {
                 let source = self.sheet(sheet)?;
                 match cut {
@@ -1176,7 +1251,7 @@ impl Packer<'_> {
                     } => faced(source, quarters, face, shadow),
                     Cut::Mirrored(tile) => mirrored(source, tile),
                     Cut::Stacked(cells) => stacked(source, cells),
-                    Cut::Blank => Ok(blank()),
+                    Cut::Blank | Cut::Sprites { .. } => Ok(blank()),
                 }
             };
             let mut pixels = pixels.map_err(|e| format!("{sheet}: {e}"))?;
@@ -1220,6 +1295,10 @@ impl Packer<'_> {
         let mut out = Vec::new();
         for index in 0..self.cells.len() {
             let (sheet, cut, tint_name) = self.cells[index].clone();
+            if let Cut::Sprites { layout, frame: 0 } = cut {
+                out.extend(self.sprite_frames(index, &sheet, layout)?);
+                continue;
+            }
             if let Some(&strip) = self.strips.get(&sheet) {
                 out.extend(self.stripped(index, &sheet, cut, &tint_name, strip)?);
                 continue;
@@ -1284,21 +1363,45 @@ impl Packer<'_> {
             let at = at.map_err(|e| format!("{e} (frame {k} of a moving tile)"))?;
             packed.push((at, strip.ms.max(1)));
         }
+        Ok(self.unless_still(index, packed))
+    }
+
+    /// The frames of packed cell `index`, frame 0 of the `layout`th
+    /// sprites on strip `sheet` ([`Cut::Sprites`]), packed now; `None` if
+    /// every frame is the same picture.
+    fn sprite_frames(
+        &mut self,
+        index: usize,
+        sheet: &str,
+        layout: usize,
+    ) -> Result<Option<FramesText>, String> {
+        let Some(sprites::Layout { frames, ms, .. }) = self.layouts.get(layout).cloned() else {
+            return Ok(None);
+        };
+        let mut packed = Vec::new();
+        for frame in 0..frames {
+            let at = self.packed(sheet, Cut::Sprites { layout, frame }, "")?;
+            packed.push((at, ms.max(1)));
+        }
+        Ok(self.unless_still(index, packed))
+    }
+
+    /// Packed cell `index` moving through the `frames` packed, unless
+    /// every frame is the same picture.
+    fn unless_still(&self, index: usize, frames: Vec<(At, u32)>) -> Option<FramesText> {
         let pixels = |at: At| {
             let i = (0..self.cells.len()).find(|&i| self.at(i) == at);
             i.and_then(|i| self.pixels.get(i))
         };
-        if packed
-            .iter()
-            .all(|&(at, _)| pixels(at) == pixels(packed[0].0))
-        {
-            return Ok(None);
+        let first = frames.first().map(|&(at, _)| pixels(at));
+        if frames.iter().all(|&(at, _)| Some(pixels(at)) == first) {
+            return None;
         }
-        Ok(Some(FramesText {
+        Some(FramesText {
             at: self.at(index),
-            frames: packed,
+            frames,
             minimal_todo: Some(MINIMAL_TODO.to_owned()),
-        }))
+        })
     }
 
     /// The packed image: width, height and RGBA8 pixels.
@@ -1386,6 +1489,7 @@ fn layer(
         }
         LayerMap::Walls { .. } => walls_layer(packer, layer),
         LayerMap::Faces { .. } | LayerMap::Standing { .. } => from_points(packer, layer),
+        LayerMap::Sprites { .. } => sprites::layer(packer, layer),
         LayerMap::Shadow { of, colour, offset } => {
             let quarters = layers.get(of).and_then(Quarters::of);
             let quarters = quarters.filter(|q| q.face.is_some());
@@ -1526,10 +1630,12 @@ fn from_points(packer: &mut Packer, layer: &LayerMap) -> Result<LayerText, Strin
             sheet,
             cells,
             skip,
+            shift,
         } => {
             let cut = |[.., down_right]: [bool; 4]| down_right.then_some(Cut::Stacked(*cells));
-            // From the tile's top-left point to the tile above it.
-            let offset = (half(TILE), -half(TILE));
+            // From the tile's top-left point to the tile above it, and
+            // `shift` tiles across.
+            let offset = (half(TILE) * (1 + 2 * shift), -half(TILE));
             let place = Place {
                 size: Some((TILE, 2 * TILE)),
                 offset,
@@ -1708,6 +1814,10 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
             | LayerMap::Walls { of, .. } => {
                 known(&what, of, terrains)?;
             }
+            LayerMap::Sprites { of, .. } => {
+                known(&what, of, terrains)?;
+                sprites::check(layer).map_err(|e| format!("{what}: {e}"))?;
+            }
             LayerMap::Quarters { of, skip, .. }
             | LayerMap::Faces { of, skip, .. }
             | LayerMap::Standing { of, skip, .. } => {
@@ -1804,6 +1914,7 @@ pub fn import(
         pixels: Vec::new(),
         slots: Vec::new(),
         taken: BTreeSet::new(),
+        layouts: Vec::new(),
     };
     let mut looks = Vec::new();
     // The look of a map that names none first: its tiles lead the image.
@@ -2056,84 +2167,7 @@ pub fn list(mapping: &Mapping) -> String {
             let _ = writeln!(out, "  {id:<16} {}", tile(at));
         }
         for layer_name in &look.layers {
-            let described = match mapping.layers.get(layer_name) {
-                Some(LayerMap::Corners {
-                    of,
-                    sheet,
-                    terrain,
-                    tint,
-                    ..
-                }) => {
-                    let tinted = if tint.is_empty() {
-                        String::new()
-                    } else {
-                        format!(", recoloured {tint}")
-                    };
-                    format!(
-                        "between tiles of {}: {sheet} \"{terrain}\"{tinted}",
-                        of.join(", ")
-                    )
-                }
-                Some(LayerMap::Tiles {
-                    of, tile: at, near, ..
-                }) => {
-                    let at = at.as_ref().map_or_else(|| "nothing".to_owned(), tile);
-                    let near = near
-                        .as_ref()
-                        .map_or_default(|n| format!(", by them {}", tile(n)));
-                    format!("on {}: {at}{near}", of.join(", "))
-                }
-                Some(LayerMap::Walls { of, sheet, .. }) => {
-                    format!("wall tops on {}: {sheet}", of.join(", "))
-                }
-                Some(LayerMap::Faces { of, sheet, .. }) => {
-                    format!("wall faces below {}: {sheet}", of.join(", "))
-                }
-                Some(LayerMap::Standing {
-                    of, sheet, cells, ..
-                }) => {
-                    let [top, bottom] = cells;
-                    format!(
-                        "standing on {}: {sheet} tiles {top} over {bottom}",
-                        of.join(", ")
-                    )
-                }
-                Some(LayerMap::Block {
-                    of, sheet, block, ..
-                }) => format!("on {}: {sheet} block from tile {block}", of.join(", ")),
-                Some(LayerMap::Patch {
-                    of, sheet, patch, ..
-                }) => format!(
-                    "between tiles of {}: {sheet} patch from tile {patch}",
-                    of.join(", ")
-                ),
-                Some(LayerMap::Quarters {
-                    of, sheet, face, ..
-                }) => {
-                    let recoloured = if mapping.recolour.contains_key(sheet) {
-                        ", recoloured"
-                    } else {
-                        ""
-                    };
-                    let face = face.map_or_default(|f| {
-                        let Face {
-                            left,
-                            middle,
-                            right,
-                        } = f;
-                        format!(", a face below from tiles {left}, {middle}, {right}")
-                    });
-                    format!(
-                        "between tiles of {}: {sheet} quarters{recoloured}{face}",
-                        of.join(", ")
-                    )
-                }
-                Some(LayerMap::Shadow { of, offset, .. }) => {
-                    let (x, y) = offset;
-                    format!("the shadow of layer {of}, moved ({x}, {y})")
-                }
-                None => "(no such layer)".to_owned(),
-            };
+            let described = described(mapping, mapping.layers.get(layer_name));
             let _ = writeln!(out, "  layer {layer_name:<10} {described}");
         }
         for (prop, (sheet, top)) in &look.props {
@@ -2144,6 +2178,98 @@ pub fn list(mapping: &Mapping) -> String {
         }
     }
     out
+}
+
+/// How `list` describes `layer` of `mapping`.
+fn described(mapping: &Mapping, layer: Option<&LayerMap>) -> String {
+    let tile = |(sheet, tile): &TileRef| format!("{sheet} tile {tile}");
+    match layer {
+        Some(LayerMap::Corners {
+            of,
+            sheet,
+            terrain,
+            tint,
+            ..
+        }) => {
+            let tinted = if tint.is_empty() {
+                String::new()
+            } else {
+                format!(", recoloured {tint}")
+            };
+            format!(
+                "between tiles of {}: {sheet} \"{terrain}\"{tinted}",
+                of.join(", ")
+            )
+        }
+        Some(LayerMap::Tiles {
+            of, tile: at, near, ..
+        }) => {
+            let at = at.as_ref().map_or_else(|| "nothing".to_owned(), tile);
+            let near = near
+                .as_ref()
+                .map_or_default(|n| format!(", by them {}", tile(n)));
+            format!("on {}: {at}{near}", of.join(", "))
+        }
+        Some(LayerMap::Walls { of, sheet, .. }) => {
+            format!("wall tops on {}: {sheet}", of.join(", "))
+        }
+        Some(LayerMap::Faces { of, sheet, .. }) => {
+            format!("wall faces below {}: {sheet}", of.join(", "))
+        }
+        Some(LayerMap::Standing {
+            of,
+            sheet,
+            cells,
+            shift,
+            ..
+        }) => {
+            let [top, bottom] = cells;
+            let shifted = match shift {
+                0 => String::new(),
+                n => format!(", moved {n} tiles across"),
+            };
+            format!(
+                "standing on {}: {sheet} tiles {top} over {bottom}{shifted}",
+                of.join(", ")
+            )
+        }
+        Some(sprites @ LayerMap::Sprites { .. }) => sprites::describe(sprites),
+        Some(LayerMap::Block {
+            of, sheet, block, ..
+        }) => format!("on {}: {sheet} block from tile {block}", of.join(", ")),
+        Some(LayerMap::Patch {
+            of, sheet, patch, ..
+        }) => format!(
+            "between tiles of {}: {sheet} patch from tile {patch}",
+            of.join(", ")
+        ),
+        Some(LayerMap::Quarters {
+            of, sheet, face, ..
+        }) => {
+            let recoloured = if mapping.recolour.contains_key(sheet) {
+                ", recoloured"
+            } else {
+                ""
+            };
+            let face = face.map_or_default(|f| {
+                let Face {
+                    left,
+                    middle,
+                    right,
+                } = f;
+                format!(", a face below from tiles {left}, {middle}, {right}")
+            });
+            format!(
+                "between tiles of {}: {sheet} quarters{recoloured}{face}",
+                of.join(", ")
+            )
+        }
+        Some(LayerMap::Shadow { of, offset, .. }) => {
+            let (x, y) = offset;
+            format!("the shadow of layer {of}, moved ({x}, {y})")
+        }
+        None => "(no such layer)".to_owned(),
+    }
 }
 
 /// Reads the mapping file under repo root `root`.
@@ -2200,6 +2326,8 @@ pub fn run(root: &Path, sprites: &[MapSprite]) -> Result<String, String> {
         imported.moving.len()
     ))
 }
+
+mod sprites;
 
 #[cfg(test)]
 mod tests;

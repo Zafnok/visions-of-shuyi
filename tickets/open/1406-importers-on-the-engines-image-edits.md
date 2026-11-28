@@ -31,6 +31,11 @@ out, recolour, tint by brightness, HSV and halve on `Image`. Each item
 it replaces is marked `// engine-friction: engine#2287, moves (game
 1406 deletes it)`.
 
+*2026-11-28 (0460):* `paired`'s alpha blend is now its own `draw_over`,
+and the new `sprites::compose` (a burning wood's flames) blits strip
+frames onto a tile with it; `Sheet::strip` reads a plain image of any
+size. All three are marked: engine#2287's blit and alpha over cover them.
+
 ## Nick input
 
 None. The imported pictures must come out byte for byte the same.

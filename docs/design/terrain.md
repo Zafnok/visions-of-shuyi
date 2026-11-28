@@ -212,9 +212,9 @@ the tables above: Fire Emblem GBA's values, which Nick picked, *tunable*.
 | Tile | What it is for | Glyph look | Picture look |
 | ---- | -------------- | ---------- | ------------ |
 | `fort` | A defensive building for bosses and chokepoints | `╦╦` battlements in `fort` gold (`look-and-feel.md`) | The grey stone tower |
-| `house` | A village house to save before raiders burn it (`turn-structure.md`, *Save the village*) | **Lean-to shack** (Nick): a sagging slanted roof, a small window and a door, in `wood` on `wood_bg` | **None good yet**: the bought houses are "too modern/nice" (Nick); a stand-in until ticket 0471 finds poorer ones |
+| `house` | A village house to save before raiders burn it (`turn-structure.md`, *Save the village*) | **Lean-to shack** (Nick): a sagging slanted roof, a small window and a door, in `wood` on `wood_bg` | edermunizz's small brown thatched cottage (*Castle and Village*, chosen in 0471, imported by 0460) |
 | `gate` | A castle or abbey gate in a wall; often the boss's tile, and a Seize point | **Portcullis** (Nick): a barred grate in an arch, in `fort` gold on `stone_bg` | The dungeon set's archway, "serviceable" (Nick); 0471 may find a better one |
-| `throne` | The boss's seat at the end of a hall; the classic Seize point | **Crowned throne** (Nick): a wide back topped with a crown, a cushion, broad legs, in `fort` gold on `floor_bg` | **None**: the bundle has no throne (only a chair); a stand-in until 0471 |
+| `throne` | The boss's seat at the end of a hall; the classic Seize point | **Crowned throne** (Nick): a wide back topped with a crown, a cushion, broad legs, in `fort` gold on `floor_bg` | ArMM1998's red-and-gold throne (*Tile Fantasy: Castle*, chosen in 0471, imported by 0460), two tiles tall |
 
 - **One picture per tile in the glyph look** (Nick: two of the same
   letter per tile is "visually confusing"). The house, gate and throne
@@ -256,5 +256,5 @@ only job is to heal. Open until a map needs one.
   works (it gives no benefits), and dedicated healing tiles.
 - **Bought pictures for the house and the throne** (and a better gate):
   ticket 0471 chose them with Nick (`look-and-feel.md`, *Art bought
-  beside Tiny Tales*), ticket 0460 imports them once bought.
+  beside Tiny Tales*); ticket 0460 imported them (2026-11-27).
 - Weather (Nick: "no weather for now").

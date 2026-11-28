@@ -83,6 +83,9 @@ playtest's checklist (1064).
 - Better throne art (picked in 0471, imported by 0460). Either order: the
   mark is independent of the tile's picture; if 0460 is done first, take
   the pictures with its throne.
+  *2026-11-27 (0460 done):* the throne is now drawn two tiles tall, its
+  back on the tile above the seize point and its arms a few pixels onto
+  the tiles beside: check the mark against that picture.
 - The objective line naming the place (0331) and the objective shown when
   a battle starts (0481). Either order; neither touches the map scene.
 - Marking other objectives (a boss, a defend point).

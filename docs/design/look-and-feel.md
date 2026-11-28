@@ -373,15 +373,15 @@ so they aren't in this repository (ADR-0032).
   | Fort | The grey stone tower: the only stronghold in the set that is one tile big |
   | Ice | The snow ground ("Snow"), laid on the water |
   | Burnt | Bare grey trees (Trees 3) on dark ground ("Grounds") |
-  | Burning | **A stand-in.** Nothing in the bundle burns: the forest's trees, recoloured in our `fire` colour (each pixel as bright as it was) |
+  | Burning | Burnt's bare grey trees (Trees 3) with Krishna Palacio's *Minifantasy* flames over them (ticket 0460): three 8-pixel flames to a tile at their own size, each wholly inside it and starting on its own frame, moving (8 frames, 100 ms each); standing still on their first frame with idle motion off and on the Playdate |
   | Floor, Wall, Door | The Dungeons 1 "Fortress" set: blue-grey slabs, tan brick, a wooden door |
-  | House | **A stand-in** (ticket 0322, until 0471): the World Map set's small single-tile house, on the grass; the bundle's houses are "too modern/nice" (Nick) |
-  | Gate | **A stand-in** (0322, until 0471): the Fortress set's open archway, on the grass ("serviceable", Nick) |
-  | Throne | **A stand-in** (0322, until 0471): the bundle has no throne, so a cushioned chair (Overworld Interiors), on the floor's slabs |
+  | House | edermunizz's small gabled brown thatched cottage (*Castle and Village*, ticket 0460), one tile, on the grass |
+  | Gate | The Fortress set's open archway, on the grass ("serviceable", Nick; 0471 found nothing better) |
+  | Throne | ArMM1998's red-and-gold throne (*Tile Fantasy: Castle*, ticket 0460), on the floor's slabs, drawn whole: two tiles tall, its back on the tile above and its arms' tips a few pixels onto the tiles beside (Nick, 2026-11-27, shown it as it really is: "A: whole, 2 tall") |
 
 - **Art bought beside Tiny Tales for the stand-ins above** (decided
-  2026-11-22, ticket 0471; until the packs are bought and imported, the
-  table above still holds). Nick chose over four rounds of mockups: our
+  2026-11-22, ticket 0471; bought and imported 2026-11-27, ticket 0460:
+  the table above shows them). Nick chose over four rounds of mockups: our
   map's tiles with each candidate pasted in from its store preview,
   moving where the art moves. Not chosen: Ivess's huts, the World Map
   house recoloured to straw, MattWalkden's and other packs' tidy houses,
@@ -394,7 +394,8 @@ so they aren't in this repository (ADR-0032).
     the options keep looking" … [asked which way to look:] "Thatched
     cottages" … [after one more search:] "Yes, edermunizz brown".
   - **Throne:** ArMM1998, *Tile Fantasy: Castle* ($5), its red-and-gold
-    throne, one tile. Nick: [Pipoya's, two tiles tall:] "B looks best
+    throne (one tile as 0471 saw it; the real file is two tiles tall,
+    drawn whole: the table above). Nick: [Pipoya's, two tiles tall:] "B looks best
     but maybe too tall" … [cut to one tile two ways:] "dont like any
     keep looking" … [ArMM1998 against 16Pixel:] "ArMM1998".
   - **Burning:** Krishna Palacio, *Minifantasy: Raided Village* ($4.99):
@@ -2696,7 +2697,8 @@ contrast apart over every theme's ground.
 - Sprite units on the map: the outline alone or with a corner mark
   (0436).
 - On the bought tiles (seen in ticket 0437, not decided): the picks in
-  the terrain table above, the burning stand-in first.
+  the terrain table above (the burning wood's flames, 0460, are judged
+  in the Act 1 playtest, 1064).
 - Key names in hints with a controller (coloured buttons or the
   platform's icons, ticket 0255) and on the Playdate's one-bit screen
   (ticket 0256): the keyboard's key caps are decided (*Key names in

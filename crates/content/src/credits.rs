@@ -148,6 +148,9 @@ mod tests {
                 "elv_games",
                 "electric_lemon_lonesome_forest",
                 "electric_lemon_classic_dungeons",
+                "edermunizz_castle_and_village",
+                "armm1998_tilefantasy_castle",
+                "minifantasy_raided_village",
                 "barely_pixel_quest",
                 "barely_post_baroque"
             ]

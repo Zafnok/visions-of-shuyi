@@ -41,6 +41,12 @@
 // tall on each of its tiles, its top on the tile above. A `Tiles` layer
 // may leave its `tile` out (nothing but its `sides`) and give `near`: the
 // picture where any side is one of `beside`.
+//
+// Ticket 0460: a `Standing` layer's `shift` moves it that many tiles
+// across (the throne's sides); a `Sprites` layer lays small moving
+// pictures on each tile at their own size, a plain sheet's `frames`
+// frames of `frame` pixels side by side, each sprite of `at` at its
+// top-left pixel in the tile and starting on its own frame.
 (
     // Each of our terrains' own tile, painted first, unless a look below
     // has another. What stands on grass has the grass; water under a
@@ -212,9 +218,18 @@
         "forest": Block(of: ["forest"], sheet: "world-map/Set_H_Trees1", block: 5),
         "thicket": Block(of: ["thicket"], sheet: "world-map/Set_H_Trees6", block: 13),
         "burnt": Block(of: ["burnt"], sheet: "world-map/Set_H_Trees3", block: 13),
-        // Nothing in the bundle burns: the forest's trees recoloured in
-        // the palette's fire colour.
-        "burning": Block(of: ["burning"], sheet: "world-map/Set_H_Trees1", block: 5, tint: "fire"),
+        // A burning wood (ticket 0460, 0471's answer): the burnt wood's
+        // bare trees, and Minifantasy's 8-pixel flames over them at their
+        // own size, three to a tile, each wholly inside it and starting on
+        // its own frame (the strip's 8 frames, 100 ms each, as its
+        // Info.txt says).
+        "burning": Block(of: ["burning"], sheet: "world-map/Set_H_Trees3", block: 13),
+        "flames": Sprites(
+            of: ["burning"],
+            sheet: "krishna-palacio/raided-village/Minifantasy_Raided_Village_v1.0/Minifantasy_Raided_Village_Assets/Props/Fire/8x8Fire1.png",
+            frame: (8, 8), frames: 8, ms: 100,
+            at: [(1, 7, 0), (7, 1, 3), (8, 8, 6)],
+        ),
         // The sheet has two tiles for some mixes; the second is the one
         // whose edge ends where the tile does.
         "mountain": Corners(
@@ -240,13 +255,20 @@
         ),
         "fort": Tiles(of: ["fort"], tile: ("world-map/Set_C_Icons", 214)),
         "door": Tiles(of: ["door"], tile: ("dungeons-1/Set_A_Fortress1", 27)),
-        // Stand-ins (ticket 0322) until ticket 0471 finds better pictures:
-        // the World Map set's small house (the bundle's are "too
-        // modern/nice", Nick), the Fortress set's open archway
-        // ("serviceable") and, as the bundle has no throne, a chair.
-        "house": Tiles(of: ["house"], tile: ("world-map/Set_C_Icons", 0)),
+        // The house is edermunizz's small gabled thatched cottage (ticket
+        // 0460, 0471's answer), (1, 2) of the Castle and Village farm sheet
+        // (31 tiles across); the gate the Fortress set's open archway
+        // ("serviceable", Nick; nothing better turned up in 0471).
+        "house": Tiles(of: ["house"], tile: ("edermunizz/castle-and-village/Castle and village - pixel art pack/PNG/City_farm_tileset.png", 63)),
         "gate": Tiles(of: ["gate"], tile: ("dungeons-1/Set_A_Fortress1", 26)),
-        "throne": Tiles(of: ["throne"], tile: ("overworld/Set_C_Interiors", 205)),
+        // ArMM1998's red-and-gold throne (0460, 0471's answer), drawn whole
+        // (Nick, 2026-11-27: "A: whole, 2 tall"): its seat (21, 18) on the
+        // throne's tile and its back (21, 17) on the tile above, of the
+        // castle sheet (32 tiles across); its arms' tips and the back's
+        // edge, the cells either side, on the tiles beside those.
+        "throne": Standing(of: ["throne"], sheet: "armm1998/tilefantasy-castle/castle_outdoors.png", cells: (565, 597)),
+        "throne_left": Standing(of: ["throne"], sheet: "armm1998/tilefantasy-castle/castle_outdoors.png", cells: (564, 596), shift: -1),
+        "throne_right": Standing(of: ["throne"], sheet: "armm1998/tilefantasy-castle/castle_outdoors.png", cells: (566, 598), shift: 1),
         // Indoors the floor runs under the pools, and a pool has a stone
         // rim on the sides where it ends (up, right, down, left).
         "indoor_floor": Corners(
@@ -432,8 +454,8 @@
                 "wall": ("elv-games/tilesets/rogue-adventure/RA_Ground_Tiles.png", 127),
             },
             layers: ["ra_forest_floor", "ra_river", "ice", "ash", "ra_peak", "lf_shadow", "lf_rim",
-                     "thicket", "burnt", "burning", "ra_bridge", "house", "gate",
-                     "throne", "door", "roof", "house_wall", "lintel", "house_door", "hedge",
+                     "thicket", "burnt", "burning", "flames", "ra_bridge", "house", "gate",
+                     "throne", "throne_left", "throne_right", "door", "roof", "house_wall", "lintel", "house_door", "hedge",
                      "well", "rack", "campfire", "desk", "papers", "candle", "shelf", "rug", "banner",
                      "crest",
                      "ra_wall_face", "ra_wall", "ra_tower", "ra_keep"],
@@ -466,8 +488,8 @@
         // Dungeons set's.
         "outdoor": (
             layers: ["deep", "coast", "grass", "ice", "road", "floor", "ash", "forest",
-                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "house",
-                     "gate", "throne", "door", "roof", "house_wall", "lintel", "house_door",
+                     "thicket", "burnt", "burning", "flames", "mountain", "peak", "bridge", "fort",
+                     "house", "gate", "throne", "throne_left", "throne_right", "door", "roof", "house_wall", "lintel", "house_door",
                      "hedge", "well", "rack", "campfire", "desk", "papers", "candle", "shelf", "rug",
                      "banner", "crest"],
         ),
@@ -481,8 +503,8 @@
                 "bridge": ("dungeons-1/Set_A_Fortress1", 65),
             },
             layers: ["indoor_floor", "pool", "grass", "ice", "road", "ash", "forest",
-                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "house",
-                     "gate", "throne", "door", "roof", "house_wall", "lintel", "house_door",
+                     "thicket", "burnt", "burning", "flames", "mountain", "peak", "bridge", "fort",
+                     "house", "gate", "throne", "throne_left", "throne_right", "door", "roof", "house_wall", "lintel", "house_door",
                      "hedge", "well", "rack", "campfire", "desk", "papers", "candle", "shelf", "rug",
                      "banner", "crest"],
         ),

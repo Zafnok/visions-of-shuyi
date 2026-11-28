@@ -5,11 +5,11 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5 / gpt-6.1-sol
 effort: medium
-status: blocked
+status: done
 blocked_by: []
 blocks: ["1064"]
 nick_input: setup
-completed:
+completed: 2026-11-27
 ---
 
 # 0460 — Import the thatched cottages, the throne and the moving fire
@@ -146,5 +146,76 @@ checklist (1064) to judge by playing.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done (2026-11-27).** Nick bought the three packs that day and gave the
+zips.
+
+- **The art:** the house is edermunizz's small gabled thatched cottage,
+  `PNG/City_farm_tileset.png` tile 63 (one tile); the throne ArMM1998's,
+  `castle_outdoors.png`; the burning wood Trees 3's bare trees (as Burnt)
+  with Minifantasy's `8x8Fire1.png` flames, three to a tile at (1, 7),
+  (7, 1) and (8, 8), starting on frames 0, 3 and 6, 8 frames of 100 ms
+  (the pack's `Info.txt`). The ground under a burning wood stays grass,
+  as before. Sorted in `library/edermunizz/`, `library/armm1998/` and
+  `library/krishna-palacio/`, each with its licence and a README.
+- **The throne is two tiles tall** (Nick's answer, asked with a picture
+  of three ways): the real file is 22×32 px, not one tile as 0471's
+  mockups had it. Drawn whole: its seat on the throne's tile, its back on
+  the tile above, the 1–3 px of its back's edge and arms' tips on the
+  tiles beside (Nick: "A: whole, 2 tall"). Three `Standing` layers; the
+  new `shift` moves the side ones a tile across.
+- **The moving fire needed no new runtime code:** tickets 1315 and 1384
+  had already made a tileset's cells move (`frames`, the skin's
+  `frame_skin`, idle motion off and the Playdate's tier standing them
+  still). The importer learned a `Sprites` layer instead: each frame of
+  the tile is packed with every flame drawn on it at its own size, and
+  the first moves through them like any moving cell. Nothing in `core`,
+  the scene or play records; the glyph look and the Playdate untouched.
+- **Deviation, phase by position:** the ticket asked each tile to start
+  at a phase from its position. The skin swaps a moving cell's picture
+  for the whole map at once (engine#2359: the sprite skin knows no frames
+  per tile), so every burning tile shows the same frame. Instead each
+  flame inside a tile starts on its own frame, so a tile's three flames
+  never flicker in step; neighbouring tiles do move together. Left to
+  judge in the Act 1 playtest (1064).
+- **Two PRs move the tileset:** 1378's (game #875, lamps) is open and its
+  art already merged in the private repository; this branch's art
+  (Zafnok/visions-of-shuyi-assets#46, built on the game's base pin) leaves
+  it out. The pin is the change's own file, `assets-private.d/t0460-art.rev`
+  (ADR-0135): merging the game PR lands #46. The packed tileset is
+  generated, so the two private branches conflict on it: when CI's merge
+  of the pins says so, merge the private `main` into `t0460-art`, run
+  `cargo xtask tileset-import` again on the merged mapping, push, and
+  `cargo xtask assets-pin --add` again. Zafnok/visions-of-shuyi-assets#45
+  was opened first from the private `main`, which carries 1380's UI frames
+  that no game credit covers yet; #46 replaced it and #45 is closed.
+- **Checked:** `frame-png` of two staged maps (never committed): a
+  village with cottages beside a burning wood at two moments, and a throne
+  room (`docs/screenshots/0460-*.png`, the game's screenshots).
+- **Tests:** the importer's `Sprites` layer (each flame on its own frame,
+  the frames moving, the checks that keep a flame inside its tile and its
+  strip) and `Standing`'s `shift`; the real tileset's burning wood moves in
+  every look, stands still at time 0 (idle motion off) and on the
+  Playdate's tier, and the throne stands in three pieces
+  (`private_assets.rs`). The skin's reading of a moving cell at two times,
+  and its stillness with idle motion off, are 1315's tests
+  (`map_view/sprite/moving.rs`), which the flames go through unchanged.
+- **Credits and records:** three `credits.ron` rows (Krishna Palacio named,
+  as his licence requires), `THIRD_PARTY_ASSETS.md`'s purchase record and
+  rows, `look-and-feel.md`'s and `terrain.md`'s tables; ticket 0901 now
+  says Nick sends Krishna Palacio a link to the game when its page goes
+  public; 0488 notes the throne's new size.
+- **Seen, not fixed:** with the art checked out,
+  `private_content::without_the_content_new_game_starts_the_test_chapter`
+  and `a_file_in_the_content_replaces_the_assets_file_at_its_path` fail
+  (`tiny_tales.ron`'s unit `defector` is not a character without the
+  content): the units part of the file, which this import writes as it
+  was.
+
+- **Friction:** estimate 130 production lines (by 1384's `moving`
+  strip and 1360's `Standing`); measured 301 added (2.3×), accepted: 103
+  only moved, out of three functions past clippy's 100-line limit (198
+  net, 1.5×). Row in `docs/engine/friction.md`.
+
+**No gameplay rule decided.** Left to judge in play (1064): the flames'
+look and motion on a burning wood, all tiles in step; the throne's height
+over the tile above it.
