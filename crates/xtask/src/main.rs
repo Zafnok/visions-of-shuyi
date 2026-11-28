@@ -517,6 +517,36 @@ mod tests {
         assert!(serde_norway::from_str::<serde_norway::Value>(broken).is_err());
     }
 
+    /// The `curl` commands of `text` that call GitHub's API without a token
+    /// or without retries, lines continued with `\` joined into one.
+    fn bare_api_curls(text: &str) -> Vec<String> {
+        let joined = text.replace("\\\r\n", " ").replace("\\\n", " ");
+        joined
+            .lines()
+            .filter(|line| line.contains("curl ") && line.contains("api.github.com"))
+            .filter(|line| !line.contains("Authorization:") || !line.contains("--retry"))
+            .map(|line| line.trim().to_string())
+            .collect()
+    }
+
+    /// GitHub limits API calls without a token by the runner's address,
+    /// which shared runners share: two jobs of PR #875 failed on a 403 from
+    /// the private-assets action's host keys (ticket 0196).
+    #[test]
+    fn every_github_api_curl_sends_a_token_and_retries() {
+        for file in workflow_files() {
+            let text = std::fs::read_to_string(&file).unwrap();
+            let bare = bare_api_curls(&text);
+            assert_eq!(bare, Vec::<String>::new(), "{}", file.display());
+        }
+
+        // The check sees the old line, and passes the fixed one.
+        let old = "  curl -fsSL https://api.github.com/meta | jq -r '.ssh_keys[]'\n";
+        assert_eq!(bare_api_curls(old).len(), 1);
+        let fixed = "  curl -fsSL --retry 4 \\\n    -H \"Authorization: Bearer $T\" https://api.github.com/meta\n";
+        assert_eq!(bare_api_curls(fixed), Vec::<String>::new());
+    }
+
     /// The `.rs` files under `dir`, at any depth.
     fn rs_files_under(dir: &Path, out: &mut Vec<PathBuf>) {
         for entry in std::fs::read_dir(dir).unwrap() {
