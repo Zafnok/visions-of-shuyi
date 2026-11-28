@@ -1369,6 +1369,48 @@ fn a_crash_record_replays_to_the_crash() {
     assert!(run.steps.iter().all(|s| s.refused.is_none()), "{run:?}");
 }
 
+/// Acceptance (1393): a crash report holding the game's battle record, as
+/// the game writes it, replays with `replay --crash` to its end: no copy
+/// of the record into a file of its own, `ok` true, nothing replayed
+/// beside the reported panic.
+#[test]
+fn a_crash_report_replays_with_replay_crash() {
+    use shuyi_platform::crash::CrashReport;
+    use trpg_ui::crash::{BattleRecord, crash_record};
+    use trpg_ui::harness::Harness;
+
+    let mut h = Harness::with_layout(trpg_ui::input::RIGHT_HANDED);
+    // Quick Battle, then Preparations: Left wraps to `Fight!`; Confirm
+    // closes the turn's banner. The lord moves one tile right and waits.
+    h.keys("Down f Left f f f");
+    h.keys("f Right f").wait(1.0).keys("f").wait(1.0);
+    let text = crash_record(h.game()).unwrap();
+    let applied = ron::from_str::<BattleRecord>(&text).unwrap().history.len();
+    assert!(applied > 0, "no command applied");
+    // The report the engine's hook writes (`config.crash` in `crates/app`),
+    // with the game's record from `Start::crash_record`.
+    let mut report = CrashReport::new(1, "index out of bounds");
+    report.location = Some("crates/core/src/battle.rs:1:1".to_owned());
+    report.set_record(Some(text));
+    let dir = std::env::temp_dir().join(format!("xtask-crash-report-{}", std::process::id()));
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(dir.join("crash-1.ron"), report.to_text()).unwrap();
+    let mut input = replay::ReplayInput::new("crash-1.ron");
+    input.crash = true;
+    let answer = replay::replay(&Trpg, &dir, &input);
+    let _ = fs::remove_dir_all(&dir);
+    assert!(answer.ok, "{:?} {:?}", answer.error, answer.limits);
+    let output = answer.result.unwrap();
+    let [run] = &output.runs[..] else {
+        panic!("one run: {output:?}")
+    };
+    assert_eq!(run.steps.len(), applied + 1);
+    assert!(run.steps.iter().all(|s| s.refused.is_none()), "{run:?}");
+    let crash = output.crash.unwrap();
+    assert_eq!(crash.reported.message, "index out of bounds");
+    assert_eq!((crash.replayed, crash.step), (None, None));
+}
+
 /// Ticket 1193: a record that isn't the game's is an error naming it.
 #[test]
 fn replay_refuses_a_record_that_isnt_one() {

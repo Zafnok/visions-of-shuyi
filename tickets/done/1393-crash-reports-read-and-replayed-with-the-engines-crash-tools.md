@@ -5,10 +5,10 @@ type: infra
 milestone: M8 Release
 model: sonnet-5 / gpt-6.1-terra
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-11-27
 ---
 
 # 1393 — A player's crash report read and replayed with the engine's crash tools
@@ -91,14 +91,14 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `docs/releasing.md` reads a report with `cargo shuyi crash --symbols`;
+- [x] `docs/releasing.md` reads a report with `cargo shuyi crash --symbols`;
       no `addr2line` or `objdump` recipe is left.
-- [ ] `docs/session-records.md` replays a report with `cargo shuyi replay
+- [x] `docs/session-records.md` replays a report with `cargo shuyi replay
       --crash`.
-- [ ] A test shows a crash report holding the game's battle record replays
+- [x] A test shows a crash report holding the game's battle record replays
       through `replay --crash` with `ok: true`.
-- [ ] The PR body has both commands' output on a battle's crash report.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The PR body has both commands' output on a battle's crash report.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -106,5 +106,36 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `docs/releasing.md`, *The debug files*: the `objdump` / `grep` /
+  `addr2line` recipe is gone; a report is read with `cargo shuyi crash
+  <report> --symbols <debug file> [--json]`, with `SH3020` and the
+  "frames fall outside every function" limit named. Tried by hand, a
+  debug file of another build can also name frames with the wrong
+  functions and no limit line, so the doc says to fetch the one whose
+  version is the report's `game`.
+- `docs/session-records.md`, *Crash reports*: the record replays straight
+  from the report with `cargo shuyi replay --crash <report>`; what `ok`,
+  `result.crash` and `same_place` say.
+- `crates/tools/src/game_tools/tests.rs`,
+  `a_crash_report_replays_with_replay_crash`: the debug Quick Battle
+  played to the lord's first move, its `crash_record` put in the
+  engine's `CrashReport` (the engine gives `CrashReport::new`,
+  `set_record` and `to_text`, so no fixture file), replayed through the
+  engine's `replay` with `crash: true`: `ok`, one run of every applied
+  command plus the start, no `replayed` panic. No code change was needed
+  in `plays.rs`, and its doc comments never said to copy the record out.
+- Deviation, the by-hand try: a debug build run with
+  `SHUYI_PANIC_AT_FRAME` wrote a real report, but keys sent to its window
+  from a script never reached it (Windows kept the focus elsewhere), so
+  it panicked on the title with no record. The battle record in the
+  report both commands were tried on was added to that real report from
+  the same Quick Battle played in the Harness (`CrashReport::parse`,
+  `set_record`). The debug build's `.exe` stood in for a release's
+  `.debug` (it holds the same DWARF).
+- The older test beside it, `a_crash_record_replays_to_the_crash`, plays
+  `Down f Left f f`, which no longer reaches a command (Preparations
+  needs one more Confirm since ticket 1237's drivers): its record holds
+  no command and its step counts pass on 0. Left as it is (out of
+  scope); the new test uses the UI test's keys and asserts a command was
+  applied. Follow-up: ticket 1396.
+- Starting rules: none.

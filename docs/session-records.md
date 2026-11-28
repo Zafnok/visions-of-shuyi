@@ -48,13 +48,24 @@ player typed). The newest five are kept, beside the saves:
 The next start says once, under the title's menu, that the game closed
 unexpectedly and a report was saved (`docs/design/crash-reports.md`).
 Nothing is sent anywhere: a player reporting a crash sends the newest
-`crash-*.ron` and `logs/latest.log` (below). Its battle record is the
-report's `record` field; copied to a file of its own, it replays to the
-crash:
+`crash-*.ron` and `logs/latest.log` (below). `cargo shuyi crash
+<report>` reads it, its stack named from the release's debug file
+(`docs/releasing.md`, *The debug files*). Its battle record (the
+report's `record` field) replays straight from the report, by this
+build's rules, to the crash:
 
 ```bash
-cargo shuyi replay <file>
+cargo shuyi replay --crash <report>
 ```
+
+`ok` is true when the record plays to its end without a panic: the bug
+is fixed, or the panic wasn't in the rules (a screen, a skin, the
+platform; `limits` says only the rules were replayed). While the rules
+panic, `ok` is false and the answer (`--json`: `result.crash`) holds the
+step that panicked and its `replayed` panic beside the report's
+`reported` one; `same_place` says whether both are at the same line (a
+Windows player's path matches a replay elsewhere). That step's command
+is the one to look at.
 
 ## The log file
 
