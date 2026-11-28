@@ -104,7 +104,8 @@ the ground around it.
 - [x] Before/after pictures in the PR. (Made, cropped and described
       there; kept local as 1384's were, since they show bought art and a
       real map.)
-- [x] The tileset import's tests pass; `assets-private.rev` moved.
+- [x] The tileset import's tests pass; `assets-private.rev` moved. (By
+      its pin file, 0195's flow: the fold moves `assets-private.rev`.)
 - [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
@@ -154,8 +155,14 @@ the lamps' stills are their first frame. GBA: no target.
 - **Content:** Zafnok/visions-of-shuyi-assets#44 (the four lamps in
   `ch01.map`, the re-packed `tiny_tales.png`/`.ron`). The lamp is packed
   at (7, 24); the moving cells after it moved one place down the image
-  and the rows naming them moved with them. Pinned to its branch commit
-  while it is open; moves to its merge on `main` before this merges.
+  and the rows naming them moved with them. #44 was merged by hand
+  before 0195 landed, on top of 1380's art (#43), whose four `game/ui/`
+  pictures the game doesn't credit yet, so `--pin` refused the private
+  `main`. Converted to 0195's flow (ADR-0135): `assets-private.rev` is
+  `main`'s, and the pin file `assets-private.d/t1378-lamps-harls-gate-road-bridge.rev`
+  names #44's head (`463632ee`; its deleted branch pushed again there).
+  On this merge `private-land.yml` sees #44 merged by hand and folds the
+  private `main`.
 - **Credits:** the ELV row's comment and `THIRD_PARTY_ASSETS.md` name the
   lamp (`RA_Jungle_Animation.png`); the packed image was already credited.
 - **README shots** (1389): `battle-forecast`, `battle-ranges`,
